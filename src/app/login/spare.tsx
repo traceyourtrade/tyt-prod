@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -58,14 +57,57 @@ export default function LoginPage() {
       <div className="absolute inset-0 z-0 opacity-30 bg-[url('/images/bg-pattern.png')] bg-repeat bg-center"></div>
       <div className="absolute inset-0 bg-[#2828287b] z-0"></div>
 
-      <div className="relative flex w-full max-w-[650px] flex-col md:flex-row items-center justify-center gap-10 px-6">
+      <div className="relative z-10 flex w-full max-w-[1450px] flex-col md:flex-row items-center justify-center gap-10 px-6">
+        {/* Left Section */}
+        <div className="w-full md:w-2/3 space-y-8 p-4">
+          <h3 className="text-4xl md:text-6xl font-bold ml-4">
+            Let’s <span className="text-[#FFA734]">Signup</span>
+          </h3>
 
-        <div className="w-full max-w-[650px] bg-linear-to-br from-[#17191d9f] to-[#1e212492] backdrop-blur-md shadow-2xl rounded-2xl flex flex-col items-center p-8 md:p-10">
+          <div className="bg-[#1A1A1A] rounded-2xl p-8 md:p-12 text-white">
+            <p className="w-fit px-4 py-1 text-sm text-orange-400 bg-[#388cfa24] border border-[#388cfa] rounded-full">
+              ✨ Advanced Trade Analytics Platform
+            </p>
 
-          <Image
-            width={100}
-            height={100}
-            src="/images/logoDarkFull.png"
+            <h1 className="mt-6 text-3xl md:text-5xl font-semibold leading-tight">
+              Data doesn’t lie — and neither will your{" "}
+              <span className="text-[#FFAC5E]">trading journal</span>. Let’s get
+              started.
+            </h1>
+
+            <p className="mt-6 text-gray-400 text-base md:text-lg w-full md:w-2/3">
+              The most advanced trade journaling and performance analytics
+              platform designed for serious traders. Auto-sync your trades,
+              analyze your performance, and accelerate your growth.
+            </p>
+
+            <div className="flex justify-between mt-8 border-t border-gray-700 pt-6 flex-wrap gap-4">
+              <div className="flex flex-col items-center">
+                <h2 className="text-orange-400 text-2xl md:text-3xl font-semibold">
+                  50K+
+                </h2>
+                <span className="text-gray-400 text-sm">Active Traders</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <h2 className="text-green-500 text-2xl md:text-3xl font-semibold">
+                  98.2%
+                </h2>
+                <span className="text-gray-400 text-sm">Accuracy Rate</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <h2 className="text-orange-400 text-2xl md:text-3xl font-semibold">
+                  $2.4B+
+                </h2>
+                <span className="text-gray-400 text-sm">Trades Analysed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section */}
+        <div className="w-full md:w-1/3 bg-gradient-to-br from-[#17191d9f] to-[#1e212492] backdrop-blur-md shadow-2xl rounded-2xl flex flex-col items-center p-8 md:p-10">
+          <img
+            src="/images/logoDark.png"
             alt="Logo"
             className="w-40 md:w-56 mt-4 mb-6"
           />
@@ -131,13 +173,7 @@ export default function LoginPage() {
           </button>
 
           <div className="w-2/3 mt-4">
-
-            <img
-              src="/images/purple-bar.png"
-              alt="Bar"
-              className="w-full"
-            />
-
+            <img src="/images/purple-bar.png" alt="Bar" className="w-full" />
           </div>
         </div>
       </div>
