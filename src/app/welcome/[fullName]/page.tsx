@@ -30,6 +30,8 @@ export default function HelloTextPage() {
             {/* Logo */}
             <Image
                 src="/images/logoDark.png"
+                width={100}
+                height={100}
                 alt="Logo"
                 data-aos="fade-up"
                 data-aos-duration="1000"
