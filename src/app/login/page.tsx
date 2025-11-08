@@ -6,6 +6,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Poppins } from "next/font/google";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGoogle, faApple } from "@fortawesome/free-brands-svg-icons";
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -65,7 +68,7 @@ export default function LoginPage() {
       {/* <div className="absolute inset-0 z-0 opacity-30 bg-[url('/images/bg-pattern.png')] bg-repeat bg-center"></div>
       <div className="absolute inset-0 bg-[#2828287b] z-0"></div> */}
 
-      <div className="w-full max-w-[450px] border-[0.1px] border-[#464646] bg-[#09090963] shadow-2xl rounded-3xl flex flex-col items-center py-8 px-4 md:p-10">
+      <div className="w-[90%] max-w-[450px] border-[0.1px] border-[#464646] bg-[#09090963] shadow-2xl rounded-3xl flex flex-col items-center py-8 px-4 md:p-10">
 
         <Image
           width={100}
@@ -122,17 +125,17 @@ export default function LoginPage() {
         </form>
 
         <button
-          className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 hover:bg-[#111] transition mt-10"
+          className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 hover:bg-[#111] transition mt-10 cursor-pointer"
         >
-          <i className="fa-brands fa-google mr-2"></i>
-          <span>Continue with Google</span>
+           <FontAwesomeIcon icon={faGoogle} className="mr-2 relative top-[-1px]" />
+          <span className=" text-sm" >Continue with Google</span>
         </button>
 
         <button
-          className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 mt-3 hover:bg-[#111] transition mb-10"
+          className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 mt-3 hover:bg-[#111] transition mb-10 cursor-pointer"
         >
-          <i className="fa-brands fa-apple mr-2"></i>
-          <span>Continue with Apple</span>
+          <FontAwesomeIcon icon={faApple} className="mr-2 relative top-[-1px]" />
+          <span className=" text-sm" >Continue with Apple</span>
         </button>
 
       </div>
