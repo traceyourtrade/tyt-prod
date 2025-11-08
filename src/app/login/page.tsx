@@ -2,14 +2,11 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
-import Cookies from "js-cookie";
-import { useGoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
-import { useDataStore } from "@/store/store";
 
 export default function LoginPage() {
+
   const router = useRouter();
-  const { bkurl } = useDataStore();
 
   const [loginData, setLoginData] = useState({
     email: "",
@@ -23,44 +20,34 @@ export default function LoginPage() {
     setLoginData({ ...loginData, [name]: value });
   };
 
-//   const logInWithGoogle = useGoogleLogin({
-//     flow: "auth-code",
-//     ux_mode: "redirect",
-//     redirect_uri: "https://console.traceyourtrade.com/auth/google/callback",
-//   });
-
   const postLoginDetails = async (e: FormEvent) => {
     e.preventDefault();
     const { email, password } = loginData;
 
     try {
-      const res = await fetch(`${bkurl}/login`, {
+      const res = await fetch("/api/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ this allows browser to store cookies from backend
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (res.status === 200) {
-        Cookies.set("Trace Your Trades", data.message, {
-          expires: 5,
-          domain: ".traceyourtrade.com",
-          path: "/",
-        });
-
-        router.push(`/welcome/${data.name}/${data.id}`);
+        router.push(`/welcome/${data.name}`);
       } else {
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck your Email & Password");
         } else if (data.error === "Enter all the details") {
           setError("Fill all the entries");
+        } else {
+          setError("Something went wrong. Please try again.");
         }
       }
     } catch (err) {
       console.error("Login error:", err);
+      setError("Server error. Please try again later.");
     }
   };
 
@@ -172,7 +159,6 @@ export default function LoginPage() {
           </form>
 
           <button
-            // onClick={() => logInWithGoogle()}
             className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 mt-6 hover:bg-[#111] transition"
           >
             <i className="fa-brands fa-google mr-2"></i>
@@ -180,7 +166,6 @@ export default function LoginPage() {
           </button>
 
           <button
-            // onClick={() => logInWithGoogle()}
             className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 mt-3 hover:bg-[#111] transition"
           >
             <i className="fa-brands fa-apple mr-2"></i>
