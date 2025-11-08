@@ -4,8 +4,15 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Poppins } from "next/font/google";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export default function LoginPage() {
+
 
   const router = useRouter();
 
@@ -53,94 +60,83 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center bg-[#1A1A1A] text-white overflow-hidden">
+    <div className={`flex min-h-screen w-full items-center justify-center bg-[#1e1e25] text-white overflow-hidden ${poppins.className}`} >
       {/* Background Overlay */}
-      <div className="absolute inset-0 z-0 opacity-30 bg-[url('/images/bg-pattern.png')] bg-repeat bg-center"></div>
-      <div className="absolute inset-0 bg-[#2828287b] z-0"></div>
+      {/* <div className="absolute inset-0 z-0 opacity-30 bg-[url('/images/bg-pattern.png')] bg-repeat bg-center"></div>
+      <div className="absolute inset-0 bg-[#2828287b] z-0"></div> */}
 
-      <div className="relative flex w-full max-w-[650px] flex-col md:flex-row items-center justify-center gap-10 px-6">
+      <div className="w-full max-w-[450px] border-[0.1px] border-[#464646] bg-[#09090963] shadow-2xl rounded-3xl flex flex-col items-center py-8 px-4 md:p-10">
 
-        <div className="w-full max-w-[650px] bg-linear-to-br from-[#17191d9f] to-[#1e212492] backdrop-blur-md shadow-2xl rounded-2xl flex flex-col items-center p-8 md:p-10">
+        <Image
+          width={100}
+          height={100}
+          src="/images/logoDarkFull.png"
+          alt="Logo"
+          className="w-55 md:w-56 mt-4 mb-6"
+        />
 
-          <Image
-            width={100}
-            height={100}
-            src="/images/logoDarkFull.png"
-            alt="Logo"
-            className="w-40 md:w-56 mt-4 mb-6"
+        <h1 className="text-2xl font-medium">Welcome back</h1>
+        <p className="text-gray-400 text-sm mt-2 mb-4">
+          Login to your trading journal.
+        </p>
+
+        <form
+          onSubmit={postLoginDetails}
+          className="w-full flex flex-col items-center gap-4 mt-5"
+        >
+          <input
+            type="text"
+            name="email"
+            placeholder="Email or Phone"
+            value={loginData.email}
+            onChange={handleInputChange}
+            autoComplete={"off"}
+            className="w-[95%] rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm border-[0.1px] border-[#464646] "
           />
-
-          <h1 className="text-2xl font-medium">Welcome back</h1>
-          <p className="text-gray-400 text-sm mt-2 mb-4">
-            Login to your trading journal.
-          </p>
-
-          <form
-            onSubmit={postLoginDetails}
-            className="w-full flex flex-col items-center gap-4"
-          >
-            <input
-              type="text"
-              name="email"
-              placeholder="Email or Phone"
-              value={loginData.email}
-              onChange={handleInputChange}
-              required
-              className="w-11/12 rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm"
-            />
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={loginData.password}
-              onChange={handleInputChange}
-              required
-              className="w-11/12 rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm"
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-            <button
-              type="submit"
-              className="w-11/12 bg-[#DDDDDD] text-[#111] font-medium py-3 rounded-xl mt-2 hover:bg-white transition"
-            >
-              Log In
-            </button>
-
-            <div className="w-11/12 flex justify-between text-xs mt-4 text-[#94A3B8]">
-              <Link href="/forgotpassword" className="text-[#00E6B0]">
-                Forgot Password?
-              </Link>
-              <Link href="/signup" className="text-[#94A3B8]">
-                New to TYT? Create account
-              </Link>
-            </div>
-          </form>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={loginData.password}
+            onChange={handleInputChange}
+            autoComplete={"off"}
+            className="w-[95%] rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm border-[0.1px] border-[#464646]"
+          />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
-            className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 mt-6 hover:bg-[#111] transition"
+            type="submit"
+            className="w-[95%] bg-[#DDDDDD] text-[#111] font-medium py-2 rounded-xl mt-2 hover:bg-white transition cursor-pointer"
           >
-            <i className="fa-brands fa-google mr-2"></i>
-            <span>Sign in with Google</span>
+            Log In
           </button>
 
-          <button
-            className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 mt-3 hover:bg-[#111] transition"
-          >
-            <i className="fa-brands fa-apple mr-2"></i>
-            <span>Sign in with Apple</span>
-          </button>
-
-          <div className="w-2/3 mt-4">
-
-            <img
-              src="/images/purple-bar.png"
-              alt="Bar"
-              className="w-full"
-            />
-
+          <div className="w-11/12 flex justify-between text-xs mt-4 text-[#94A3B8]">
+            <Link href="/forgotpassword" className="text-[#00E6B0]">
+              Forgot Password?
+            </Link>
+            <Link href="/signup" className="text-[#94A3B8]">
+              New to TYT? Create account
+            </Link>
           </div>
-        </div>
+        </form>
+
+        <button
+          className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 hover:bg-[#111] transition mt-10"
+        >
+          <i className="fa-brands fa-google mr-2"></i>
+          <span>Continue with Google</span>
+        </button>
+
+        <button
+          className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 mt-3 hover:bg-[#111] transition mb-10"
+        >
+          <i className="fa-brands fa-apple mr-2"></i>
+          <span>Continue with Apple</span>
+        </button>
+
       </div>
+
     </div>
   );
 }
