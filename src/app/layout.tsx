@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "@/lib/fontawesome";
 
 export const metadata: Metadata = {
-    
+
     title: "Trace Your Trade | India's #1 Automated Trading Journal",
     description:
         "Trace Your Trade is India's only #1 automated trading journal. Automate trade syncing, track performance, backtest strategies, review trades, and join a strong community of active traders. Turn market moves into money-making insights with automation.",
+    icons: {
+        icon: "/favicon.png",
+    },
     keywords: [
         "trading journal India",
         "automated trading journal",
