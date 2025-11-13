@@ -1,0 +1,50 @@
+@keyframes growOut {
+    0% {
+        transform: scale(0)
+    }
+
+    100% {
+        transform: scale(1)
+    }
+}
+
+.accounts-visible {
+    /* height: auto; */
+    visibility: visible;
+    transition: 0.5s ease-in-out;
+    animation: growOut 300ms ease-in-out forwards;
+    transform-origin: top center;
+}
+
+@keyframes shrinkIn {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(0);
+    }
+}
+
+.accounts-hidden {
+    animation: shrinkIn 300ms ease-in-out forwards;
+    pointer-events: none;
+    /* Prevents interaction during animation */
+}
+
+.currencyOpen-dark-span {
+    width: 90% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px !important;
+    padding-left: 20px !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    font-family: "Inter", sans-serif;
+    color: white;
+}
+
+.currencyOpen-dark-span:hover {
+    background-color: #dfdfdf80;
+}
