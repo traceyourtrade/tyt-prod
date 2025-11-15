@@ -1,9 +1,15 @@
-const Strategies = () => {
+import StrategyMain from "@/components/strategy/StrategyMain"
 
-    return <>
-        <h1 className="text-2xl" >Strategies</h1>
-    </>
-
+export const metadata = {
+  title: 'Strategy',
 }
 
-export default Strategies;
+export default function Page() {
+  return (
+    <main className="min-h-screen bg-[#0f0f0f] text-white">
+      <div className="w-full">
+        <StrategyMain />
+      </div>
+    </main>
+  )
+}

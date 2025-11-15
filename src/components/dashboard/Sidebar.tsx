@@ -42,7 +42,7 @@ export default function Sidebar({ expanded, setExpanded }: SidebarProps) {
 
   const menuTop = [
     { name: "Dashboard", icon: <BookOpen size={18} />, url: "/" },
-    { name: "Daily Journal", icon: <BookOpen size={18} />, url: "/dailyjournal" },
+    { name: "Daily Journal", icon: <BookOpen size={18} />, url: "/daily-journal" },
     { name: "Notebook", icon: <NotebookPen size={18} />, url: "/notebook" },
     { name: "My Strategies", icon: <Layers size={18} />, url: "/strategies" },
     { name: "Reports", icon: <BarChart2 size={18} />, url: "/reports" },

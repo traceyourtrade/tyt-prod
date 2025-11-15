@@ -67,7 +67,7 @@ setAccounts(userId,tokenn||"");
 useEffect(()=>{
   if(pathname.split('/')[2]==undefined){
     
-  router.replace('/strategy/strategies')
+  router.replace('/strategies/strategies')
   }
 },[])
 

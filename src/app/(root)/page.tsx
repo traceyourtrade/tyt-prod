@@ -145,19 +145,7 @@ const updatePath = (url: string) => {
 >
   <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
 </div>
-                    <Sidebar 
-  sideExpand={sideExpand}
-  expandFun={expandFun}
-  menuItems={menuItems}
-  currentUrl={currentUrl}
-  setCurrentUrl={setCurrentUrl}
-  getInitials={getInitials}
-  profileData={{fullName:"", email:""}}
-  maskEmail={maskEmail}
-  logoutFun={logoutFun}
-  setAddTrades={setAddTrades}
-  updatePath={updatePath}
-/>
+                    
 
                     {/* Main Content Area */}
                     <div className={`absolute right-2 z-0 transition-all duration-500 ease-in-out p-2 ${
