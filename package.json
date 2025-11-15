@@ -23,6 +23,7 @@
     "aos": "^2.3.4",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
+    "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",

@@ -215,9 +215,9 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
               </Pie>
               <Tooltip
                 contentStyle={{
-                  background: "#1a1a1a",
-                  border: "1px solid #333",
-                  color: "#fff",
+                  background: "#c9ffdeff",
+                  border: "1px solid #70ff68ff",
+                  color: "#2201b5ff",
                 }}
               />
               <Legend />

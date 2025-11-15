@@ -8,7 +8,7 @@ import Reports from "./reports/StrategyReportsMain";
 import Compare from "./compare/StrategyCompareMain";
 import useAccountDetails from "@/store/accountdetails";
 import { useRouter, usePathname } from 'next/navigation'
-
+import Cookies from "js-cookie";
 interface StrategyType {
   strategy?: string;
   [key: string]: any;
@@ -54,8 +54,12 @@ const tabs: { id: TabType; label: string; path: string }[] = [
 const StrategyMain = () => {
   const [fDate, setFDate] = useState<string>("");
   const [toDate, setTDate] = useState<string>("");
-  
-  const { strategies, selectedAccounts } = useAccountDetails();
+  const { strategies, selectedAccounts,setAccounts } = useAccountDetails();
+    const tokenn = Cookies.get("Trace Your Trades");
+    const userId:string = Cookies.get("userId")||"";
+  useEffect(()=>{
+setAccounts(userId,tokenn||"");
+  },[tokenn,userId,setAccounts])
   
   const router = useRouter()
   const pathname = usePathname()
@@ -63,7 +67,7 @@ const StrategyMain = () => {
 useEffect(()=>{
   if(pathname.split('/')[2]==undefined){
     
-  router.push('/strategy/strategies')
+  router.replace('/strategy/strategies')
   }
 },[])
 

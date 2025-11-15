@@ -25,9 +25,9 @@ export default function ReportsMain() {
     const { setAccounts } = useAccountDetails()
 
 useEffect(() => {
-  const tokenn = Cookies.get('Trace Your Trades') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODliMjE3OTFlZjQ5NWQyZGIyZGJjMmEiLCJpYXQiOjE3NjI5NjAwMzQsImV4cCI6MTc2MzM5MjAzNH0.CdTTCmSX6SW39nnnr_Uo0eyfsQnRURn8Wk-vd_YyOyc'
+  const tokenn = Cookies.get('Trace Your Trades') || ''
   // For now, we'll use a placeholder userId - in production, this should come from params or session
-  const userId = 'SJCx5EJ3Zh2J' // Default/fallback userId
+  const userId = Cookies.get("userId")||'' // Default/fallback userId
   if (userId && tokenn) {
     console.log('Reports page: Calling setAccounts')
     setAccounts(userId, tokenn)

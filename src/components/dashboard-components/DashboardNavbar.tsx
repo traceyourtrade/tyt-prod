@@ -23,10 +23,8 @@ interface DashboardNavProps {
 }
 
 const DashboardNav: React.FC<DashboardNavProps> = ({ heading }) => {
-  let { id: userId } = useParams<{ id: string }>();
-  if(userId === undefined){
-    userId='SJCx5EJ3Zh2J';
-  }
+  const userId=Cookies.get("userId")||"";
+
   const [isAccOpen, setAcc] = useState(false);
   const [isCurrOpen, setCrr] = useState(false);
 
@@ -90,7 +88,7 @@ const DashboardNav: React.FC<DashboardNavProps> = ({ heading }) => {
     }
   };
 
-  const tokenn = Cookies.get("Trace Your Trades") ||"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODliMjE3OTFlZjQ5NWQyZGIyZGJjMmEiLCJpYXQiOjE3NjI5NjAwMzQsImV4cCI6MTc2MzM5MjAzNH0.CdTTCmSX6SW39nnnr_Uo0eyfsQnRURn8Wk-vd_YyOyc";
+  const tokenn = Cookies.get("Trace Your Trades") ||"";
 
   const getAccDetails = async () => {
     if (userId && tokenn) {

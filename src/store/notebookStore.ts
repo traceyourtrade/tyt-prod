@@ -1,3 +1,4 @@
+"use clients"
 import { create } from "zustand";
 
 // 🔹 API URLs (Replace with actual endpoints)

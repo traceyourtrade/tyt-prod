@@ -6,6 +6,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 interface MenuItem {
   name: string;
   img: string;
+  url:string;
 }
 
 interface ProfileData {
@@ -88,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {/* Menu Items */}
           {menuItems.map((ele) => (
             <div 
-              onClick={() => updatePath(ele.name=='My Strategies'?"strategy":ele.name.toLocaleLowerCase())} 
+              onClick={() => updatePath(ele.url)} 
               className={`flex items-center w-full py-1 rounded-lg text-white font-['Inter'] font-[450] mt-1 transition-all duration-100 ease-in-out cursor-pointer ${
                 currentUrl === ele.name ? "bg-[rgba(122,122,122,0.31)]" : ""
               } ${

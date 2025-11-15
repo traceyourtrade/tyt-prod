@@ -67,11 +67,11 @@ const DashboardHome = () => {
     const userId = params.userId as string;
 
     const menuItems = [
-        { icon: "fa-solid fa-chart-pie", img: "/images/sidebar/menu.png", name: "Dashboard", url: `/d/${userId}` },
-        { icon: "fa-solid fa-pen-fancy", img: "/images/sidebar/pen.png", name: "Daily Journal", url: `/d/${userId}` },
-        { icon: "fa-solid fa-pen-to-square", img: "/images/sidebar/notepad.png", name: "Notebook", url: `/d/${userId}` },
-        { icon: "fa-solid fa-circle-play", img: "/images/sidebar/strategy.png", name: "My Strategies", url: `/d/${userId}` },
-        { icon: "fa-solid fa-circle-play", img: "/images/attributes/Reporting.png", name: "Reports", url: `/d/${userId}` },
+        { icon: "fa-solid fa-chart-pie", img: "/images/sidebar/menu.png", name: "Dashboard", url: `/` },
+        { icon: "fa-solid fa-pen-fancy", img: "/images/sidebar/pen.png", name: "Daily Journal", url: `/daily-journal` },
+        { icon: "fa-solid fa-pen-to-square", img: "/images/sidebar/notepad.png", name: "Notebook", url: `/notebook` },
+        { icon: "fa-solid fa-circle-play", img: "/images/sidebar/strategy.png", name: "My Strategies", url: `/strategy` },
+        { icon: "fa-solid fa-circle-play", img: "/images/attributes/Reporting.png", name: "Reports", url: `/reports` },
     ];
 
     const [sideExpand, setsideExpand] = useState(false);
@@ -121,9 +121,7 @@ const DashboardHome = () => {
         }
     };
 const updatePath = (url: string) => {
-    window.history.pushState({}, '', `/${url}`);
-    // Dispatch a popstate event to trigger useEffect
-    window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+    router.push(url);
 }
     const getInitials = () => {
         if (!profileData.fullName) return "";
