@@ -1,0 +1,4 @@
+/* ChartCard.css copied from original reports */
+.chart-header { display:flex; justify-content:space-between }
+
+/* reuse original styles where needed; the chart components apply inline sizes */

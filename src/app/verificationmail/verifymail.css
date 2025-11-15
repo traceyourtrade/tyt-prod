@@ -1,0 +1,287 @@
+/* --- Existing Styles (Keep As Is) --- */
+.verifyMain {
+    width: 100vw;
+    min-height: 100vh;
+    display: grid;
+    place-content: center;
+    /* Ensure the path is correct relative to the CSS file location */
+    /* background-image: url('../../../images/loginbggradient.png'); */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+        font-family: 'SF Pro Display';
+    /* Apply base font family */
+}
+
+.verifySub {
+    width: 90vw;
+    max-width: 450px;
+    /* Adjusted height to auto or min-height to fit content better */
+    min-height: 300px;
+    padding-bottom: 30px;
+    /* Add some padding at the bottom */
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+    /* Adjusted shadow */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    /* Align items to the start */
+    border-radius: 25px;
+    background-color: white;
+    text-align: center;
+    /* Center text elements like h1 and p */
+}
+
+.verifySub h1 {
+    font-size: 28px;
+    margin-top: 20px;
+    /* Add some margin */
+    margin-bottom: 10px;
+    /* Add some margin */
+    color: #333;
+    /* Darker color for heading */
+}
+
+.verifySub>p {
+    /* Style the paragraph directly under verifySub */
+    padding: 2px 15px;
+    /* Add horizontal padding */
+    color: #817a7a;
+    margin: 0 5px 15px 5px;
+    /* Add bottom margin */
+    font-size: 13px;
+    /* Slightly larger */
+    font-weight: 500;
+    /* Adjusted weight */
+    max-width: 80%;
+    /* Prevent text from getting too wide */
+}
+
+.verifyLogo {
+    margin-top: 25px;
+    /* Adjusted margin */
+    width: 100px;
+    /* Explicit width */
+    height: auto;
+    /* Maintain aspect ratio */
+}
+
+
+/* --- Notification Styles --- */
+
+.verifynotification {
+    display: flex;
+    /* Use flexbox for alignment */
+    align-items: center;
+    /* Vertically center items */
+    border-radius: 50px;
+        font-family: 'SF Pro Display';
+    /* Consistent font */
+    font-size: 16px;
+    margin-top: 15px;
+    width: 300px;
+    /* Fixed width */
+    min-height: 70px;
+    /* Ensure enough height for the icon */
+    box-sizing: border-box;
+    /* Include padding in width */
+    position: relative;
+    /* Needed for absolute positioning of the icon */
+    overflow: hidden;
+    /* Hide icon overflow during animation */
+}
+
+/* Specific styles for loading state */
+.verifynotification.loading {
+    background-color: #525252;
+    /* Dark gray background */
+    /* Increased left padding to make space for the absolutely positioned icon */
+    padding: 10px 10px 10px 70px;
+}
+
+/* Specific styles for success state */
+.verifynotification.success {
+    background-color: #803dca;
+    /* Purple background */
+    padding: 10px;
+    /* Original padding */
+    justify-content: space-between;
+    /* Align items normally */
+}
+
+/* Icon container styles */
+.verifyicon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    /* Prevent icon from shrinking */
+}
+
+/* Positioning ONLY for the icon in the LOADING state */
+.verifynotification.loading .verifyicon {
+    position: absolute;
+    /* Position absolutely for animation */
+    left: 10px;
+    /* Initial position */
+    top: 50%;
+    transform: translateY(-50%);
+    /* Center vertically */
+    z-index: 2;
+    /* Ensure icon is above the text */
+    /* No margin-right needed when absolutely positioned */
+}
+
+/* Icon margin for the SUCCESS state (when position is not absolute) */
+.verifynotification.success .verifyicon {
+    margin-right: 16px;
+}
+
+/* Specific background for success icon (optional, if needed) */
+.verifyicon-purple {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    /* background-color: #someColor; */
+}
+
+/* Loader image styles */
+.verifyloader {
+    width: 30px !important;
+    /* Keep user's width */
+    height: 30px !important;
+    /* Make height consistent with width for aspect */
+    object-fit: contain;
+}
+
+/* Checkmark image styles */
+.verifycheckmark {
+    width: 35px !important;
+    /* Slightly smaller checkmark */
+    height: 35px !important;
+    object-fit: contain;
+}
+
+/* Message text styles */
+.verify-msg {
+    font-size: 16px !important;
+    /* Keep user's style */
+    font-weight: 600;
+    color: #fff !important;
+    /* Keep user's style */
+        font-family: 'SF Pro Display';
+    margin: 0;
+    /* Remove default margins */
+    padding: 0;
+    /* Remove default padding */
+    white-space: nowrap;
+    /* Prevent text wrapping */
+}
+
+/* Styles specific to the message in the LOADING state */
+.verifynotification.loading .verify-msg {
+    position: relative;
+    /* Needed for z-index */
+    z-index: 1;
+    /* Ensure text is behind the icon */
+    display: inline-block;
+    /* Required for spans to work correctly */
+}
+
+/* Individual character spans (used in loading state) */
+.verifynotification.loading .verify-msg span {
+    display: inline-block;
+    /* Treat each character as block for animation */
+    opacity: 1;
+    /* Start visible */
+    transition: opacity 0.3s ease-out;
+    /* Fallback transition */
+}
+
+
+/* --- Animation Keyframes --- */
+
+@keyframes slideRight {
+    0% {
+        left: 10px;
+        /* Start position */
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+        /* Remain visible while moving */
+    }
+
+    100% {
+        /* Move across the full width minus icon width and padding */
+        left: calc(100% - 60px);
+        /* End position (container width - icon width - right padding) */
+        /* opacity: 0; */
+        /* Fade out icon at the end */
+    }
+}
+
+@keyframes fadeOutChar {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+
+/* --- Apply Animations --- */
+
+/* Apply slide animation to the icon when 'animate' class is present */
+.verifynotification.loading.animate .verifyicon {
+    /* Animation: name duration timing-function delay iteration-count direction fill-mode */
+    animation: slideRight 1.5s ease-in-out 0.2s 1 forwards;
+    /* Run once, keep end state */
+}
+
+/* Apply fade-out animation to each character span when 'animate' class is present */
+.verifynotification.loading.animate .verify-msg span {
+    /* Apply the fade-out animation */
+    /* The actual delay is set inline in the JSX style attribute */
+    animation: fadeOutChar 0.4s ease-out forwards;
+    /* Run once, keep end state */
+}
+
+@keyframes fadeIntxt {
+    from {
+        opacity: 0;
+        /* Start completely transparent */
+    }
+
+    to {
+        opacity: 1;
+        /* End fully opaque */
+    }
+}
+
+/* Apply the fade-in animation to elements with the class 'fadein-txt' */
+.fadein-txt {
+    animation: fadeIntxt 0.5s ease-in-out forwards;
+    /* Apply animation: name, duration, timing-function, fill-mode */
+    animation-name: fadeIn;
+    /* The name of the @keyframes rule */
+    animation-duration: 0.5s;
+    /* How long the animation takes to complete */
+    animation-timing-function: ease-in-out;
+    /* The speed curve of the animation */
+    animation-fill-mode: forwards;
+    /* Keeps the final state of the animation after it ends */
+}
