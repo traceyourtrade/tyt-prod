@@ -9,7 +9,7 @@ const connections: {
   main?: mongoose.Connection;
   accounts?: mongoose.Connection;
 } = {};
-
+console.log("🌐 DB Connect Module Loaded");
 export const connectMainDB = async (): Promise<mongoose.Connection> => {
   if (connections.main) {
     console.log("ℹ️ Using existing Main DB connection");

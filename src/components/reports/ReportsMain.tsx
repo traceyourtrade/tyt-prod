@@ -25,15 +25,7 @@ export default function ReportsMain() {
     const { setAccounts } = useAccountDetails()
 
 useEffect(() => {
-  const tokenn = Cookies.get('Trace Your Trades') || ''
-  // For now, we'll use a placeholder userId - in production, this should come from params or session
-  const userId = Cookies.get("userId")||'' // Default/fallback userId
-  if (userId && tokenn) {
-    console.log('Reports page: Calling setAccounts')
-    setAccounts(userId, tokenn)
-  } else {
-    console.warn('Reports page: Missing userId or tokenn', { userId, tokenn: tokenn ? '***' : 'missing' })
-  }
+    setAccounts()
 }, [setAccounts])
  const router = useRouter()
 const pathname = usePathname()

@@ -137,14 +137,7 @@ const updatePath = (url: string) => {
         <>
             <div className="w-screen h-auto bg-black">
                 <div className="w-screen h-auto min-h-[90vh] flex mt-5 bg-black">
-                    <div 
-  onClick={expandFun} 
-  className={`fixed text-white z-20 top-24 rounded-full bg-[#ffffff47] flex items-center justify-center cursor-pointer transition-all duration-500 ease-in-out ${
-    sideExpand ? "left-50" : "left-15"
-  } w-5 h-5`}
->
-  <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
-</div>
+                    
                     
 
                     {/* Main Content Area */}

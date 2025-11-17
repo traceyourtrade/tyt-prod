@@ -144,8 +144,9 @@ const JRContent = ({ dailyData }: JRContentProps) => {
             formData.append("imgType", imgType);
             formData.append("tokenn", tokenn || "");
             formData.append("accountType", accountType);
-
-            fetch(`${bkurl}/tytusersasqwzxerdfcv/upload-img/djr`, {
+        formData.append('apiName', 'uploadImage');
+console.log('Form Data Entries:',formData );
+            fetch(`/api/daily-journal/post`, {
               method: "POST",
               body: formData,
             })

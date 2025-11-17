@@ -1,8 +1,7 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 import { connectMainDB } from "@/lib/db/connect";
 
-// 🧩 Interfaces
-interface IFile {
+export interface INoteFile {
   filename: string;
   created: number;
   lastUpdate: number;
@@ -12,22 +11,23 @@ interface IFile {
   };
 }
 
-interface INoteFolder {
+export interface INoteFolder {
   folderName: string;
   createdDate: number;
   folderType: string;
-  files: IFile[];
+  files: INoteFile[];
 }
 
-export interface INotes extends Document {
+export interface INote extends Document {
   uniqueId: string;
   email: string;
   notes: INoteFolder[];
+  
+  // Methods
   addFolder(folderName: string, folderType: string): Promise<INoteFolder[]>;
 }
 
-// 🧱 Schema
-const noteSchema = new Schema<INotes>({
+const noteSchema = new Schema<INote>({
   uniqueId: { type: String, required: true },
   email: { type: String, required: true },
   notes: [
@@ -35,13 +35,13 @@ const noteSchema = new Schema<INotes>({
       folderName: { type: String, required: true },
       createdDate: { type: Number, default: () => Date.now() },
       folderType: { type: String, required: true },
-      files: { type: [Schema.Types.Mixed], default: [] },
-    },
-  ],
+      files: { type: [Schema.Types.Mixed], default: [] }
+    }
+  ]
 });
 
-// ➕ Add Folder Method
-noteSchema.methods.addFolder = async function (folderName: string, folderType: string) {
+// Add folder method
+noteSchema.methods.addFolder = async function (folderName: string, folderType: string): Promise<INoteFolder[]> {
   try {
     this.notes = this.notes.concat({ folderName, folderType, files: [] });
     await this.save();
@@ -52,17 +52,16 @@ noteSchema.methods.addFolder = async function (folderName: string, folderType: s
   }
 };
 
-// ⚙️ Pre-Save Hook for Default Folders
-noteSchema.pre("save", async function (next) {
+// Pre-save hook to add default folders/files for new documents
+noteSchema.pre('save', async function (next) {
   if (this.isNew) {
     const now = Date.now();
-
     this.notes = [
       {
         folderName: "Daily Journal",
         folderType: "dj",
         createdDate: now,
-        files: [],
+        files: []
       },
       {
         folderName: "Risk Management",
@@ -70,24 +69,24 @@ noteSchema.pre("save", async function (next) {
         createdDate: now,
         files: [
           {
-            filename: "Risk Management Rules",
+            filename: 'Risk Management Rules',
             created: now,
             lastUpdate: now,
             content: {
-              title: "Risk Management Rules",
-              content: `<font style=""><font size="5" style="font-weight: bold; font-style: italic;"><u>Risk Management Rules</u></font><br><font size="3">Recall below Risk Managment Rules before placing a trade:</font></font><div><ul><li><font size="3">Risk Just 0.5-1% of capital per trade.</font></li><li><font size="3">Capture atleast 1:2 RR ratio</font></li><li><font size="3">Use a strategy with atleast 70% accuracy</font></li></ul></div>`,
-            },
+              title: 'Risk Management Rules',
+              content: `<font style=""><font size="5" style="font-weight: bold; font-style: italic;"><u>Risk Management Rules</u></font><br><font size="3">Recall below Risk Managment Rules before placing a trade:</font></font><div><ul><li><font style=""><font size="3">Risk Just 0.5-1% of capital per trade.</font></font></li><li><font size="3">Capture atleast 1:2 RR ratio</font></li><li><font size="3">Use a strategy with atleast 70% accuracy</font></li></ul></div>`
+            }
           },
           {
-            filename: "Position Sizing Formulas",
+            filename: 'Position Sizing Formulas',
             created: now,
             lastUpdate: now,
             content: {
-              title: "Position Sizing Calculators Formulas",
-              content: `<font size="3"><br><table className="notebook-table" contenteditable="false"><tr><th>Market</th><th>Formula</th></tr><tr><td>&nbsp;Forex</td><td>&nbsp;Lot Size = (Risk Per Trade) / (Pips in SL × Pip Value)</td></tr><tr><td>&nbsp;Stocks</td><td>&nbsp;Shares = Risk Amount / (Entry Price − Stop Loss Price)</td></tr><tr><td>&nbsp;Crypto</td><td>&nbsp;Quantity = (Risk Per Trade / % in SL) / Current Market Price</td></tr></table><br></font>`,
-            },
-          },
-        ],
+              title: 'Position Sizing Calculators Formulas',
+              content: `<font size="3"><br><table className="notebook-table" contenteditable="false"><tr><th contenteditable="true">Market</th><th contenteditable="true">Formula</th></tr><tr><td contenteditable="true">&nbsp;Forex</td><td contenteditable="true">&nbsp;Lot Size = (Risk Per Trade) / (Pips in SL × Pip Value)</td></tr><tr><td contenteditable="true">&nbsp;Stocks</td><td contenteditable="true">&nbsp;Shares = Risk Amount / (Entry Price − Stop Loss Price)</td></tr><tr><td contenteditable="true">&nbsp;Crypto</td><td contenteditable="true">&nbsp;Quantity = (Risk Per Trade / % in SL) / Current Market Price</td></tr></table><br></font>`
+            }
+          }
+        ]
       },
       {
         folderName: "Psychology",
@@ -95,24 +94,22 @@ noteSchema.pre("save", async function (next) {
         createdDate: now,
         files: [
           {
-            filename: "Psychology Rules",
+            filename: 'Psychology Rules',
             created: now,
             lastUpdate: now,
             content: {
-              title: "Psychology Rules",
-              content: `<div><font size="5"><b><i><u>Psychology Tips:</u></i></b></font></div><div><ul><li><font size="3">Stick to Your Plan - Emotions like fear and greed lead to impulsive decisions. Always follow your trading plan.</font></li><li><font size="3">Accept Losses as Part of the Game – No strategy wins 100%. Losing trades don't mean failure—poor discipline does.</font></li><li><font size="3">Avoid Revenge Trading – Don't chase losses. One bad trade shouldn't turn into five.</font></li><li><font size="3">Be Patient – Wait for high-probability setups. Opportunities will come; FOMO kills accounts.</font></li><li><font size="3">Keep Ego in Check – It's not about being "right"—it's about making money. Cut losers fast, no matter your opinion.</font></li></ul></div>`,
-            },
-          },
-        ],
-      },
+              title: 'Psychology Rules',
+              content: `<div><font size="5"><b><i><u>Psychology Tips:</u></i></b></font></div><div><ul><li><font size="3">Stick to Your Plan&nbsp;<font color="#fafafc" face="system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif, Inter, NotoSansHans"><span style="letter-spacing: 0.32px; white-space-collapse: preserve-breaks; background-color: rgb(43, 43, 49);">&nbsp;- Emotions like fear and greed lead to impulsive decisions. Always follow your trading plan.</span></font></font></li><li><font size="3"><font color="#fafafc" face="system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif, Inter, NotoSansHans"><span style="letter-spacing: 0.32px; white-space-collapse: preserve-breaks; background-color: rgb(43, 43, 49);">A</span></font></font>ccept Losses as Part of the Game&nbsp;<span style="background-color: rgb(43, 43, 49); color: rgb(250, 250, 252); font-family: system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif, Inter, NotoSansHans; letter-spacing: 0.32px; white-space-collapse: preserve-breaks;"> – No strategy wins 100%. Losing trades don't mean failure—poor discipline does.</span></li><li>Avoid Revenge Trading&nbsp;<span style="background-color: rgb(43, 43, 49); color: rgb(250, 250, 252); font-family: system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif, Inter, NotoSansHans; letter-spacing: 0.32px; white-space-collapse: preserve-breaks;"> – Don't chase losses. One bad trade shouldn't turn into five.</span></li><li>Be Patient -&nbsp;<span style="background-color: rgb(43, 43, 49); color: rgb(250, 250, 252); font-family: system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif, Inter, NotoSansHans; letter-spacing: 0.32px; white-space-collapse: preserve-breaks;">&nbsp;Wait for high-probability setups. Opportunities will come; FOMO kills accounts.</span></li><li>Keep Ego in Check&nbsp;<span style="background-color: rgb(43, 43, 49); color: rgb(250, 250, 252); font-family: system-ui, ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif, Inter, NotoSansHans; letter-spacing: 0.32px; white-space-collapse: preserve-breaks;"> – It's not about being "right"—it's about making money. Cut losers fast, no matter your opinion</span></li></ul></div>`
+            }
+          }
+        ]
+      }
     ];
   }
-
   next();
 });
 
-// 🚀 Model Getter
-export const getNotesModel = async () => {
+export const getNoteModel = async (): Promise<Model<INote>> => {
   const conn = await connectMainDB();
-  return conn.models.NOTES || conn.model<INotes>("NOTES", noteSchema);
+  return conn.models.NOTES || conn.model<INote>("NOTES", noteSchema);
 };

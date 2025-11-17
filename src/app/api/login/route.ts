@@ -35,8 +35,9 @@ export async function POST(req: Request) {
     // ✅ Secure cookie handling (backend only)
     const fiveDays = 5 * 24 * 60 * 60; // seconds
 
+    // use a safer cookie name (no spaces) for reliable retrieval in middleware
     response.cookies.set({
-      name: "Trace Your Trades",
+      name: "authToken",
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

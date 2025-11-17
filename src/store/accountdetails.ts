@@ -4,121 +4,359 @@ import { create } from "zustand";
 interface Account {
   checked: boolean;
   accountName: string;
-  [key:string]: any;
-  // Add other account properties as needed
+  accountId?: string;
+  accountBalance?: number;
+  accountType?: string;
+  broker?: string;
+  description?: string;
+  tradeData?: any[];
+  [key: string]: any;
 }
 
 interface ProfileData {
+  uniqueId?: string;
   fullName?: string;
   email?: string;
-  [key:string]: any;
-  // Add other profile properties as needed
+  phone?: number;
+  countryCode?: string;
+  country?: string;
+  bio?: string;
+  profilePicture?: string;
+  accountValue?: number;
+  [key: string]: any;
 }
 
 interface Strategy {
-  // Define strategy properties as needed
-  [key:string]: any;
+  [key: string]: any;
 }
 
 interface AccountDetailsState {
-  accounts: Account[] | string[];
+  accounts: Account[];
   profileData: ProfileData;
-  selectedAccounts: any[];
+  selectedAccounts: Account[];
   strategies: Strategy[];
-  setAccounts: (userId: string, tokenn: string) => Promise<void>;
-  updateAccView: (accountName: string, tokenn: string) => Promise<void>;
-  checkAll: (tokenn: string, newAllSelected: boolean) => Promise<void>;
+  loading: boolean;
+  error: string | null;
+  
+  // Actions
+  setAccounts: () => Promise<void>;
+  updateAccView: (accountName: string) => Promise<void>;
+  checkAll: (newAllSelected: boolean) => Promise<void>;
+  createAccount: (accountData: {
+    accountName: string;
+    accountBalance: number;
+    accountType: string;
+    broker: string;
+    description: string;
+  }) => Promise<{ success: boolean; message?: string; error?: string }>;
+  createAutoSyncAccount: (accountData: {
+    accountName: string;
+    accountType: string;
+    broker: string;
+    investorId: string;
+    password: string;
+    serverName: string;
+    description: string;
+  }) => Promise<{ success: boolean; message?: string; error?: string }>;
+  deleteAccount: (accountName: string, accountType: 'filemanual' | 'async') => Promise<{ success: boolean; message?: string; error?: string }>;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  clearError: () => void;
 }
 
-// 🔹 API URLs
-const API_FETCH_URL = "https://tyt-backend2-473812.el.r.appspot.com/usersasqwzxerdfcv/get/accDetails";
-const API_SEND_URL = "https://tyt-backend2-473812.el.r.appspot.com/usersasqwzxerdfcv/edit/accCheck";
-const API_CHECK_ALL = "https://tyt-backend2-473812.el.r.appspot.com/usersasqwzxerdfcv/edit/checkAll";
+// 🔹 API URLs - Updated for Next.js endpoints
+const API_BASE_URL = "/api/dashboard";
 
-const useAccountDetails = create<AccountDetailsState>((set) => ({
+const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   accounts: [],
   profileData: {},
   selectedAccounts: [],
   strategies: [],
+  loading: false,
+  error: null,
 
-  setAccounts: async (userId: string, tokenn: string) => {
+  setLoading: (loading: boolean) => set({ loading }),
+  
+  setError: (error: string | null) => set({ error }),
+  
+  clearError: () => set({ error: null }),
+
+  setAccounts: async () => {
     try {
-      console.log('setAccounts: Fetching accounts with userId:', userId , 'and tokenn:', tokenn);
-      const res = await fetch(API_FETCH_URL, {
+      set({ loading: true, error: null });
+      console.log('setAccounts: Fetching accounts with cookies');
+      
+      const res = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
         headers: {
-          Accept: "application/json",
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          userId, tokenn
+          apiName: "getAccountDetails"
         })
       });
 
       const data = await res.json();
       console.log('setAccounts: response', data, 'status', res.status);
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to fetch accounts');
+      }
+      
       if (data.error === "Fishy!") {
-        set({ accounts: ["/logout"] });
+        set({ accounts: ["/logout"] as any, loading: false });
       } else if (res.status === 200) {
-        const selectedAccounts = (data.accounts || []).filter((account: any) => account.checked === true);
+        const accounts = data.accounts || [];
+        const selectedAccounts = accounts.filter((account: Account) => account.checked === true);
+        
         console.log('setAccounts: selectedAccounts (filtered):', selectedAccounts);
-        set({ accounts: data.accounts });
-        set({ profileData: data.data });
-        set({ selectedAccounts: selectedAccounts });
-        set({ strategies: data.strategies });
-        return data.accounts;
+        
+        set({ 
+          accounts: accounts,
+          profileData: data.data || {},
+          selectedAccounts: selectedAccounts,
+          strategies: data.strategies || [],
+          loading: false 
+        });
+        
+        return accounts;
       } else {
-        // Log unexpected responses for debugging
         console.warn('setAccounts: unexpected response', res.status, data);
+        set({ loading: false });
       }
     } catch (error) {
       console.error("setAccounts: Error fetching accounts:", error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to fetch accounts',
+        loading: false 
+      });
     }
   },
 
-  updateAccView: async (accountName: string, tokenn: string) => {
+  updateAccView: async (accountName: string) => {
     try {
+      set({ loading: true, error: null });
       console.log('updateAccView: sending accountName', accountName);
-      const response = await fetch(API_SEND_URL, {
+      
+      const response = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ accountName, tokenn }),
+        body: JSON.stringify({ 
+          apiName: "editAccCheck",
+          accountName 
+        }),
       });
 
-      if (!response.ok) throw new Error("Failed to send data");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update account view');
+      }
 
       const data = await response.json();
       console.log('updateAccView: response', data);
-      set({ accounts: data.data.accounts });
-      set({ selectedAccounts: data.data.accounts.filter((account: Account) => account.checked === true) });
+      
+      if (data.data && data.data.accounts) {
+        const selectedAccounts = data.data.accounts.filter((account: Account) => account.checked === true);
+        
+        set({ 
+          accounts: data.data.accounts,
+          selectedAccounts: selectedAccounts,
+          loading: false 
+        });
+      } else {
+        set({ loading: false });
+      }
     } catch (error) {
       console.error("updateAccView: Error updating account view:", error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to update account view',
+        loading: false 
+      });
     }
   },
 
-  checkAll: async (tokenn: string, newAllSelected: boolean) => {
+  checkAll: async (newAllSelected: boolean) => {
     try {
-      console.log('checkAll: token present, value=', newAllSelected);
-      const response = await fetch(API_CHECK_ALL, {
+      set({ loading: true, error: null });
+      console.log('checkAll: value=', newAllSelected);
+      
+      const response = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ tokenn, value: newAllSelected }),
+        body: JSON.stringify({ 
+          apiName: "checkAll",
+          value: newAllSelected 
+        }),
       });
 
-      if (!response.ok) throw new Error("Failed to send data");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update all accounts');
+      }
 
       const data = await response.json();
       console.log('checkAll: response', data);
-      set({ accounts: data.data.accounts });
-      set({ selectedAccounts: data.data.accounts.filter((account: Account) => account.checked === true) });
+      
+      if (data.data && data.data.accounts) {
+        const selectedAccounts = data.data.accounts.filter((account: Account) => account.checked === true);
+        
+        set({ 
+          accounts: data.data.accounts,
+          selectedAccounts: selectedAccounts,
+          loading: false 
+        });
+      } else {
+        set({ loading: false });
+      }
     } catch (error) {
       console.error("checkAll: Error checking all accounts:", error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to update all accounts',
+        loading: false 
+      });
     }
   },
+
+  createAccount: async (accountData) => {
+    try {
+      set({ loading: true, error: null });
+      console.log('createAccount: creating account', accountData);
+      
+      const response = await fetch(`${API_BASE_URL}/post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          apiName: "createAccount",
+          ...accountData
+        }),
+      });
+
+      const data = await response.json();
+      console.log('createAccount: response', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create account');
+      }
+
+      set({ loading: false });
+      
+      // Refresh accounts after successful creation
+      if (response.ok && data.message) {
+        await get().setAccounts(); // Refresh the accounts list
+        return { success: true, message: data.message };
+      }
+      
+      return { success: false, error: 'Unexpected response' };
+    } catch (error) {
+      console.error("createAccount: Error creating account:", error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to create account',
+        loading: false 
+      });
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to create account' 
+      };
+    }
+  },
+
+  createAutoSyncAccount: async (accountData) => {
+    try {
+      set({ loading: true, error: null });
+      console.log('createAutoSyncAccount: creating auto sync account', accountData);
+      
+      const response = await fetch(`${API_BASE_URL}/post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          apiName: "createAutoSyncAccount",
+          ...accountData
+        }),
+      });
+
+      const data = await response.json();
+      console.log('createAutoSyncAccount: response', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create auto sync account');
+      }
+
+      set({ loading: false });
+      
+      // Refresh accounts after successful creation
+      if (response.ok && data.message) {
+        await get().setAccounts(); // Refresh the accounts list
+        return { success: true, message: data.message };
+      }
+      
+      return { success: false, error: 'Unexpected response' };
+    } catch (error) {
+      console.error("createAutoSyncAccount: Error creating auto sync account:", error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to create auto sync account',
+        loading: false 
+      });
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to create auto sync account' 
+      };
+    }
+  },
+
+  deleteAccount: async (accountName: string, accountType: 'filemanual' | 'async') => {
+    try {
+      set({ loading: true, error: null });
+      console.log('deleteAccount: deleting account', accountName, accountType);
+      
+      const apiName = accountType === 'async' ? 'deleteAsyncAcc' : 'deleteFileManual';
+      
+      const response = await fetch(`${API_BASE_URL}/delete`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          apiName: apiName,
+          accountName: accountName
+        }),
+      });
+
+      const data = await response.json();
+      console.log('deleteAccount: response', data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      set({ loading: false });
+      
+      // Refresh accounts after successful deletion
+      if (response.ok && data.message) {
+        await get().setAccounts(); // Refresh the accounts list
+        return { success: true, message: data.message };
+      }
+      
+      return { success: false, error: 'Unexpected response' };
+    } catch (error) {
+      console.error("deleteAccount: Error deleting account:", error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to delete account',
+        loading: false 
+      });
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to delete account' 
+      };
+    }
+  }
 }));
 
 export default useAccountDetails;
