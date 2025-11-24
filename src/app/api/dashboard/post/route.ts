@@ -33,28 +33,28 @@ export async function POST(req: NextRequest) {
         // Switch based on apiName from request body
         switch (apiName) {
             case "createAccount":
-                return await createAccountHandler(req, userId, token);
+                return await createAccountHandler(body, userId, token);
             
             case "createAutoSyncAccount":
-                return await createAutoSyncAccountHandler(req, userId, token);
+                return await createAutoSyncAccountHandler(body, userId, token);
             
             case "pollAutoSyncAccount":
-                return await pollAutoSyncAccountHandler(req, userId, token);
+                return await pollAutoSyncAccountHandler(body, userId, token);
             
             case "getAccountDetails":
-                return await getAccountDetailsHandler(req, userId, token);
+                return await getAccountDetailsHandler(body, userId, token);
             
             case "editAccCheck":
-                return await editAccCheckHandler(req, userId, token);
+                return await editAccCheckHandler(body, userId, token);
             
             case "checkAll":
-                return await checkAllHandler(req, userId, token);
+                return await checkAllHandler(body, userId, token);
             
             case "postFileUpload":
-                return await postFileUploadHandler(req, userId, token);
+                return await postFileUploadHandler(body, userId, token);
             
             case "postManualUpload":
-                return await postManualUploadHandler(req, userId, token);
+                return await postManualUploadHandler(body, userId, token);
             
             default:
                 return NextResponse.json({ error: "API endpoint not found" }, { status: 404 });

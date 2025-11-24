@@ -178,12 +178,11 @@ const userSchema = new Schema<IUser>({
 
 // 🔒 Hash passwords before save
 userSchema.pre("save", async function (next) {
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 12);
-    this.cpassword = await bcrypt.hash(this.cpassword, 12);
-  }
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 12);
   next();
 });
+
 
 // 🔑 JWT Generator
 userSchema.methods.generateAuthToken = async function (): Promise<string> {

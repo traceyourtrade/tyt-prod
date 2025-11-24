@@ -10,7 +10,7 @@ import {
 
 export async function DELETE(req: NextRequest) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get('authToken')?.value;
         const userId = cookieStore.get('userId')?.value;
 
@@ -27,13 +27,13 @@ export async function DELETE(req: NextRequest) {
 
         switch (apiName) {
             case "deleteAsyncAcc":
-                return await deleteAsyncAccHandler(req, userId, token);
+                return await deleteAsyncAccHandler(body, userId, token);
             
             case "deleteFileManual":
-                return await deleteFileManualHandler(req, userId, token);
+                return await deleteFileManualHandler(body, userId, token);
             
             case "deleteManualUpload":
-                return await deleteManualUploadHandler(req, userId, token);
+                return await deleteManualUploadHandler(body, userId, token);
             
             default:
                 return NextResponse.json({ error: "API endpoint not found" }, { status: 404 });

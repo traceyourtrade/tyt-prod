@@ -123,9 +123,9 @@ export async function uploadImageHandler(formData, userId: string, token: string
 }
 
 // DELETE IMAGE
-export async function deleteImageHandler(req: NextRequest, userId: string, token: string) {
+export async function deleteImageHandler(req: any, userId: string, token: string) {
     try {
-        const { url } = await req.json();
+        const { url } = req;
 
         if (!url) {
             return NextResponse.json({ error: "Enter all details" }, { status: 400 });
@@ -220,9 +220,9 @@ export async function deleteImageHandler(req: NextRequest, userId: string, token
 }
 
 // CHANGE SELECT QUALITY
-export async function changeSelectQualityHandler(req: NextRequest, userId: string, token: string) {
+export async function changeSelectQualityHandler(req: any, userId: string, token: string) {
     try {
-        const { id, option, accountType } = await req.json();
+        const { id, option, accountType } =  req;
 
         if (!id || !option || !accountType) {
             return NextResponse.json({ error: "Enter all details" }, { status: 400 });
@@ -294,9 +294,9 @@ export async function changeSelectQualityHandler(req: NextRequest, userId: strin
 }
 
 // UPLOAD JOURNAL DATA
-export async function uploadJournalDataHandler(req: NextRequest, userId: string, token: string) {
+export async function uploadJournalDataHandler(req: any, userId: string, token: string) {
     try {
-        const { id, jrData, accountType } = await req.json();
+        const { id, jrData, accountType } = req;
 
         if (!id || !jrData || !accountType) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -343,9 +343,9 @@ export async function uploadJournalDataHandler(req: NextRequest, userId: string,
 }
 
 // ADD OTHER DATA
-export async function addOtherDataHandler(req: NextRequest, userId: string, token: string) {
+export async function addOtherDataHandler(req: any, userId: string, token: string) {
     try {
-        const { type, value } = await req.json();
+        const { type, value } = req;
 
         if (!type || !value) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -391,9 +391,9 @@ export async function addOtherDataHandler(req: NextRequest, userId: string, toke
 }
 
 // DELETE OTHER DATA
-export async function deleteOtherDataHandler(req: NextRequest, userId: string, token: string) {
+export async function deleteOtherDataHandler(req: any, userId: string, token: string) {
     try {
-        const { type, value } = await req.json();
+        const { type, value } = req;
 
         if (!type || !value) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -432,9 +432,10 @@ export async function deleteOtherDataHandler(req: NextRequest, userId: string, t
 }
 
 // EDIT DROPDOWNS
-export async function editDropdownsHandler(req: NextRequest, userId: string, token: string) {
+export async function editDropdownsHandler(req, userId: string, token: string) {
     try {
-        const { id, type, value, accountType } = await req.json();
+        console.log("EditDropdownsHandler called with:", req);
+        const { id, type, value, accountType } =  req;
 
         if (!id || !value || !type || !accountType) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

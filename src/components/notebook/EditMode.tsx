@@ -330,12 +330,12 @@ const EditMode = ({ notes, selectedFolder, selectedFile, bkurl, changeMode, setN
         const data = { title, content };
 
         try {
-            const response = await fetch(`${bkurl}/tytusersasqwzxerdfcv/edit/notebookfile`, {
+            const response = await fetch(`/api/notebook/post`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ tokenn, selectedFolder, selectedFile, data }),
+                body: JSON.stringify({ tokenn, selectedFolder, selectedFile, data, apiName:'editNotebookFile' }),
             });
 
             if (response.ok) {

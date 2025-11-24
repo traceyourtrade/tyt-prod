@@ -6,10 +6,14 @@ import { getUserModel } from "@/models/main/user.model";
 
 export async function POST(req: Request) {
   try {
+    console.log("Verify Mail API Called");
     const User = await getUserModel();
     const body = await req.json();
     const { token } = body;
-
+console.log("the token received is ",token);
+    if (!token) {
+      return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+    }
     const decoded = jwt.verify(token, process.env.SECRET_KEY!) as { email: string };
     const email = decoded.email;
 
@@ -20,9 +24,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // if (user.isEmailVerified) {
-    //   return NextResponse.json({ message: "Email is already verified" }, { status: 400 });
-    // }
+    if (user.isEmailVerified) {
+      return NextResponse.json({ message: "Email is already verified" }, { status: 400 });
+    }
 
     user.isEmailVerified = true;
     await user.save();

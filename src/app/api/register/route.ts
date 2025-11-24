@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { getUserModel } from "@/models/main/user.model";
-import { getNotesModel } from "@/models/main/notes.model"; // assuming Notes is a model too
+import { getNoteModel } from "@/models/main/notes.model"; // assuming Notes is a model too
 import nodemailer from "nodemailer"
 export async function POST(req: Request) {
   try {
@@ -18,12 +18,12 @@ export async function POST(req: Request) {
     }
 
     const User = await getUserModel();
-    const Notes = await getNotesModel();
+    const Notes = await getNoteModel();
 
     const existingUser = await User.findOne({ email });
-    // if (existingUser) {
-    //   return NextResponse.json({ error: "Email already registered" }, { status: 409 });
-    // }
+    if (existingUser) {
+      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+    }
 
     // ✅ Generate unique user ID
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -40,8 +40,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Hash password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+
 
     // ✅ Generate signup verification token (expires in 15 minutes)
     const signUpVerificationToken = jwt.sign(
@@ -56,8 +55,8 @@ export async function POST(req: Request) {
       email,
       fullName,
       phone,
-      password: hashedPassword,
-      cpassword: hashedPassword,
+      password,
+      cpassword,
       countryCode,
       country,
     });
@@ -89,7 +88,7 @@ export async function POST(req: Request) {
           <br/>
           <a 
             style="font-size:12px; background-color:rgb(172,72,172); text-decoration:none; width:100px; height:25px; border-radius:25px; color:white; display:flex; align-items:center; justify-content:center;"
-            href="${process.env.BASE_URL}/verify/token?t=${signUpVerificationToken}">
+            href="http://192.168.0.25:3000/verify?t=${signUpVerificationToken}">
             Verify
           </a>
         </div>

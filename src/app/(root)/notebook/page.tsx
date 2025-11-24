@@ -13,8 +13,7 @@ import EditMode from "@/components/notebook/EditMode";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const Notebook = () => {
-    const userId: string = Cookies.get("userId") || "";
-    const { bkurl } = useDataStore();
+
     const { notes, setNotes, selectedFolder, setFolder, selectedFile, setFile } = notebookStore();
 
     const [fileShow, setFileShow] = useState(false);
@@ -24,14 +23,14 @@ const Notebook = () => {
         setMode(mode)
     }
 
-    const tokenn = Cookies.get("Trace Your Trades");
+
     const [newFile, setNewFile] = useState("")
     const [newFolder, setNewFolder] = useState("")
     useEffect(() => {
-        setNotes(userId, tokenn || "");
-    }, [userId, tokenn, setNotes])
+        setNotes();
+    }, [ setNotes])
     return (
-        <div className="w-full h-auto min-h-[calc(100vh)] absolute z-[1] top-[50px] left-[-10px]">
+        <div className="w-full h-auto min-h-[calc(100vh)] absolute z-[1] top-[50px] left-[10px]">
             <div className="w-full h-auto flex flex-col items-start justify-start">
                 <div className="flex">
                     <div className="w-[320px] flex flex-row items-center h-auto bg-[rgba(122,122,122,0.551)] rounded-[25px] pl-[20px] cursor-pointer shadow-[rgba(100,100,111,0.2)_0px_7px_29px_0px]">
@@ -51,9 +50,6 @@ const Notebook = () => {
 
                 <div className="w-full h-auto flex items-center justify-between mt-[20px]">
                     <Folder
-                        userId={userId}
-                        bkurl={bkurl}
-                        tokenn={tokenn}
                         notes={notes}
                         setNotes={setNotes}
                         selectedFolder={selectedFolder}
@@ -67,9 +63,6 @@ const Notebook = () => {
                     />
 
                     <Files
-                        userId={userId}
-                        bkurl={bkurl}
-                        tokenn={tokenn}
                         newFile={newFile}
                         notes={notes}
                         setNotes={setNotes}

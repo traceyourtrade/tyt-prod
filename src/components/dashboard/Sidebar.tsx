@@ -11,13 +11,17 @@ import {
   BookOpen,
   NotebookPen,
   Layers,
-  BarChart2
+  BarChart2,
+  PlusCircle
 } from "lucide-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import DashHome from "./images/DashHome.png";
 
 import { Poppins } from "next/font/google";
 import { Inter } from "next/font/google";
+import axios from "axios";
+import useAccountDetails from "@/store/accountdetails";
+import calendarPopUp from "@/store/calendarPopUp";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -39,6 +43,8 @@ interface SidebarProps {
 export default function Sidebar({ expanded, setExpanded }: SidebarProps) {
 
   const pathname = usePathname();
+  const {profileData}=useAccountDetails();
+  const {setAddTrades}=calendarPopUp();
 
   const menuTop = [
     { name: "Dashboard", icon: <BookOpen size={18} />, url: "/" },
@@ -53,6 +59,14 @@ export default function Sidebar({ expanded, setExpanded }: SidebarProps) {
     { name: "Settings", icon: <Settings size={18} />, url: "/settings" },
   ]
 
+  const handleLogout=async()=>{
+    console.log("Logout clicked");
+    const resposne =await axios.post('/api/logout');
+    console.log(resposne.data);
+    if(resposne.data.success){
+      window.location.href="/login";
+    }
+  }
   return (
     <>
 
@@ -77,7 +91,18 @@ export default function Sidebar({ expanded, setExpanded }: SidebarProps) {
           <div className={`w-full flex items-center justify-center gap-2 p-4 h-[50px] overflow-hidden mt-2 ${expanded ? "hidden" : "visible"}`}>
             <Image src={"/images/logos1.png"} width={150} height={50} alt="logo" className="w-10" />
           </div>
-
+           
+           <button
+              onClick={()=>{setAddTrades(); document.body.classList.add("no-scroll");}}
+              className={`w-[90%] cursor-pointer mx-auto flex items-center gap-3 py-2 px-4 text-[#fff] hover:bg-white-400/10 rounded-lg transition-all mt-2 pl-5 `}
+            >
+              <div className="transition-none">
+                <PlusCircle size={18} />
+              </div>
+              <span className={`text-sm font-medium group-hover:text-white transition-colors ${expanded ? "ml-0" : "ml-5"} whitespace-nowrap `} >
+                Add Trades
+              </span>
+            </button>
           <nav className="mt-4 flex flex-col gap-1">
             {menuTop.map((item) => (
               <Link
@@ -123,7 +148,7 @@ export default function Sidebar({ expanded, setExpanded }: SidebarProps) {
             ))}
 
             <button
-              onClick={() => console.log("Logout clicked")}
+              onClick={handleLogout}
               className={`w-[90%] mx-auto flex items-center gap-3 py-2 px-4 text-red-400 hover:bg-red-400/10 rounded-lg transition-all mt-2 pl-5 `}
             >
               <div className="transition-none">
@@ -135,8 +160,8 @@ export default function Sidebar({ expanded, setExpanded }: SidebarProps) {
             </button>
 
             <Link href="/settings" className={`text-center w-60 ${expanded ? "opacity-[1] my-5" : "opacity-0 my-5"}`} >
-              <h1 className="text-sm font-semibold whitespace-nowrap ">Tanmay Mundada</h1>
-              <p className="text-xs text-gray-400 whitespace-nowrap ">tan****@gmail.com</p>
+              <h1 className="text-sm font-semibold whitespace-nowrap ">{profileData.fullName ? `${profileData.fullName.charAt(0)}${profileData.fullName.split(" ")[1]?.charAt(0)}` : ""}</h1>
+              <p className="text-xs text-gray-400 whitespace-nowrap ">{profileData.email ? (profileData.email).replace(/^(.{4}).*(@.*)$/, (_, a, b) => `${a}*****${b}`) : ""}</p>
             </Link>
 
           </nav>

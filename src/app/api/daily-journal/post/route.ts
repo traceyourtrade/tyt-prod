@@ -53,22 +53,22 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: "Upload image must use form-data" }, { status: 400 });
             
             case "deleteImage":
-                return await deleteImageHandler(req, userId, token);
+                return await deleteImageHandler(body, userId, token);
             
             case "changeSelectQuality":
-                return await changeSelectQualityHandler(req, userId, token);
+                return await changeSelectQualityHandler(body, userId, token);
             
             case "uploadJournalData":
-                return await uploadJournalDataHandler(req, userId, token);
+                return await uploadJournalDataHandler(body, userId, token);
             
             case "addOtherData":
-                return await addOtherDataHandler(req, userId, token);
+                return await addOtherDataHandler(body, userId, token);
             
             case "deleteOtherData":
-                return await deleteOtherDataHandler(req, userId, token);
+                return await deleteOtherDataHandler(body, userId, token);
             
             case "editDropdowns":
-                return await editDropdownsHandler(req, userId, token);
+                return await editDropdownsHandler(body, userId, token);
             
             default:
                 return NextResponse.json({ error: "API endpoint not found" }, { status: 404 });

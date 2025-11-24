@@ -71,12 +71,12 @@ const Files = ({
         e.preventDefault();
 
         try {
-            const response = await fetch(`${bkurl}/tytusersasqwzxerdfcv/add/file`, {
+            const response = await fetch(`/api/notebook/post`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ tokenn, newFile, folderName: selectedFolder }),
+                body: JSON.stringify({ tokenn, newFile, folderName: selectedFolder, apiName:'createFile' }),
             });
 
             const data = await response.json();
@@ -127,12 +127,12 @@ const Files = ({
         e.preventDefault();
 
         try {
-            const response = await fetch(`${bkurl}/tytusersasqwzxerdfcv/delete/notebook/file`, {
+            const response = await fetch(`/api/notebook/post`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ tokenn, folderName: selectedFolder, fileName: delFolder }),
+                body: JSON.stringify({ tokenn, folderName: selectedFolder, fileName: delFolder ,apiName:'deleteFile' }),
             });
 
             const data = await response.json();
@@ -158,12 +158,12 @@ const Files = ({
         e.preventDefault();
 
         try {
-            const response = await fetch(`${bkurl}/tytusersasqwzxerdfcv/rename/notebook/file`, {
+            const response = await fetch(`/api/notebook/post`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ tokenn, folderName: selectedFolder, fileName: delFolder, renameFile: folderRename }),
+                body: JSON.stringify({ tokenn, folderName: selectedFolder, fileName: delFolder, renameFile: folderRename ,apiName:'renameFile' }),
             });
 
             const data = await response.json();
