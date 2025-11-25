@@ -14,8 +14,7 @@ import calendarPopUp from '@/store/calendarPopUp';
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 import TradesWidget from '../TradesWidget';
 import { Key } from 'lucide-react';
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
-import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import { faCaretLeft, faCaretRight,faCaretDown } from '@fortawesome/free-solid-svg-icons';
 
 interface TradeData {
   date: string;
@@ -287,7 +286,7 @@ const DashboardWeek: React.FC = () => {
               onClick={toggleDatePicker}
             >
               {currentMonth} {currentYear} 
-              <ChevronDownIcon className="w-3 h-3 inline-block -mt-1 ml-1" />
+              <FontAwesomeIcon icon={faCaretDown} className="w-3 h-3 inline-block -mt-1 ml-1" />
             </h1>
             <span className="w-20 absolute text-sm left-15 font-poppins bg-gray-600 px-1.5 py-0.5 rounded-3xl text-white text-center">
               WEEK {currentWeekIndex + 1}
@@ -311,7 +310,7 @@ const DashboardWeek: React.FC = () => {
                     onClick={() => setShowMonthOptions(!showMonthOptions)}
                   >
                     {monthNames[selectedMonth]}
-                    <ChevronDownIcon className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faCaretDown} className="w-3 h-3" />
                   </div>
                   {showMonthOptions && (
                     <div className="absolute top-full left-0 mt-1 bg-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50 w-40">
@@ -341,7 +340,7 @@ const DashboardWeek: React.FC = () => {
                     onClick={() => setShowYearOptions(!showYearOptions)}
                   >
                     {selectedYear}
-                    <ChevronDownIcon className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faCaretDown} className="w-3 h-3" />
                   </div>
                   {showYearOptions && (
                     <div className="absolute top-full left-0 mt-1 bg-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50 w-24">
