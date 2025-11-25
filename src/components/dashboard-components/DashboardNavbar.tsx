@@ -8,9 +8,7 @@ import useAccountDetails from "@/store/accountdetails";
 import notebookStore from "@/store/notebookStore";
 import calendarPopUp from "@/store/calendarPopUp";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollarSign, faIndianRupeeSign, faPercent, faAsterisk, faCaretDown, faFile, faUserGear } from '@fortawesome/free-solid-svg-icons';
-
-// Stores
+import { faDollarSign, faIndianRupeeSign, faPercent, faAsterisk, faCaretDown, faFile, faUserGear,faFileInvoice } from '@fortawesome/free-solid-svg-icons';
 
 interface Account {
   _id: string;
@@ -22,23 +20,29 @@ interface DashboardNavProps {
   heading: string;
 }
 
-const DashboardNav: React.FC<DashboardNavProps> = ({ heading }) => {
-  const userId=Cookies.get("userId")||"";
-
+const DashboardNav = ({ heading }: DashboardNavProps) => {
+  const params = useParams();
+  const userId = params.userId as string;
+  
   const [isAccOpen, setAcc] = useState(false);
   const [isCurrOpen, setCrr] = useState(false);
+  const [allSelected, setAllSelected] = useState(false);
 
-  // Hook
-  // Create refs for dropdowns and buttons
+  // Refs
   const accDropdownRef = useRef<HTMLDivElement>(null);
   const currDropdownRef = useRef<HTMLDivElement>(null);
   const accButtonRef = useRef<HTMLLIElement>(null);
   const currButtonRef = useRef<HTMLLIElement>(null);
 
-  // Custom click outside hook (defined inside the component)
+  // Store hooks
+  const { setAddAcc } = calendarPopUp();
+  const { accounts, setAccounts, updateAccView, checkAll } = useAccountDetails();
+  const { setNotes } = notebookStore();
+
+
+  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Check if click is outside both dropdowns and buttons
       if (
         accDropdownRef.current &&
         !accDropdownRef.current.contains(event.target as Node) &&
@@ -60,16 +64,8 @@ const DashboardNav: React.FC<DashboardNavProps> = ({ heading }) => {
     };
   }, []);
 
-  const { setAddAcc } = calendarPopUp();
-
-  const { accounts, setAccounts, updateAccView, checkAll } = useAccountDetails();
-  const accountList: Account[] = accounts as Account[];
-  const { setNotes } = notebookStore();
-
-  const [allSelected, setAllSelected] = useState(false);
-
   const handleAccountChange = (_id: string) => {
-    const updatedAccounts = accountList.map(account =>
+    const updatedAccounts = accounts.map(account =>
       account._id === _id ? { ...account, checked: !account.checked } : account
     );
 
@@ -80,143 +76,150 @@ const DashboardNav: React.FC<DashboardNavProps> = ({ heading }) => {
   const handleAllAccountsChange = () => {
     const newAllSelected = !allSelected;
     setAllSelected(newAllSelected);
-    
-    // Check if token exists before calling checkAll
-    const tokenn = Cookies.get("Trace Your Trades");
-    if (tokenn) {
-      checkAll(tokenn, newAllSelected);
-    }
+    checkAll( newAllSelected);
   };
 
-  const tokenn = Cookies.get("Trace Your Trades") ||"";
-
   const getAccDetails = async () => {
-    if (userId && tokenn) {
-      await setAccounts(userId, tokenn);
-      await setNotes(userId, tokenn);
-    }
+    setAccounts();
+    setNotes();
   };
 
   useEffect(() => {
     getAccDetails();
-    setAllSelected(accountList.every(account => account.checked === true));
+    setAllSelected(accounts.every(account => account.checked === true));
   }, []);
 
   return (
-    <>
-      <div className="fixed top-0 right-0 z-20 w-full h-[70px] flex flex-row items-center justify-between bg-black transition-all duration-300 ease-in-out transform translate-z-0">
-        <div className="flex flex-row items-center">
-          <h2 className="text-[30px] font-bold ml-[30px] font-['Inter'] bg-gradient-to-r from-[#9054f9] to-[#e08c04] bg-clip-text text-transparent">
-            {heading}
-          </h2>
-        </div>
+    <div className="w-80% mt-[-20px] h-16 flex items-center justify-end bg-black transition-all duration-300 px-4">
+     
 
-        <div className="flex flex-row items-center">
-          <ul className="flex flex-row items-center justify-end list-none w-auto min-w-[60%] h-auto">
-            <li
-              className="w-[70px] h-auto flex items-center justify-between p-[5px_10px] rounded-[10px] mr-[15px] cursor-pointer backdrop-filter backdrop-blur-[25px] border border-[rgba(255,255,255,0.347)] border-r-0 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]"
+      {/* Right Section - Navigation Items */}
+      <div className="flex items-center">
+        <ul className="flex items-center space-x-4">
+          {/* Currency Selector */}
+          <li className="relative">
+            <button
+              className="flex items-center space-x-2 bg-[#000] backdrop-blur-md border border-gray-600 rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-gray-700/60"
               onClick={() => { setCrr(!isCurrOpen); setAcc(false); }}
               ref={currButtonRef}
             >
-                <FontAwesomeIcon icon={faDollarSign} />
-              <span>
-                <FontAwesomeIcon icon={faCaretDown} className="ml-[5px]" />
-              </span>
-            </li>
+              <FontAwesomeIcon icon={faDollarSign} className="text-white" />
+              <FontAwesomeIcon icon={faCaretDown} className="text-white text-xs" />
+            </button>
 
+            {/* Currency Dropdown */}
             <div
-              className={`w-[250px] h-auto overflow-hidden flex flex-col absolute top-[60px] right-[130px] p-0 rounded-[10px] font-['Inter'] bg-[rgba(196,196,196,0.366)] shadow-[rgba(0,0,0,0.35)_0px_5px_15px] transition-all duration-500 ease-in-out ${isCurrOpen ? "accounts-visible" : "accounts-hidden"}`}
               ref={currDropdownRef}
+              className={`absolute top-12 right-0 w-48 bg-gray-800/90 backdrop-blur-md border border-gray-600 rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${
+                isCurrOpen
+                  ? "scale-100 opacity-100 visible"
+                  : "scale-95 opacity-0 invisible"
+              }`}
             >
-              <div className="w-[250px] h-auto backdrop-filter backdrop-blur-[25px]">
-                <div className="w-[100%] flex items-center justify-between p-[10px] pl-[20px] cursor-pointer rounded-none font-['Inter'] text-white hover:bg-[#dfdfdf80]">
-                  <span>Dollar</span>
-                  <FontAwesomeIcon icon={faDollarSign} />
-                </div>
-                <div className="w-[100%] flex items-center justify-between p-[10px] pl-[20px] cursor-pointer rounded-none font-['Inter'] text-white hover:bg-[#dfdfdf80]">
-                  <span>Rupees</span>
-                  <FontAwesomeIcon icon={faIndianRupeeSign} />
-                </div>
-                <div className="w-[100%] flex items-center justify-between p-[10px] pl-[20px] cursor-pointer rounded-none font-['Inter'] text-white hover:bg-[#dfdfdf80]">
-                  <span>Percentage</span>
-                  <FontAwesomeIcon icon={faPercent} />
-                </div>
-                <div className="w-[100%] flex items-center justify-between p-[10px] pl-[20px] cursor-pointer rounded-none font-['Inter'] text-white hover:bg-[#dfdfdf80]">
-                  <span>R factor</span>
-                  <FontAwesomeIcon icon={faAsterisk} />
-                </div>
+              <div className="p-2">
+                <button className="w-full flex items-center justify-between px-3 py-2 text-white hover:bg-gray-700/60 rounded-md transition-colors">
+                  Dollar <FontAwesomeIcon icon={faDollarSign} />
+                </button>
+                <button className="w-full flex items-center justify-between px-3 py-2 text-white hover:bg-gray-700/60 rounded-md transition-colors">
+                  Rupees <FontAwesomeIcon icon={faIndianRupeeSign} />
+                </button>
+                <button className="w-full flex items-center justify-between px-3 py-2 text-white hover:bg-gray-700/60 rounded-md transition-colors">
+                  Percentage <FontAwesomeIcon icon={faPercent} />
+                </button>
+                <button className="w-full flex items-center justify-between px-3 py-2 text-white hover:bg-gray-700/60 rounded-md transition-colors">
+                  R factor <FontAwesomeIcon icon={faAsterisk} />
+                </button>
               </div>
             </div>
+          </li>
 
-            <li
-              className="w-[150px] p-[5.5px_10px] rounded-[10px] flex flex-row items-center justify-between cursor-pointer mr-[15px] backdrop-filter backdrop-blur-[25px] border border-[rgba(255,255,255,0.347)] border-r-0 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] text-white"
+          {/* Accounts Selector */}
+          <li className="relative">
+            <button
+              className="flex items-center space-x-2 bg-[#000] backdrop-blur-md border border-gray-600 rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-gray-700/60"
               onClick={() => { setAcc(!isAccOpen); setCrr(false); }}
               ref={accButtonRef}
             >
-                <FontAwesomeIcon icon={faFile} className="mr-[5px]" />
-              <span>
-                Accounts
-              </span>
-              <FontAwesomeIcon icon={faCaretDown} className="ml-[15px]" />
-            </li>
+              <FontAwesomeIcon icon={faFileInvoice} />
+              <span>Accounts</span>
+              <FontAwesomeIcon icon={faCaretDown} className="text-xs" />
+            </button>
 
+            {/* Accounts Dropdown */}
             <div
-              className={`w-[250px] h-auto overflow-hidden flex flex-col absolute top-[60px] right-[70px] p-0 rounded-[10px] font-['Inter'] bg-[rgba(196,196,196,0.366)] shadow-[rgba(0,0,0,0.35)_0px_5px_15px] transition-all duration-500 ease-in-out ${isAccOpen ? "accounts-visible" : "accounts-hidden"}`}
               ref={accDropdownRef}
+              className={`absolute top-12 right-0 w-64 bg-gray-800/90 backdrop-blur-md border border-gray-600 rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${
+                isAccOpen
+                  ? "scale-100 opacity-100 visible"
+                  : "scale-95 opacity-0 invisible"
+              }`}
             >
-              <div className="w-[250px] h-auto backdrop-filter backdrop-blur-[25px]">
-                {accountList.length === 0 ? (
+              <div className="p-3">
+                {accounts.length === 0 ? (
                   <>
-                    <div className="mt-[10px] text-[14px]">
-                      <p className="text-center py-[20px]">No accounts added</p>
+                    <div className="text-center py-4 text-gray-300">
+                      No accounts added
                     </div>
-                    <div onClick={() => { setAddAcc(); }} className="mt-[10px] pt-[8px] border-t border-[#ddd] flex items-center text-white cursor-pointer text-[14px] hover:bg-[#dfdfdf80]">
-                      <FontAwesomeIcon icon={faUserGear} className="mr-[8px] ml-[40px]" />
+                    <button
+                      onClick={() => setAddAcc()}
+                      className="w-full flex items-center px-3 py-2 text-gray-300 hover:bg-gray-700/60 rounded-md transition-colors mt-2"
+                    >
+                      <FontAwesomeIcon icon={faUserGear} className="mr-3" />
                       <span>Add Accounts</span>
-                    </div>
+                    </button>
                   </>
                 ) : (
                   <>
-                    <div className="pt-[8px] pb-[8px] border-b border-[#ddd] flex items-center pl-[10px] text-[14px] mt-[7px] text-white">
+                    {/* All Accounts Checkbox */}
+                    <div className="flex items-center px-2 py-2 border-b border-gray-600 mb-2">
                       <input
                         type="checkbox"
                         checked={allSelected}
                         onChange={handleAllAccountsChange}
-                        className="mr-[8px] accent-[#9d83dd] cursor-pointer"
+                        className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer"
                       />
-                      <span>All Accounts</span>
+                      <span className="ml-3 text-white text-sm font-medium">All Accounts</span>
                     </div>
-                    <div className="mt-[10px] text-[14px]">
-                      {accountList.map((ele) => (
-                        <label key={ele._id} className="flex items-center py-[6px_0] cursor-pointer w-full pl-[10px] text-white hover:bg-[#dfdfdf80]">
+
+                    {/* Account List */}
+                    <div className="max-h-48 overflow-y-auto">
+                      {accounts.map((account) => (
+                        <label
+                          key={account._id}
+                          className="flex items-center px-2 py-2 cursor-pointer hover:bg-gray-700/60 rounded-md transition-colors"
+                        >
                           <input
                             type="checkbox"
-                            checked={ele.checked}
-                            onChange={() => { 
-                              handleAccountChange(ele._id); 
-                              if (tokenn) {
-                                updateAccView(ele.accountName, tokenn); 
-                              }
+                            checked={account.checked}
+                            onChange={() => {
+                              handleAccountChange(account._id);
+                              updateAccView(account.accountName);
                             }}
+                            className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer"
                           />
-                          <span>{ele.accountName}</span>
+                          <span className="ml-3 text-white text-sm">{account.accountName}</span>
                         </label>
                       ))}
                     </div>
-                    <div onClick={() => { setAddAcc(); }} className="mt-[10px] pt-[8px] border-t border-[#ddd] flex items-center text-white cursor-pointer text-[14px] hover:bg-[#dfdfdf80]">
-                      <i className="fa-solid fa-user-gear mr-[8px] ml-[40px]"></i>
+
+                    {/* Manage Accounts */}
+                    <button
+                      onClick={() => setAddAcc()}
+                      className="w-full flex items-center px-2 py-3 text-gray-300 hover:bg-gray-700/60 rounded-md transition-colors mt-2 border-t border-gray-600"
+                    >
+                      <FontAwesomeIcon icon={faUserGear} className="mr-3 ml-2" />
                       <span>Manage Accounts</span>
-                    </div>
+                    </button>
                   </>
                 )}
               </div>
             </div>
+          </li>
 
-            {/* <img className="w-[35px] h-[35px] mr-[20px] rounded-[50%]" src={Profile} alt="" /> */}
-          </ul>
-        </div>
+          
+        </ul>
       </div>
-    </>
+    </div>
   );
 };
 

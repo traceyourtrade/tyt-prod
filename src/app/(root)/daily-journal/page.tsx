@@ -80,7 +80,7 @@ const DJCalendar = ({
               <h2 className="text-white text-sm font-semibold text-center">{heading}</h2>
               <div className="flex justify-between mb-2">
                 <select 
-                  className="appearance-none bg-purple-600/50 text-white border-none rounded-[25px] px-2.5 py-0.75 text-xs cursor-pointer outline-none w-[150px] mt-2.5 mr-2.5 relative top-0.5 font-sans font-medium"
+                  className="appearance-none bg-[#985ace8a] text-white border-none rounded-[4px] px-2.5 py-0.75 text-xs cursor-pointer outline-none w-[150px] mt-2.5 mr-2.5 relative top-0.5 font-sans font-medium"
                   value={year} 
                   onChange={(e) => setYear(parseInt(e.target.value))}
                 >
@@ -91,7 +91,7 @@ const DJCalendar = ({
                 <select 
                   value={month} 
                   onChange={(e) => setMonth(parseInt(e.target.value))}
-                  className="px-1.25 py-1.25 text-xs border border-gray-300 rounded-[4px] outline-none"
+                  className="px-1.25 py-1.25 text-xs border border-gray-300 rounded-[4px] outline-none cursor-pointer bg-white text-gray-900 font-sans font-medium"
                 >
                   {Array.from({ length: 12 }, (_, i) => i).map((m) => (
                     <option key={m} value={m}>{new Date(0, m).toLocaleString('default', { month: 'long' })}</option>

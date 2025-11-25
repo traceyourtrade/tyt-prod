@@ -10,7 +10,7 @@ import {
 
 export async function PUT(req: NextRequest) {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const token = cookieStore.get('authToken')?.value;
         const userId = cookieStore.get('userId')?.value;
 
@@ -27,13 +27,13 @@ export async function PUT(req: NextRequest) {
 
         switch (apiName) {
             case "updateAsyncCredentials":
-                return await updateAsyncCredentialsHandler(req, userId, token);
+                return await updateAsyncCredentialsHandler(body, userId, token);
             
             case "updateFileManualCredentials":
-                return await updateFileManualCredentialsHandler(req, userId, token);
+                return await updateFileManualCredentialsHandler(body, userId, token);
             
             case "editManualUpload":
-                return await editManualUploadHandler(req, userId, token);
+                return await editManualUploadHandler(body, userId, token);
             
             default:
                 return NextResponse.json({ error: "API endpoint not found" }, { status: 404 });

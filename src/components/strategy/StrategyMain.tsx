@@ -46,20 +46,19 @@ type TabType = 'strategies' | 'overview' | 'reports' | 'compare'
 
 // Define tabs outside component or use useMemo to prevent recreation
 const tabs: { id: TabType; label: string; path: string }[] = [
-  { id: 'strategies', label: 'Strategies', path: '/strategy/strategies' },
-  { id: 'overview', label: 'Overview', path: '/strategy/overview' },
-  { id: 'reports', label: 'Reports', path: '/strategy/reports' },
-  { id: 'compare', label: 'Compare', path: '/strategy/compare' },
+  { id: 'strategies', label: 'Strategies', path: '/strategies/strategies' },
+  { id: 'overview', label: 'Overview', path: '/strategies/overview' },
+  { id: 'reports', label: 'Reports', path: '/strategies/reports' },
+  { id: 'compare', label: 'Compare', path: '/strategies/compare' },
 ]
 const StrategyMain = () => {
   const [fDate, setFDate] = useState<string>("");
   const [toDate, setTDate] = useState<string>("");
   const { strategies, selectedAccounts,setAccounts } = useAccountDetails();
-    const tokenn = Cookies.get("Trace Your Trades");
-    const userId:string = Cookies.get("userId")||"";
   useEffect(()=>{
-setAccounts(userId,tokenn||"");
-  },[tokenn,userId,setAccounts])
+    console.log('Strategies ',strategies);
+setAccounts();
+  },[setAccounts])
   
   const router = useRouter()
   const pathname = usePathname()

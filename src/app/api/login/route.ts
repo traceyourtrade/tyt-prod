@@ -11,15 +11,16 @@ export async function POST(req: Request) {
     if (!email || !password) {
       return NextResponse.json({ error: "Enter all the details" }, { status: 400 });
     }
-
+console.log("the rmail is",email ,password)
     const User = await getUserModel();
     const user = await User.findOne({ email });
 
     if (!user) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "User is not registered" }, { status: 401 });
     }
-
+console.log("the user is",user.password)
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log("the isMatch is",isMatch)
     if (!isMatch) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }

@@ -26,10 +26,10 @@ export async function DELETE(req: NextRequest) {
 
         switch (apiName) {
             case "deleteImage":
-                return await deleteImageHandler(req, userId, token);
+                return await deleteImageHandler(body, userId, token);
             
             case "deleteOtherData":
-                return await deleteOtherDataHandler(req, userId, token);
+                return await deleteOtherDataHandler(body, userId, token);
             
             default:
                 return NextResponse.json({ error: "API endpoint not found" }, { status: 404 });

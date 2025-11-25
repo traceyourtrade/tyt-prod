@@ -503,7 +503,7 @@ console.log('Form Data Entries:',formData );
 
     try {
       const res = await fetch(
-        `${bkurl}/tytusersasqwzxerdfcv/change-select/djr`,
+        `/api/daily-journal/post`,
         {
           method: "POST",
           headers: {
@@ -514,6 +514,7 @@ console.log('Form Data Entries:',formData );
             option,
             tokenn,
             accountType,
+            apiName:"changeSelectQuality",
           }),
         }
       );
@@ -540,7 +541,7 @@ console.log('Form Data Entries:',formData );
 
     try {
       const res = await fetch(
-        `${bkurl}/tytusersasqwzxerdfcv/djr/editdropdowns`,
+        `/api/daily-journal/post`,
         {
           method: "POST",
           headers: {
@@ -552,6 +553,7 @@ console.log('Form Data Entries:',formData );
             value,
             tokenn,
             accountType,
+            apiName:"editDropdowns",
           }),
         }
       );

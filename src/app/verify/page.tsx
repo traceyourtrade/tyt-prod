@@ -14,6 +14,7 @@ const Verifyemail = () => {
     const { bkurl } = store();
     const searchParams = useSearchParams();
     const token = searchParams.get('t');
+    console.log("the token in verify page is ",token);
 
     const [verified, setVerified] = useState(false);
     const [err, setErr] = useState("")

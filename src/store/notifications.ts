@@ -13,7 +13,7 @@ interface NotificationsStore {
   setAlertBoxG: (data1: string | null, data2: string | null) => void;
   polling: boolean;
   pollResult: any;
-  accStatusPolling: (accountName: string, uniqueId: string, tokenn: string) => Promise<void>;
+  accStatusPolling: (accountName: string) => Promise<void>;
 }
 
 const notifications = create<NotificationsStore>((set, get) => ({
@@ -33,7 +33,7 @@ const notifications = create<NotificationsStore>((set, get) => ({
   polling: false,
   pollResult: null,
 
-  accStatusPolling: async (accountName: string, uniqueId: string, tokenn: string) => {
+  accStatusPolling: async (accountName: string) => {
     if (get().polling) return;
     set({ polling: true });
 
@@ -42,10 +42,9 @@ const notifications = create<NotificationsStore>((set, get) => ({
 
       while (!success) {
         try {
-          const res = await axios.post(API_POLLING_URL, {
+          const res = await axios.post('/api/dashboard/post', {
             accountName,
-            uniqueId,
-            tokenn,
+            apiName:"pollAutoSyncAccount",
           });
 
           // Only 2xx responses reach here

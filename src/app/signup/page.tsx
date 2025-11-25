@@ -13,6 +13,8 @@ import { useGoogleLogin } from "@react-oauth/google";
 
 // zustand store
 import {useDataStore as store} from "@/store/store";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 
 type CountryCode = { country: string; code: string };
 
@@ -261,6 +263,8 @@ const SignUp: React.FC = () => {
 
   const router = useRouter();
   const [error, setError] = useState<string>(" ");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConPassword, setShowConPassword] = useState(false);
 
   const setLoginVal = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -322,7 +326,7 @@ const SignUp: React.FC = () => {
 
   return (
     <div className="min-h-screen w-screen bg-[rgba(40,40,40,0.48)] absolute inset-0 flex items-center justify-center">
-      <div className="w-[30%] h-[85vh] rounded-[25px] flex flex-col items-center justify-start
+      <div className="w-[30%] h-[90vh] rounded-[25px] flex flex-col items-center justify-start
                       p-6
                       bg-gradient-to-br from-[rgba(23,25,29,0.622)] to-[rgba(30,33,36,0.474)]
                       shadow-[0_30px_60px_-30px_rgba(0,0,0,0.3),0_20px_30px_-10px_rgba(38,57,77,1)]
@@ -457,7 +461,7 @@ const SignUp: React.FC = () => {
             />
           </div>
 
-          <input
+          {/* <input
             required
             autoComplete="off"
             name="password"
@@ -466,8 +470,28 @@ const SignUp: React.FC = () => {
             placeholder="Password"
             className="w-[85%] mb-5 px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
             type="password"
-          />
+          /> */}
 
+         <div className="w-[85%] relative mb-5">
+  <input
+    type={showPassword ? "text" : "password"}
+    name="password"
+    required
+    placeholder="Password"
+    value={signUpData.password}
+    onChange={setLoginVal}
+    autoComplete="off"
+    className="w-full rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm "
+  />
+
+  <FontAwesomeIcon
+    icon={showPassword ? faEyeSlash : faEye}
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+  />
+</div>
+
+         <div className="w-[85%] relative">
           <input
             required
             autoComplete="off"
@@ -475,9 +499,15 @@ const SignUp: React.FC = () => {
             value={signUpData.cpassword}
             onChange={setLoginVal}
             placeholder="Confirm your Password"
-            className="w-[85%] px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
+            className="w-full px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
             type="password"
           />
+            <FontAwesomeIcon
+    icon={showConPassword ? faEyeSlash : faEye}
+    onClick={() => setShowConPassword(!showConPassword)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+  />
+          </div>
 
           <p className="text-red-600 relative top-3 font-sans">{error}</p>
 

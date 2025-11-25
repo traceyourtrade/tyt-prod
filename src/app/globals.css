@@ -26,3 +26,64 @@ body {
   /* font-family: "SF Pro Display", Arial, Helvetica, sans-serif; */
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.vertical-graph {
+    width: 95%;
+    max-width: 600px;
+    height: auto;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: "Inter", sans-serif;
+    background: rgba(114, 113, 113, 0.134);
+    border-radius: 12px;
+    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.chart-container {
+    width: 100%;
+    height: 250px;
+}
+
+.recharts-text.recharts-cartesian-axis-tick-value tspan {
+    font-size: 12px;
+}
+
+.recharts-surface {
+    position: relative;
+}
+.trades-widget-main {
+    width: 40%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    font-family: "Inter", sans-serif;
+}
+
+@media (min-width: 1550px) {
+    .trades-widget-main {
+        width: calc(100% - 950px);
+    }
+}
+
+.recharts-cartesian-axis-tick-line {
+    color: white !important;
+}
+
+.recharts-text tspan {
+    color: white !important;
+}
+@keyframes loadPlain {
+    from {
+        width: 0px;
+    }
+    to {
+        width: 320px; /* 350px - 30px for padding */
+    }
+}

@@ -79,13 +79,14 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
     if (!id) return;
 
     try {
-      const res = await fetch(`${bkurl}/strategy/update/strategy-name/${id}`, {
+      const res = await fetch(`/api/strategy/put`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          tokenn, newName: tempName
+          tokenn, newName: tempName,
+          id:id, apiName:'updateStrategyName'
         })
       });
 
@@ -114,13 +115,15 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
     if (!id) return;
 
     try {
-      const res = await fetch(`${bkurl}/strategy/delete/strategy/${id}`, {
+      const res = await fetch(`/api/strategy/delete`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          tokenn
+          tokenn,
+          id:id,
+          apiName:'deleteStrategy'
         })
       });
 
@@ -149,11 +152,15 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
     if (!id) return;
 
     try {
-      const res = await fetch(`${bkurl}/strategy/set-default/${id}`, {
+      const res = await fetch(`/api/strategy/put`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
-        }
+        },
+        body: JSON.stringify({
+          id:id,
+          apiName:'setDefaultStrategy'
+        })
       });
 
       const data = await res.json();
@@ -182,12 +189,13 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
     }
 
     try {
-      const res = await fetch(`${bkurl}/strategy/add/strategy`, {
+      const res = await fetch(`/api/strategy/post`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
+          apiName:'addStrategy',
           tokenn, strategy: newStrategy.name, tags: newStrategy.tags, description: newStrategy.author
         })
       });

@@ -61,12 +61,12 @@ const Folder = ({
         e.preventDefault();
 
         try {
-            const response = await fetch(`${bkurl}/tytusersasqwzxerdfcv/add/folder`, {
+            const response = await fetch(`/api/notebook/post`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ tokenn, newFolder }),
+                body: JSON.stringify({ tokenn, newFolder,apiName:'createFolder' }),
             });
 
             const data = await response.json();
@@ -112,12 +112,12 @@ const Folder = ({
         e.preventDefault();
 
         try {
-            const response = await fetch(`${bkurl}/tytusersasqwzxerdfcv/delete/notebook/folder`, {
+            const response = await fetch(`/api/notebook/post`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ tokenn, folderName: delFolder }),
+                body: JSON.stringify({ tokenn, folderName: delFolder,apiName:'deleteFolder' }),
             });
 
             const data = await response.json();
@@ -143,12 +143,12 @@ const Folder = ({
         e.preventDefault();
 
         try {
-            const response = await fetch(`${bkurl}/tytusersasqwzxerdfcv/rename/notebook/folder`, {
+            const response = await fetch(`/api/notebook/post`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ tokenn, folderName: delFolder, renameFolder: folderRename }),
+                body: JSON.stringify({ tokenn, folderName: delFolder, renameFolder: folderRename ,apiName:'renameFolder'}),
             });
 
             const data = await response.json();

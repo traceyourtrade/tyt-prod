@@ -8,6 +8,7 @@ import { Poppins } from "next/font/google";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGoogle, faApple } from "@fortawesome/free-brands-svg-icons";
+import { faEye, faEyeSlash, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function LoginPage() {
   });
 
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -44,7 +46,7 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-
+console.log(data);
       if (res.status === 200) {
         router.push(`/welcome/${data.name}`);
       } else {
@@ -93,18 +95,27 @@ export default function LoginPage() {
             placeholder="Email or Phone"
             value={loginData.email}
             onChange={handleInputChange}
-            autoComplete={"off"}
+            autoComplete={"on"}
             className="w-[95%] rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm border-[0.1px] border-[#464646] "
           />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={loginData.password}
-            onChange={handleInputChange}
-            autoComplete={"off"}
-            className="w-[95%] rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm border-[0.1px] border-[#464646]"
-          />
+         <div className="w-[95%] relative">
+  <input
+    type={showPassword ? "text" : "password"}
+    name="password"
+    placeholder="Password"
+    value={loginData.password}
+    onChange={handleInputChange}
+    autoComplete="off"
+    className="w-full rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm border-[0.1px] border-[#464646]"
+  />
+
+  <FontAwesomeIcon
+    icon={showPassword ? faEyeSlash : faEye}
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+  />
+</div>
+
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
