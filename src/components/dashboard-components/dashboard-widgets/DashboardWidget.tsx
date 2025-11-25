@@ -6,9 +6,6 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, DoughnutController } fro
 import TinyChart from "./TinyChart";
 import Donut from "./Donut";
 
-// Icons
-import { InformationCircleIcon } from '@heroicons/react/24/outline';
-import { AcademicCapIcon as TrendingUpIcon } from '@heroicons/react/24/solid';
 
 ChartJS.register(DoughnutController, ArcElement, Tooltip, Legend);
 
