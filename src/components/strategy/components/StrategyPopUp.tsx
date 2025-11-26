@@ -49,9 +49,10 @@ const StrategyPopup = ({ strategy, onClose, tokenn }: StrategyPopupProps) => {
       formData.append("image", file);
       formData.append("tokenn", tokenn || "");
       formData.append("strategy", strategy.name);
+      formData.append("apiName","uploadStrategyImage")
 
       const res = await axios.post(
-        `${bkurl}/strategy/add/strategyimage`,
+        `/api/strategy/post`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

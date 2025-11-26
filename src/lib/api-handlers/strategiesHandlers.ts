@@ -353,9 +353,8 @@ export async function getStrategiesHandler(req:any, userId: string, token: strin
 }
 
 // UPLOAD STRATEGY IMAGE
-export async function uploadStrategyImageHandler(req:any, userId: string, token: string) {
+export async function uploadStrategyImageHandler(formData:any, userId: string, token: string) {
     try {
-        const formData = await req.formData();
         const strategy = formData.get('strategy') as string;
         const file = formData.get('image') as File;
 

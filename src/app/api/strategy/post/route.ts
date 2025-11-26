@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
             apiName = formData.get('apiName') as string;
             
             if (apiName === 'uploadStrategyImage') {
-                return await uploadStrategyImageHandler(req, userId, token);
+                return await uploadStrategyImageHandler(formData, userId, token);
             }
         } else {
             // For JSON requests
