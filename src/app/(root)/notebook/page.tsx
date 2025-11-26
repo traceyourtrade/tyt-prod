@@ -88,11 +88,8 @@ const Notebook = () => {
                                 notes={notes}
                                 selectedFolder={selectedFolder}
                                 selectedFile={selectedFile}
-                                bkurl={bkurl}
                                 changeMode={changeMode}
                                 setNotes={setNotes}
-                                tokenn={tokenn}
-                                userId={userId}
                             /> :
                             ""
                     }

@@ -438,7 +438,7 @@ console.log('Form Data Entries:',formData );
 
     try {
       const res = await fetch(
-        `${bkurl}/tytusersasqwzxerdfcv/djr/addOtherData`,
+        `/api/daily-journal/post`,
         {
           method: "POST",
           headers: {
@@ -448,6 +448,7 @@ console.log('Form Data Entries:',formData );
             type,
             value,
             tokenn,
+            apiName:'addOtherData'
           }),
         }
       );
@@ -468,7 +469,7 @@ console.log('Form Data Entries:',formData );
 
     try {
       const res = await fetch(
-        `${bkurl}/tytusersasqwzxerdfcv/djr/deleteOtherData`,
+        `/api/daily-journal/post`,
         {
           method: "POST",
           headers: {
@@ -478,6 +479,7 @@ console.log('Form Data Entries:',formData );
             tokenn,
             value,
             type,
+            apiName:"deleteOtherData"
           }),
         }
       );
@@ -605,7 +607,7 @@ console.log('Form Data Entries:',formData );
 
     try {
       const res = await fetch(
-        `${bkurl}/tytusersasqwzxerdfcv/djr/uploadjrdata`,
+        `/api/daily-journal/post`,
         {
           method: "POST",
           headers: {
@@ -616,6 +618,7 @@ console.log('Form Data Entries:',formData );
             tokenn,
             jrData,
             accountType,
+            apiName:'uploadJournalData'
           }),
         }
       );
@@ -705,7 +708,7 @@ console.log('Form Data Entries:',formData );
 
     try {
       const res = await fetch(
-        `${bkurl}/tytusersasqwzxerdfcv/add/notebook/dailyjournal`,
+        `/api/notebook/post`,
         {
           method: "POST",
           headers: {
@@ -719,6 +722,7 @@ console.log('Form Data Entries:',formData );
             time,
             date,
             accountType,
+            apiName:'addNotesFromDailyJournal'
           }),
         }
       );
