@@ -392,9 +392,9 @@ const CalendarPopup = () => {
         <div 
           ref={popupRef} 
           id="trade-details"
-          className="w-4/5 h-3/4 mt-12 bg-[rgba(34,33,33,0.379) bg-opacity-40 backdrop-blur-3xl rounded-3xl flex flex-col items-center justify-start border border-gray-500 relative"
+          className="w-4/5 h-3/4  bg-[rgba(34,33,33,0.379) bg-opacity-40 backdrop-blur-3xl rounded-3xl flex flex-col items-center justify-start border border-gray-500 relative"
         >
-          <div className="w-11/12 flex flex-row items-center justify-between relative -top-4">
+          <div className="w-11/12 mt-10 flex flex-row items-center justify-between relative -top-4">
             <p className="text-white text-lg font-semibold mt-6">TRADE DETAILS</p>
 
             <div className="w-7/10 h-auto flex flex-row items-center justify-end font-inter mt-4">
@@ -406,7 +406,7 @@ const CalendarPopup = () => {
               <Image src={Logo} alt="logo" width={60} height={60} className="cursor-pointer" />
             </div>
 
-            <p className="tr-menu-btns absolute top-0 right-0 w-12 h-auto flex flex-row items-center justify-between">
+            <p className="tr-menu-btns absolute top-3 right-[-20] w-12 h-auto flex flex-row items-center justify-between">
               <FontAwesomeIcon 
                 icon={faCircleLeft} 
                 className="text-green-500 cursor-pointer relative -top-4 mr-1 text-base"

@@ -45,7 +45,7 @@ export const calculateCumulativePnL = (trades: Trade[]): CumulativePnLDataPoint[
     runningTotal += dailyPnL[date];
     cumulativePnLData.push({
       date: date,
-      value: parseFloat(runningTotal.toFixed(2)) // Round to 2 decimal places
+      value:parseFloat(runningTotal) // Round to 2 decimal places
     });
   });
 
