@@ -9,6 +9,7 @@ import { Poppins } from "next/font/google";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGoogle, faApple } from "@fortawesome/free-brands-svg-icons";
 import { faEye, faEyeSlash, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -63,6 +64,11 @@ console.log(data);
       setError("Server error. Please try again later.");
     }
   };
+  const logInWithGoogle=useGoogleLogin({
+    flow:'auth-code',
+    ux_mode:"redirect",
+    redirect_uri:'https://app.projournx.com/auth/google/callback'
+  })
 
   return (
     <div className={`flex min-h-screen w-full items-center justify-center bg-[#1e1e25] text-white overflow-hidden ${poppins.className}`} >
@@ -137,6 +143,7 @@ console.log(data);
 
         <button
           className="w-11/12 flex items-center justify-center bg-black text-[#94A3B8] border border-[#F8FAFC1A] rounded-xl py-2 hover:bg-[#111] transition mt-10 cursor-pointer"
+        onClick={logInWithGoogle}
         >
            <FontAwesomeIcon icon={faGoogle} className="mr-2 relative top-[-1px]" />
           <span className=" text-sm" >Continue with Google</span>

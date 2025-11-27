@@ -27,7 +27,6 @@ type SignUpData = {
 };
 
 const SignUp: React.FC = () => {
-  const { bkurl } = store();
 
   const countryPhoneCodes: CountryCode[] = [
     { country: "Afghanistan", code: "+93" },
@@ -271,11 +270,11 @@ const SignUp: React.FC = () => {
     setSignUpData((prev) => ({ ...prev, [name]: value }));
   };
 
-//   const signUpWithGoogle = useGoogleLogin({
-//     flow: "auth-code",
-//     ux_mode: "redirect",
-//     redirect_uri: "https://console.traceyourtrade.com/auth/google/callback",
-//   });
+  const signUpWithGoogle = useGoogleLogin({
+    flow: "auth-code",
+    ux_mode: "redirect",
+    redirect_uri: "https://app.projournx.com/auth/google/callback",
+  });
 
   const postSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,8 +353,9 @@ const SignUp: React.FC = () => {
         {/* Google Sign-in */}
         <button
           type="button"
-        //   onClick={() => signUpWithGoogle()}
+          onClick={() => signUpWithGoogle()}
           className="w-[90%] mt-5 px-3 py-2 rounded-[12px] bg-[#111] border border-[rgba(248,250,252,0.1)] text-slate-400
+          cursor-pointer
                      flex items-center justify-center gap-3"
         >
           <div className="w-5 h-5 relative">
