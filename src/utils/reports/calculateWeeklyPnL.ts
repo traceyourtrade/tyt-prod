@@ -1,4 +1,23 @@
-export const calculateWeeklyPnL = (monthIndex:number, year:number, monthData:{[key:string]:any}[]) => {
+// utils/calculateWeeklyPnL.ts
+
+interface WeeklyPnLData {
+    week: number;
+    pnl: number;
+}
+
+export const calculateWeeklyPnL = (monthIndex: number, year: number, monthData: {[key: string]: any}[]): WeeklyPnLData[] => {
+    // If no data, return default structure with all weeks at 0 PnL
+    if (!Array.isArray(monthData) || monthData.length === 0) {
+        const defaultWeeklyPnl: WeeklyPnLData[] = [];
+        for (let i = 1; i <= 6; i++) {
+            defaultWeeklyPnl.push({
+                week: i,
+                pnl: 0
+            });
+        }
+        return defaultWeeklyPnl;
+    }
+
     // 1. Initialize PNL storage for all potential weeks (1-6) with 0.
     const weeklyPnl = {};
     for (let i = 1; i <= 6; i++) {
@@ -47,7 +66,7 @@ export const calculateWeeklyPnL = (monthIndex:number, year:number, monthData:{[k
     }
 
     // 4. Transform the aggregated object into the required array format
-    const finalPnlArray = [];
+    const finalPnlArray: WeeklyPnLData[] = [];
     
     // Iterate from week 1 to 6 to guarantee order and inclusion of 0-PNL weeks
     for (let weekNumber = 1; weekNumber <= 6; weekNumber++) {
@@ -56,15 +75,6 @@ export const calculateWeeklyPnL = (monthIndex:number, year:number, monthData:{[k
         // Round to 2 decimal places
         const roundedPnl = Math.round(pnl * 100) / 100;
         
-        // Only push to the array if the week was part of the calculation (i.e., not a superfluous Week 6 in a 4-week month)
-        // A simple check: if the total PNL for the entire month is 0, we can stop early, 
-        // but generally, we include all relevant weeks that have days in them.
-        
-        // A more reliable way to ensure we only include needed weeks is to check the last day of the month.
-        // But since you asked for up to Week 6, we'll include all 6 and let the PNL be 0.
-        
-        // Check if the week number is valid based on the total number of days/weeks in the month.
-        // For simplicity and adherence to the '0 for nothing' requirement, we include all 6:
         finalPnlArray.push({
             week: weekNumber,
             pnl: roundedPnl

@@ -487,7 +487,7 @@ const DailyJournal = () => {
                   <div
                     key={option.value}
                     className={`flex items-center px-1.5 py-1.5 cursor-pointer w-full pl-2.5 text-white transition-colors duration-300 ${
-                      selectedFilter === option.value ? "bg-purple-500 font-bold border-l-4 border-white pl-1.5" : ""
+                      selectedFilter === option.value ? "bg-[#5a33b6] font-bold border-l-4 border-white pl-1.5" : ""
                     }`}
                     onClick={() => handleFilterSelect(option.value)}
                   >
@@ -566,9 +566,9 @@ const DailyJournal = () => {
                 </div>
 
                 {isDropdownVisible && (
-                  <div className="w-full max-w-[350px] h-auto max-h-[400px] flex flex-col items-center justify-center absolute top-15 z-20 bg-white rounded-[12px] shadow-lg p-4 animate-fadeIn">
+                  <div className="w-full max-w-[350px] h-auto max-h-[350px] flex flex-col items-center justify-center absolute top-15 z-20 bg-[#2d2d2d] rounded-[12px] shadow-lg p-4 animate-fadeIn">
                     <div className="w-full mb-4">
-                      <p className="cursor-pointer text-gray-700" onClick={() => setDropdownYear((prev) => !prev)}>
+                      <p className="cursor-pointer text-white-700" onClick={() => setDropdownYear((prev) => !prev)}>
                         {dropdownYear
                           ? selectedYear
                           : new Date(selectedYear, selectedMonth).toLocaleString("default", {
@@ -579,12 +579,12 @@ const DailyJournal = () => {
                     </div>
 
                     {dropdownYear ? (
-                      <div className="grid grid-cols-3 gap-2 w-full">
+                      <div className="grid grid-cols-3 gap-2 w-full ">
                         {Array.from({ length: 12 }, (_, i) => i).map((month) => (
                           <div
                             key={month}
-                            className={`p-2 text-center cursor-pointer rounded-[4px] ${
-                              month === selectedMonth ? "bg-purple-500 text-white" : "hover:bg-gray-200"
+                            className={`p-[8px] text-center cursor-pointer rounded-[8px] text-[12px] bg-[#7a7a7a37] ${
+                              month === selectedMonth ? "bg-[#5a33b6] text-white" : "hover:bg-gray-200 hover:text-purple-500"
                             }`}
                             onClick={() => handleMonthSelect(month)}
                           >
@@ -596,15 +596,15 @@ const DailyJournal = () => {
                       </div>
                     ) : (
                       <div
-                        className="overflow-y-auto w-full max-h-[200px]"
+                        className="overflow-y-auto w-full max-h-[200px] grid grid-cols-3 gap-2 w-full bg-[#2d2d2d]"
                         ref={yearContainerRef}
                       >
-                        {Array.from({ length: 2100 - 1970 + 1 }, (_, i) => 1970 + i).map(
+                        {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map(
                           (year) => (
                             <div
                               key={year}
-                              className={`p-2 text-center cursor-pointer ${
-                                year === selectedYear ? "bg-purple-500 text-white" : "hover:bg-gray-200"
+                              className={` p-2 text-center cursor-pointer rounded-[8px]  bg-[#7a7a7a37] text-[12px] ${
+                                year === selectedYear ? "bg-[#5a33b6] text-white" : "hover:bg-gray-200 hover:text-purple-500"
                               }`}
                               onClick={() => handleYearSelect(year)}
                             >
@@ -618,7 +618,7 @@ const DailyJournal = () => {
                     <div className="w-full flex flex-col items-center justify-center mt-4">
                       <button 
                         onClick={() => setIsDropdownVisible(false)}
-                        className="px-3 py-2 bg-purple-500 text-white rounded-[4px] cursor-pointer"
+                        className="p-[5px] bg-[#5a33b6] text-white rounded-[12px] cursor-pointer text-[12px]"
                       >
                         Select
                       </button>

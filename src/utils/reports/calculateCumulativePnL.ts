@@ -19,7 +19,13 @@ interface CumulativePnLDataPoint {
  */
 export const calculateCumulativePnL = (trades: Trade[]): CumulativePnLDataPoint[] => {
   if (!Array.isArray(trades) || trades.length === 0) {
-    return [];
+    // Return default structure instead of empty array to prevent crashes
+    return [
+      {
+        date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+        value: 0
+      }
+    ];
   }
 
   // --- Aggregate P&L by Date ---
@@ -27,7 +33,7 @@ export const calculateCumulativePnL = (trades: Trade[]): CumulativePnLDataPoint[
 
   trades.forEach(trade => {
     // Calculate P&L for this trade (Profit + Commission + Swap)
-    const tradePnL = trade.Profit + trade.Commission + trade.Swap;
+    const tradePnL = trade.Profit + Number(trade.Commission)||0 + trade.Swap;
     const dateKey = trade.date; // Assuming 'date' is YYYY-MM-DD
 
     if (!dailyPnL[dateKey]) {
@@ -45,7 +51,7 @@ export const calculateCumulativePnL = (trades: Trade[]): CumulativePnLDataPoint[
     runningTotal += dailyPnL[date];
     cumulativePnLData.push({
       date: date,
-      value:parseFloat(runningTotal) // Round to 2 decimal places
+      value: parseFloat(runningTotal.toFixed(2)) // Round to 2 decimal places
     });
   });
 

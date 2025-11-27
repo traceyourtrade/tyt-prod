@@ -660,17 +660,17 @@ console.log('Form Data Entries:',formData );
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const canvas = await html2canvas(element, {
-        backgroundColor: "#1e1e1e",
-        useCORS: true,
-        allowTaint: false,
-        scale: 2,
-        scrollY: 0,
-        windowHeight: element.scrollHeight,
-      });
+  backgroundColor: "#1e1e1e",
+  useCORS: true,
+  allowTaint: false,
+  scale: 2,
+  scrollY: 0,
+  windowHeight: element.scrollHeight,
+});
 
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png")
-      );
+const blob = await new Promise<Blob | null>((resolve) =>
+  canvas.toBlob(resolve, "image/png")
+);
       if (!blob) return;
 
       const file = new File([blob], `trade-${index}.png`, {
@@ -1090,9 +1090,9 @@ console.log('Form Data Entries:',formData );
           </div>
 
           <div
-            className={`w-[90%] h-0 transition-all duration-500 ${
-              expandedId === ele.id ? "animate-openHeight" : ""
-            }`}
+            className={`w-[90%]  transition-all duration-500 
+              ${expandedId === ele.id ? "h-90" : "h-0"}`
+          }
           >
             <h2 className="text-white w-fit px-2.5 py-1.25 rounded-[12px] ml-5 mt-6 text-base">
               LET'S JOURNAL THIS TRADE

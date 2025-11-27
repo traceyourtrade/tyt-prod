@@ -40,7 +40,7 @@ const dailyPnLData = allTrades.reduce((acc, trade) => {
     if (!acc[date]) {
       acc[date] = { date, value: 0 };
     }
-    acc[date].value += trade.Profit + trade.Commission + trade.Swap;
+    acc[date].value += trade.Profit + Number(trade.Commission)|| 0 + trade.Swap;
     return acc;
   }, {});
 

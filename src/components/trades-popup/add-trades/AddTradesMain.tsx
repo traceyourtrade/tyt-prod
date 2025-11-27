@@ -26,7 +26,7 @@ const AddtradesMain = () => {
         setAddTrades();
         document.body.classList.remove("no-scroll");
     };
-console.warn("RENDERING ADD TRADES MAIN",showAddTrades);
+
     return (
         <div className={` pt-[10vh] w-[100vw] h-[100vh] flex justify-center align-center fixed top-0 left-0 bg-[#00000067] z-100 ${showAddTrades ? "block" : "hidden"}`}>
             <div className="w-[90%] max-w-[500px] h-[85vh] rounded-[25px] bg-[rgba(34,33,33,0.379)] backdrop-blur-[30px] border-[0.5px] border-[#717171] font-inter overflow-y-auto">

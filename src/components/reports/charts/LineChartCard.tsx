@@ -43,8 +43,7 @@ function ColorSwitch({ threshold=0, color1, color2, id,data }: ColorSwitchProps)
 
   const scale = useYScale(); // Debugging line to check the scale function
   const y0 = scale(threshold)|| 0;
-  console.log("data",data.length,"Y0 Position:", y0,"svgHeight",svgHeight); // Debugging line to check the y0 position
-  
+
   // Fix: Ensure offset is always a valid number between 0 and 1
   const off = y0 / svgHeight// Default to middle if calculation fails
   console.log("data",data.length,"Offset:", off); // Debugging line to check the offset value
