@@ -57,7 +57,7 @@ const DashboardMonth: React.FC = () => {
   const metrics = calculateRiskRewardRatio(thisMonthData);
 
   return (
-    <div className="w-full h-auto flex flex-col mt-6 rounded-[25px] border border-white/35 border-r-white/20 border-l-white/20">
+    <div className="w-full h-auto flex flex-col rounded-[25px]">
 
       {/* Dashboard Widgets */}
       <DashWidgets
@@ -78,7 +78,7 @@ const DashboardMonth: React.FC = () => {
       {/* Part next to widgets */}
       <div className="w-full max-w-[1710px] h-auto flex items-start justify-center mx-auto">
         <Calendar />
-        <div className="w-2/5 h-auto flex flex-col items-center justify-end font-inter lg:max-2xl:w-[calc(100%-950px)]">
+        <div className="w-2/5 h-auto flex flex-col items-center justify-end font-inter lg:max-2xl:w-[calc(100%-950px)] mt-5">
           <PnLDailyChart data={data} />
           <TradesWidget data={thisMonthData} />
           <Radar />

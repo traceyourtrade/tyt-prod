@@ -22,21 +22,22 @@ export default function RootLayout({
   const [expanded, setExpanded] = useState<boolean>(false)
 
   return (
-    <div className="flex h-screen bg-[#0e0e0e] ">
+    <div className="flex h-screen bg-[#030303] ">
 
-          <AddtradesMain/>
-      <Sidebar expanded={expanded} setExpanded={setExpanded} />
+      <AddtradesMain />
+      <Sidebar expanded={expanded} />
 
       <main className={`w-screen`}>
-        <div className={`${expanded ? "w-[calc(100%-240px)]" : "w-[calc(100%-64px)]"} h-screen flex-1 bg-[#000] rounded-tl-[20px] overflow-auto p-6 mt-2 border-[0.5px] border-[#242424] fixed right-0 transition-[width] duration-500 ease-in-out`} >
-        <DashboardNav heading="m"/>
-          <DeleteAccPopup/>
-          <EditAccPopup/>
-          <AddAccPopup/>
-          <EditTradePopUp/>
-          <CalendarPopup/>
-          <AlertBox/>
-          <DjImgPopup/>
+        <div className={`${expanded ? "w-[calc(100%-240px)]" : "w-[calc(100%-64px)]"} h-screen flex-1 bg-[#0e0e0e] rounded-tl-[20px] overflow-auto p-6 mt-2 border-[0.5px] border-[#242424] fixed right-0 transition-[width] duration-500 ease-in-out`} >
+          <DashboardNav expanded={expanded} setExpanded={setExpanded} />
+          <div className="absolute w-full h-px bg-[#1b1b1b] -mt-2.5" ></div>
+          <DeleteAccPopup />
+          <EditAccPopup />
+          <AddAccPopup />
+          <EditTradePopUp />
+          <CalendarPopup />
+          <AlertBox />
+          <DjImgPopup />
           {children}
         </div>
       </main>

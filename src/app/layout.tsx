@@ -3,6 +3,14 @@ import "./globals.css";
 import "@/lib/fontawesome";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+    weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+    subsets: ["latin"],
+    variable: "--font-inter",
+})
+
 export const metadata: Metadata = {
 
     title: "Trace Your Trade | India's #1 Automated Trading Journal",
@@ -61,10 +69,10 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" className={`${inter.variable}`}>
             <body>
-                <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID||""}>   
-                {children}
+                <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID || ""}>
+                    {children}
                 </GoogleOAuthProvider>
             </body>
         </html>

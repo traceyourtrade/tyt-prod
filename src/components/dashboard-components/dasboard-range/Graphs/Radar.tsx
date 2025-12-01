@@ -22,8 +22,8 @@ function valueFormatter(v: number | null) {
 export default function MultiSeriesRadar() {
     return (
         <ThemeProvider theme={darkTheme}>
-            <div className="w-[95%] max-w-[600px] h-auto min-h-[350px] flex flex-col items-center justify-start font-['Inter'] bg-[rgba(114,113,113,0.134)] rounded-xl mt-5 shadow-[0_25px_45px_rgba(0,0,0,0.1)] border-b border-b-[rgba(255,255,255,0.2)] backdrop-blur-sm">
-                <h2 className="w-full text-white text-lg text-center border-b border-gray-500 pb-4 mt-3">
+            <div className="w-[95%] max-w-[600px] h-auto min-h-[350px] flex flex-col items-center justify-start font-['Inter'] bg-[#141414] rounded-xl mt-5 shadow-[0_25px_45px_rgba(0,0,0,0.1)] border border-[#1b1b1b]">
+                <h2 className="w-full text-white text-lg text-center border-b border-gray-500 pb-4 mt-3 mb-5">
                     Radar Chart <FontAwesomeIcon icon={faCircleInfo} className="text-xs relative -top-0.5 -right-1 cursor-pointer" />
                 </h2>
                 <RadarChart

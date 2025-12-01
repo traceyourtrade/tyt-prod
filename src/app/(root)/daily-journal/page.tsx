@@ -39,7 +39,7 @@ interface DJCalendarProps {
   tempStartDate: Date | null;
   tempEndDate: Date | null;
   today: Date;
-  isSelectedDate: (day: number | null, month: number, year: number) => boolean;
+  isSelectedDate: (day: number | null, month: number, year: number) => boolean | null;
   isInRange: (day: number | null, month: number, year: number) => boolean;
   handleDateClick: (day: number, month: number, year: number) => void;
   handleHover: (day: number, month: number, year: number) => void;
@@ -125,8 +125,16 @@ const DJCalendar = ({
                       } ${
                         isDisabled ? "text-gray-500/70 pointer-events-none bg-transparent border border-gray-500/70" : "hover:bg-gray-300 hover:text-gray-900"
                       }`}
-                      onClick={() => date && !isDisabled && handleDateClick(day, month, year)}
-                      onMouseEnter={() => date && !isDisabled && handleHover(day, month, year)}
+                      onClick={() => {
+  if (date && !isDisabled && day != null && month != null && year != null) {
+    handleDateClick(day, month, year);
+  }
+}}
+                      onMouseEnter={() => {
+  if (date && !isDisabled && day != null && month != null && year != null) {
+    handleHover(day, month, year);
+  }
+}}
                     >
                       {day || ""}
                     </div>
@@ -526,7 +534,7 @@ const DailyJournal = () => {
           <h2 className="font-sans text-gray-200 relative top-6.25 z-[-1] text-2xl font-semibold">Calendar</h2>
 
           {showDateRangePicker ? (
-            <DJCalendar
+            <DJCalendar  
               currentYearLeft={currentYearLeft}
               setCurrentYearLeft={setCurrentYearLeft}
               currentMonthLeft={currentMonthLeft}

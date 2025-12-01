@@ -4,10 +4,10 @@ import Image from "next/image";
 
 // Font Awesome imports
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faCaretLeft, 
-  faCaretRight, 
-  faChevronDown, 
+import {
+  faCaretLeft,
+  faCaretRight,
+  faChevronDown,
   faCaretDown,
   faCircleXmark,
   faCircleLeft,
@@ -53,6 +53,31 @@ const Calendar = () => {
     if (profit < 0) return "bg-[rgba(255,119,119,0.32)]";
     return "bg-[#323577ff]";
   };
+
+  const getBackgroundHover = (profit: number) => {
+    if (profit > 0) return "hover:bg-[rgba(21,147,132,0.43)]/60";
+    if (profit < 0) return "hover:bg-[rgba(255,119,119,0.32)]/60";
+    return "hover:bg-[rgba(122,122,122,0.551)]";
+  };
+
+  const getTextClass = (profit: number) => {
+    if (profit > 0) return "text-[rgb(60,255,181)]";
+    if (profit < 0) return "text-[rgba(255,99,99)]";
+    return "text-[#323577ff]";
+  };
+
+  const getDateColor = (profit: number) => {
+    if (profit > 0) return "text-[#a6a6a6]/60";
+    if (profit < 0) return "text-[#a6a6a6]/60";
+    return "text-[#a6a6a6]";
+  };
+
+  function formatNumber(num: number) {
+    if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "b";
+    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "m";
+    if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
+    return num.toString();
+  }
 
   // Years should start from selected year
   // Ref for the year container
@@ -118,24 +143,28 @@ const Calendar = () => {
       calendarCells.push(
         <div
           key={day}
-          className={`h-20 rounded-lg flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200 hover:scale-105 hover:bg-[rgba(122,122,122,0.551)] hover:saturate-160 ${
-            dayData ? getBackgroundClass(dayData.profit) : "bg-[rgba(122,122,122,0.214)]"
-          }`}
+          className={`h-20 rounded-lg flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200 hover:scale-105 hover:saturate-160 ${dayData ? getBackgroundClass(dayData.profit) : "bg-[rgba(50,50,50,0.21)]"} ${dayData ? getBackgroundHover(dayData.profit) : "hover:bg-[rgba(122,122,122,0.551)]"} `}
           onClick={() => { setShowTr(); document.body.classList.add("no-scroll"); setDataDate(selectedYear, selectedMonth, day) }}
         >
-          <div className="text-white text-base font-bold">{day}</div>
+          <div className={`text-base font-bold text-[14px] ${dayData ? getDateColor(dayData.profit) : "text-[#7a7a7a]"} `}>{day}</div>
           {dayData && (
-            <div className="mt-1 text-center text-base font-inter font-600 relative bottom-[10px]">
-              <div>
+            <div className="mt-2 text-[14px] text-center font-inter font-semibold relative bottom-[10px]">
+
+              <div className={`${dayData ? getTextClass(dayData.profit) : "text-[#a6a6a6]"} font-bold`}>
                 ${new Intl.NumberFormat('en', {
                   notation: "compact",
                   compactDisplay: "short",
                   maximumFractionDigits: 1
                 }).format(dayData.profit)}
               </div>
-              <div className="text-white">{dayData.tradeLength}</div>
+
+              <div className="text-[#a6a6a6] text-[12px] font-medium">
+                {formatNumber(dayData.tradeLength)} trades
+              </div>
+
             </div>
           )}
+
         </div>
       );
     }
@@ -190,17 +219,17 @@ const Calendar = () => {
 
   return (
     <>
-      <div className="w-3/5 max-w-930 h-auto flex flex-col rounded-xl mt-5 ml-2.5 p-2.5 pb-2.5 bg-[rgba(114,113,113,0.134)] shadow-[0_25px_45px_rgba(0,0,0,0.1)] border-b border-[rgba(255,255,255,0.2)] backdrop-blur-sm shadow-lg">
+      <div className="w-3/5 max-w-930 h-auto flex flex-col rounded-xl mt-5 ml-2.5 p-2.5 pb-2.5 bg-[#141414] shadow-[0_25px_45px_rgba(0,0,0,0.1)] border border-[#1b1b1b] backdrop-blur-sm shadow-lg">
 
         <div className="flex justify-between items-center mb-4 cursor-pointer">
 
-          <button className="bg-[#7c51e1] text-white border-none py-1 px-2.5 text-sm rounded cursor-pointer mx-2.5 hover:bg-[#553b91]" onClick={handlePrevMonth}>
+          <button className="bg-[#4a6aff] text-white border-none py-1 px-2.5 text-sm rounded cursor-pointer mx-2.5 hover:bg-[#4a6aff]/80" onClick={handlePrevMonth}>
             <FontAwesomeIcon icon={faCaretLeft} />
           </button>
 
           <div>
 
-            <h1 onClick={handleYearMonthClick} className="m-0 text-2xl text-white">
+            <h1 onClick={handleYearMonthClick} className="m-0 text-2xl text-white font-bold ">
               {new Date(selectedYear, selectedMonth).toLocaleString("default", {
                 month: "long",
               })}{" "}
@@ -217,7 +246,7 @@ const Calendar = () => {
                         : new Date(selectedYear, selectedMonth).toLocaleString("default", {
                           month: "long",
                         })}
-                      <FontAwesomeIcon icon={faCaretDown} className="text-sm relative right-[-20px]" />
+                      <FontAwesomeIcon icon={faCaretDown} className="text-sm relative -right-5" />
                     </p>
                   </div>
 
@@ -226,9 +255,8 @@ const Calendar = () => {
                       {Array.from({ length: 12 }, (_, i) => i).map((month) => (
                         <div
                           key={month}
-                          className={`p-[8px] text-[12px] text-center rounded-lg cursor-pointer transition-all duration-200 bg-[#2d2d2d] hover:bg-[#e3f2fd] hover:text-[#5a33b6] hover:scale-105 ${
-                            month === selectedMonth ? "activee bg-[#5a33b6] text-white" : ""
-                          }`}
+                          className={`p-[8px] text-[12px] text-center rounded-lg cursor-pointer transition-all duration-200 bg-[#2d2d2d] hover:bg-[#e3f2fd] hover:text-[#5a33b6] hover:scale-105 ${month === selectedMonth ? "activee bg-[#5a33b6] text-white" : ""
+                            }`}
                           onClick={() => handleMonthSelect(month)}
                         >
                           {new Date(0, month).toLocaleString("default", {
@@ -246,9 +274,8 @@ const Calendar = () => {
                         (year) => (
                           <div
                             key={year}
-                            className={`text-base p-2 rounded-lg cursor-pointer bg-[#7a7a7a37] transition-all duration-200 hover:bg-[#eef6f9] hover:text-[#5a33b6] text-xs ${
-                              year === selectedYear ? "activee bg-[#5a33b6] text-white" : ""
-                            }`}
+                            className={`text-base p-2 rounded-lg cursor-pointer bg-[#7a7a7a37] transition-all duration-200 hover:bg-[#eef6f9] hover:text-[#5a33b6] text-xs ${year === selectedYear ? "activee bg-[#5a33b6] text-white" : ""
+                              }`}
                             onClick={() => handleYearSelect(year)}
                           >
                             {year}
@@ -259,9 +286,9 @@ const Calendar = () => {
                   )}
 
                   <div className="w-full h-auto flex flex-col items-center justify-center">
-                    <button 
-                      onClick={() => setIsDropdownVisible(false)} 
-                      className="w-17 h-auto py-1 bg-[#5a33b6] border-none outline-none text-white rounded-xl text-xs font-inter font-600 cursor-pointer transition-all duration-500 ease-in-out -mt-1 hover:bg-[#b386e5]"
+                    <button
+                      onClick={() => setIsDropdownVisible(false)}
+                      className="w-17 h-auto py-1 bg-[#444444] border-none outline-none text-white rounded-xl text-xs font-inter font-600 cursor-pointer transition-all duration-500 ease-in-out -mt-1 hover:bg-[#b386e5]"
                     >
                       OK
                     </button>
@@ -273,18 +300,18 @@ const Calendar = () => {
 
           </div>
 
-          <button className="bg-[#7c51e1] text-white border-none py-1 px-2.5 text-sm rounded cursor-pointer mx-2.5 hover:bg-[#553b91]" onClick={handleNextMonth}>
+          <button className="bg-[#4a6aff] text-white border-none py-1 px-2.5 text-sm rounded cursor-pointer mx-2.5 hover:bg-[#4a6aff]/80" onClick={handleNextMonth}>
             <FontAwesomeIcon icon={faCaretRight} />
           </button>
 
         </div>
 
-        <div className="w-full max-w-900 mx-auto rounded-xl font-sans flex flex-row justify-center">
+        <div className="w-full max-w-900 mx-auto rounded-xl flex flex-row justify-center">
 
           <div className="w-95/100 h-auto grid grid-cols-7 gap-1.75">
 
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center font-bold text-white py-2">
+              <div key={day} className="text-center font-bold text-[#a6a6a6] py-2">
                 {day}
               </div>
             ))}
@@ -298,7 +325,7 @@ const Calendar = () => {
               {weeklyProfits.map((profit, index) => (
                 <div
                   key={index}
-                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative right-[-10px] bg-[#b6b6b657] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-white mt-[7px] hover:scale-105"
+                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative -right-2.5 bg-[#52525257] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-[#a6a6a6] mt-[7px] hover:scale-105"
                   style={{
                     background: profit > 0
                       ? "rgba(21, 147, 132, 0.43)"
@@ -309,7 +336,7 @@ const Calendar = () => {
                 >
                   Week {index + 1}{" "}
                   <span
-                    className="profit-value -mt-7.5"
+                    className="profit-value -mt-7.5 font-bold"
                     style={{
                       color: profit > 0
                         ? "#3cffb5"
@@ -332,7 +359,7 @@ const Calendar = () => {
               {weeklyProfits.map((profit, index) => (
                 <div
                   key={index}
-                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative right-[-10px] bg-[#b6b6b657] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-white mt-[7px] hover:scale-105"
+                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative right-[-10px] bg-[#52525257] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-[#a6a6a6] mt-[7px] hover:scale-105"
                   style={{
                     background: profit > 0
                       ? "rgba(21, 147, 132, 0.43)"
@@ -343,7 +370,7 @@ const Calendar = () => {
                 >
                   Week {index + 1}{" "}
                   <span
-                    className="profit-value -mt-7.5"
+                    className="profit-value -mt-7.5 font-bold"
                     style={{
                       color: profit > 0
                         ? "#3cffb5"
@@ -366,7 +393,7 @@ const Calendar = () => {
               {weeklyProfits.map((profit, index) => (
                 <div
                   key={index}
-                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative right-[-10px] bg-[#b6b6b657] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-white mt-[7px] hover:scale-105"
+                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative right-[-10px] bg-[#52525257] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-[#a6a6a6] mt-[7px] hover:scale-105"
                   style={{
                     background: profit > 0
                       ? "rgba(21, 147, 132, 0.43)"
@@ -377,7 +404,7 @@ const Calendar = () => {
                 >
                   Week {index + 1}{" "}
                   <span
-                    className="profit-value -mt-7.5"
+                    className="profit-value -mt-7.5 font-bold"
                     style={{
                       color: profit > 0
                         ? "#3cffb5"

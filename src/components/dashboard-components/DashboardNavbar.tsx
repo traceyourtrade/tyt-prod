@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import Cookies from "js-cookie";
+import { usePathname } from "next/navigation";
 import "./DashboardNav.css";
 import useAccountDetails from "@/store/accountdetails";
 import notebookStore from "@/store/notebookStore";
 import calendarPopUp from "@/store/calendarPopUp";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDollarSign, faIndianRupeeSign, faPercent, faAsterisk, faCaretDown, faFile, faUserGear,faFileInvoice } from '@fortawesome/free-solid-svg-icons';
+import { faDollarSign, faIndianRupeeSign, faPercent, faAsterisk, faCaretDown, faUserGear, faFileInvoice } from '@fortawesome/free-solid-svg-icons';
+import { PanelLeft } from "lucide-react";
 
 interface Account {
   _id: string;
@@ -17,13 +18,17 @@ interface Account {
 }
 
 interface DashboardNavProps {
-  heading: string;
+  expanded: boolean;
+  setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const DashboardNav = ({ heading }: DashboardNavProps) => {
+const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
+
+  const pathname = usePathname();
+
   const params = useParams();
   const userId = params.userId as string;
-  
+
   const [isAccOpen, setAcc] = useState(false);
   const [isCurrOpen, setCrr] = useState(false);
   const [allSelected, setAllSelected] = useState(false);
@@ -39,6 +44,17 @@ const DashboardNav = ({ heading }: DashboardNavProps) => {
   const { accounts, setAccounts, updateAccView, checkAll } = useAccountDetails();
   const { setNotes } = notebookStore();
 
+  const getHeadingFromPath = () => {
+    if (pathname === "/" || pathname === `/${userId}`) return "Dashboard";
+    if (pathname.includes("/daily-journal")) return "Daily Journal";
+    if (pathname.includes("/notebook")) return "Notebook";
+    if (pathname.includes("/reports")) return "Reports";
+    if (pathname.includes("/strategies")) return "Strategies";
+    if (pathname.includes("/support")) return "Support";
+    if (pathname.includes("/settings")) return "Settings";
+
+    return "Dashboard"; // default
+  };
 
   // Click outside handler
   useEffect(() => {
@@ -76,7 +92,7 @@ const DashboardNav = ({ heading }: DashboardNavProps) => {
   const handleAllAccountsChange = () => {
     const newAllSelected = !allSelected;
     setAllSelected(newAllSelected);
-    checkAll( newAllSelected);
+    checkAll(newAllSelected);
   };
 
   const getAccDetails = async () => {
@@ -90,8 +106,17 @@ const DashboardNav = ({ heading }: DashboardNavProps) => {
   }, []);
 
   return (
-    <div className="w-80% mt-[-20px] h-16 flex items-center justify-end bg-black transition-all duration-300 px-4">
-     
+    <div className="w-full -mt-5 h-16 flex items-center justify-between transition-all duration-300 px-4 font-inter">
+
+      {/* <h1 className="text-white text-xl font-inter text-[24px] font-bold mt-25">
+        {" "}
+      </h1> */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-10 h-10 text-white/70 hover:text-white transition-all cursor-pointer outline-none hover:bg-[#272727] rounded-xl z-50 top-5 ease-in-out duration-500 flex items-center justify-center`}
+      >
+        <PanelLeft size={18} />
+      </button>
 
       {/* Right Section - Navigation Items */}
       <div className="flex items-center">
@@ -99,7 +124,7 @@ const DashboardNav = ({ heading }: DashboardNavProps) => {
           {/* Currency Selector */}
           <li className="relative">
             <button
-              className="flex items-center space-x-2 bg-[#000] backdrop-blur-md border border-gray-600 rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-gray-700/60"
+              className="flex items-center space-x-2 bg-[#252525] backdrop-blur-md rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-[#252525]/40 "
               onClick={() => { setCrr(!isCurrOpen); setAcc(false); }}
               ref={currButtonRef}
             >
@@ -110,11 +135,10 @@ const DashboardNav = ({ heading }: DashboardNavProps) => {
             {/* Currency Dropdown */}
             <div
               ref={currDropdownRef}
-              className={`absolute top-12 right-0 w-48 bg-gray-800/90 backdrop-blur-md border border-gray-600 rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${
-                isCurrOpen
-                  ? "scale-100 opacity-100 visible"
-                  : "scale-95 opacity-0 invisible"
-              }`}
+              className={`absolute top-12 right-0 w-48 bg-[#252525] backdrop-blur-md rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${isCurrOpen
+                ? "scale-100 opacity-100 visible"
+                : "scale-95 opacity-0 invisible"
+                }`}
             >
               <div className="p-2">
                 <button className="w-full flex items-center justify-between px-3 py-2 text-white hover:bg-gray-700/60 rounded-md transition-colors">
@@ -136,23 +160,22 @@ const DashboardNav = ({ heading }: DashboardNavProps) => {
           {/* Accounts Selector */}
           <li className="relative">
             <button
-              className="flex items-center space-x-2 bg-[#000] backdrop-blur-md border border-gray-600 rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-gray-700/60"
+              className="text-[14px] flex items-center space-x-2 bg-[#252525] backdrop-blur-md rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-[#252525]/40 "
               onClick={() => { setAcc(!isAccOpen); setCrr(false); }}
               ref={accButtonRef}
             >
               <FontAwesomeIcon icon={faFileInvoice} />
-              <span>Accounts</span>
+              <span className="text-[14px]" >Accounts</span>
               <FontAwesomeIcon icon={faCaretDown} className="text-xs" />
             </button>
 
             {/* Accounts Dropdown */}
             <div
               ref={accDropdownRef}
-              className={`absolute top-12 right-0 w-64 bg-gray-800/90 backdrop-blur-md border border-gray-600 rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${
-                isAccOpen
-                  ? "scale-100 opacity-100 visible"
-                  : "scale-95 opacity-0 invisible"
-              }`}
+              className={`absolute top-12 right-0 w-64 bg-[#252525] backdrop-blur-md rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${isAccOpen
+                ? "scale-100 opacity-100 visible"
+                : "scale-95 opacity-0 invisible"
+                }`}
             >
               <div className="p-3">
                 {accounts.length === 0 ? (
@@ -216,7 +239,7 @@ const DashboardNav = ({ heading }: DashboardNavProps) => {
             </div>
           </li>
 
-          
+
         </ul>
       </div>
     </div>

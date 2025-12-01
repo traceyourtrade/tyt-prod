@@ -249,7 +249,7 @@ const DashboardCustom: React.FC = () => {
   const metrics = calculateRiskRewardRatio(displayData.segData);
 
   return (
-    <div className="w-full h-auto flex flex-col mt-6 rounded-[25px] border border-white/35 border-r-white/20 border-l-white/20 relative">
+    <div className="w-full h-auto flex flex-col rounded-[25px]">
       {/* Calendar UI */}
       {blurBg && (
         <div className="w-full h-auto flex flex-col items-center justify-start mt-5 absolute z-20 top-17">
@@ -301,8 +301,16 @@ const DashboardCustom: React.FC = () => {
                             ${isDisabled ? "text-gray-500/70 pointer-events-none bg-transparent border border-gray-500/70" : "hover:bg-gray-400 hover:text-gray-900"}
                             ${!isSelected && !inRange && !isDisabled ? "text-white" : ""}
                           `}
-                          onClick={() => date && !isDisabled && handleDateClick(day, month, year)}
-                          onMouseEnter={() => date && !isDisabled && handleHover(day, month, year)}
+                          onClick={() => {
+  if (date && !isDisabled && day != null && month != null && year != null) {
+    handleDateClick(day, month, year);
+  }
+}}
+                          onMouseEnter={() => {
+  if (date && !isDisabled && day != null && month != null && year != null) {
+    handleHover(day, month, year);
+  }
+}}
                         >
                           {day || ""}
                         </div>

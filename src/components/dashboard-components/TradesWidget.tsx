@@ -39,13 +39,13 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
     <table className="w-[95%] border-collapse">
       <thead>
         <tr className="w-4/5 mx-auto rounded-full overflow-hidden">
-          <th className="px-3 py-2 text-center bg-gray-600 bg-opacity-55 font-bold text-xs uppercase text-gray-200 rounded-l-full">
+          <th className="px-3 py-2 text-center bg-[#52525257] bg-opacity-55 font-bold text-xs uppercase text-gray-200 rounded-l-full">
             Close Date
           </th>
-          <th className="px-3 py-2 text-center bg-gray-600 bg-opacity-55 font-bold text-xs uppercase text-gray-200">
+          <th className="px-3 py-2 text-center bg-[#52525257] bg-opacity-55 font-bold text-xs uppercase text-gray-200">
             Symbol
           </th>
-          <th className="px-3 py-2 text-center bg-gray-600 bg-opacity-55 font-bold text-xs uppercase text-gray-200 rounded-r-full">
+          <th className="px-3 py-2 text-center bg-[#52525257] bg-opacity-55 font-bold text-xs uppercase text-gray-200 rounded-r-full">
             Net P&L
           </th>
         </tr>
@@ -55,10 +55,9 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
           <tr key={index} className="border-b border-gray-700">
             <td className="px-3 py-2 text-center text-gray-300">{row.date}</td>
             <td className="px-3 py-2 text-center font-semibold text-gray-300">{row.Item}</td>
-            <td className={`px-3 py-2 text-center font-semibold ${
-              parseFloat(row.Profit.toString()) < 0 ? "text-red-400" : 
-              parseFloat(row.Profit.toString()) > 0 ? "text-green-500" : "text-gray-300"
-            }`}>
+            <td className={`px-3 py-2 text-center font-semibold ${parseFloat(row.Profit.toString()) < 0 ? "text-red-400" :
+                parseFloat(row.Profit.toString()) > 0 ? "text-green-500" : "text-gray-300"
+              }`}>
               {parseFloat(row.Profit.toString()) < 0 ? `-$${Math.abs(row.Profit)}` : `$${row.Profit}`}
             </td>
           </tr>
@@ -68,20 +67,18 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
   );
 
   return (
-    <div className="w-[95%] max-w-[600px] h-[300px] flex flex-col font-['Inter'] bg-[rgba(114,113,113,0.134)] rounded-xl mt-5 shadow-[0_25px_45px_rgba(0,0,0,0.1)] border-b border-b-[rgba(255,255,255,0.2)] backdrop-blur-sm shadow-lg">
+    <div className="w-[95%] max-w-[600px] h-[300px] flex flex-col font-['Inter'] bg-[#141414] rounded-xl mt-5 shadow-[0_25px_45px_rgba(0,0,0,0.1)] border border-[#1b1b1b] shadow-lg">
       <div className="tab-header relative flex border-b-2 border-gray-500">
         <button
-          className={`tab-button flex-1 px-2.5 py-2.5 text-center cursor-pointer text-base bg-transparent border-none outline-none transition-colors duration-300 font-['Inter'] text-white ${
-            activeTab === "recentTrades" ? "font-bold text-gray-200" : ""
-          }`}
+          className={`tab-button flex-1 px-2.5 py-2.5 text-center cursor-pointer text-base bg-transparent border-none outline-none transition-colors duration-300 font-['Inter'] text-white ${activeTab === "recentTrades" ? "font-bold text-gray-200" : ""
+            }`}
           onClick={() => handleTabSwitch("recentTrades")}
         >
           Recent Trades
         </button>
         <button
-          className={`tab-button flex-1 px-2.5 py-2.5 text-center cursor-pointer text-base bg-transparent border-none outline-none transition-colors duration-300 font-['Inter'] text-white ${
-            activeTab === "openPositions" ? "font-bold text-gray-200" : ""
-          }`}
+          className={`tab-button flex-1 px-2.5 py-2.5 text-center cursor-pointer text-base bg-transparent border-none outline-none transition-colors duration-300 font-['Inter'] text-white ${activeTab === "openPositions" ? "font-bold text-gray-200" : ""
+            }`}
           onClick={() => handleTabSwitch("openPositions")}
         >
           Open Positions
@@ -94,9 +91,9 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
         ></div>
       </div>
 
-      <div className="tab-container w-full overflow-y-auto overflow-x-hidden mt-2.5 rounded-xl">
+      <div className="tab-container w-full overflow-y-auto overflow-x-hidden mt-2.5 rounded-xl" >
         <div className="tab-content min-h-[150px] text-sm text-white rounded-xl px-2.5 py-5">
-          {loading ? skeletonPlaceholder : activeTab === "recentTrades" ? tableContent : <p>No open positions.</p>}
+          {activeTab === "recentTrades" ? tableContent : <p>No open positions.</p>}
         </div>
       </div>
     </div>

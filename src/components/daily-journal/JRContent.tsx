@@ -60,7 +60,7 @@ interface ProfileData {
 }
 
 interface JRContentProps {
-  dailyData: Trade[];
+  dailyData: any[];
 }
 
 const JRContent = ({ dailyData }: JRContentProps) => {

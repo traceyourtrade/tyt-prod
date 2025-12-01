@@ -85,7 +85,7 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ data }) => {
 
     return (
         <div className="vertical-graph">
-            <h2 className="w-full text-white text-lg text-center border-b border-gray-500 pb-4 mt-3">
+            <h2 className="w-full text-white text-lg text-center border border-[#1b1b1b] pb-4 mt-3">
                 Net Daily P&L <FontAwesomeIcon icon={faCircleInfo} className="text-xs relative -top-0.5 -right-1 cursor-pointer" />
             </h2>
             <div className="chart-container">

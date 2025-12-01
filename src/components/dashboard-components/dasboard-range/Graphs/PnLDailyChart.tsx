@@ -42,11 +42,21 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
 
     const zeroOffset = calculateOffset(data);
 
+    const formatCompact = (num: number) => {
+        const formatted = Intl.NumberFormat("en", {
+            notation: "compact",
+            compactDisplay: "short",
+            maximumFractionDigits: 1,
+        }).format(num);
+
+        return num < 0 ? `-$${formatted.replace("-", "")}` : `$${formatted}`;
+    };
+
     return (
-        <div className="w-[95%] max-w-[600px] h-auto min-h-[350px] flex flex-col items-center justify-start font-['Inter'] bg-[#72717122] rounded-[25px] ">
-            <h2 className="w-full text-white text-lg text-center border-b border-gray-500 pb-4 mt-3">
+        <div className="w-[95%] max-w-[600px] h-auto min-h-[350px] flex flex-col items-center justify-start font-['Inter'] bg-[#141414] rounded-xl border border-[#1b1b1b] ">
+            <p className="w-full text-white text-[18px] text-center border-b border-gray-500 pb-4 mt-3 font-bold">
                 Net Cumulative P&L <FontAwesomeIcon icon={faCircleInfo} className="text-xs relative -top-0.5 -right-1 cursor-pointer" />
-            </h2>
+            </p>
 
             {status === "both" ? (
                 <ResponsiveContainer width="100%" height={280}>
@@ -61,26 +71,26 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
                         </defs>
 
                         <CartesianGrid stroke="rgb(80, 80, 80)" strokeDasharray="3 3" vertical={false} />
-                        <XAxis 
-                            dataKey="time" 
-                            stroke="rgba(255, 255, 255, 0.51)" 
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }} 
+                        <XAxis
+                            dataKey="time"
+                            stroke="rgba(255, 255, 255, 0.51)"
+                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
                         />
                         <YAxis
                             stroke="rgba(255, 255, 255, 0.51)"
                             tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                            tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+                            tickFormatter={(value) => formatCompact(value)}
                             interval={0}
                             minTickGap={2}
                             tickCount={10}
                         />
 
-                        <Tooltip 
-                            contentStyle={{ 
-                                backgroundColor: "#222", 
-                                color: "white", 
-                                border: "1px solid white" 
-                            }} 
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: "#222",
+                                color: "white",
+                                border: "1px solid white"
+                            }}
                         />
 
                         <Area
@@ -104,26 +114,26 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
                         </defs>
 
                         <CartesianGrid stroke="rgb(80, 80, 80)" strokeDasharray="3 3" vertical={false} />
-                        <XAxis 
-                            dataKey="time" 
-                            stroke="rgba(255, 255, 255, 0.51)" 
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }} 
+                        <XAxis
+                            dataKey="time"
+                            stroke="rgba(255, 255, 255, 0.51)"
+                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
                         />
                         <YAxis
                             stroke="rgba(255, 255, 255, 0.51)"
                             tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                            tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+                            tickFormatter={(value) => formatCompact(value)}
                             interval={0}
                             minTickGap={2}
                             tickCount={10}
                         />
 
-                        <Tooltip 
-                            contentStyle={{ 
-                                backgroundColor: "#222", 
-                                color: "white", 
-                                border: "1px solid white" 
-                            }} 
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: "#222",
+                                color: "white",
+                                border: "1px solid white"
+                            }}
                         />
 
                         <Area
@@ -147,26 +157,26 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
                         </defs>
 
                         <CartesianGrid stroke="rgb(80, 80, 80)" strokeDasharray="3 3" vertical={false} />
-                        <XAxis 
-                            dataKey="time" 
-                            stroke="rgba(255, 255, 255, 0.51)" 
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }} 
+                        <XAxis
+                            dataKey="time"
+                            stroke="rgba(255, 255, 255, 0.51)"
+                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
                         />
                         <YAxis
                             stroke="rgba(255, 255, 255, 0.51)"
                             tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                            tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+                            tickFormatter={(value) => formatCompact(value)}
                             interval={0}
                             minTickGap={2}
                             tickCount={10}
                         />
 
-                        <Tooltip 
-                            contentStyle={{ 
-                                backgroundColor: "#222", 
-                                color: "white", 
-                                border: "1px solid white" 
-                            }} 
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: "#222",
+                                color: "white",
+                                border: "1px solid white"
+                            }}
                         />
 
                         <Area

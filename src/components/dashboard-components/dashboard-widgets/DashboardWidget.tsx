@@ -83,12 +83,12 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   const avgLossPercentage = avgProfits && avgLoses ? (avgLoses / (avgProfits + avgLoses)) * 100 : 0;
 
   return (
-    <div className="w-full max-w-7xl h-auto p-5 flex items-center flex-wrap justify-evenly cursor-pointer mx-auto mt-2">
+    <div className="w-full h-auto p-2.5 flex flex-wrap justify-between cursor-pointer ">
       {/* Net P&L Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#0f1214] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 hover:scale-105">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#0f1214]/60 border border-[#1d2126]">
+      <div className="w-[18%] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b] ">
+        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]">
           <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-white mt-5 ml-5">
+            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
               Net P&L
               <label className="w-14 bg-green-500/10 flex items-center justify-evenly text-[#2fa87aff] text-xs rounded-lg absolute mt-[-19px] ml-14 border border-green-500">
                 <svg viewBox="64 64 896 896" focusable="false" data-icon="rise" width="1em" height="1em" fill="currentColor" aria-hidden="true" >
@@ -108,10 +108,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
       </div>
 
       {/* Win-Rate Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#0f1214] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 hover:scale-105">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#0f1214]/60 border  border-[#1d2126]">
+      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
+        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]/60 ">
           <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-white mt-5 ml-5">
+            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
               Win-Rate %
               {/* <InformationCircleIcon className="w-3 h-3 text-gray-400 ml-1" /> */}
             </span>
@@ -138,10 +138,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
       </div>
 
       {/* Profit Factor Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#0f1214] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 hover:scale-105">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#0f1214]/60 border  border-[#1d2126]">
+      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
+        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]/60  ">
           <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-white mt-5 ml-5">
+            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
               Profit Factor
               {/* <InformationCircleIcon className="w-3 h-3 text-gray-400 ml-1" /> */}
             </span>
@@ -156,10 +156,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
       </div>
 
       {/* Account Balance Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#0f1214] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 hover:scale-105">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#0f1214]/60 border  border-[#1d2126] p-5">
+      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
+        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]/60 p-5">
           <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="absolute pt-10 font-inter text-xs font-semibold text-white">
+            <span className="absolute pt-10 font-inter text-xs font-semibold text-[#a6a6a6]">
               Account Balance
               <label className="ml-28 w-14 bg-green-500/10 flex items-center justify-evenly text-[#2fa87aff] text-xs rounded-lg border border-green-500">
                 <svg viewBox="64 64 896 896" focusable="false" data-icon="rise" width="1em" height="1em" fill="currentColor" aria-hidden="true" >
@@ -179,10 +179,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
       </div>
 
       {/* Risk-to-Reward Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#0f1214] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 hover:scale-105">
-        <div className="w-full h-28 rounded-xl flex flex-col items-start justify-start bg-[#0f1214]/60 border  border-[#1d2126]">
+      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
+        <div className="w-full h-28 rounded-xl flex flex-col items-start justify-start bg-[#141414]/60">
           <div className="w-full flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-white mt-5 ml-5">
+            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
               Risk-to-Reward ratio
               {/* <InformationCircleIcon className="w-3 h-3 text-gray-400 ml-1" /> */}
             </span>
@@ -194,7 +194,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
 
             <div className="w-2/3 h-2 bg-white/15 rounded-full ml-5 mt-4 flex">
               <div 
-                className="h-2 rounded-l-full transition-all duration-300 hover:scale-105 hover:bg-green-500/80"
+                className="h-2 rounded-l-full transition-all duration-300 hover:bg-green-500/80"
                 style={{ 
                   width: `${avgProfitPercentage}%`,
                   backgroundColor: avgProfits ? "rgb(51, 157, 84)" : "transparent"
@@ -205,7 +205,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
                 </p>
               </div>
               <div 
-                className="h-2 rounded-r-full transition-all duration-300 hover:scale-105 hover:bg-red-400/80"
+                className="h-2 rounded-r-full transition-all duration-300 hover:bg-red-400/80"
                 style={{ 
                   width: `${avgLossPercentage}%`,
                   backgroundColor: avgLoses ? "rgb(255, 99, 99)" : "transparent"

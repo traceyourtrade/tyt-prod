@@ -252,7 +252,7 @@ const DashboardWeek: React.FC = () => {
   const metrics = calculateRiskRewardRatio(allTrades);
 
   return (
-    <div className="w-full h-auto flex flex-col mt-6 rounded-[25px] border border-white/35 border-r-white/20 border-l-white/20">
+    <div className="w-full h-auto flex flex-col rounded-[25px]">
       {/* Dashboard Widgets */}
       <DashWidgets
         data={PNLcumulative}

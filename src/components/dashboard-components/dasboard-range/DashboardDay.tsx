@@ -193,7 +193,7 @@ const DashboardDay: React.FC = () => {
   const metrics = calculateRiskRewardRatio(todayData);
 
   return (
-    <div className="w-full h-auto flex flex-col mt-6 rounded-[25px] border border-white/35 border-r-white/20 border-l-white/20">
+    <div className="w-full h-auto flex flex-col">
       {/* Dashboard Widgets */}
       <DashWidgets
         data={data}
@@ -211,9 +211,9 @@ const DashboardDay: React.FC = () => {
       />
 
       {/* Part next to widgets */}
-      <div className="w-full max-w-[1710px] h-auto flex items-start justify-center mx-auto">
+      <div className="w-full h-auto flex items-start justify-center mx-auto">
         {/* Calendar */}
-        <div className="w-3/5 max-w-[930px] h-auto flex flex-col bg-gray-500/15 backdrop-blur-md rounded-xl mt-5 ml-2.5 p-2.5 pb-2.5 border-b border-white/20 shadow-lg">
+        <div className="w-3/5 h-auto flex flex-col bg-gray-500/15 backdrop-blur-md rounded-xl mt-5 ml-2.5 p-2.5 pb-2.5 border-b border-white/20 shadow-lg">
           <div className="min-h-25">
             <h1 className="text-gray-300 text-lg ml-5 mt-2.5 font-inter font-semibold">TRADE DETAILS</h1>
 
