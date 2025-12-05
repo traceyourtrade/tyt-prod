@@ -283,7 +283,7 @@ console.log('Form Data Entries:',formData );
               name="strategy"
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
-              className="border-none border-b border-gray-900 outline-none text-gray-700 px-1"
+              className="border-none border-b border-border outline-none text-foreground px-1 bg-transparent"
             />
             <span
               onClick={(e) => addOtherData(e, "strategy", strategy)}
@@ -294,7 +294,7 @@ console.log('Form Data Entries:',formData );
           </p>
         ) : (
           <p onClick={() => setShowStra(true)}>
-            <span className="text-xs text-center block mt-3 text-gray-700 cursor-pointer">
+            <span className="text-xs text-center block mt-3 text-primary cursor-pointer hover:text-primary-dark">
               + ADD STRATEGY
             </span>
           </p>
@@ -316,7 +316,7 @@ console.log('Form Data Entries:',formData );
               name="strategy"
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
-              className="border-none border-b border-gray-900 outline-none text-gray-700 px-1"
+              className="border-none border-b border-border outline-none text-foreground px-1 bg-transparent"
             />
             <span
               onClick={(e) => addOtherData(e, "rfe", strategy)}
@@ -327,7 +327,7 @@ console.log('Form Data Entries:',formData );
           </p>
         ) : (
           <p onClick={() => setShowStra(true)}>
-            <span className="text-xs text-center block mt-3 text-gray-700 cursor-pointer">
+            <span className="text-xs text-center block mt-3 text-primary cursor-pointer hover:text-primary-dark">
               + ADD
             </span>
           </p>
@@ -349,7 +349,7 @@ console.log('Form Data Entries:',formData );
               name="strategy"
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
-              className="border-none border-b border-gray-900 outline-none text-gray-700 px-1"
+              className="border-none border-b border-border outline-none text-foreground px-1 bg-transparent"
             />
             <span
               onClick={(e) => addOtherData(e, "btm", strategy)}
@@ -360,7 +360,7 @@ console.log('Form Data Entries:',formData );
           </p>
         ) : (
           <p onClick={() => setShowStra(true)}>
-            <span className="text-xs text-center block mt-3 text-gray-700 cursor-pointer">
+            <span className="text-xs text-center block mt-3 text-primary cursor-pointer hover:text-primary-dark">
               + ADD
             </span>
           </p>
@@ -382,7 +382,7 @@ console.log('Form Data Entries:',formData );
               name="strategy"
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
-              className="border-none border-b border-gray-900 outline-none text-gray-700 px-1"
+              className="border-none border-b border-border outline-none text-foreground px-1 bg-transparent"
             />
             <span
               onClick={(e) => addOtherData(e, "dtm", strategy)}
@@ -393,7 +393,7 @@ console.log('Form Data Entries:',formData );
           </p>
         ) : (
           <p onClick={() => setShowStra(true)}>
-            <span className="text-black">+ ADD</span>
+            <span className="text-primary">+ ADD</span>
           </p>
         )}
       </>
@@ -413,7 +413,7 @@ console.log('Form Data Entries:',formData );
               name="strategy"
               value={strategy}
               onChange={(e) => setStrategy(e.target.value)}
-              className="border-none border-b border-gray-900 outline-none text-gray-700 px-1"
+              className="border-none border-b border-border outline-none text-foreground px-1 bg-transparent"
             />
             <span
               onClick={(e) => addOtherData(e, "atm", strategy)}
@@ -424,7 +424,7 @@ console.log('Form Data Entries:',formData );
           </p>
         ) : (
           <p onClick={() => setShowStra(true)}>
-            <span className="text-xs text-center block mt-3 text-gray-700 cursor-pointer">
+            <span className="text-xs text-center block mt-3 text-primary cursor-pointer hover:text-primary-dark">
               + ADD
             </span>
           </p>
@@ -772,7 +772,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                     setFolder("Daily Journal");
                     setFile(ele.noteName!);
                   }}
-                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-[25px] text-white border border-white/20 bg-primary/50 backdrop-blur-sm shadow-lg transition-all duration-300"
+                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-full bg-primary text-white border border-primary/20 shadow-sm transition-all duration-300 hover:bg-primary-dark"
                 >
                   VIEW NOTES
                 </button>
@@ -788,7 +788,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       ele.accountType
                     )
                   }
-                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-[25px] text-white border border-white/20 bg-primary/50 backdrop-blur-sm shadow-lg transition-all duration-300"
+                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-full bg-primary text-white border border-primary/20 shadow-sm transition-all duration-300 hover:bg-primary-dark"
                 >
                   ADD NOTES +
                 </button>
@@ -796,25 +796,34 @@ const blob = await new Promise<Blob | null>((resolve) =>
               <FontAwesomeIcon
                 icon={faShareNodes}
                 onClick={() => handleShareSelected(index)}
-                className="text-lg text-gray-500 cursor-pointer mr-5 font-semibold"
+                className="text-lg text-muted-foreground cursor-pointer mr-5 font-semibold hover:text-foreground transition-colors"
               />
             </div>
           </div>
 
-          <div className="w-[90%] h-auto flex flex-row items-center justify-start mt-6">
-            <div className="w-full h-48 rounded-[25px] flex items-center justify-evenly flex-wrap">
-              <div className="w-[32%] h-52 rounded-[25px] mt-[-9px] flex flex-col items-start justify-center text-white cursor-pointer border-none">
-                <div className="w-full bg-gray-600/20 rounded-[15px] h-auto px-5 py-5 pt-2.5">
-                  <p className="mt-2.5 ml-1.25 border-line border-red-600">
-                    <span className="text-xl font-semibold px-5 py-0.75 rounded-[25px]">
+          <div className="w-[90%] h-auto flex flex-row items-start justify-start mt-6 gap-4">
+            <div className="w-full flex items-start justify-between flex-wrap gap-4">
+              <div className="w-[32%] min-w-[280px] flex flex-col items-start justify-start text-foreground">
+                <div className="w-full bg-muted/50 rounded-xl h-auto p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-lg font-bold text-foreground">
                       {ele.Item}
                     </span>
-                  </p>
-                  <div className="flex flex-row items-center justify-start">
-                    <p className="">
-                      <span className="text-muted-foreground text-xs">PNL</span> <br />
+                    {ele.Profit >= 0 ? (
+                      <span className="bg-profit/20 text-profit px-2.5 py-1 rounded-lg font-semibold uppercase text-xs">
+                        WIN
+                      </span>
+                    ) : (
+                      <span className="bg-loss/20 text-loss px-2.5 py-1 rounded-lg font-semibold uppercase text-xs">
+                        LOSS
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">P&L</span>
                       <span
-                        className={`font-semibold rounded-[10px] px-1.25 py-0.5 ${
+                        className={`text-lg font-bold ${
                           ele.Profit < 0 ? "text-loss" : "text-profit"
                         }`}
                       >
@@ -822,54 +831,38 @@ const blob = await new Promise<Blob | null>((resolve) =>
                           ? `+$${Math.abs(ele.Profit).toFixed(2)}`
                           : `-$${Math.abs(ele.Profit).toFixed(2)}`}
                       </span>
-                    </p>
-                    <div className=" ml-5">
-                      <p className="text-gray-400 text-xs mb-0.5">
-                        RISK:REWARD
-                      </p>
-                      <span className="text-primary font-bold">
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Risk:Reward</span>
+                      <span className="text-primary text-lg font-bold">
                         1:3
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="w-full rounded-[10px] mt-5">
-                  <div className="w-full h-auto flex items-center justify-between font-semibold">
-                    <span className="w-1/3 text-center border-r border-gray-500 py-1.25 text-xs">
-                      RESULT
-                    </span>
-                    <span className="w-1/3 text-center border-r border-gray-500 py-1.25 text-xs">
+                <div className="w-full rounded-xl mt-4 bg-muted/30 overflow-hidden">
+                  <div className="w-full flex items-center justify-between font-medium border-b border-border">
+                    <span className="w-1/2 text-center py-2.5 text-xs text-muted-foreground uppercase tracking-wide">
                       STRATEGY
                     </span>
-                    <span className="w-1/3 text-center py-1.25 text-xs">
+                    <span className="w-1/2 text-center py-2.5 text-xs text-muted-foreground uppercase tracking-wide border-l border-border">
                       QUALITY
                     </span>
                   </div>
-                  <div className="w-full h-10 flex items-center justify-between font-extrabold">
-                    <p className="w-1/3 block text-center">
-                      {ele.Profit >= 0 ? (
-                        <span className="bg-profit/20 text-profit border-none px-2.5 py-0.5 rounded-[10px] font-semibold uppercase text-xs">
-                          WIN
-                        </span>
-                      ) : (
-                        <span className="bg-loss/20 text-loss border-none px-2.5 py-0.5 rounded-[10px] font-semibold uppercase text-xs">
-                          LOSS
-                        </span>
-                      )}
-                    </p>
-                    <div className="w-1/3">
+                  <div className="w-full flex items-center justify-between py-3">
+                    <div className="w-1/2 flex justify-center relative">
                       <span
                         onClick={() => toggleStra(ele.id)}
-                        className="block mx-auto text-xs w-fit px-2 py-1 rounded-full capitalize bg-primary text-white cursor-pointer"
+                        className="text-xs w-fit px-3 py-1.5 rounded-full capitalize bg-primary text-white cursor-pointer"
                       >
                         {ele.strategy} <FontAwesomeIcon icon={faChevronDown} />
                       </span>
                       <div
-                        className={`w-fit ${
+                        className={`${
                           expStra === ele.id
-                            ? "w-28 h-auto flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 visible opacity-100 z-10 shadow-lg"
-                            : "w-28 h-0 flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 invisible opacity-0 z-10"
+                            ? "w-28 h-auto flex flex-col items-center justify-evenly absolute top-full left-1/2 -translate-x-1/2 rounded-lg overflow-hidden bg-card border border-border mt-2 p-2.5 visible opacity-100 z-20 shadow-lg"
+                            : "w-28 h-0 flex flex-col items-center justify-evenly absolute top-full left-1/2 -translate-x-1/2 rounded-lg overflow-hidden bg-card border border-border mt-2 p-2.5 invisible opacity-0 z-20"
                         }`}
                       >
                         {Object.entries(
@@ -899,13 +892,13 @@ const blob = await new Promise<Blob | null>((resolve) =>
                         <StrategyAdd />
                       </div>
                     </div>
-                    <div className="w-1/3 border-r-0">
+                    <div className="w-1/2 flex justify-center relative border-l border-border">
                       {Object.entries(ele.Quality).map(([key, value]) =>
                         value === true ? (
                           <span
                             key={key}
                             onClick={() => toggleSelect(ele.id)}
-                            className="block mx-auto text-xs w-fit px-2 py-1 rounded-full capitalize bg-primary text-white cursor-pointer"
+                            className="text-xs w-fit px-3 py-1.5 rounded-full capitalize bg-primary text-white cursor-pointer"
                           >
                             {key} <FontAwesomeIcon icon={faChevronDown} />
                           </span>
@@ -916,8 +909,8 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       <div
                         className={`${
                           expSelect === ele.id
-                            ? "w-28 h-auto flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 visible opacity-100 z-10 shadow-lg"
-                            : "w-28 h-0 flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 invisible opacity-0 z-10"
+                            ? "w-28 h-auto flex flex-col items-center justify-evenly absolute top-full left-1/2 -translate-x-1/2 rounded-lg overflow-hidden bg-card border border-border mt-2 p-2.5 visible opacity-100 z-20 shadow-lg"
+                            : "w-28 h-0 flex flex-col items-center justify-evenly absolute top-full left-1/2 -translate-x-1/2 rounded-lg overflow-hidden bg-card border border-border mt-2 p-2.5 invisible opacity-0 z-20"
                         }`}
                       >
                         {Object.entries(ele.Quality)
@@ -1094,12 +1087,12 @@ const blob = await new Promise<Blob | null>((resolve) =>
               ${expandedId === ele.id ? "h-90" : "h-0"}`
           }
           >
-            <h2 className="text-white w-fit px-2.5 py-1.25 rounded-[12px] ml-5 mt-6 text-base">
+            <h2 className="text-foreground w-fit px-2.5 py-1.5 rounded-xl ml-5 mt-6 text-base font-semibold">
               LET'S JOURNAL THIS TRADE
             </h2>
 
-            <div className="w-full h-fit flex rounded-[12px] border border-gray-500 overflow-hidden mt-2.5 mb-5">
-              <div className="w-[30%] h-auto flex flex-col items-start justify-between">
+            <div className="w-full h-fit flex rounded-xl border border-border overflow-hidden mt-2.5 mb-5">
+              <div className="w-[30%] h-auto flex flex-col items-start justify-between bg-muted/30">
                 {[
                   "Reason for Entry",
                   "Reason for Exit",
@@ -1110,10 +1103,10 @@ const blob = await new Promise<Blob | null>((resolve) =>
                 ].map((text, idx) => (
                   <div
                     key={idx}
-                    className="w-full flex h-10 items-center justify-start text-white"
+                    className="w-full flex h-10 items-center justify-start text-foreground"
                   >
-                    <FontAwesomeIcon icon={faCircleDot} className="text-xs mr-5 ml-5" />
-                    <p className="text-sm text-blue-400">{text}</p>
+                    <FontAwesomeIcon icon={faCircleDot} className="text-xs mr-5 ml-5 text-primary" />
+                    <p className="text-sm text-primary">{text}</p>
                   </div>
                 ))}
               </div>
@@ -1124,27 +1117,27 @@ const blob = await new Promise<Blob | null>((resolve) =>
                   value={jrData.rfe}
                   name="rfe"
                   onChange={changeJrArray}
-                  className="w-full h-10 flex items-center justify-start text-white bg-transparent border-none outline-none pl-5 font-sans"
+                  className="w-full h-10 flex items-center justify-start text-foreground bg-transparent border-none outline-none pl-5 font-sans placeholder:text-muted-foreground"
                 />
-                <div className="w-full flex h-10 items-start justify-start text-white">
+                <div className="w-full flex h-10 items-start justify-start text-foreground">
                   <span
                     onClick={() => toggleRFE(ele.id)}
-                    className="bg-profit/30 text-profit ml-5 text-xs px-1.25 py-0.5 rounded-[5px] cursor-pointer font-semibold mt-2.5"
+                    className="bg-profit/30 text-profit ml-5 text-xs px-2 py-1 rounded-lg cursor-pointer font-semibold mt-2.5"
                   >
                     {ele.rfe} <FontAwesomeIcon icon={faChevronDown} />
                   </span>
                   <div
                     className={`mt-10 w-fit ${
                       expRFE === ele.id
-                        ? "w-24 h-auto flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white p-2.5 visible opacity-100 z-10"
-                        : "w-24 h-0 flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white p-2.5 invisible opacity-0 z-10"
+                        ? "w-28 h-auto flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border p-2.5 visible opacity-100 z-20 shadow-lg"
+                        : "w-28 h-0 flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border p-2.5 invisible opacity-0 z-20"
                     }`}
                   >
                     {Object.entries((profileData as ProfileData).otherData.rfe)
                       .slice(1)
                       .map(([key, value]) => (
                         <p
-                          className="w-full text-gray-700 border-none bg-transparent transition-all duration-200 px-0.5 py-0.5 text-xs capitalize flex items-center justify-between rounded-[12px] cursor-pointer"
+                          className="w-full text-foreground border-none bg-transparent hover:bg-muted transition-all duration-200 px-1.5 py-1 text-xs capitalize flex items-center justify-between rounded-lg cursor-pointer"
                           key={key}
                         >
                           <span
@@ -1203,12 +1196,12 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       className="w-1/3 flex items-start justify-evenly mt-2.5"
                     >
                       <div className="flex flex-col items-start justify-evenly">
-                        <p className="text-xs text-gray-400 p-0 m-0">
+                        <p className="text-xs text-muted-foreground p-0 m-0">
                           <FontAwesomeIcon icon={faStopwatch} /> {mood.time}
                         </p>
                         <p
                           onClick={() => mood.toggle(ele.id)}
-                          className={`text-xs px-1.25 py-0.5 rounded-[5px] cursor-pointer font-semibold text-white mt-[-3px] ${mood.color}`}
+                          className={`text-xs px-2 py-1 rounded-lg cursor-pointer font-semibold text-foreground mt-1 ${mood.color}`}
                         >
                           {mood.value === "Select" ? "MOOD" : mood.value}{" "}
                           <FontAwesomeIcon icon={faCaretDown}/>
@@ -1216,8 +1209,8 @@ const blob = await new Promise<Blob | null>((resolve) =>
                         <div
                           className={`mt-12 w-fit ${
                             mood.state === ele.id
-                              ? "w-24 h-auto flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white p-2.5 visible opacity-100 z-10"
-                              : "w-24 h-0 flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white p-2.5 invisible opacity-0 z-10"
+                              ? "w-28 h-auto flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border p-2.5 visible opacity-100 z-20 shadow-lg"
+                              : "w-28 h-0 flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border p-2.5 invisible opacity-0 z-20"
                           }`}
                         >
                           {Object.entries(
@@ -1228,7 +1221,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                             .slice(1)
                             .map(([key, value]) => (
                               <p
-                                className="w-full text-gray-700 border-none bg-transparent transition-all duration-200 px-0.5 py-0.5 text-xs capitalize flex items-center justify-between rounded-[12px] cursor-pointer"
+                                className="w-full text-foreground border-none bg-transparent hover:bg-muted transition-all duration-200 px-1.5 py-1 text-xs capitalize flex items-center justify-between rounded-lg cursor-pointer"
                                 key={key}
                               >
                                 <span
@@ -1267,21 +1260,21 @@ const blob = await new Promise<Blob | null>((resolve) =>
                   value={jrData.widw}
                   name="widw"
                   onChange={changeJrArray}
-                  className="w-full h-10 flex items-center justify-start text-white bg-transparent border-none outline-none pl-5 font-sans"
+                  className="w-full h-10 flex items-center justify-start text-foreground bg-transparent border-none outline-none pl-5 font-sans placeholder:text-muted-foreground"
                 />
                 <input
                   placeholder="Add Comments"
                   value={jrData.wni}
                   name="wni"
                   onChange={changeJrArray}
-                  className="w-full h-10 flex items-center justify-start text-white bg-transparent border-none outline-none pl-5 font-sans"
+                  className="w-full h-10 flex items-center justify-start text-foreground bg-transparent border-none outline-none pl-5 font-sans placeholder:text-muted-foreground"
                 />
                 <input
                   placeholder="Add Comments"
                   value={jrData.lfnt}
                   name="lfnt"
                   onChange={changeJrArray}
-                  className="w-full h-10 flex items-center justify-start text-white bg-transparent border-none outline-none pl-5 font-sans"
+                  className="w-full h-10 flex items-center justify-start text-foreground bg-transparent border-none outline-none pl-5 font-sans placeholder:text-muted-foreground"
                 />
               </div>
             </div>
