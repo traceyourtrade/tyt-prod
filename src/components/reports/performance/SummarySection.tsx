@@ -1,12 +1,22 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { 
+  DollarSign, 
+  Percent, 
+  TrendingUp, 
+  Clock, 
+  BarChart3, 
+  Calendar,
+  ArrowDownRight,
+  Target,
+  Activity
+} from 'lucide-react'
 import StatItem from './StatItem'
 import useAccountDetails from '@/store/accountdetails'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
-import { calculateCumulativePnL } from '@/utils/reports/calculateCumulativePnL'
 
-export default function SummarySection({trades=[]}: {trades?: any[]}) {
+export default function SummarySection({ trades = [] }: { trades?: any[] }) {
   const { selectedAccounts } = useAccountDetails()
   const [calculations, setCalculations] = useState<any>({
     netPnL: 0,
@@ -43,58 +53,293 @@ export default function SummarySection({trades=[]}: {trades?: any[]}) {
     if (trades?.length) processData()
   }, [trades])
 
+  const formatValue = (value: any, prefix = '', suffix = '') => {
+    if (value === null || value === undefined || isNaN(value)) return `${prefix}0${suffix}`
+    if (typeof value === 'number') {
+      return `${prefix}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${suffix}`
+    }
+    return `${prefix}${value}${suffix}`
+  }
+
   const stats = [
-    { label: 'Net P&L', value: `$${calculations.netPnL?.toFixed?.(2) ?? '0.00'}`, isDays: false, isTrades: false, isSummary: true, tooltip: 'Total profit and loss' },
-    { label: 'Win %', value: `${(calculations.winPercentage ?? 0).toFixed(2)}%`, isDays: false, isTrades: true, isSummary: true, tooltip: 'Percentage of winning trades' },
-    { label: 'Avg daily win %', value: `${(calculations.avgDailyWinPercentage ?? 0).toFixed(2)}%`, isDays: true, isTrades: false, isSummary: true, tooltip: 'Average daily win percentage' },
-    { label: 'Profit factor', value: (calculations.profitFactor ?? 0).toFixed?.(2) ?? 0, isDays: false, isTrades: false, isSummary: true, tooltip: 'Gross profit / gross loss' },
-    { label: 'Trade expectancy', value: `$${(calculations.tradeExpectancy ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: false, isSummary: true, tooltip: 'Expected value per trade' },
-    { label: 'Avg daily win/loss', value: `$${(calculations.avgDailyWinLoss ?? 0).toFixed?.(2) ?? 0}`, isDays: true, isTrades: false, isSummary: true, tooltip: 'Average win vs loss ratio' },
-    { label: 'Avg trade win/loss', value: `$${(calculations.avgTradeWinLoss ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: true, isSummary: true, tooltip: 'Average trade outcome' },
-    { label: 'Avg hold time', value: calculations.avgHoldTime ?? 'N/A', isDays: false, isTrades: false, isSummary: true, tooltip: 'Average duration of trades' },
-    { label: 'Avg net trade P&L', value: `$${(calculations.avgNetTradePnL ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: true, isSummary: true, tooltip: 'Average profit per trade' },
-    { label: 'Avg daily net P&L', value: `$${(calculations.avgDailyNetPnL ?? 0).toFixed?.(2) ?? 0}`, isDays: true, isTrades: false, isSummary: true, tooltip: 'Average daily profit' },
-    { label: 'Avg. planned r-multiple', value: `${calculations.avgPlannedRMultiple ?? 0}R`, isDays: false, isTrades: false, isSummary: true, tooltip: 'Planned risk-reward ratio' },
-    { label: 'Avg. realized r-multiple', value: `${calculations.avgRealizedRMultiple ?? 0}R`, isDays: false, isTrades: false, isSummary: true, tooltip: 'Actual risk-reward ratio' },
-    { label: 'Avg daily volume', value: (calculations.avgDailyVolume ?? 0).toFixed?.(2) ?? 0, isDays: false, isTrades: false, isSummary: true, tooltip: 'Average contracts/shares traded' },
-    { label: 'Logged days', value: (calculations.loggedDays ?? 0).toString(), isDays: false, isTrades: false, isSummary: true, tooltip: 'Days with journal entries' },
-    { label: 'Max daily net drawdown', value: `$${(calculations.maxDailyNetDrawdown ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: false, isSummary: true, tooltip: 'Maximum single-day loss' },
-    { label: 'Avg daily net drawdown', value: `$${(calculations.avgDailyNetDrawdown ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: false, isSummary: true, tooltip: 'Average daily drawdown' },
+    { 
+      label: 'Net P&L', 
+      value: formatValue(calculations.netPnL, '$'),
+      icon: <DollarSign className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Total profit and loss',
+      variant: calculations.netPnL >= 0 ? 'profit' : 'loss'
+    },
+    { 
+      label: 'Win %', 
+      value: formatValue(calculations.winPercentage, '', '%'),
+      icon: <Percent className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: true, 
+      isSummary: true, 
+      tooltip: 'Percentage of winning trades',
+      variant: 'default'
+    },
+    { 
+      label: 'Avg daily win %', 
+      value: formatValue(calculations.avgDailyWinPercentage, '', '%'),
+      icon: <TrendingUp className="h-4 w-4" />,
+      isDays: true, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Average daily win percentage',
+      variant: 'default'
+    },
+    { 
+      label: 'Profit factor', 
+      value: formatValue(calculations.profitFactor),
+      icon: <Activity className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Gross profit / gross loss',
+      variant: 'default'
+    },
+    { 
+      label: 'Trade expectancy', 
+      value: formatValue(calculations.tradeExpectancy, '$'),
+      icon: <Target className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Expected value per trade',
+      variant: calculations.tradeExpectancy >= 0 ? 'profit' : 'loss'
+    },
+    { 
+      label: 'Avg daily win/loss', 
+      value: formatValue(calculations.avgDailyWinLoss, '$'),
+      icon: <BarChart3 className="h-4 w-4" />,
+      isDays: true, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Average win vs loss ratio',
+      variant: 'default'
+    },
+    { 
+      label: 'Avg trade win/loss', 
+      value: formatValue(calculations.avgTradeWinLoss, '$'),
+      icon: <BarChart3 className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: true, 
+      isSummary: true, 
+      tooltip: 'Average trade outcome',
+      variant: 'default'
+    },
+    { 
+      label: 'Avg hold time', 
+      value: calculations.avgHoldTime ?? 'N/A',
+      icon: <Clock className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Average duration of trades',
+      variant: 'default'
+    },
+    { 
+      label: 'Avg net trade P&L', 
+      value: formatValue(calculations.avgNetTradePnL, '$'),
+      icon: <DollarSign className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: true, 
+      isSummary: true, 
+      tooltip: 'Average profit per trade',
+      variant: calculations.avgNetTradePnL >= 0 ? 'profit' : 'loss'
+    },
+    { 
+      label: 'Avg daily net P&L', 
+      value: formatValue(calculations.avgDailyNetPnL, '$'),
+      icon: <DollarSign className="h-4 w-4" />,
+      isDays: true, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Average daily profit',
+      variant: calculations.avgDailyNetPnL >= 0 ? 'profit' : 'loss'
+    },
+    { 
+      label: 'Avg. planned r-multiple', 
+      value: `${calculations.avgPlannedRMultiple ?? 0}R`,
+      icon: <Target className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Planned risk-reward ratio',
+      variant: 'default'
+    },
+    { 
+      label: 'Avg. realized r-multiple', 
+      value: `${calculations.avgRealizedRMultiple ?? 0}R`,
+      icon: <Target className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Actual risk-reward ratio',
+      variant: 'default'
+    },
+    { 
+      label: 'Avg daily volume', 
+      value: formatValue(calculations.avgDailyVolume),
+      icon: <BarChart3 className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Average contracts/shares traded',
+      variant: 'default'
+    },
+    { 
+      label: 'Logged days', 
+      value: (calculations.loggedDays ?? 0).toString(),
+      icon: <Calendar className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Days with journal entries',
+      variant: 'default'
+    },
+    { 
+      label: 'Max daily net drawdown', 
+      value: formatValue(calculations.maxDailyNetDrawdown, '$'),
+      icon: <ArrowDownRight className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Maximum single-day loss',
+      variant: 'loss'
+    },
+    { 
+      label: 'Avg daily net drawdown', 
+      value: formatValue(calculations.avgDailyNetDrawdown, '$'),
+      icon: <ArrowDownRight className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: false, 
+      isSummary: true, 
+      tooltip: 'Average daily drawdown',
+      variant: 'loss'
+    },
   ]
 
   const daysExtra = [
-    { label: 'Largest profitable day', value: `$${(calculations.maxDailyProfit ?? 0).toFixed?.(2) ?? 0}`, isDays: true, isTrades: false, tooltip: 'Largest single-day profit' },
-    { label: 'Largest losing day', value: `$${(calculations.maxDailyLoss ?? 0).toFixed?.(2) ?? 0}`, isDays: true, isTrades: false, tooltip: 'Largest single-day loss' },
+    { 
+      label: 'Largest profitable day', 
+      value: formatValue(calculations.maxDailyProfit, '$'),
+      icon: <TrendingUp className="h-4 w-4" />,
+      isDays: true, 
+      isTrades: false, 
+      tooltip: 'Largest single-day profit',
+      variant: 'profit'
+    },
+    { 
+      label: 'Largest losing day', 
+      value: formatValue(calculations.maxDailyLoss, '$'),
+      icon: <ArrowDownRight className="h-4 w-4" />,
+      isDays: true, 
+      isTrades: false, 
+      tooltip: 'Largest single-day loss',
+      variant: 'loss'
+    },
   ]
 
   const tradesExtra = [
-    { label: 'Longest trade duration', value: `${calculations.maxTradeDuration ?? 0}`, isDays: false, isTrades: true, tooltip: 'Longest held trade' },
-    { label: 'Trade expectancy', value: `${(calculations.tradeExpectancy ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: true, tooltip: 'Trade expectancy' },
-    { label: 'Average trading days duration', value: `${calculations.avgDailyHoldTime ?? ''}`, isDays: true, isTrades: false, tooltip: 'Average trading days duration' },
-    { label: 'Largest profitable trade', value: `$${(calculations.maxTradeProfit ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: true, tooltip: 'Largest Profit ever got in a single day' },
-    { label: 'Largest Losing trade', value: `$${(calculations.maxTradeLoss ?? 0).toFixed?.(2) ?? 0}`, isDays: false, isTrades: true, tooltip: 'Largest loss ever got in a single day' },
+    { 
+      label: 'Longest trade duration', 
+      value: `${calculations.maxTradeDuration ?? 0}`,
+      icon: <Clock className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: true, 
+      tooltip: 'Longest held trade',
+      variant: 'default'
+    },
+    { 
+      label: 'Trade expectancy', 
+      value: formatValue(calculations.tradeExpectancy),
+      icon: <Target className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: true, 
+      tooltip: 'Trade expectancy',
+      variant: 'default'
+    },
+    { 
+      label: 'Average trading days duration', 
+      value: `${calculations.avgDailyHoldTime ?? ''}`,
+      icon: <Clock className="h-4 w-4" />,
+      isDays: true, 
+      isTrades: false, 
+      tooltip: 'Average trading days duration',
+      variant: 'default'
+    },
+    { 
+      label: 'Largest profitable trade', 
+      value: formatValue(calculations.maxTradeProfit, '$'),
+      icon: <TrendingUp className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: true, 
+      tooltip: 'Largest profit ever got in a single trade',
+      variant: 'profit'
+    },
+    { 
+      label: 'Largest Losing trade', 
+      value: formatValue(calculations.maxTradeLoss, '$'),
+      icon: <ArrowDownRight className="h-4 w-4" />,
+      isDays: false, 
+      isTrades: true, 
+      tooltip: 'Largest loss ever got in a single trade',
+      variant: 'loss'
+    },
   ]
 
   const [activeTab, setActiveTab] = useState('Summary')
 
+  const tabOptions = [
+    { id: 'Summary', label: 'Summary' },
+    { id: 'Days', label: 'Days' },
+    { id: 'Trades', label: 'Trades' },
+  ]
+
   return (
-    <div>
-      <div className="flex gap-2 mb-4">
-        <button onClick={() => setActiveTab('Summary')} className={`px-3 py-1 rounded-md ${activeTab === 'Summary' ? 'bg-emerald-600 text-white' : 'bg-transparent text-gray-300 border border-[#333]'}`}>Summary</button>
-        <button onClick={() => setActiveTab('Days')} className={`px-3 py-1 rounded-md ${activeTab === 'Days' ? 'bg-emerald-600 text-white' : 'bg-transparent text-gray-300 border border-[#333]'}`}>Days</button>
-        <button onClick={() => setActiveTab('Trades')} className={`px-3 py-1 rounded-md ${activeTab === 'Trades' ? 'bg-emerald-600 text-white' : 'bg-transparent text-gray-300 border border-[#333]'}`}>Trades</button>
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      {/* Tab Header */}
+      <div className="flex items-center gap-1 p-2 border-b border-border bg-muted/30">
+        {tabOptions.map((tab) => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)} 
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              activeTab === tab.id 
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...stats, ...tradesExtra, ...daysExtra].map((stat, index) => {
-          const s = stat as any
-          if ((activeTab === 'Summary' && s.isSummary) || (activeTab === 'Days' && s.isDays) || (activeTab === 'Trades' && s.isTrades)) {
-            return (
-              <StatItem key={index} label={s.label} value={s.value} infoTooltip={s.tooltip} />
-            )
-          }
-          return null
-        })}
+      {/* Stats Grid */}
+      <div className="p-4 md:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {[...stats, ...tradesExtra, ...daysExtra].map((stat, index) => {
+            const s = stat as any
+            if ((activeTab === 'Summary' && s.isSummary) || (activeTab === 'Days' && s.isDays) || (activeTab === 'Trades' && s.isTrades)) {
+              return (
+                <StatItem 
+                  key={index} 
+                  label={s.label} 
+                  value={s.value} 
+                  icon={s.icon}
+                  infoTooltip={s.tooltip}
+                  variant={s.variant}
+                />
+              )
+            }
+            return null
+          })}
+        </div>
       </div>
     </div>
   )

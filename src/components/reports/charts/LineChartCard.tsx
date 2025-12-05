@@ -1,5 +1,7 @@
 // components/charts/LineChartCard.tsx
-import React from "react";
+"use client"
+
+import React, { useEffect, useState } from "react";
 import { LineChart, areaElementClasses } from "@mui/x-charts/LineChart";
 import {
   axisClasses,
@@ -37,16 +39,14 @@ interface ColorSwitchProps {
   data: ChartData[];
 }
 
-function ColorSwitch({ threshold=0, color1, color2, id,data }: ColorSwitchProps) {
+function ColorSwitch({ threshold = 0, color1, color2, id, data }: ColorSwitchProps) {
   const { top, height, bottom } = useDrawingArea();
   const svgHeight = top + bottom + height;
 
-  const scale = useYScale(); // Debugging line to check the scale function
-  const y0 = scale(threshold)|| 0;
+  const scale = useYScale();
+  const y0 = scale(threshold) || 0;
 
-  // Fix: Ensure offset is always a valid number between 0 and 1
-  const off = y0 / svgHeight// Default to middle if calculation fails
-  console.log("data",data.length,"Offset:", off); // Debugging line to check the offset value
+  const off = y0 / svgHeight;
 
   return (
     <defs>
@@ -76,7 +76,27 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
   isArea = true,
   styles
 }) => {
-  // Ensure data is valid before processing
+  const [colors, setColors] = useState({
+    primary: "#2563EB",
+    profit: "#22C55E",
+    loss: "#EF4444",
+    chartText: "#9CA3AF",
+    border: "#262626"
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const computedStyle = getComputedStyle(document.documentElement);
+      setColors({
+        primary: computedStyle.getPropertyValue('--primary').trim() || "#2563EB",
+        profit: computedStyle.getPropertyValue('--profit').trim() || "#22C55E",
+        loss: computedStyle.getPropertyValue('--loss').trim() || "#EF4444",
+        chartText: computedStyle.getPropertyValue('--chart-text').trim() || "#9CA3AF",
+        border: computedStyle.getPropertyValue('--border').trim() || "#262626"
+      });
+    }
+  }, []);
+
   const validData = Array.isArray(data) ? data.filter(item => item !== null && item !== undefined) : [];
   
   const sortedData = [...validData].sort((a, b) => {
@@ -92,8 +112,8 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
   const xLabels = sortedData.map((d) => d.x || d.date || "").filter(Boolean);
 
   return (
-    <div>
-      <div style={{ width: "100%", height: 300 }}>
+    <div className="w-full h-full">
+      <div style={{ width: "100%", height: "100%" }}>
         <LineChart
           xAxis={[
             {
@@ -115,38 +135,55 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
               label: yLabel,
               area: isArea,
               showMark: true,
-              color: "#4EBF94",
+              color: colors.primary,
             },
           ]}
           sx={{
-            [`.${axisClasses.left} .${axisClasses.label}`]: { fill: "#fff" },
-            [`.${axisClasses.bottom} .${axisClasses.label}`]: { fill: "#fff" },
-            [`.${axisClasses.left} .${axisClasses.tickLabel}`]: { fill: "#fff" },
-            [`.${axisClasses.bottom} .${axisClasses.tickLabel}`]: { fill: "#fff" },
-            [`.${axisClasses.left} .${axisClasses.line}`]: { stroke: "#fff" },
-            [`.${axisClasses.bottom} .${axisClasses.line}`]: { stroke: "#fff" },
-            [`.${chartsGridClasses.horizontalLine}`]: {
-              stroke: "#ffffff80",
-              strokeDasharray: "5 3",
+            [`.${axisClasses.left} .${axisClasses.label}`]: { 
+              fill: colors.chartText
             },
-            [`.${legendClasses.root}`]: { color: "#fff" },
+            [`.${axisClasses.bottom} .${axisClasses.label}`]: { 
+              fill: colors.chartText
+            },
+            [`.${axisClasses.left} .${axisClasses.tickLabel}`]: { 
+              fill: colors.chartText,
+              fontSize: 11 
+            },
+            [`.${axisClasses.bottom} .${axisClasses.tickLabel}`]: { 
+              fill: colors.chartText,
+              fontSize: 11 
+            },
+            [`.${axisClasses.left} .${axisClasses.line}`]: { 
+              stroke: colors.border
+            },
+            [`.${axisClasses.bottom} .${axisClasses.line}`]: { 
+              stroke: colors.border
+            },
+            [`.${chartsGridClasses.horizontalLine}`]: {
+              stroke: colors.border,
+              strokeDasharray: "4 4",
+              strokeOpacity: 0.5
+            },
+            [`.${legendClasses.root}`]: { 
+              display: "none"
+            },
             [`.${markElementClasses.root}`]: {
-              strokeWidth: 1,
-              fill: "#28b384ff",
-              r: 2,
+              strokeWidth: 2,
+              fill: colors.primary,
+              r: 3,
             },
             [`& .${areaElementClasses.root}`]: {
               fill: "url(#switch-color-id-1)",
+              opacity: 0.3
             },
-            background: "#212122ff",
+            background: "transparent",
             borderRadius: 8,
-            textColor: "white",
             ...styles
           }}
         >
           <ColorSwitch
-            color1="#11B678"
-            color2="#FF3143"
+            color1={colors.profit}
+            color2={colors.loss}
             threshold={0}
             id="switch-color-id-1"
             data={sortedData}

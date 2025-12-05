@@ -1,6 +1,13 @@
 "use client"
 
 import { useMemo } from 'react'
+import { 
+  TrendingUp, 
+  BarChart3, 
+  Plus, 
+  MoreHorizontal,
+  ChevronDown
+} from 'lucide-react'
 import LineChartCard from '@/components/reports/charts/LineChartCard'
 import BarChartCard from '@/components/reports/charts/BarChartCard'
 import SummarySection from './SummarySection'
@@ -13,12 +20,10 @@ type Props = {
 }
 
 export default function PerformanceMain({ metric = 'pnl', type = 'gross' }: Props) {
-  
   const { selectedAccounts } = useAccountDetails()
-  const trades =  selectedAccounts.flatMap((account: any) => account.tradeData || [])
+  const trades = selectedAccounts.flatMap((account: any) => account.tradeData || [])
 
-
-  const netPLData = useMemo(() => calculateCumulativePnL(trades as any,"performance"), [trades])
+  const netPLData = useMemo(() => calculateCumulativePnL(trades as any), [trades])
 
   const avgDailyData = useMemo(() => {
     const map: Record<string, { date: string; value: number; count: number }> = {}
@@ -31,45 +36,113 @@ export default function PerformanceMain({ metric = 'pnl', type = 'gross' }: Prop
     return Object.values(map).map((d) => ({ date: d.date, value: parseFloat((d.value / Math.max(1, d.count)).toFixed(2)) }))
   }, [trades])
 
-  const chartWrapper = ({ title, yLabel, line }: { title: string; yLabel: string; line?: boolean }) => {
-    return (
-      <div className="bg-[#121212] rounded-xl p-4 border border-[#333] flex-1">
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">📈</span>
-            <select className="bg-transparent text-white border border-[#333] rounded px-2 py-1 text-sm" disabled>
-              <option>{title}</option>
-            </select>
-            <button className="ml-2 bg-[#1a3a2d] text-[#878a89] rounded px-2 py-1 text-sm" disabled>+ Add metric</button>
-          </div>
-          <div className="flex items-center gap-2">
-            <select className="bg-transparent text-white border border-[#333] rounded px-2 py-1 text-sm" disabled>
-              <option>Day</option>
-            </select>
-            <button className="text-gray-400 text-xl" disabled>⋯</button>
-          </div>
-        </div>
-        <div className="h-72">
-          {(() => {
-            const LC: any = LineChartCard
-            const BC: any = BarChartCard
-            return line ? <LC data={netPLData as any} xLabel="date" yLabel="Net P&L" styles={{}} /> : <BC data={avgDailyData as any} xLabel="date" yLabel="Avg Daily" styles={{}} />
-          })()}
-        </div>
-        <div className="mt-3 flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span className="text-sm text-gray-300">{yLabel}</span>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row gap-4">
-        {chartWrapper({ title: 'Net P&L - cumulative', yLabel: 'Net P&L', line: true })}
-        {chartWrapper({ title: 'Avg Daily Win/Loss', yLabel: 'Avg Daily Win/Loss', line: false })}
+    <div className="space-y-6">
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Net P&L Chart */}
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          {/* Chart Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-sm font-medium text-foreground hover:bg-muted/80 transition-colors">
+                  Net P&L - cumulative
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-primary hover:bg-primary/5 transition-colors">
+                <Plus className="h-3.5 w-3.5" />
+                Add metric
+              </button>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-sm font-medium text-foreground hover:bg-muted/80 transition-colors">
+                Day
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+              <button className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Chart Content */}
+          <div className="p-4">
+            <div className="h-64 md:h-72">
+              <LineChartCard 
+                data={netPLData as any} 
+                xLabel="date" 
+                yLabel="Net P&L" 
+                styles={{}} 
+              />
+            </div>
+            {/* Legend */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+              <span className="text-sm text-muted-foreground">Net P&L</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Avg Daily Win/Loss Chart */}
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          {/* Chart Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-profit/10 flex items-center justify-center">
+                <BarChart3 className="h-4 w-4 text-profit" />
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-sm font-medium text-foreground hover:bg-muted/80 transition-colors">
+                  Avg Daily Win/Loss
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-primary hover:bg-primary/5 transition-colors">
+                <Plus className="h-3.5 w-3.5" />
+                Add metric
+              </button>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg text-sm font-medium text-foreground hover:bg-muted/80 transition-colors">
+                Day
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
+              <button className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Chart Content */}
+          <div className="p-4">
+            <div className="h-64 md:h-72">
+              <BarChartCard 
+                data={avgDailyData as any} 
+                xLabel="date" 
+                yLabel="Avg Daily"
+              />
+            </div>
+            {/* Legend */}
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-sm bg-profit" />
+                <span className="text-sm text-muted-foreground">Avg Daily (Positive)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-sm bg-loss" />
+                <span className="text-sm text-muted-foreground">Avg Daily (Negative)</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Summary Section */}
       <SummarySection trades={trades} />
     </div>
   )
