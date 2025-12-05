@@ -6,7 +6,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, DoughnutController } fro
 import { DollarSign, Target, Activity, Wallet, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TinyChart from "./TinyChart";
-import { formatCompactNumber } from "@/utils/formatNumber";
+import useCurrencyStore, { formatCurrencyValue, formatCompactCurrency } from "@/store/currencyStore";
 
 ChartJS.register(DoughnutController, ArcElement, Tooltip, Legend);
 
@@ -118,14 +118,17 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   rrRatio, 
   accBal, 
 }) => {
+  const { currency, exchangeRate } = useCurrencyStore();
+  
   const numericPnl = typeof pnl === 'string' ? parseFloat(pnl) : pnl;
   const winrate = winners || losers ? ((winners / (winners + losers)) * 100).toFixed(1) : '0';
   const totalTrades = winners + losers;
-  
-  const pnlFormatted = '$' + formatCompactNumber(Math.abs(numericPnl), 2);
-
   const balanceValue = typeof accBal === 'string' ? parseFloat(accBal) : accBal;
-  const balanceFormatted = '$' + formatCompactNumber(balanceValue, 2);
+  
+  const pnlFormatted = formatCurrencyValue(Math.abs(numericPnl), currency, exchangeRate, balanceValue);
+  const balanceFormatted = formatCurrencyValue(balanceValue, currency, exchangeRate);
+  const avgProfitFormatted = formatCompactCurrency(avgProfits || 0, currency, exchangeRate);
+  const avgLossFormatted = formatCompactCurrency(Math.abs(avgLoses || 0), currency, exchangeRate);
 
   const dataWinLoss = {
     labels: ["Wins", "Losses"],
@@ -163,21 +166,19 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      {/* Net P&L */}
       <StatCard
         title="Net P&L"
-        value={numericPnl >= 0 ? pnlFormatted : `-${pnlFormatted}`}
+        value={numericPnl >= 0 ? pnlFormatted : pnlFormatted.replace(/^([₹$])/, '-$1')}
         icon={<DollarSign className="w-4 h-4" />}
         iconColor="emerald"
         valueType={numericPnl > 0 ? 'profit' : numericPnl < 0 ? 'loss' : 'neutral'}
-        subtitle={numericPnl !== 0 ? `${numericPnl >= 0 ? '+' : ''}${((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1)}% return` : 'No change'}
+        subtitle={numericPnl !== 0 ? `${numericPnl >= 0 ? '+' : ''}${((numericPnl / (balanceValue || 1)) * 100).toFixed(1)}% return` : 'No change'}
       >
         <div className="w-16 h-8">
           <TinyChart data={data} />
         </div>
       </StatCard>
 
-      {/* Win Rate - Large Gauge Style */}
       <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border">
         <div className="flex items-center gap-2 mb-1.5">
           <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
@@ -205,7 +206,6 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         </div>
       </div>
 
-      {/* Profit Factor */}
       <StatCard
         title="Profit Factor"
         value={typeof profitF === 'number' ? profitF.toFixed(2) : profitF}
@@ -215,7 +215,6 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         status={profitFactorNum >= 1.5 ? "Profitable" : profitFactorNum < 1 ? "Losing" : "Breakeven"}
       />
 
-      {/* Account Balance */}
       <StatCard
         title="Account Balance"
         value={balanceFormatted}
@@ -228,7 +227,6 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         </div>
       </StatCard>
 
-      {/* Risk:Reward */}
       <StatCard
         title="Risk : Reward"
         value={typeof rrRatio === 'number' ? `1:${rrRatio.toFixed(1)}` : `1:${rrRatio}`}
@@ -248,10 +246,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
           </div>
           <div className="flex justify-between mt-1.5">
             <span className="text-[9px] text-profit font-medium">
-              +${formatCompactNumber(avgProfits || 0, 0)}
+              +{avgProfitFormatted}
             </span>
             <span className="text-[9px] text-loss font-medium">
-              -${formatCompactNumber(Math.abs(avgLoses || 0), 0)}
+              -{avgLossFormatted}
             </span>
           </div>
         </div>

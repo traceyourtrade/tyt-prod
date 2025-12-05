@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
 import calendarPopUp from "@/store/calendarPopUp";
 import datesforcal from "@/store/datesforcal";
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 interface Trade {
   date: string;
@@ -30,6 +31,7 @@ const Calendar = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { setcalMonth, setcalYear } = datesforcal();
   const { selectedAccounts } = useAccountDetails();
+  const { currency, exchangeRate } = useCurrencyStore();
 
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: Record<string, GroupedTrade>, trade: Trade) => {
@@ -71,12 +73,8 @@ const Calendar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('en-US', {
-      notation: 'compact',
-      compactDisplay: 'short',
-      maximumFractionDigits: 1,
-    }).format(num);
+  const formatCurrencyDisplay = (num: number) => {
+    return formatCompactCurrency(Math.abs(num), currency, exchangeRate);
   };
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -176,7 +174,7 @@ const Calendar = () => {
                 "text-[10px] sm:text-sm font-bold mt-0.5",
                 isProfit ? "text-profit" : isLoss ? "text-loss" : "text-muted-foreground"
               )}>
-                ${formatCurrency(Math.abs(dayData.profit))}
+                {formatCurrencyDisplay(dayData.profit)}
               </span>
               <span className="text-[8px] sm:text-[9px] text-muted-foreground/70 hidden sm:block">
                 {dayData.tradeLength} {dayData.tradeLength === 1 ? 'trade' : 'trades'}
@@ -224,7 +222,6 @@ const Calendar = () => {
 
   return (
     <div className="flex-1 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-5 overflow-hidden">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4 sm:mb-5">
         <button 
           onClick={handlePrevMonth}
@@ -322,11 +319,8 @@ const Calendar = () => {
         </button>
       </div>
 
-      {/* Calendar Grid */}
       <div className="flex gap-2 sm:gap-3 mb-4">
-        {/* Main Calendar */}
         <div className="flex-1 min-w-0">
-          {/* Day Headers */}
           <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1 sm:mb-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <div key={day} className="text-center text-[8px] sm:text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider py-1 sm:py-2">
@@ -334,13 +328,11 @@ const Calendar = () => {
               </div>
             ))}
           </div>
-          {/* Calendar Days */}
           <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
             {renderCalendar()}
           </div>
         </div>
 
-        {/* Weekly Summary - Hidden on mobile */}
         <div className="hidden sm:flex w-[72px] flex-col gap-1.5 pt-8">
           {weeklyProfits.map((profit, index) => (
             <div
@@ -357,14 +349,13 @@ const Calendar = () => {
                 "text-xs font-bold mt-0.5",
                 profit > 0 ? "text-profit" : profit < 0 ? "text-loss" : "text-muted-foreground/50"
               )}>
-                {profit !== 0 ? `$${formatCurrency(Math.abs(profit))}` : '$0'}
+                {profit !== 0 ? formatCurrencyDisplay(profit) : formatCompactCurrency(0, currency, exchangeRate)}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Monthly Stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-3 border-t border-border/50">
         <div className="bg-muted/20 rounded-xl p-2.5 sm:p-3 text-center">
           <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
@@ -378,7 +369,7 @@ const Calendar = () => {
             "text-sm sm:text-lg font-bold",
             monthlyStats.totalPnL >= 0 ? "text-profit" : "text-loss"
           )}>
-            {monthlyStats.totalPnL >= 0 ? "+" : "-"}${formatCurrency(Math.abs(monthlyStats.totalPnL))}
+            {monthlyStats.totalPnL >= 0 ? "+" : "-"}{formatCurrencyDisplay(monthlyStats.totalPnL)}
           </p>
         </div>
 

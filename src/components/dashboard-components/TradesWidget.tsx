@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import useCurrencyStore, { formatCurrencyValue, currencySymbols } from "@/store/currencyStore";
 
 interface TradeData {
   date: string;
@@ -17,17 +18,33 @@ interface TradesWidgetProps {
 
 const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
   const [activeTab, setActiveTab] = useState<"recentTrades" | "openPositions">("recentTrades");
+  const { currency, exchangeRate } = useCurrencyStore();
 
   const formatProfit = (profit: number) => {
-    const formatted = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(Math.abs(profit));
+    let displayValue = profit;
+    if (currency === "INR") {
+      displayValue = profit * exchangeRate;
+    }
     
-    if (profit < 0) return `-${formatted}`;
-    if (profit > 0) return `+${formatted}`;
-    return formatted;
+    const symbol = currencySymbols[currency];
+    const absValue = Math.abs(displayValue);
+    
+    let formatted: string;
+    if (currency === "INR") {
+      if (absValue >= 100000) {
+        formatted = `${(absValue / 100000).toFixed(2)}L`;
+      } else if (absValue >= 1000) {
+        formatted = `${(absValue / 1000).toFixed(1)}K`;
+      } else {
+        formatted = absValue.toFixed(2);
+      }
+    } else {
+      formatted = absValue.toFixed(2);
+    }
+    
+    if (profit < 0) return `-${symbol}${formatted}`;
+    if (profit > 0) return `+${symbol}${formatted}`;
+    return `${symbol}${formatted}`;
   };
 
   const formatDate = (dateStr: string) => {
@@ -42,7 +59,6 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
 
   return (
     <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
-      {/* Tab Header */}
       <div className="flex border-b border-border/50">
         <button
           className={cn(
@@ -74,7 +90,6 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
         </button>
       </div>
 
-      {/* Content */}
       <div className="max-h-[260px] overflow-y-auto scrollbar-thin">
         {activeTab === "recentTrades" ? (
           recentTrades.length > 0 ? (
