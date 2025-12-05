@@ -251,9 +251,9 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
   return (
     <div className="w-full min-h-[70vh] text-foreground flex flex-col gap-6">
       {/* Header Section */}
-      <div className="flex justify-between items-center flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Target className="h-5 w-5 text-primary" />
           </div>
           <div>
@@ -262,21 +262,21 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           <button 
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all shadow-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all shadow-sm touch-manipulation"
             onClick={() => setShowPopup(true)}
           >
             <Plus className="h-4 w-4" />
             Add Strategy
           </button>
 
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search strategies..."
-              className="pl-10 pr-4 py-2.5 bg-muted border border-border text-foreground rounded-lg text-sm outline-none w-[220px] transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
+              className="pl-10 pr-4 py-2.5 bg-muted border border-border text-foreground rounded-lg text-sm outline-none w-full sm:w-[220px] transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
