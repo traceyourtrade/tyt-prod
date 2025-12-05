@@ -22,7 +22,12 @@ const nextConfig: NextConfig = {
   },
 
   // Allow all dev origins for Replit proxy environment
-  allowedDevOrigins: ["*"],
+  allowedDevOrigins: [
+    process.env.REPLIT_DEV_DOMAIN || "",
+    "*.replit.dev",
+    "127.0.0.1",
+    "localhost",
+  ].filter(Boolean),
 };
 
 export default nextConfig;
