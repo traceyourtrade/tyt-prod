@@ -21,7 +21,9 @@ import {
   MessageSquare,
   Plus,
   Target,
-  Search
+  Search,
+  Trash2,
+  X
 } from "lucide-react";
 
 import useAccountDetails from "@/store/accountdetails";
@@ -207,6 +209,30 @@ const JRContent = ({ dailyData }: JRContentProps) => {
   const handleFileSelect = (file: File, id: string, imgType: string, accountType: string) => {
     if (!file?.type.startsWith("image/")) return;
     compressAndUploadImage(file, id, imgType, accountType);
+  };
+
+  const deleteScreenshot = async (id: string, imgType: string, accountType: string) => {
+    try {
+      const res = await fetch(`/api/daily-journal/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          id, 
+          type: imgType, 
+          value: "", 
+          tokenn, 
+          accountType, 
+          apiName: "editDropdowns" 
+        }),
+      });
+      if (res.ok) {
+        setAccounts();
+        setAlertBoxG("Screenshot deleted", "success");
+      }
+    } catch (error) {
+      console.error(error);
+      setAlertBoxG("Failed to delete screenshot", "error");
+    }
   };
 
   const postDropOptions = async (id: string, value: string, type: string, accountType: string) => {
@@ -594,7 +620,29 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                       fill
                                       className="object-cover transition-transform group-hover:scale-105"
                                     />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
+                                    {/* Delete Button */}
+                                    <button
+                                      onClick={() => deleteScreenshot(trade.id, `${type}URL`, trade.accountType)}
+                                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-loss/90 text-white opacity-0 group-hover:opacity-100 hover:bg-loss transition-all shadow-lg"
+                                      title="Delete screenshot"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    {/* Replace Button */}
+                                    <label className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-white/90 dark:bg-card/90 text-foreground opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-card transition-all shadow-lg cursor-pointer">
+                                      <Upload className="w-3.5 h-3.5" />
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          if (e.target.files?.[0]) {
+                                            handleFileSelect(e.target.files[0], trade.id, `${type}URL`, trade.accountType);
+                                          }
+                                        }}
+                                      />
+                                    </label>
                                   </div>
                                 ) : (
                                   <label className="group flex flex-col items-center justify-center aspect-[4/3] rounded-lg border-2 border-dashed border-border/60 bg-muted/30 cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-all">
