@@ -140,9 +140,9 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
     datasets: [
       {
         data: [winners, losers],
-        backgroundColor: ["rgba(255, 255, 255, 0.15)", "rgba(255, 255, 255, 0.05)"],
-        hoverBackgroundColor: ["rgba(255, 255, 255, 0.25)", "rgba(255, 255, 255, 0.1)"],
-        borderColor: ["rgba(255, 255, 255, 0.3)", "rgba(255, 255, 255, 0.15)"],
+        backgroundColor: ["rgba(34, 197, 94, 0.7)", "rgba(239, 68, 68, 0.7)"],
+        hoverBackgroundColor: ["rgba(34, 197, 94, 0.9)", "rgba(239, 68, 68, 0.9)"],
+        borderColor: ["rgba(34, 197, 94, 1)", "rgba(239, 68, 68, 1)"],
         borderWidth: 1,
         spacing: 2,
       },
@@ -196,8 +196,8 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         <div className="relative w-12 h-7">
           <Doughnut data={dataWinLoss} options={optionsWinLoss} />
           <div className="absolute -bottom-0.5 left-0 right-0 flex justify-between px-0.5">
-            <span className="text-[8px] font-medium text-muted-foreground">{winners}W</span>
-            <span className="text-[8px] font-medium text-muted-foreground">{losers}L</span>
+            <span className="text-[8px] font-medium text-profit">{winners}W</span>
+            <span className="text-[8px] font-medium text-loss">{losers}L</span>
           </div>
         </div>
       </StatCard>
