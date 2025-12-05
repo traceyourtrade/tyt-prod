@@ -203,7 +203,7 @@ const Profile = () => {
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
+        className={`w-full bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white font-medium placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
           disabled ? 'opacity-60 cursor-not-allowed' : ''
         }`}
       />
@@ -215,15 +215,15 @@ const Profile = () => {
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
           <div>
-            <h2 className="text-lg lg:text-xl font-bold text-white">Profile Details</h2>
+            <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white">Profile Details</h2>
             <p className="text-gray-500 text-xs lg:text-sm mt-1">Manage your personal information</p>
           </div>
           <button
             onClick={() => setIsEditing(!isEditing)}
             className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto ${
               isEditing 
-                ? "bg-gray-700 text-gray-300 hover:bg-gray-600" 
-                : "bg-[#1e1e1e] text-gray-300 hover:bg-[#252525] border border-[#2a2a2a]"
+                ? "bg-gray-200 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-[#333333]" 
+                : "bg-gray-100 dark:bg-[#1a1a1a] text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-[#252525] border border-gray-200 dark:border-[#262626]"
             }`}
           >
             <FontAwesomeIcon icon={faPen} className="text-xs" />
@@ -233,7 +233,7 @@ const Profile = () => {
 
         {(error || success) && (
           <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium ${
-            error ? "bg-red-500/15 text-red-400 border border-red-500/30" : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+            error ? "bg-red-500/15 text-red-500 dark:text-red-400 border border-red-500/30" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
           }`}>
             {error || success}
           </div>
@@ -241,7 +241,7 @@ const Profile = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
           <div className="lg:col-span-4">
-            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
+            <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
               <div className="flex flex-row lg:flex-col items-center gap-4 lg:gap-0">
                 {profilePicture ? (
                   <div 
@@ -250,7 +250,7 @@ const Profile = () => {
                     onClick={() => { setProImg(); document.body.classList.add("no-scroll"); setProUrl(profilePicture) }}
                   />
                 ) : (
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl bg-[#252525] flex items-center justify-center flex-shrink-0">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl bg-gray-200 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
                     <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-400">
                       {profileData.fullName ? `${profileData.fullName.charAt(0)}${profileData.fullName.split(" ")[1]?.charAt(0) || ""}` : <FontAwesomeIcon icon={faUser} />}
                     </span>
@@ -258,19 +258,19 @@ const Profile = () => {
                 )}
                 
                 <div className="flex-1 lg:flex-initial text-left lg:text-center">
-                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                     {profileDetails.firstName} {profileDetails.lastName}
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-500 mt-1">{profileDetails.email}</p>
                   {profileDetails.country && (
-                    <span className="inline-block mt-2 px-3 py-1 bg-[#252525] text-gray-400 text-xs rounded-full">
+                    <span className="inline-block mt-2 px-3 py-1 bg-gray-200 dark:bg-[#1e1e1e] text-gray-500 text-xs rounded-full">
                       {profileDetails.country}
                     </span>
                   )}
                   
                   <label
                     htmlFor="file-upload"
-                    className="mt-3 lg:mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[#252525] hover:bg-[#2a2a2a] text-gray-300 text-sm font-medium rounded-xl cursor-pointer transition-colors"
+                    className="mt-3 lg:mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-[#1e1e1e] hover:bg-gray-300 dark:hover:bg-[#252525] text-gray-900 dark:text-white text-sm font-medium rounded-xl cursor-pointer transition-colors"
                   >
                     <FontAwesomeIcon icon={faCamera} className="text-xs" />
                     Upload Photo
@@ -291,8 +291,8 @@ const Profile = () => {
           </div>
 
           <div className="lg:col-span-8 space-y-4 lg:space-y-6">
-            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
-              <h3 className="text-sm font-semibold text-white mb-4">Personal Information</h3>
+            <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField
@@ -340,15 +340,15 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
-              <h3 className="text-sm font-semibold text-white mb-4">Trader Bio</h3>
+            <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Trader Bio</h3>
               <textarea 
                 placeholder="Tell us more about yourself and your trading journey..." 
                 name="bio" 
                 value={bio} 
                 onChange={(e) => setBio(e.target.value)}
                 disabled={!isEditing}
-                className={`w-full h-24 sm:h-32 bg-[#252525] border border-[#2a2a2a] rounded-xl p-3 sm:p-4 text-sm text-white placeholder:text-gray-600 resize-none focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
+                className={`w-full h-24 sm:h-32 bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-xl p-3 sm:p-4 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
                   !isEditing ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
               />

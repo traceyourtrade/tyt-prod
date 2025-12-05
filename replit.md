@@ -21,10 +21,21 @@ The application features a complete UI redesign inspired by Notion, Linear, and 
 - Loss (Red): #EF4444 - Negative P&L, losses, error states
 - Warning (Yellow): #FACC15 - Alerts, warnings
 
-**Dark Theme Backgrounds:**
-- Main App BG: #020617 - Primary dark background
-- Section BG: #020817 - Section containers
-- Cards/Panels: #0B1220 - Card surfaces
+**Dark Theme Backgrounds (Neutral Black Palette - No Purple/Blue Tints):**
+- #0a0a0a - Main page background
+- #0f0f0f - Sidebar containers
+- #141414 - Card surfaces, main content areas
+- #1a1a1a - Elevated surfaces, inputs, dropdowns
+- #1e1e1e - Interactive elements base state
+- #252525 - Hover states
+- #262626 - Borders throughout
+- #2a2a2a - Active/pressed states
+
+**Light Theme Backgrounds:**
+- White (#ffffff) - Main surfaces, cards
+- Gray-50 (#f9fafb) - Background areas
+- Gray-100 (#f3f4f6) - Input backgrounds, secondary surfaces
+- Gray-200 (#e5e7eb) - Borders, dividers
 
 ### Design Tokens
 - **Color Mode:** Dark theme (default) with light theme support
@@ -37,7 +48,7 @@ The application features a complete UI redesign inspired by Notion, Linear, and 
 2. **Root Layout** - New header with accounts dropdown, date range selector, and theme toggle
 3. **Dashboard Page** - Stat cards, charts, calendar, and trades widget with new styling
 4. **Daily Journal Page** - Filter toolbar, calendar sidebar, quick stats with modern design
-5. **Settings Page** - Sidebar navigation with user/general settings sections
+5. **Settings Page** - Fully redesigned with mobile-responsive sidebar navigation, user/general settings sections, dual-theme support with explicit dark: variants for reliable theme switching
 6. **Reports Page** - Fully redesigned with modern tab navigation (Performance, Overview, Reports, Compare, Calendar), theme-aware chart cards with icons and legends, Summary/Days/Trades stat grid with modern pill-style tabs, and dynamic CSS variable-based chart colors
 7. **Notebook Page** - Fully redesigned with modern three-column layout (Folders, Notes, Content), responsive mobile navigation, rich text editor with formatting toolbar, clean empty states, and context menus for rename/delete operations
 8. **Strategies Page** - Fully redesigned with modern tab navigation (Strategies, Overview, Reports, Compare), theme-aware chart cards using CSS variable-based colors, modern stat grids with icons, strategy comparison charts, and clean empty states. All components use semantic theme tokens exclusively with no hardcoded colors.

@@ -54,13 +54,13 @@ const GlobalSettings = () => {
     onToggle: () => void;
     onSelect: (val: string) => void;
   }) => (
-    <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
+    <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
       <div className="flex items-start gap-3 sm:gap-4 mb-4">
         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
           <FontAwesomeIcon icon={icon} className={`text-base sm:text-lg ${iconColor}`} />
         </div>
         <div className="min-w-0">
-          <h3 className="text-white font-semibold text-sm sm:text-base">{title}</h3>
+          <h3 className="text-gray-900 dark:text-white font-semibold text-sm sm:text-base">{title}</h3>
           <p className="text-gray-500 text-xs sm:text-sm mt-1 truncate">{description}</p>
         </div>
       </div>
@@ -68,25 +68,25 @@ const GlobalSettings = () => {
       <div className="relative">
         <button
           onClick={onToggle}
-          className="w-full flex items-center justify-between px-4 py-3 bg-[#252525] border border-[#2a2a2a] rounded-xl hover:bg-[#2a2a2a] transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl hover:bg-gray-200 dark:hover:bg-[#252525] transition-colors"
         >
-          <span className="text-gray-300 text-sm font-medium truncate pr-2">{value}</span>
+          <span className="text-gray-700 dark:text-gray-300 text-sm font-medium truncate pr-2">{value}</span>
           <FontAwesomeIcon 
             icon={faChevronDown} 
-            className={`text-gray-500 text-xs transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} 
+            className={`text-gray-400 text-xs transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} 
           />
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 w-full mt-2 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl shadow-2xl z-10 overflow-hidden max-h-48 overflow-y-auto">
+          <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-xl shadow-2xl z-10 overflow-hidden max-h-48 overflow-y-auto">
             {options.map((option, index) => (
               <button
                 key={index}
                 onClick={() => onSelect(option)}
                 className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
                   value === option 
-                    ? "bg-emerald-500/10 text-emerald-400" 
-                    : "text-gray-300 hover:bg-[#252525]"
+                    ? "bg-emerald-500/10 text-emerald-500" 
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1a1a1a]"
                 }`}
               >
                 <span className="truncate pr-2">{option}</span>
@@ -105,7 +105,7 @@ const GlobalSettings = () => {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div>
-          <h2 className="text-lg lg:text-xl font-bold text-white">Global Settings</h2>
+          <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white">Global Settings</h2>
           <p className="text-gray-500 text-xs lg:text-sm mt-1">Configure your display preferences</p>
         </div>
         <button
@@ -133,8 +133,8 @@ const GlobalSettings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         <SettingCard
           icon={faClock}
-          iconColor="text-gray-400"
-          iconBg="bg-[#252525]"
+          iconColor="text-gray-500 dark:text-gray-400"
+          iconBg="bg-gray-100 dark:bg-[#1e1e1e]"
           title="Timezone"
           description="Select the timezone for displaying your trade data"
           value={selectedTimezone}
@@ -159,50 +159,50 @@ const GlobalSettings = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mt-4 lg:mt-6">
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
+        <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
           <div className="flex items-start gap-3 sm:gap-4 mb-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#252525] flex items-center justify-center flex-shrink-0">
-              <FontAwesomeIcon icon={faPalette} className="text-base sm:text-lg text-gray-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faPalette} className="text-base sm:text-lg text-gray-500 dark:text-gray-400" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-white font-semibold text-sm sm:text-base">Theme</h3>
+              <h3 className="text-gray-900 dark:text-white font-semibold text-sm sm:text-base">Theme</h3>
               <p className="text-gray-500 text-xs sm:text-sm mt-1 truncate">Choose your preferred color theme</p>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <button className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-medium rounded-xl">
-              <div className="w-4 h-4 rounded-full bg-[#141414] border-2 border-emerald-500 flex-shrink-0" />
+            <button className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 text-sm font-medium rounded-xl">
+              <div className="w-4 h-4 rounded-full bg-gray-900 dark:bg-[#0a0a0a] border-2 border-emerald-500 flex-shrink-0" />
               <span>Dark</span>
             </button>
-            <button className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-3 bg-[#252525] border border-[#2a2a2a] text-gray-400 text-sm font-medium rounded-xl hover:bg-[#2a2a2a] transition-colors">
+            <button className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-3 bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] text-gray-500 text-sm font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-[#252525] transition-colors">
               <div className="w-4 h-4 rounded-full bg-white border-2 border-gray-400 flex-shrink-0" />
               <span>Light</span>
             </button>
           </div>
         </div>
 
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
+        <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
           <div className="flex items-start gap-3 sm:gap-4 mb-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#252525] flex items-center justify-center flex-shrink-0">
-              <FontAwesomeIcon icon={faBell} className="text-base sm:text-lg text-gray-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faBell} className="text-base sm:text-lg text-gray-500 dark:text-gray-400" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-white font-semibold text-sm sm:text-base">Notifications</h3>
+              <h3 className="text-gray-900 dark:text-white font-semibold text-sm sm:text-base">Notifications</h3>
               <p className="text-gray-500 text-xs sm:text-sm mt-1 truncate">Manage your notification preferences</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-[#252525] border border-[#2a2a2a] rounded-xl">
-              <span className="text-gray-300 text-sm">Email notifications</span>
+            <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl">
+              <span className="text-gray-700 dark:text-gray-300 text-sm">Email notifications</span>
               <button className="w-10 h-6 bg-emerald-500 rounded-full relative flex-shrink-0">
                 <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1" />
               </button>
             </div>
-            <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-[#252525] border border-[#2a2a2a] rounded-xl">
-              <span className="text-gray-300 text-sm">Push notifications</span>
-              <button className="w-10 h-6 bg-[#2a2a2a] rounded-full relative flex-shrink-0">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl">
+              <span className="text-gray-700 dark:text-gray-300 text-sm">Push notifications</span>
+              <button className="w-10 h-6 bg-gray-300 dark:bg-[#262626] rounded-full relative flex-shrink-0">
                 <div className="w-4 h-4 bg-gray-500 rounded-full absolute left-1 top-1" />
               </button>
             </div>
