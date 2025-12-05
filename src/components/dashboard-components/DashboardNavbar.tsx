@@ -121,7 +121,7 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
       {/* Right Section - Navigation Items */}
       <div className="flex items-center">
         <ul className="flex items-center space-x-4">
-          {/* Currency Selector */}
+
           <li className="relative">
             <button
               className="flex items-center space-x-2 bg-[#252525] backdrop-blur-md rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-[#252525]/40 "
@@ -132,7 +132,6 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
               <FontAwesomeIcon icon={faCaretDown} className="text-white text-xs" />
             </button>
 
-            {/* Currency Dropdown */}
             <div
               ref={currDropdownRef}
               className={`absolute top-12 right-0 w-48 bg-[#252525] backdrop-blur-md rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${isCurrOpen
@@ -157,7 +156,6 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
             </div>
           </li>
 
-          {/* Accounts Selector */}
           <li className="relative">
             <button
               className="text-[14px] flex items-center space-x-2 bg-[#252525] backdrop-blur-md rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-[#252525]/40 "
@@ -169,7 +167,6 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
               <FontAwesomeIcon icon={faCaretDown} className="text-xs" />
             </button>
 
-            {/* Accounts Dropdown */}
             <div
               ref={accDropdownRef}
               className={`absolute top-12 right-0 w-64 bg-[#252525] backdrop-blur-md rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${isAccOpen
@@ -193,7 +190,6 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
                   </>
                 ) : (
                   <>
-                    {/* All Accounts Checkbox */}
                     <div className="flex items-center px-2 py-2 border-b border-gray-600 mb-2">
                       <input
                         type="checkbox"
@@ -204,7 +200,6 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
                       <span className="ml-3 text-white text-sm font-medium">All Accounts</span>
                     </div>
 
-                    {/* Account List */}
                     <div className="max-h-48 overflow-y-auto">
                       {accounts.map((account) => (
                         <label
@@ -225,7 +220,6 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
                       ))}
                     </div>
 
-                    {/* Manage Accounts */}
                     <button
                       onClick={() => setAddAcc()}
                       className="w-full flex items-center px-2 py-3 text-gray-300 hover:bg-gray-700/60 rounded-md transition-colors mt-2 border-t border-gray-600"
@@ -238,8 +232,6 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
               </div>
             </div>
           </li>
-
-
         </ul>
       </div>
     </div>
