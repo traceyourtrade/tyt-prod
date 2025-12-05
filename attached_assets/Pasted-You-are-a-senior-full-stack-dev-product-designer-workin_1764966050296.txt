@@ -1,0 +1,225 @@
+You are a senior full-stack dev + product designer working inside my Projournx trading journal app.
+
+Your task:
+
+Add a full “Prop Firm Mode” to the app, starting from the Dashboard UI + logic.
+
+🎯 GOAL OF PROP FIRM MODE
+
+When the user switches to Prop Firm Mode (PF Mode), the dashboard should behave like a prop firm challenge tracker:
+
+User can set:
+
+Account starting balance
+
+Profit target % (default: 8%)
+
+Max total drawdown % (e.g., 5% or 10%, plus custom option)
+
+(Optional) Max daily drawdown % if easy
+
+Dashboard then shows:
+
+Progress toward Profit Target
+
+Used vs remaining Max Drawdown
+
+Visual alerts if they are close to breaching or have breached rules
+
+🧩 IMPLEMENTATION REQUIREMENTS
+1. Prop Firm Mode Toggle
+
+Add a toggle switch on the dashboard:
+
+Normal Mode / Prop Firm Mode
+
+This toggle can be:
+
+In the top right of the dashboard header, or
+
+As a small segmented control: [ Live Trading ] [ Prop Firm ]
+
+Default mode: Normal Mode (current behavior, unchanged).
+
+When in Normal Mode → existing dashboard works as it does now.
+
+When in Prop Firm Mode → use new prop firm calculations & UI described below.
+
+2. Prop Firm Settings UI
+
+Create a small settings panel (card) on the dashboard that appears in Prop Firm Mode:
+
+Fields:
+
+“Account Starting Balance” (number / currency)
+
+“Profit Target %” (default 8%)
+
+“Max Total Drawdown %” (dropdown: 5%, 10%, Custom)
+
+If Custom is selected → show input for custom %.
+
+(Optional) “Max Daily Drawdown %” input
+
+Behavior:
+
+Save these settings in the existing user/settings structure if possible.
+
+Use sensible defaults if nothing is set yet.
+
+3. Core Calculations (Prop Firm Mode)
+
+Using user’s trades / PnL history and the prop firm settings, compute:
+
+Current Equity = Starting Balance + Realized PnL (within this challenge)
+
+Profit Target Value = Starting Balance × (Profit Target %)
+
+Max Allowed Drawdown Value = Starting Balance × (Max DD %)
+
+From these, compute:
+
+Target Progress %
+
+current_profit / profit_target_value * 100
+
+Clamp at 0–100
+
+Drawdown Used %
+
+Based on max peak equity – current equity relative to max allowed DD.
+
+dd_used = (peak_equity - current_equity) / max_dd_value * 100
+
+Daily DD (if implemented):
+
+Track equity PnL per day and compare with daily DD threshold.
+
+Keep logic simple and robust.
+If exact equity tracking is complex, make a best effort based on existing PnL structures without breaking anything.
+
+4. Prop Firm Dashboard UI
+
+In Prop Firm Mode, change the top part of the dashboard to:
+
+A. Challenge Summary Card
+
+Card shows:
+
+Mode: “Prop Firm Challenge”
+
+Starting Balance
+
+Profit Target (in % and absolute value)
+
+Max Drawdown (in % and absolute value)
+
+B. Progress Bars
+
+Two main progress visualizations:
+
+Profit Target Progress
+
+Label: “Target Progress”
+
+Progress bar:
+
+0% → 100% to target
+
+Color:
+
+Normal: primary blue
+
+Near target (>=80%): subtle green mix
+
+Text like: X% of 8% target reached
+
+Drawdown Usage
+
+Label: “Drawdown Used”
+
+Progress bar where:
+
+0% = no DD used
+
+100% = rule breach
+
+Colors:
+
+0–60%: blue/neutral
+
+60–85%: amber warning
+
+85–100%: red alert
+
+Text like: Y% of 5% max drawdown used
+
+C. Status Pill
+
+Small pill showing:
+
+“Challenge Active” (green)
+
+“At Risk” (amber when DD used > 70%)
+
+“Challenge Breached” (red when DD used ≥ 100% or target overshoot logic if needed)
+
+5. Behavior on Breach
+
+If max DD is breached:
+
+Show a red banner at the top of the prop firm section:
+
+“Challenge breached – max drawdown exceeded.”
+
+Optionally:
+
+Disable progress visuals or mark them as “Failed”
+
+Show a button: “Reset Challenge” (which resets PF mode statistics to initial state based on settings)
+
+Make this NON-DESTRUCTIVE:
+
+Don’t delete trades
+
+Only reset PF challenge state / reference balance.
+
+🎨 DESIGN / THEME RULES
+
+Keep the same dark theme and existing Projournx color system.
+
+No new random colors; use:
+
+Primary Blue for progress / CTAs
+
+Green only for success
+
+Red only for breach / loss
+
+Amber for warnings
+
+UI Style:
+
+Card background: #0B1220
+
+Border: subtle rgba(255,255,255,0.1)
+
+Rounded corners, clean spacing.
+
+Typography consistent with current dashboard.
+
+🛑 DO NOT
+
+❌ Don’t remove or break existing Normal Mode dashboard.
+
+❌ Don’t change existing calculation logic outside what’s needed for PF Mode.
+
+❌ Don’t introduce heavy new deps unless necessary.
+
+✅ DO
+
+✅ Add Prop Firm Mode as a layer on top of existing data.
+
+✅ Make it easy for trader to switch between modes.
+
+✅ Make the UI very clear, simple, and readable.
