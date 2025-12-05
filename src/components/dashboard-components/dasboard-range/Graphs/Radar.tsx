@@ -1,145 +1,244 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { RadarChart } from '@mui/x-charts/RadarChart';
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import useAccountDetails from '@/store/accountdetails';
+import datesforcal from '@/store/datesforcal';
 
-function valueFormatter(v: number | null) {
-    if (v === null) {
-        return 'N/A';
-    }
-    return `${v.toFixed(2)}`;
+interface TradeData {
+  date: string;
+  Profit: number;
+  [key: string]: unknown;
 }
 
-export default function MultiSeriesRadar() {
-    const [isDark, setIsDark] = useState(true);
-    const [chartColors, setChartColors] = useState<string[]>([]);
+interface Account {
+  tradeData?: TradeData[];
+  accountBalance?: number;
+  [key: string]: unknown;
+}
 
-    useEffect(() => {
-        const checkDarkMode = () => {
-            const dark = document.documentElement.classList.contains('dark');
-            setIsDark(dark);
-            
-            const root = document.documentElement;
-            const computedStyle = getComputedStyle(root);
-            const foreground = computedStyle.getPropertyValue('--foreground').trim();
-            
-            if (dark) {
-                setChartColors([
-                    'rgba(255,255,255,0.6)', 
-                    'rgba(255,255,255,0.35)', 
-                    'rgba(255,255,255,0.15)'
-                ]);
-            } else {
-                setChartColors([
-                    'rgba(0,0,0,0.7)', 
-                    'rgba(0,0,0,0.4)', 
-                    'rgba(0,0,0,0.2)'
-                ]);
-            }
-        };
-        
-        checkDarkMode();
-        
-        const observer = new MutationObserver(checkDarkMode);
-        observer.observe(document.documentElement, { 
-            attributes: true, 
-            attributeFilter: ['class'] 
-        });
-        
-        return () => observer.disconnect();
-    }, []);
+export default function PerformanceRadar() {
+  const [isDark, setIsDark] = useState(true);
+  const { selectedAccounts } = useAccountDetails();
+  const { calMonth, calYear } = datesforcal();
 
-    const theme = createTheme({
-        palette: {
-            mode: isDark ? "dark" : "light",
-            background: {
-                default: 'transparent',
-                paper: 'transparent',
-            },
-            text: {
-                primary: isDark ? 'rgba(255,255,255,0.7)' : '#171717',
-                secondary: isDark ? 'rgba(255,255,255,0.4)' : '#737373',
-            },
-        },
-        typography: {
-            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        },
-    });
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    checkDarkMode();
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
-    if (chartColors.length === 0) {
-        return (
-            <div className="w-full flex items-center justify-center h-[340px] bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl">
-                <span className="text-muted-foreground text-sm">Loading...</span>
-            </div>
-        );
+  function isCurrentMonth(dateString: string): boolean {
+    const date = new Date(dateString);
+    return date.getFullYear() === calYear && (date.getMonth() + 1) === calMonth;
+  }
+
+  const thisMonthData = (selectedAccounts as Account[]).flatMap((account) => {
+    if (!account.tradeData) return [];
+    return account.tradeData.filter(trade => isCurrentMonth(trade.date));
+  });
+
+  const calculateMetrics = () => {
+    if (thisMonthData.length === 0) {
+      return {
+        winRate: 0,
+        profitFactor: 0,
+        avgWinLoss: 0,
+        recoveryFactor: 0,
+        maxDrawdown: 0,
+        consistency: 0,
+        overallScore: 0
+      };
     }
 
-    return (
-        <ThemeProvider theme={theme}>
-            <div className={cn(
-                "w-full flex flex-col items-center justify-start rounded-2xl border transition-colors",
-                "bg-card/50 backdrop-blur-sm border-border/50"
-            )}>
-                <div className="w-full flex items-center justify-between px-5 py-4 border-b border-border/50">
-                    <div className="flex items-center gap-3">
-                        <h2 className="text-sm font-semibold text-foreground">
-                            Performance Radar
-                        </h2>
-                    </div>
-                    <button className="p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                        <Info className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                </div>
-                
-                <div className="w-full p-4 flex flex-col items-center justify-center">
-                    {/* Legend */}
-                    <div className="flex items-center gap-6 mb-2">
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[0] }} />
-                            <span className="text-[10px] text-muted-foreground font-medium">This Month</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[1] }} />
-                            <span className="text-[10px] text-muted-foreground font-medium">Last Month</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[2] }} />
-                            <span className="text-[10px] text-muted-foreground font-medium">Overall</span>
-                        </div>
-                    </div>
-                    
-                    <RadarChart
-                        width={360}
-                        height={260}
-                        series={[
-                            { 
-                                label: 'This Month', 
-                                data: [6.65, 2.76, 5.15, 0.19, 0.07, 0.12], 
-                                valueFormatter,
-                                color: chartColors[0]
-                            }, 
-                            { 
-                                label: 'Last Month', 
-                                data: [5.52, 5.5, 3.19, 0.51, 0.15, 0.11], 
-                                valueFormatter,
-                                color: chartColors[1]
-                            }, 
-                            { 
-                                label: 'Overall', 
-                                data: [2.26, 0.29, 2.03, 0.05, 0.04, 0.06], 
-                                valueFormatter,
-                                color: chartColors[2]
-                            }
-                        ]}
-                        radar={{
-                            metrics: ['Win %', 'Consistency', 'Profit Factor', 'RR Ratio', 'Drawdown', 'Recovery'],
-                        }}
-                    />
-                </div>
-            </div>
-        </ThemeProvider>
+    const winners = thisMonthData.filter(t => t.Profit > 0);
+    const losers = thisMonthData.filter(t => t.Profit < 0);
+    
+    const winRate = (winners.length / thisMonthData.length) * 100;
+    
+    const totalProfit = winners.reduce((sum, t) => sum + t.Profit, 0);
+    const totalLoss = Math.abs(losers.reduce((sum, t) => sum + t.Profit, 0));
+    const profitFactor = totalLoss > 0 ? (totalProfit / totalLoss) : totalProfit > 0 ? 10 : 0;
+    
+    const avgWin = winners.length > 0 ? totalProfit / winners.length : 0;
+    const avgLoss = losers.length > 0 ? totalLoss / losers.length : 0;
+    const avgWinLoss = avgLoss > 0 ? (avgWin / avgLoss) : avgWin > 0 ? 10 : 0;
+
+    let peak = 0;
+    let maxDD = 0;
+    let cumulative = 0;
+    thisMonthData.forEach(trade => {
+      cumulative += trade.Profit;
+      if (cumulative > peak) peak = cumulative;
+      const dd = peak - cumulative;
+      if (dd > maxDD) maxDD = dd;
+    });
+    const maxDrawdownPct = peak > 0 ? (maxDD / peak) * 100 : 0;
+    
+    const netProfit = thisMonthData.reduce((sum, t) => sum + t.Profit, 0);
+    const recoveryFactor = maxDD > 0 ? netProfit / maxDD : netProfit > 0 ? 10 : 0;
+
+    const profitDays = new Set(thisMonthData.filter(t => t.Profit > 0).map(t => t.date)).size;
+    const totalDays = new Set(thisMonthData.map(t => t.date)).size;
+    const consistency = totalDays > 0 ? (profitDays / totalDays) * 100 : 0;
+
+    const normalizedWinRate = Math.min(winRate, 100);
+    const normalizedPF = Math.min(profitFactor * 20, 100);
+    const normalizedAvgWL = Math.min(avgWinLoss * 25, 100);
+    const normalizedRecovery = Math.min(recoveryFactor * 10, 100);
+    const normalizedDrawdown = Math.max(100 - maxDrawdownPct * 2, 0);
+    const normalizedConsistency = Math.min(consistency, 100);
+
+    const overallScore = (
+      normalizedWinRate * 0.2 +
+      normalizedPF * 0.2 +
+      normalizedAvgWL * 0.15 +
+      normalizedRecovery * 0.15 +
+      normalizedDrawdown * 0.15 +
+      normalizedConsistency * 0.15
     );
+
+    return {
+      winRate: normalizedWinRate,
+      profitFactor: normalizedPF,
+      avgWinLoss: normalizedAvgWL,
+      recoveryFactor: normalizedRecovery,
+      maxDrawdown: normalizedDrawdown,
+      consistency: normalizedConsistency,
+      overallScore: Math.min(overallScore, 100)
+    };
+  };
+
+  const metrics = calculateMetrics();
+
+  const chartData = [
+    { metric: 'Win %', value: metrics.winRate, fullMark: 100 },
+    { metric: 'Profit factor', value: metrics.profitFactor, fullMark: 100 },
+    { metric: 'Avg win/loss', value: metrics.avgWinLoss, fullMark: 100 },
+    { metric: 'Recovery factor', value: metrics.recoveryFactor, fullMark: 100 },
+    { metric: 'Max drawdown', value: metrics.maxDrawdown, fullMark: 100 },
+    { metric: 'Consistency', value: metrics.consistency, fullMark: 100 },
+  ];
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return '#22C55E';
+    if (score >= 60) return '#84CC16';
+    if (score >= 40) return '#FACC15';
+    if (score >= 20) return '#F97316';
+    return '#EF4444';
+  };
+
+  const gradientStops = [
+    { offset: '0%', color: '#EF4444' },
+    { offset: '25%', color: '#F97316' },
+    { offset: '50%', color: '#FACC15' },
+    { offset: '75%', color: '#84CC16' },
+    { offset: '100%', color: '#22C55E' },
+  ];
+
+  return (
+    <div className={cn(
+      "w-full flex flex-col rounded-2xl border transition-colors overflow-hidden",
+      "bg-card/50 backdrop-blur-sm border-border/50"
+    )}>
+      <div className="w-full flex items-center justify-between px-5 py-4 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            Performance Score
+          </h2>
+        </div>
+        <button className="p-2 rounded-lg hover:bg-muted/50 transition-colors">
+          <Info className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+      
+      <div className="w-full p-4 flex flex-col items-center justify-center">
+        <ResponsiveContainer width="100%" height={220}>
+          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
+            <defs>
+              <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                <stop offset="100%" stopColor="#6366F1" stopOpacity={0.4} />
+              </linearGradient>
+            </defs>
+            <PolarGrid 
+              stroke={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} 
+              strokeDasharray="3 3"
+            />
+            <PolarAngleAxis 
+              dataKey="metric" 
+              tick={{ 
+                fill: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', 
+                fontSize: 11,
+                fontWeight: 500
+              }}
+              tickLine={false}
+            />
+            <PolarRadiusAxis 
+              angle={90} 
+              domain={[0, 100]} 
+              tick={false}
+              axisLine={false}
+            />
+            <Radar
+              name="Performance"
+              dataKey="value"
+              stroke="#8B5CF6"
+              strokeWidth={2}
+              fill="url(#radarFill)"
+              dot={{ 
+                r: 4, 
+                fill: '#8B5CF6',
+                stroke: isDark ? '#1a1a2e' : '#ffffff',
+                strokeWidth: 2
+              }}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+
+        <div className="w-full mt-4 px-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-muted-foreground font-medium">Your Score</span>
+            <span 
+              className="text-2xl font-bold"
+              style={{ color: getScoreColor(metrics.overallScore) }}
+            >
+              {metrics.overallScore.toFixed(2)}
+            </span>
+          </div>
+          
+          <div className="relative w-full h-3 rounded-full overflow-hidden bg-muted/30">
+            <div 
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `linear-gradient(to right, ${gradientStops.map(s => s.color).join(', ')})`
+              }}
+            />
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white shadow-lg transition-all duration-500"
+              style={{ 
+                left: `calc(${Math.min(metrics.overallScore, 100)}% - 8px)`,
+                backgroundColor: getScoreColor(metrics.overallScore)
+              }}
+            />
+          </div>
+          
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-muted-foreground">0</span>
+            <span className="text-[10px] text-muted-foreground">20</span>
+            <span className="text-[10px] text-muted-foreground">40</span>
+            <span className="text-[10px] text-muted-foreground">60</span>
+            <span className="text-[10px] text-muted-foreground">80</span>
+            <span className="text-[10px] text-muted-foreground">100</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
