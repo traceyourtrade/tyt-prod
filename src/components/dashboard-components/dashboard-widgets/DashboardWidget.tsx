@@ -193,11 +193,11 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         icon={<Target className="w-4 h-4" />}
         iconColor="blue"
       >
-        <div className="relative w-12 h-7">
+        <div className="relative w-16 h-10">
           <Doughnut data={dataWinLoss} options={optionsWinLoss} />
-          <div className="absolute -bottom-0.5 left-0 right-0 flex justify-between px-0.5">
-            <span className="text-[8px] font-medium text-profit">{winners}W</span>
-            <span className="text-[8px] font-medium text-loss">{losers}L</span>
+          <div className="absolute -bottom-1 left-0 right-0 flex justify-between px-1">
+            <span className="text-[9px] font-medium text-profit">{winners}W</span>
+            <span className="text-[9px] font-medium text-loss">{losers}L</span>
           </div>
         </div>
       </StatCard>
