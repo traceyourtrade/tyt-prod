@@ -40,7 +40,7 @@ The application features a complete UI redesign inspired by Notion, Linear, and 
 5. **Settings Page** - Sidebar navigation with user/general settings sections
 6. **Reports Page** - Fully redesigned with modern tab navigation (Performance, Overview, Reports, Compare, Calendar), theme-aware chart cards with icons and legends, Summary/Days/Trades stat grid with modern pill-style tabs, and dynamic CSS variable-based chart colors
 7. **Notebook Page** - Fully redesigned with modern three-column layout (Folders, Notes, Content), responsive mobile navigation, rich text editor with formatting toolbar, clean empty states, and context menus for rename/delete operations
-8. **Strategies Page** - Tab navigation, strategy dropdown, and date range picker with modern styling
+8. **Strategies Page** - Fully redesigned with modern tab navigation (Strategies, Overview, Reports, Compare), theme-aware chart cards using CSS variable-based colors, modern stat grids with icons, strategy comparison charts, and clean empty states. All components use semantic theme tokens exclusively with no hardcoded colors.
 
 ### UI Component Library
 Located in `src/components/ui/`:
