@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { ChevronLeft, ChevronRight, ChevronDown, TrendingUp, BarChart3, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import useAccountDetails from "@/store/accountdetails";
@@ -81,26 +81,28 @@ const Calendar = () => {
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
-  const calculateWeeklyProfits = (year: number, month: number) => {
-    const days = daysInMonth(year, month);
-    const weeks: number[] = [];
-    let weekProfit = 0;
+  const monthlyStats = useMemo(() => {
+    const monthStart = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-01`;
+    const monthEnd = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${daysInMonth(selectedYear, selectedMonth).toString().padStart(2, "0")}`;
+    
+    let totalPnL = 0;
+    let totalTrades = 0;
+    let tradingDays = 0;
+    let winningDays = 0;
 
-    for (let day = 1; day <= days; day++) {
-      const dateStr = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-      const dayData = calendarData.find((d) => d.date === dateStr);
-
-      if (dayData) {
-        weekProfit += dayData.profit;
+    calendarData.forEach((day) => {
+      if (day.date >= monthStart && day.date <= monthEnd) {
+        totalPnL += day.profit;
+        totalTrades += day.tradeLength;
+        tradingDays += 1;
+        if (day.profit > 0) winningDays += 1;
       }
+    });
 
-      if (new Date(year, month, day).getDay() === 6 || day === days) {
-        weeks.push(weekProfit);
-        weekProfit = 0;
-      }
-    }
-    return weeks;
-  };
+    const winRate = tradingDays > 0 ? Math.round((winningDays / tradingDays) * 100) : 0;
+
+    return { totalPnL, totalTrades, tradingDays, winRate };
+  }, [calendarData, selectedYear, selectedMonth]);
 
   const renderCalendar = () => {
     const days = daysInMonth(selectedYear, selectedMonth);
@@ -165,8 +167,6 @@ const Calendar = () => {
 
     return cells;
   };
-
-  const weeklyProfits = calculateWeeklyProfits(selectedYear, selectedMonth);
 
   const handlePrevMonth = () => {
     setIsDropdownVisible(false);
@@ -299,44 +299,57 @@ const Calendar = () => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex gap-2 sm:gap-3">
-        {/* Main Calendar */}
-        <div className="flex-1 min-w-0">
-          {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1 sm:mb-2">
-            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
-              <div key={day} className="text-center text-[8px] sm:text-[10px] font-semibold text-gray-500 uppercase tracking-wider py-1">
-                {day}
-              </div>
-            ))}
-          </div>
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-            {renderCalendar()}
-          </div>
-        </div>
-
-        {/* Weekly Summary - Hidden on very small screens */}
-        <div className="hidden sm:flex w-16 flex-col gap-1 sm:gap-1.5 pt-6">
-          {weeklyProfits.map((profit, index) => (
-            <div
-              key={index}
-              className={cn(
-                "aspect-square rounded-xl flex flex-col items-center justify-center text-center transition-all",
-                profit !== 0 
-                  ? "bg-[#1e1e1e] border border-[#333]" 
-                  : "bg-[#1a1a1a]"
-              )}
-            >
-              <span className="text-[8px] text-gray-500 font-medium">Week</span>
-              <span className={cn(
-                "text-[10px] font-bold",
-                profit > 0 ? "text-emerald-400" : profit < 0 ? "text-red-400" : "text-gray-500"
-              )}>
-                {profit !== 0 ? `$${formatCurrency(Math.abs(profit))}` : '$0'}
-              </span>
+      <div className="mb-4">
+        {/* Day Headers */}
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1 sm:mb-2">
+          {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
+            <div key={day} className="text-center text-[8px] sm:text-[10px] font-semibold text-gray-500 uppercase tracking-wider py-1">
+              {day}
             </div>
           ))}
+        </div>
+        {/* Calendar Days */}
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+          {renderCalendar()}
+        </div>
+      </div>
+
+      {/* Monthly Stats */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-3 border-t border-[#262626]">
+        <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <TrendingUp className={cn(
+              "w-3.5 h-3.5",
+              monthlyStats.totalPnL >= 0 ? "text-emerald-400" : "text-red-400"
+            )} />
+            <span className="text-[10px] sm:text-xs text-gray-400">Monthly P&L</span>
+          </div>
+          <p className={cn(
+            "text-sm sm:text-lg font-bold",
+            monthlyStats.totalPnL >= 0 ? "text-emerald-400" : "text-red-400"
+          )}>
+            {monthlyStats.totalPnL >= 0 ? "+" : "-"}${formatCurrency(Math.abs(monthlyStats.totalPnL))}
+          </p>
+        </div>
+
+        <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <BarChart3 className="w-3.5 h-3.5 text-blue-400" />
+            <span className="text-[10px] sm:text-xs text-gray-400">Total Trades</span>
+          </div>
+          <p className="text-sm sm:text-lg font-bold text-white">
+            {monthlyStats.totalTrades}
+          </p>
+        </div>
+
+        <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <CalendarIcon className="w-3.5 h-3.5 text-purple-400" />
+            <span className="text-[10px] sm:text-xs text-gray-400">Win Rate</span>
+          </div>
+          <p className="text-sm sm:text-lg font-bold text-white">
+            {monthlyStats.winRate}%
+          </p>
         </div>
       </div>
     </div>
