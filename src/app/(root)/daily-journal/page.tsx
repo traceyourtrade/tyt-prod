@@ -1,18 +1,22 @@
 "use client"
-import { useState, useRef, useEffect, useMemo, MouseEvent } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
-  faFilter, 
-  faChevronRight, 
-  faBan, 
-  faCalendarDays, 
-  faCaretLeft, 
-  faCaretRight, 
-  faCaretDown 
-} from "@fortawesome/free-solid-svg-icons";
+  Filter, 
+  Calendar, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  X,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  BarChart3
+} from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import QuickStats from "@/components/daily-journal/QuickStat";
 import JRContent from "@/components/daily-journal/JRContent";
+
 interface Trade {
   date: string;
   time: string;
@@ -25,168 +29,25 @@ interface Account {
   [key: string]: any;
 }
 
-interface DJCalendarProps {
-  currentYearLeft: number;
-  setCurrentYearLeft: (year: number) => void;
-  currentMonthLeft: number;
-  setCurrentMonthLeft: (month: number) => void;
-  currentYearRight: number;
-  setCurrentYearRight: (year: number) => void;
-  currentMonthRight: number;
-  setCurrentMonthRight: (month: number) => void;
-  fromDate: string;
-  toDate: string;
-  tempStartDate: Date | null;
-  tempEndDate: Date | null;
-  today: Date;
-  isSelectedDate: (day: number | null, month: number, year: number) => boolean | null;
-  isInRange: (day: number | null, month: number, year: number) => boolean;
-  handleDateClick: (day: number, month: number, year: number) => void;
-  handleHover: (day: number, month: number, year: number) => void;
-  handleSelect: () => void;
-  generateCalendar: (year: number, month: number) => (number | null)[];
-}
-
-const DJCalendar = ({
-  currentYearLeft,
-  setCurrentYearLeft,
-  currentMonthLeft,
-  setCurrentMonthLeft,
-  currentYearRight,
-  setCurrentYearRight,
-  currentMonthRight,
-  setCurrentMonthRight,
-  fromDate,
-  toDate,
-  tempStartDate,
-  tempEndDate,
-  today,
-  isSelectedDate,
-  isInRange,
-  handleDateClick,
-  handleHover,
-  handleSelect,
-  generateCalendar
-}: DJCalendarProps) => {
-  return (
-    <div className="w-full h-auto flex flex-col items-center justify-start mt-5 absolute z-10 top-17.5">
-      <div className="w-auto h-auto flex flex-col items-center justify-evenly bg-gray-600/50 backdrop-blur-sm text-gray-300 p-2.5 shadow-lg rounded-[12px]">
-        <div className="flex gap-5 justify-center items-start flex-wrap font-poppins">
-          {[
-            { year: currentYearLeft, setYear: setCurrentYearLeft, month: currentMonthLeft, setMonth: setCurrentMonthLeft, heading: fromDate },
-            { year: currentYearRight, setYear: setCurrentYearRight, month: currentMonthRight, setMonth: setCurrentMonthRight, heading: toDate }
-          ].map(({ year, setYear, month, setMonth, heading }, index) => (
-            <div key={index} className="w-[300px] min-h-[265px] p-1.25 rounded-[8px]">
-              <h2 className="text-white text-sm font-semibold text-center">{heading}</h2>
-              <div className="flex justify-between mb-2">
-                <select 
-                  className="appearance-none bg-[#985ace8a] text-white border-none rounded-[4px] px-2.5 py-0.75 text-xs cursor-pointer outline-none w-[150px] mt-2.5 mr-2.5 relative top-0.5 font-sans font-medium"
-                  value={year} 
-                  onChange={(e) => setYear(parseInt(e.target.value))}
-                >
-                  {Array.from({ length: 131 }, (_, i) => 1970 + i).map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-                <select 
-                  value={month} 
-                  onChange={(e) => setMonth(parseInt(e.target.value))}
-                  className="px-1.25 py-1.25 text-xs border border-gray-300 rounded-[4px] outline-none cursor-pointer bg-white text-gray-900 font-sans font-medium"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i).map((m) => (
-                    <option key={m} value={m}>{new Date(0, m).toLocaleString('default', { month: 'long' })}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-7 gap-0.5 text-center">
-                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-                  <div key={d} className="font-bold p-0.25 text-white">{d}</div>
-                ))}
-                {generateCalendar(year, month).map((day, index) => {
-                  const date = day ? new Date(year, month, day) : null;
-                  const isDisabled = date && date > today;
-                  return (
-                    <div
-                      key={index}
-                      className={`p-2 cursor-pointer rounded-[4px] transition-colors duration-300 ${
-                        day === null ? "empty" : ""
-                      } ${
-                        tempStartDate && date && day === tempStartDate.getDate() && month === tempStartDate.getMonth() && year === tempStartDate.getFullYear() 
-                          ? "bg-purple-600/70 text-white" 
-                          : ""
-                      } ${
-                        tempEndDate && date && day === tempEndDate.getDate() && month === tempEndDate.getMonth() && year === tempEndDate.getFullYear() 
-                          ? "bg-purple-600/70 text-white" 
-                          : ""
-                      } ${
-                        isSelectedDate(day, month, year) ? "selected-date" : ""
-                      } ${
-                        date && isInRange(day, month, year) ? "bg-gray-300 text-gray-900" : ""
-                      } ${
-                        isDisabled ? "text-gray-500/70 pointer-events-none bg-transparent border border-gray-500/70" : "hover:bg-gray-300 hover:text-gray-900"
-                      }`}
-                      onClick={() => {
-  if (date && !isDisabled && day != null && month != null && year != null) {
-    handleDateClick(day, month, year);
-  }
-}}
-                      onMouseEnter={() => {
-  if (date && !isDisabled && day != null && month != null && year != null) {
-    handleHover(day, month, year);
-  }
-}}
-                    >
-                      {day || ""}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-        <button
-          className="w-24 h-auto mx-auto mt-1.25 mb-2.5 px-3 py-2 border-none bg-purple-600/50 text-white cursor-pointer rounded-[4px] transition-colors duration-300 hover:bg-purple-600/70 disabled:opacity-50"
-          onClick={handleSelect}
-          disabled={!tempStartDate || !tempEndDate}
-        >
-          Select
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const DailyJournal = () => {
   const { selectedAccounts } = useAccountDetails();
   
   const [dailyData, setDailyData] = useState<Trade[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [dropdownYear, setDropdownYear] = useState(true);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [showDateRangePicker, setShowDateRangePicker] = useState(false);
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showMobileStats, setShowMobileStats] = useState(false);
 
   const today = new Date();
-  const [currentYearRight, setCurrentYearRight] = useState(today.getFullYear());
-  const [currentMonthRight, setCurrentMonthRight] = useState(today.getMonth());
-  const [currentYearLeft, setCurrentYearLeft] = useState(
-    today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear()
-  );
-  const [currentMonthLeft, setCurrentMonthLeft] = useState(
-    today.getMonth() === 0 ? 11 : today.getMonth() - 1
-  );
-  const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
-  const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
-  const [hoverDate, setHoverDate] = useState<Date | null>(null);
-  const [fromDate, setFromDate] = useState('From Date');
-  const [toDate, setToDate] = useState('To Date');
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
+  const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
 
-  const yearContainerRef = useRef<HTMLDivElement>(null);
-  const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const processData = () => {
@@ -211,16 +72,12 @@ const DailyJournal = () => {
       case 'profitLowToHigh':
         data = [...data].sort((a, b) => a.Profit - b.Profit);
         break;
-      case 'lossHighToLow':
-        data = [...data].sort((a, b) => a.Profit - b.Profit);
-        break;
       case 'onlyProfit':
         data = data.filter(trade => trade.Profit > 0);
         break;
       case 'onlyLoss':
         data = data.filter(trade => trade.Profit < 0);
         break;
-      case 'all':
       default:
         break;
     }
@@ -236,433 +93,387 @@ const DailyJournal = () => {
     return data;
   }, [dailyData, selectedFilter, selectedStartDate, selectedEndDate]);
 
-  const updateDailyData = (selectedDate: string) => {
-    const filteredTrades = (selectedAccounts as Account[]).flatMap(account =>
-      account.tradeData?.filter(trade => trade.date === selectedDate) || []
-    );
-    const sortedTrades = filteredTrades.sort((a, b) => {
-      const timeA = new Date(`1970-01-01T${a.time}`);
-      const timeB = new Date(`1970-01-01T${b.time}`);
-      return timeB.getTime() - timeA.getTime();
-    });
-    setDailyData(sortedTrades);
-  };
-
   const groupedTrades = (selectedAccounts as Account[]).flatMap(acc => acc.tradeData || [])
-    .reduce((acc: { [key: string]: { date: string; trades: Trade[]; profit: number; tradeLength: number } }, trade) => {
-      if (!acc[trade.date]) acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
-      acc[trade.date].trades.push(trade);
+    .reduce((acc: { [key: string]: { date: string; profit: number } }, trade) => {
+      if (!acc[trade.date]) acc[trade.date] = { date: trade.date, profit: 0 };
       acc[trade.date].profit += trade.Profit;
-      acc[trade.date].tradeLength += 1;
       return acc;
     }, {});
 
   const calendarData = Object.values(groupedTrades);
 
-  const getBackgroundClass = (profit: number) => {
-    if (profit > 0) return "bg-green-500/45 text-green-400";
-    if (profit < 0) return "bg-red-400/35 text-red-400";
-    return "bg-transparent";
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setIsCalendarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filterOptions = [
+    { value: 'all', label: 'All Trades', icon: BarChart3 },
+    { value: 'profitHighToLow', label: 'Profit: High to Low', icon: TrendingUp },
+    { value: 'profitLowToHigh', label: 'Profit: Low to High', icon: TrendingDown },
+    { value: 'onlyProfit', label: 'Winners Only', icon: TrendingUp },
+    { value: 'onlyLoss', label: 'Losers Only', icon: TrendingDown },
+  ];
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
-  const renderCalendar = () => {
-    const days = daysInMonth(selectedYear, selectedMonth);
-    const firstDayIndex = new Date(selectedYear, selectedMonth, 1).getDay();
-    const calendarCells = [];
-
-    for (let i = 0; i < firstDayIndex; i++) {
-      calendarCells.push(
-        <div key={`empty-${i}`} className="text-center bg-transparent border-none h-8.75"></div>
-      );
+  const handlePrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedYear(prev => prev - 1);
+      setSelectedMonth(11);
+    } else {
+      setSelectedMonth(prev => prev - 1);
     }
-
-    for (let day = 1; day <= days; day++) {
-      const dateStr = `${selectedYear}-${(selectedMonth + 1)
-        .toString()
-        .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-      const dayData = calendarData.find((d) => d.date === dateStr);
-      
-      calendarCells.push(
-        <div
-          key={day}
-          className={`text-center text-white bg-gray-500/20 relative cursor-pointer flex flex-col justify-center items-center h-8.75 rounded-[8px] transition-all duration-200 hover:scale-105 hover:bg-gray-500/55 ${
-            dayData ? getBackgroundClass(dayData.profit) : ""
-          }`}
-          onClick={() => {
-            const formattedMonth = String(selectedMonth + 1).padStart(2, '0');
-            const formattedDay = String(day).padStart(2, '0');
-            const selectedDate = `${selectedYear}-${formattedMonth}-${formattedDay}`;
-            updateDailyData(selectedDate);
-          }}
-        >
-          <div className="text-xs font-semibold">{day}</div>
-        </div>
-      );
-    }
-    return calendarCells;
   };
 
-  const generateCalendar = (year: number, month: number) => {
-    const daysInMonthCal = new Date(year, month + 1, 0).getDate();
-    const firstDayIndex = new Date(year, month, 1).getDay();
-    const calendarDays = [];
-
-    for (let i = 0; i < firstDayIndex; i++) {
-      calendarDays.push(null);
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedYear(prev => prev + 1);
+      setSelectedMonth(0);
+    } else {
+      setSelectedMonth(prev => prev + 1);
     }
-
-    for (let day = 1; day <= daysInMonthCal; day++) {
-      calendarDays.push(day);
-    }
-
-    return calendarDays;
   };
 
-  const isSelectedDate = (day: number | null, month: number, year: number) => {
-    if (!day) return false;
-    const date = new Date(year, month, day);
-    return (
-      (tempStartDate && date.getTime() === tempStartDate.getTime()) ||
-      (tempEndDate && date.getTime() === tempEndDate.getTime())
-    );
-  };
-
-  const isInRange = (day: number | null, month: number, year: number) => {
-    if (!day || !tempStartDate || (!tempEndDate && !hoverDate)) return false;
-    const date = new Date(year, month, day);
-
-    if (tempStartDate && !tempEndDate && hoverDate) {
-      const startDate = new Date(tempStartDate.getFullYear(), tempStartDate.getMonth(), tempStartDate.getDate());
-      const endDate = new Date(hoverDate.getFullYear(), hoverDate.getMonth(), hoverDate.getDate());
-      const [actualStart, actualEnd] = startDate <= endDate ? [startDate, endDate] : [endDate, startDate];
-      return date >= actualStart && date <= actualEnd;
-    }
-
-    if (tempStartDate && tempEndDate) {
-      const startDate = new Date(tempStartDate.getFullYear(), tempStartDate.getMonth(), tempStartDate.getDate());
-      const endDate = new Date(tempEndDate.getFullYear(), tempEndDate.getMonth(), tempEndDate.getDate());
-      const [actualStart, actualEnd] = startDate <= endDate ? [startDate, endDate] : [endDate, startDate];
-      return date >= actualStart && date <= actualEnd;
-    }
-
-    return false;
-  };
-
-  const handleDateClick = (day: number, month: number, year: number) => {
-    const clickedDate = new Date(year, month, day);
-
+  const handleDateClick = (day: number) => {
+    const clickedDate = new Date(selectedYear, selectedMonth, day);
     if (clickedDate > today) return;
 
     if (!tempStartDate || (tempStartDate && tempEndDate)) {
       setTempStartDate(clickedDate);
       setTempEndDate(null);
-      setHoverDate(null);
-    } else if (tempStartDate && !tempEndDate) {
+    } else {
       if (clickedDate < tempStartDate) {
         setTempEndDate(tempStartDate);
         setTempStartDate(clickedDate);
       } else {
         setTempEndDate(clickedDate);
       }
-      setHoverDate(null);
     }
   };
 
-  const handleHover = (day: number, month: number, year: number) => {
-    if (tempStartDate && !tempEndDate) {
-      const hoveredDate = new Date(year, month, day);
-      if (hoveredDate <= today && hoveredDate.getTime() !== tempStartDate.getTime()) {
-        setHoverDate(hoveredDate);
-      } else {
-        setHoverDate(null);
-      }
-    }
-  };
-
-  const handleSelectRange = () => {
+  const applyDateRange = () => {
     if (tempStartDate && tempEndDate) {
-      const finalStartDate = tempStartDate <= tempEndDate ? tempStartDate : tempEndDate;
-      const finalEndDate = tempStartDate <= tempEndDate ? tempEndDate : tempStartDate;
-
-      setSelectedStartDate(finalStartDate);
-      setSelectedEndDate(finalEndDate);
-      setFromDate(finalStartDate.toLocaleDateString('en-GB'));
-      setToDate(finalEndDate.toLocaleDateString('en-GB'));
-      setShowDateRangePicker(false);
+      setSelectedStartDate(tempStartDate);
+      setSelectedEndDate(tempEndDate);
+      setIsCalendarOpen(false);
     }
   };
 
-  const handleYearMonthClick = () => {
-    setIsDropdownVisible((prev) => !prev);
+  const clearDateRange = () => {
+    setTempStartDate(null);
+    setTempEndDate(null);
+    setSelectedStartDate(null);
+    setSelectedEndDate(null);
   };
 
-  const handleMonthSelect = (month: number) => {
-    setSelectedMonth(month);
-    setIsDropdownVisible(false);
-  };
+  const renderCalendar = () => {
+    const days = daysInMonth(selectedYear, selectedMonth);
+    const firstDay = firstDayOfMonth(selectedYear, selectedMonth);
+    const cells = [];
 
-  const handleYearSelect = (year: number) => {
-    setSelectedYear(year);
-    setDropdownYear(true);
-  };
-
-  const handlePrevMonth = () => {
-    setIsDropdownVisible(false);
-    if (selectedMonth === 0) {
-      setSelectedYear((prevYear) => prevYear - 1);
-      setSelectedMonth(11);
-    } else {
-      setSelectedMonth((prevMonth) => prevMonth - 1);
+    for (let i = 0; i < firstDay; i++) {
+      cells.push(<div key={`empty-${i}`} className="h-10 sm:h-12" />);
     }
-  };
 
-  const handleNextMonth = () => {
-    setIsDropdownVisible(false);
-    if (selectedMonth === 11) {
-      setSelectedYear((prevYear) => prevYear + 1);
-      setSelectedMonth(0);
-    } else {
-      setSelectedMonth((prevMonth) => prevMonth + 1);
+    for (let day = 1; day <= days; day++) {
+      const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+      const dayData = calendarData.find(d => d.date === dateStr);
+      const currentDate = new Date(selectedYear, selectedMonth, day);
+      const isDisabled = currentDate > today;
+      const isSelected = tempStartDate && currentDate.getTime() === tempStartDate.getTime();
+      const isEnd = tempEndDate && currentDate.getTime() === tempEndDate.getTime();
+      const isInRange = tempStartDate && tempEndDate && currentDate > tempStartDate && currentDate < tempEndDate;
+
+      cells.push(
+        <motion.button
+          key={day}
+          whileHover={{ scale: isDisabled ? 1 : 1.05 }}
+          whileTap={{ scale: isDisabled ? 1 : 0.95 }}
+          onClick={() => !isDisabled && handleDateClick(day)}
+          disabled={isDisabled}
+          className={`
+            h-10 sm:h-12 rounded-xl text-sm font-medium transition-all relative
+            ${isDisabled ? 'text-muted-foreground/30 cursor-not-allowed' : 'cursor-pointer hover:bg-muted'}
+            ${isSelected || isEnd ? 'bg-primary text-primary-foreground' : ''}
+            ${isInRange ? 'bg-primary/20' : ''}
+            ${dayData && !isSelected && !isEnd ? dayData.profit > 0 ? 'bg-profit/20 text-profit' : dayData.profit < 0 ? 'bg-loss/20 text-loss' : '' : ''}
+          `}
+        >
+          {day}
+          {dayData && (
+            <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${dayData.profit > 0 ? 'bg-profit' : 'bg-loss'}`} />
+          )}
+        </motion.button>
+      );
     }
+
+    return cells;
   };
-
-  const handleFilterSelect = (filterValue: string) => {
-    setIsFilterDropdownOpen(false);
-    setSelectedFilter(filterValue);
-  };
-
-  const handleRemoveFilters = () => {
-    setSelectedFilter('all');
-    setIsFilterDropdownOpen(false);
-  };
-
-  const handleClickOutside = (event: globalThis.MouseEvent) => {
-    if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
-      setIsFilterDropdownOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleFilterDropDownOpenClose = () => {
-    setIsFilterDropdownOpen(!isFilterDropdownOpen);
-  };
-
-  const filterOptions = [
-    { value: 'all', label: 'All Trades' },
-    { value: 'profitHighToLow', label: 'Profit: High to Low' },
-    { value: 'profitLowToHigh', label: 'Profit: Low to High' },
-    { value: 'lossHighToLow', label: 'Loss: High to Low' },
-    { value: 'onlyProfit', label: 'Only Profit' },
-    { value: 'onlyLoss', label: 'Only Loss' },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Toolbar */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div 
-            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
-            onClick={handleFilterDropDownOpenClose}
-          >
-            <FontAwesomeIcon icon={faFilter} className="text-primary text-sm" />
-            <span className="text-sm font-medium text-foreground">
-              {selectedFilter === 'all'
-                ? 'Filter'
-                : filterOptions.find(opt => opt.value === selectedFilter)?.label || 'Filter'}
-            </span>
-            <FontAwesomeIcon icon={faChevronRight} className="text-muted-foreground text-xs" />
-          </div>
-
-          <div 
-            className={`absolute top-16 left-6 w-56 bg-card border border-border rounded-xl shadow-lg overflow-hidden transition-all duration-200 ${
-              isFilterDropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
-            }`}
-            ref={filterDropdownRef}
-          >
-            <div className="py-2">
-              {filterOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className={`flex items-center px-4 py-2.5 cursor-pointer text-sm transition-colors ${
-                    selectedFilter === option.value 
-                      ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                  onClick={() => handleFilterSelect(option.value)}
-                >
-                  <span>{option.label}</span>
-                </div>
-              ))}
+      {/* Header / Toolbar */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Title */}
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Daily Journal</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">Track and analyze your trades</p>
             </div>
-            {selectedFilter !== 'all' && (
-              <div
-                className="py-2.5 px-4 border-t border-border flex items-center text-muted-foreground hover:text-foreground cursor-pointer text-sm"
-                onClick={handleRemoveFilters}
-              >
-                <FontAwesomeIcon icon={faBan} className="mr-2" />
-                <span>Remove Filters</span>
-              </div>
-            )}
-          </div>
 
-          <div 
-            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
-            onClick={() => setShowDateRangePicker(!showDateRangePicker)}
-          >
-            <FontAwesomeIcon icon={faCalendarDays} className="text-primary text-sm" />
-            <span className="text-sm font-medium text-foreground">Date Range</span>
-            <FontAwesomeIcon icon={faChevronRight} className="text-muted-foreground text-xs" />
+            {/* Controls */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Mobile Stats Toggle */}
+              <button
+                onClick={() => setShowMobileStats(!showMobileStats)}
+                className="lg:hidden flex items-center gap-2 px-3 py-2.5 bg-card border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                <Target className="w-4 h-4 text-primary" />
+                Stats
+              </button>
+
+              {/* Filter Dropdown */}
+              <div className="relative" ref={filterRef}>
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-card border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <Filter className="w-4 h-4 text-primary" />
+                  <span className="hidden sm:inline">
+                    {filterOptions.find(f => f.value === selectedFilter)?.label || 'Filter'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isFilterOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50"
+                    >
+                      {filterOptions.map((option) => {
+                        const Icon = option.icon;
+                        return (
+                          <button
+                            key={option.value}
+                            onClick={() => {
+                              setSelectedFilter(option.value);
+                              setIsFilterOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                              selectedFilter === option.value 
+                                ? 'bg-primary/10 text-primary' 
+                                : 'text-foreground hover:bg-muted'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Calendar Button */}
+              <div className="relative" ref={calendarRef}>
+                <button
+                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-card border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <span className="hidden sm:inline">
+                    {selectedStartDate && selectedEndDate 
+                      ? `${selectedStartDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} - ${selectedEndDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`
+                      : 'Date Range'
+                    }
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isCalendarOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-[320px] bg-card border border-border rounded-2xl shadow-xl p-4 z-50"
+                    >
+                      {/* Calendar Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <button
+                          onClick={handlePrevMonth}
+                          className="p-2 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                        <span className="text-sm font-semibold text-foreground">
+                          {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </span>
+                        <button
+                          onClick={handleNextMonth}
+                          className="p-2 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
+
+                      {/* Weekday Headers */}
+                      <div className="grid grid-cols-7 gap-1 mb-2">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                          <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                            {d}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Calendar Grid */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {renderCalendar()}
+                      </div>
+
+                      {/* Legend */}
+                      <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-border">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-profit" />
+                          <span className="text-xs text-muted-foreground">Profit</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-loss" />
+                          <span className="text-xs text-muted-foreground">Loss</span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 mt-4">
+                        <button
+                          onClick={clearDateRange}
+                          className="flex-1 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          onClick={applyDateRange}
+                          disabled={!tempStartDate || !tempEndDate}
+                          className="flex-1 px-4 py-2.5 text-sm font-medium bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex">
-        <div className="flex-1 p-6">
+      {/* Mobile Stats Panel */}
+      <AnimatePresence>
+        {showMobileStats && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="lg:hidden overflow-hidden border-b border-border"
+          >
+            <div className="p-4">
+              <QuickStats dailyData={filteredDailyData} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px]">
+        {/* Trade Entries */}
+        <div className="p-4 sm:p-6 min-h-screen">
           <JRContent dailyData={filteredDailyData} />
         </div>
 
-        <div className="w-80 xl:w-96 flex-shrink-0 p-6 border-l border-border sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Calendar</h2>
-
-          {showDateRangePicker ? (
-            <DJCalendar  
-              currentYearLeft={currentYearLeft}
-              setCurrentYearLeft={setCurrentYearLeft}
-              currentMonthLeft={currentMonthLeft}
-              setCurrentMonthLeft={setCurrentMonthLeft}
-              currentYearRight={currentYearRight}
-              setCurrentYearRight={setCurrentYearRight}
-              currentMonthRight={currentMonthRight}
-              setCurrentMonthRight={setCurrentMonthRight}
-              fromDate={fromDate}
-              toDate={toDate}
-              tempStartDate={tempStartDate}
-              tempEndDate={tempEndDate}
-              today={today}
-              isSelectedDate={isSelectedDate}
-              isInRange={isInRange}
-              handleDateClick={handleDateClick}
-              handleHover={handleHover}
-              handleSelect={handleSelectRange}
-              generateCalendar={generateCalendar}
-            />
-          ) : (
-            <div className="space-y-6">
-              <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <button 
-                    className="p-2 rounded-lg hover:bg-muted transition-colors"
-                    onClick={handlePrevMonth}
-                  >
-                    <FontAwesomeIcon icon={faCaretLeft} className="text-muted-foreground" />
+        {/* Sidebar - Desktop Only */}
+        <div className="hidden lg:block border-l border-border sticky top-[81px] h-[calc(100vh-81px)] overflow-y-auto">
+          <div className="p-6 space-y-6">
+            {/* Mini Calendar */}
+            <div className="bg-card border border-border rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-foreground">Calendar</h3>
+                <div className="flex items-center gap-1">
+                  <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                    <ChevronLeft className="w-4 h-4 text-muted-foreground" />
                   </button>
-                  <button 
-                    className="text-sm font-medium text-foreground hover:text-primary"
-                    onClick={handleYearMonthClick}
-                  >
-                    {new Date(selectedYear, selectedMonth).toLocaleString("default", {
-                      month: "long",
-                    })}{" "}
-                    {selectedYear}
-                    <FontAwesomeIcon icon={faCaretDown} className="ml-2 text-xs" />
+                  <span className="text-xs font-medium text-muted-foreground px-2">
+                    {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'short', year: 'numeric' })}
+                  </span>
+                  <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </button>
-                  <button 
-                    className="p-2 rounded-lg hover:bg-muted transition-colors"
-                    onClick={handleNextMonth}
-                  >
-                    <FontAwesomeIcon icon={faCaretRight} className="text-muted-foreground" />
-                  </button>
-                </div>
-
-                {isDropdownVisible && (
-                  <div className="absolute z-20 bg-card border border-border rounded-xl shadow-lg p-4 mt-2 w-64 animate-fade-in">
-                    <div className="text-center mb-4">
-                      <button 
-                        className="text-sm font-medium text-muted-foreground hover:text-foreground"
-                        onClick={() => setDropdownYear((prev) => !prev)}
-                      >
-                        {dropdownYear
-                          ? selectedYear
-                          : new Date(selectedYear, selectedMonth).toLocaleString("default", {
-                            month: "long",
-                          })}
-                        <FontAwesomeIcon icon={faCaretDown} className="ml-2 text-xs" />
-                      </button>
-                    </div>
-
-                    {dropdownYear ? (
-                      <div className="grid grid-cols-3 gap-2">
-                        {Array.from({ length: 12 }, (_, i) => i).map((month) => (
-                          <div
-                            key={month}
-                            className={`p-2 text-center cursor-pointer rounded-lg text-xs transition-colors ${
-                              month === selectedMonth 
-                                ? "bg-primary text-primary-foreground" 
-                                : "hover:bg-muted text-foreground"
-                            }`}
-                            onClick={() => handleMonthSelect(month)}
-                          >
-                            {new Date(0, month).toLocaleString("default", { month: "short" })}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div
-                        className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto"
-                        ref={yearContainerRef}
-                      >
-                        {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map(
-                          (year) => (
-                            <div
-                              key={year}
-                              className={`p-2 text-center cursor-pointer rounded-lg text-xs transition-colors ${
-                                year === selectedYear 
-                                  ? "bg-primary text-primary-foreground" 
-                                  : "hover:bg-muted text-foreground"
-                              }`}
-                              onClick={() => handleYearSelect(year)}
-                            >
-                              {year}
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
-
-                    <div className="mt-4 text-center">
-                      <button 
-                        onClick={() => setIsDropdownVisible(false)}
-                        className="px-4 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
-                      >
-                        Select
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-7 gap-1">
-                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                    <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
-                      {day}
-                    </div>
-                  ))}
-                  {renderCalendar()}
                 </div>
               </div>
 
-              <QuickStats dailyData={filteredDailyData} />
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                  <div key={i} className="h-6 flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {(() => {
+                  const days = daysInMonth(selectedYear, selectedMonth);
+                  const firstDay = firstDayOfMonth(selectedYear, selectedMonth);
+                  const cells = [];
+
+                  for (let i = 0; i < firstDay; i++) {
+                    cells.push(<div key={`e-${i}`} className="h-8" />);
+                  }
+
+                  for (let day = 1; day <= days; day++) {
+                    const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+                    const dayData = calendarData.find(d => d.date === dateStr);
+                    
+                    cells.push(
+                      <div
+                        key={day}
+                        className={`h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-colors cursor-pointer hover:bg-muted ${
+                          dayData 
+                            ? dayData.profit > 0 
+                              ? 'bg-profit/20 text-profit' 
+                              : 'bg-loss/20 text-loss'
+                            : 'text-foreground'
+                        }`}
+                      >
+                        {day}
+                      </div>
+                    );
+                  }
+
+                  return cells;
+                })()}
+              </div>
             </div>
-          )}
+
+            {/* Quick Stats */}
+            <QuickStats dailyData={filteredDailyData} />
+          </div>
         </div>
       </div>
     </div>
