@@ -80,10 +80,18 @@ export default function RootLayout({
 }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState<boolean>(true)
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true)
   
   const { profileData } = useAccountDetails()
   const { setAddTrades, setAddAcc } = calendarPopUp()
+  
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDarkMode])
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
