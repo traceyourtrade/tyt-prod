@@ -748,10 +748,10 @@ const blob = await new Promise<Blob | null>((resolve) =>
         <div
           key={index}
           id={`trade-${index}`}
-          className="w-full h-fit mt-5 rounded-[25px] flex flex-col items-center justify-start bg-[#111] backdrop-blur-sm shadow-lg border-b border-white/20 pt-5 overflow-hidden"
+          className="w-full h-fit mt-5 rounded-xl flex flex-col items-center justify-start bg-card border border-border pt-5 overflow-hidden"
         >
           <div className="w-[90%] flex flex-row items-center justify-between mb-2.5">
-            <div className="w-fit h-7 flex items-center justify-center rounded-[25px] bg-gray-500/20 text-xs px-3.5 text-white font-semibold">
+            <div className="w-fit h-7 flex items-center justify-center rounded-full bg-muted text-xs px-3.5 text-foreground font-semibold">
               <span>
                 {new Date(ele.date)
                   .toLocaleDateString("en-US", {
@@ -772,7 +772,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                     setFolder("Daily Journal");
                     setFile(ele.noteName!);
                   }}
-                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-[25px] text-white border border-white/20 bg-purple-600/50 backdrop-blur-sm shadow-lg transition-all duration-300"
+                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-[25px] text-white border border-white/20 bg-primary/50 backdrop-blur-sm shadow-lg transition-all duration-300"
                 >
                   VIEW NOTES
                 </button>
@@ -788,7 +788,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       ele.accountType
                     )
                   }
-                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-[25px] text-white border border-white/20 bg-purple-600/50 backdrop-blur-sm shadow-lg transition-all duration-300"
+                  className="w-28 h-auto px-2 py-1 font-sans text-xs rounded-[25px] text-white border border-white/20 bg-primary/50 backdrop-blur-sm shadow-lg transition-all duration-300"
                 >
                   ADD NOTES +
                 </button>
@@ -827,7 +827,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       <p className="text-gray-400 text-xs mb-0.5">
                         RISK:REWARD
                       </p>
-                      <span className="bg-gradient-to-r from-purple-600 to-yellow-600 bg-clip-text text-transparent font-bold">
+                      <span className="text-primary font-bold">
                         1:3
                       </span>
                     </div>
@@ -861,15 +861,15 @@ const blob = await new Promise<Blob | null>((resolve) =>
                     <div className="w-1/3">
                       <span
                         onClick={() => toggleStra(ele.id)}
-                        className="block mx-auto text-xs w-fit px-1.75 py-0.5 rounded-[25px] capitalize bg-gradient-to-r from-purple-600 to-yellow-600 cursor-pointer"
+                        className="block mx-auto text-xs w-fit px-2 py-1 rounded-full capitalize bg-primary text-white cursor-pointer"
                       >
                         {ele.strategy} <FontAwesomeIcon icon={faChevronDown} />
                       </span>
                       <div
                         className={`w-fit ${
                           expStra === ele.id
-                            ? "w-24 h-auto flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white mt-2.5 p-2.5 visible opacity-100 z-10"
-                            : "w-24 h-0 flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white mt-2.5 p-2.5 invisible opacity-0 z-10"
+                            ? "w-28 h-auto flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 visible opacity-100 z-10 shadow-lg"
+                            : "w-28 h-0 flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 invisible opacity-0 z-10"
                         }`}
                       >
                         {Object.entries(
@@ -878,7 +878,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                           .slice(1)
                           .map(([key, value]) => (
                             <p
-                              className="w-full text-gray-700 border-none bg-transparent transition-all duration-200 px-0.5 py-0.5 text-xs capitalize flex items-center justify-between rounded-[12px] cursor-pointer"
+                              className="w-full text-foreground border-none bg-transparent hover:bg-muted transition-all duration-200 px-1.5 py-1 text-xs capitalize flex items-center justify-between rounded-lg cursor-pointer"
                               key={key}
                             >
                               <span
@@ -905,7 +905,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                           <span
                             key={key}
                             onClick={() => toggleSelect(ele.id)}
-                            className="block mx-auto text-xs w-fit px-1.75 py-0.5 rounded-[25px] capitalize bg-gradient-to-r from-purple-600 to-yellow-600 cursor-pointer"
+                            className="block mx-auto text-xs w-fit px-2 py-1 rounded-full capitalize bg-primary text-white cursor-pointer"
                           >
                             {key} <FontAwesomeIcon icon={faChevronDown} />
                           </span>
@@ -916,8 +916,8 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       <div
                         className={`${
                           expSelect === ele.id
-                            ? "w-24 h-auto flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white mt-2.5 p-2.5 visible opacity-100 z-10"
-                            : "w-24 h-0 flex flex-col items-center justify-evenly absolute rounded-[10px] overflow-hidden bg-white mt-2.5 p-2.5 invisible opacity-0 z-10"
+                            ? "w-28 h-auto flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 visible opacity-100 z-10 shadow-lg"
+                            : "w-28 h-0 flex flex-col items-center justify-evenly absolute rounded-lg overflow-hidden bg-card border border-border mt-2.5 p-2.5 invisible opacity-0 z-10"
                         }`}
                       >
                         {Object.entries(ele.Quality)
@@ -927,7 +927,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                               onClick={(e) =>
                                 postSelect(e, ele.id, key, ele.accountType)
                               }
-                              className="w-full text-gray-700 border-none bg-transparent transition-all duration-200 px-0.5 py-0.5 text-xs capitalize flex items-center justify-between rounded-[12px] cursor-pointer"
+                              className="w-full text-foreground border-none bg-transparent hover:bg-muted transition-all duration-200 px-1.5 py-1 text-xs capitalize flex items-center justify-between rounded-lg cursor-pointer"
                               key={key}
                             >
                               {key}
@@ -941,14 +941,14 @@ const blob = await new Promise<Blob | null>((resolve) =>
 
               {ele.beforeURL ? (
                 <div
-                  className="w-[32%] h-52 rounded-[25px] mt-[-9px] flex flex-col items-center justify-center text-white cursor-pointer overflow-hidden relative bg-gradient-to-r from-purple-600 to-yellow-600 border border-dashed border-gray-900"
+                  className="w-[32%] h-52 rounded-xl mt-[-9px] flex flex-col items-center justify-center text-foreground cursor-pointer overflow-hidden relative bg-card border border-border"
                   onClick={() => {
                     setDjImg();
                     document.body.classList.add("no-scroll");
                     setDjUrl(ele.beforeURL!);
                   }}
                 >
-                  <p className="text-xs font-semibold bg-pink-400/30 px-1.25 py-0.5 rounded-[10px] absolute mt-[-260px] ml-[-22%]">
+                  <p className="text-xs font-semibold bg-primary/30 text-primary px-2 py-0.5 rounded-lg absolute mt-[-260px] ml-[-22%]">
                     BEFORE
                   </p>
                   <img
@@ -961,14 +961,14 @@ const blob = await new Promise<Blob | null>((resolve) =>
               ) : (
                 <label
                   htmlFor={`file-upload-bf-${ele.id}`}
-                  className={`w-[32%] h-52 rounded-[25px] mt-[-9px] flex flex-col items-center justify-center text-white cursor-pointer overflow-hidden relative  border border-dashed border-green-200 ${
+                  className={`w-[32%] h-52 rounded-xl mt-[-9px] flex flex-col items-center justify-center text-muted-foreground cursor-pointer overflow-hidden relative border border-dashed border-border hover:border-primary/50 transition-colors ${
                     isDragging ? "dragging" : ""
                   }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, ele.id, "beforeURL")}
                 >
-                  <p className="text-xs font-semibold bg-pink-400/30 px-1.25 py-0.5 rounded-[10px] absolute mt-[-260px] ml-[-22%]">
+                  <p className="text-xs font-semibold bg-primary/30 text-primary px-2 py-0.5 rounded-lg absolute mt-[-260px] ml-[-22%]">
                     BEFORE
                   </p>
                   <FontAwesomeIcon icon={faCloudArrowUp} />
@@ -995,14 +995,14 @@ const blob = await new Promise<Blob | null>((resolve) =>
 
               {ele.afterURL ? (
                 <div
-                  className="w-[32%] h-52 rounded-[25px] mt-[-9px] flex flex-col items-center justify-center text-white cursor-pointer overflow-hidden relative bg-gradient-to-r from-purple-600 to-yellow-600 border border-dashed border-gray-900"
+                  className="w-[32%] h-52 rounded-xl mt-[-9px] flex flex-col items-center justify-center text-foreground cursor-pointer overflow-hidden relative bg-card border border-border"
                   onClick={() => {
                     setDjImg();
                     document.body.classList.add("no-scroll");
                     setDjUrl(ele.afterURL!);
                   }}
                 >
-                  <p className="text-xs font-semibold bg-green-700 px-1.25 py-0.5 rounded-[10px] absolute mt-[-260px] ml-[-22%]">
+                  <p className="text-xs font-semibold bg-profit/30 text-profit px-2 py-0.5 rounded-lg absolute mt-[-260px] ml-[-22%]">
                     AFTER
                   </p>
                   <img
@@ -1015,14 +1015,14 @@ const blob = await new Promise<Blob | null>((resolve) =>
               ) : (
                 <label
                   htmlFor={`file-upload-af-${ele.id}`}
-                  className={`w-[32%] h-52 rounded-[25px] mt-[-9px] flex flex-col items-center justify-center text-white cursor-pointer overflow-hidden relative   border border-dashed border-green-200  ${
+                  className={`w-[32%] h-52 rounded-xl mt-[-9px] flex flex-col items-center justify-center text-muted-foreground cursor-pointer overflow-hidden relative border border-dashed border-border hover:border-primary/50 transition-colors ${
                     isDragging ? "dragging" : ""
                   }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, ele.id, "afterURL")}
                 >
-                  <p className="text-xs font-semibold bg-green-700 px-1.25 py-0.5 rounded-[10px] absolute mt-[-260px] ml-[-22%]">
+                  <p className="text-xs font-semibold bg-profit/30 text-profit px-2 py-0.5 rounded-lg absolute mt-[-260px] ml-[-22%]">
                     AFTER
                   </p>
                   
@@ -1050,40 +1050,40 @@ const blob = await new Promise<Blob | null>((resolve) =>
             </div>
           </div>
 
-          <div className="w-[90%] mt-5">
-            <table className="w-full text-white">
-              <thead className="bg-gray-600/20">
+          <div className="w-[90%] mt-5 overflow-x-auto">
+            <table className="w-full text-foreground text-sm">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-2">OPEN TIME</th>
-                  <th className="px-4 py-2">SYMBOL</th>
-                  <th className="px-4 py-2">LONG / SHORT</th>
-                  <th className="px-4 py-2">QTY</th>
-                  <th className="px-4 py-2">NET P&L</th>
-                  <th className="px-4 py-2">NET ROI</th>
-                  <th className="px-4 py-2">RR RATIO</th>
-                  <th className="px-4 py-2">COMMISSION</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">OPEN TIME</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">SYMBOL</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">LONG / SHORT</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">QTY</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">NET P&L</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">NET ROI</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">RR RATIO</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold text-muted-foreground whitespace-nowrap">COMMISSION</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <th className="px-4 py-2">{ele.OpenTime}</th>
-                  <th className="px-4 py-2">{ele.Item}</th>
-                  <th className="px-4 py-2 uppercase">{ele.Type}</th>
-                  <th className="px-4 py-2">{ele.Size}</th>
-                  <th
-                    className={`px-4 py-2 text-center ${
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">{ele.OpenTime}</td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">{ele.Item}</td>
+                  <td className="px-3 py-2.5 text-center uppercase whitespace-nowrap">{ele.Type}</td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">{ele.Size}</td>
+                  <td
+                    className={`px-3 py-2.5 text-center font-semibold whitespace-nowrap ${
                       ele.Profit < 0 ? "text-loss" : "text-profit"
                     }`}
                   >
                     {ele.Profit > 0
                       ? `$${Math.abs(ele.Profit)}`
                       : `-$${Math.abs(ele.Profit)}`}
-                  </th>
-                  <th className="px-4 py-2">NET ROI</th>
-                  <th className="px-4 py-2">RR RATIO</th>
-                  <th className="px-4 py-2 text-center">
+                  </td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">-</td>
+                  <td className="px-3 py-2.5 text-center whitespace-nowrap">
                     {ele.Commission ? ele.Commission : "-"}
-                  </th>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -1288,7 +1288,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
 
             <button
               onClick={(e) => submitJrData(e, ele.id, ele.accountType)}
-              className="w-24 h-auto text-base float-right rounded-[15px] px-2.5 py-1.25 border border-white/20 cursor-pointer mr-5 bg-purple-600/50 backdrop-blur-sm shadow-lg text-white"
+              className="w-24 h-auto text-base float-right rounded-lg px-2.5 py-1.5 border border-primary/20 cursor-pointer mr-5 bg-primary hover:bg-primary-dark text-white transition-colors"
             >
               SAVE
             </button>
@@ -1297,7 +1297,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
           <center>
             <FontAwesomeIcon
               icon={faGripLines}
-              className=" text-white cursor-pointer"
+              className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
               onClick={(e) => {
                 settingJrData(
                   ele.jrData || { rfe: "", widw: "", wni: "", lfnt: "" }
@@ -1310,30 +1310,30 @@ const blob = await new Promise<Blob | null>((resolve) =>
       ))}
 
       {/* Pagination controls */}
-      <div className="flex justify-center items-center gap-2.5 my-5 py-2.5 border-t border-gray-500/20">
+      <div className="flex justify-center items-center gap-2.5 my-5 py-2.5 border-t border-border">
         <button
           onClick={() => paginate(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`px-2.5 py-1.25 text-white border-none rounded-[4px] ${
+          className={`px-3 py-1.5 border-none rounded-lg text-sm ${
             currentPage === 1
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-gray-700 cursor-pointer"
+              ? "bg-muted text-muted-foreground cursor-not-allowed"
+              : "bg-primary text-white cursor-pointer hover:bg-primary-dark"
           }`}
         >
           Previous
         </button>
 
-        <span className="text-gray-400">
+        <span className="text-muted-foreground text-sm">
           Page {currentPage} of {totalPages}
         </span>
 
         <button
           onClick={() => paginate(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={`px-2.5 py-1.25 text-white border-none rounded-[4px] ${
+          className={`px-3 py-1.5 border-none rounded-lg text-sm ${
             currentPage === totalPages
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-gray-700 cursor-pointer"
+              ? "bg-muted text-muted-foreground cursor-not-allowed"
+              : "bg-primary text-white cursor-pointer hover:bg-primary-dark"
           }`}
         >
           Next
