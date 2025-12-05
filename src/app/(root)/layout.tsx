@@ -29,6 +29,7 @@ import {
   ChevronDown,
   Menu,
   X,
+  Calculator,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -51,6 +52,7 @@ const mainNavItems = [
   { name: "Notebook", href: "/notebook", icon: FileText },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Strategies", href: "/strategies", icon: Target },
+  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator },
 ]
 
 const bottomNavItems = [
@@ -73,6 +75,7 @@ const pageTitles: Record<string, string> = {
   "/strategies/strategies": "All Strategies",
   "/strategies/reports": "Reports",
   "/strategies/compare": "Compare",
+  "/lot-calculator": "Lot Calculator",
   "/settings": "Settings",
   "/support": "Support",
 }
