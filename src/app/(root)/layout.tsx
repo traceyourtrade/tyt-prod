@@ -91,8 +91,12 @@ export default function RootLayout({
   const [mobileOpen, setMobileOpen] = useState<boolean>(false)
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true)
   
-  const { profileData } = useAccountDetails()
+  const { profileData, setAccounts } = useAccountDetails()
   const { setAddTrades, setAddAcc } = calendarPopUp()
+  
+  useEffect(() => {
+    setAccounts()
+  }, [])
   
   useEffect(() => {
     if (isDarkMode) {
