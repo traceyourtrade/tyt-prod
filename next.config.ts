@@ -21,10 +21,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Allow all hosts for Replit proxy environment
-  experimental: {
-    allowedOrigins: ["*"],
-  },
+  // Allow all dev origins for Replit proxy environment
+  allowedDevOrigins: ["*"],
 };
 
 export default nextConfig;
