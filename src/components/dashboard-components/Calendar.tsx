@@ -116,14 +116,19 @@ const Calendar = () => {
       const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
       const dayData = calendarData.find((d) => d.date === dateStr);
 
+      const getProfitBgClass = () => {
+        if (!dayData) return "bg-muted/20 hover:bg-muted/40";
+        if (dayData.profit > 0) return "bg-profit/10 border border-profit/20 hover:border-profit/40 hover:bg-profit/15";
+        if (dayData.profit < 0) return "bg-loss/10 border border-loss/20 hover:border-loss/40 hover:bg-loss/15";
+        return "bg-card/80 border border-border/50 hover:border-border hover:bg-card";
+      };
+
       cells.push(
         <div
           key={day}
           className={cn(
             "h-[80px] rounded-xl flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
-            dayData 
-              ? "bg-card/80 border border-border/50 hover:border-border hover:bg-card" 
-              : "bg-muted/20 hover:bg-muted/40"
+            getProfitBgClass()
           )}
           onClick={() => {
             setShowTr();
