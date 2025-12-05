@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faDollarSign, faBars } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faDollarSign } from "@fortawesome/free-solid-svg-icons";
 
 interface Trade {
   id: number;
@@ -13,11 +13,7 @@ interface Trade {
   date: string;
 }
 
-interface Props {
-  onMenuClick: () => void;
-}
-
-const CommissionNfees = ({ onMenuClick }: Props) => {
+const CommissionNfees = () => {
   const [filter, setFilter] = useState("All");
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -32,12 +28,7 @@ const CommissionNfees = ({ onMenuClick }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <button onClick={onMenuClick} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white">
-          <FontAwesomeIcon icon={faBars} />
-        </button>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Commissions & Fees</h2>
-      </div>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Commissions & Fees</h2>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">

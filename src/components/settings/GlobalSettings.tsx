@@ -1,13 +1,9 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClock, faWallet, faCheck, faChevronDown, faMoon, faSun, faBars } from "@fortawesome/free-solid-svg-icons";
+import { faClock, faWallet, faCheck, faChevronDown, faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
 
-interface Props {
-  onMenuClick: () => void;
-}
-
-const GlobalSettings = ({ onMenuClick }: Props) => {
+const GlobalSettings = () => {
   const [timezone, setTimezone] = useState("(GMT+05:30) Asia/Calcutta");
   const [currency, setCurrency] = useState("USD ($)");
   const [tzOpen, setTzOpen] = useState(false);
@@ -29,12 +25,7 @@ const GlobalSettings = ({ onMenuClick }: Props) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={onMenuClick} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white">
-            <FontAwesomeIcon icon={faBars} />
-          </button>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Global Settings</h2>
-        </div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Global Settings</h2>
         <button 
           onClick={handleSave}
           className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
