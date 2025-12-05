@@ -1,9 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
-  faUser, faShield, faCrown, faWallet, faPercent, faGear,
-  faChevronRight, faXmark
+  faUser, faShield, faCrown, faWallet, faPercent, faGear
 } from "@fortawesome/free-solid-svg-icons";
 
 import Profile from "@/components/settings/Profile";
@@ -18,8 +17,8 @@ type NavItem = { name: string; icon: any; id: string };
 
 const Settings = () => {
   const [active, setActive] = useState("profile");
-  const [showNav, setShowNav] = useState(false);
   const { setAccounts } = useAccountDetails();
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setAccounts(); }, [setAccounts]);
 
@@ -28,66 +27,48 @@ const Settings = () => {
     { name: "Security", icon: faShield, id: "security" },
     { name: "Subscription", icon: faCrown, id: "subscription" },
     { name: "Accounts", icon: faWallet, id: "accounts" },
-    { name: "Commissions & Fees", icon: faPercent, id: "fees" },
-    { name: "Global Settings", icon: faGear, id: "global" },
+    { name: "Fees", icon: faPercent, id: "fees" },
+    { name: "Settings", icon: faGear, id: "global" },
   ];
 
-  const activeItem = navItems.find(item => item.id === active);
-
-  const handleNavClick = (id: string) => {
+  const handleTabClick = (id: string, index: number) => {
     setActive(id);
-    setShowNav(false);
+    // Scroll the clicked tab into view
+    if (tabsRef.current) {
+      const tabs = tabsRef.current.children;
+      if (tabs[index]) {
+        (tabs[index] as HTMLElement).scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest',
+          inline: 'center' 
+        });
+      }
+    }
   };
 
   return (
     <div className="min-h-[calc(100vh-8rem)]">
-      {/* Mobile: Section selector button (opens overlay) */}
-      <div className="lg:hidden mb-4">
-        <button
-          onClick={() => setShowNav(true)}
-          className="flex items-center justify-between w-full px-4 py-3 bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626]"
-        >
-          <div className="flex items-center gap-3">
-            <FontAwesomeIcon icon={activeItem?.icon || faUser} className="text-primary w-4" />
-            <span className="font-medium text-gray-900 dark:text-white">{activeItem?.name || "Profile"}</span>
-          </div>
-          <FontAwesomeIcon icon={faChevronRight} className="text-gray-400 text-sm" />
-        </button>
+      {/* Mobile: Horizontal scrollable tabs */}
+      <div 
+        ref={tabsRef}
+        className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 lg:hidden scrollbar-hide"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {navItems.map((item, index) => (
+          <button
+            key={item.id}
+            onClick={() => handleTabClick(item.id, index)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+              active === item.id
+                ? "bg-primary text-white shadow-md"
+                : "bg-gray-100 dark:bg-[#1e1e1e] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#252525]"
+            }`}
+          >
+            <FontAwesomeIcon icon={item.icon} className="w-3.5" />
+            <span>{item.name}</span>
+          </button>
+        ))}
       </div>
-
-      {/* Mobile: Navigation overlay */}
-      {showNav && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowNav(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-[#141414] overflow-y-auto">
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-[#262626]">
-              <span className="font-semibold text-gray-900 dark:text-white">Settings</span>
-              <button 
-                onClick={() => setShowNav(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-            <nav className="p-3 space-y-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    active === item.id
-                      ? "bg-primary/10 text-primary"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
-                  }`}
-                >
-                  <FontAwesomeIcon icon={item.icon} className="w-4 opacity-70" />
-                  <span>{item.name}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-      )}
 
       {/* Desktop: Sidebar + Content layout */}
       <div className="flex gap-6">
