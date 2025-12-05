@@ -362,11 +362,11 @@ const EditTradePopUp = () => {
     readOnly?: boolean;
   }) => (
     <div className="space-y-2">
-      <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium">{label}</label>
+      <label className="text-[11px] uppercase tracking-wider text-gray-500 font-medium">{label}</label>
       <div className="relative">
         <input
           type="text"
-          className={`w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all duration-200 ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
+          className={`w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/50 focus:bg-[#252525] transition-all duration-200 ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
@@ -378,27 +378,27 @@ const EditTradePopUp = () => {
   );
 
   return (
-    <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4 transition-opacity duration-300 ${showEditTradePopUp ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+    <div className={`fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center p-4 transition-opacity duration-300 ${showEditTradePopUp ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
       <div 
-        className="w-full max-w-md max-h-[90vh] bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] backdrop-blur-2xl rounded-3xl flex flex-col border border-white/10 shadow-2xl shadow-black/50 overflow-hidden"
+        className="w-full max-w-md max-h-[90vh] bg-[#141414] rounded-3xl flex flex-col border border-[#2a2a2a] shadow-2xl overflow-hidden"
         ref={popupRef}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a2a]">
           <div>
             <h2 className="text-lg font-bold text-white">Edit Trade</h2>
-            <p className="text-xs text-white/40 mt-0.5">{marketType} Market</p>
+            <p className="text-xs text-gray-500 mt-0.5">{marketType} Market</p>
           </div>
           <button 
-            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition-colors duration-200 group"
+            className="w-9 h-9 rounded-xl bg-[#1e1e1e] hover:bg-red-500/20 flex items-center justify-center transition-colors duration-200 group"
             onClick={() => setShowEditTradePopUp(false)}
           >
-            <FontAwesomeIcon icon={faXmark} className="text-white/50 group-hover:text-red-400 text-sm" />
+            <FontAwesomeIcon icon={faXmark} className="text-gray-400 group-hover:text-red-400 text-sm" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#141414]">
           <div className="relative" ref={symbolInputRef}>
-            <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium block mb-2">Symbol</label>
+            <label className="text-[11px] uppercase tracking-wider text-gray-500 font-medium block mb-2">Symbol</label>
             <div 
               className="relative cursor-pointer"
               onClick={() => {
@@ -410,7 +410,7 @@ const EditTradePopUp = () => {
             >
               <input
                 type="text"
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all duration-200 pr-10 uppercase"
+                className="w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/50 focus:bg-[#252525] transition-all duration-200 pr-10 uppercase"
                 placeholder="Search symbol..."
                 value={tradeEntry.symbol || ""}
                 onChange={(e) => {
@@ -422,19 +422,19 @@ const EditTradePopUp = () => {
               />
               <FontAwesomeIcon 
                 icon={faChevronDown} 
-                className={`absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-xs transition-transform duration-200 ${openSymbolDropdown ? 'rotate-180' : ''}`}
+                className={`absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs transition-transform duration-200 ${openSymbolDropdown ? 'rotate-180' : ''}`}
               />
             </div>
 
             {openSymbolDropdown && filteredSymbols().length > 0 && (
               <div
-                className="absolute top-full left-0 w-full max-h-48 bg-[#1a1a1a] border border-white/10 rounded-xl mt-2 shadow-2xl z-10 overflow-auto"
+                className="absolute top-full left-0 w-full max-h-48 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl mt-2 shadow-2xl z-10 overflow-auto"
                 ref={symbolDropdownRef}
               >
                 {filteredSymbols().map((symbolData, index) => (
                   <div
                     key={`${symbolData.symbol}-${index}`}
-                    className="px-4 py-3 cursor-pointer text-white/70 hover:bg-white/[0.05] hover:text-white transition-colors duration-150 text-sm border-b border-white/[0.03] last:border-0"
+                    className="px-4 py-3 cursor-pointer text-gray-300 hover:bg-[#252525] hover:text-white transition-colors duration-150 text-sm border-b border-[#2a2a2a] last:border-0"
                     onClick={() => {
                       handleInputChange("symbol", symbolData.symbol);
                       if (symbolData.market !== undefined) {
@@ -449,7 +449,7 @@ const EditTradePopUp = () => {
                   >
                     <span className="font-medium">{symbolData.symbol}</span>
                     {symbolData.name && (
-                      <span className="text-white/40 ml-2 text-xs">{symbolData.name}</span>
+                      <span className="text-gray-500 ml-2 text-xs">{symbolData.name}</span>
                     )}
                   </div>
                 ))}
@@ -458,14 +458,14 @@ const EditTradePopUp = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Position Type</label>
+            <label className="text-[11px] uppercase tracking-wider text-gray-500 font-medium">Position Type</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border transition-all duration-200 ${
                   selectedSide === "buy" 
                     ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" 
-                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
+                    : "bg-[#1e1e1e] text-gray-400 border-[#2a2a2a] hover:bg-[#252525]"
                 }`}
                 onClick={() => {
                   setSelectedSide("buy");
@@ -480,7 +480,7 @@ const EditTradePopUp = () => {
                 className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border transition-all duration-200 ${
                   selectedSide === "sell" 
                     ? "bg-red-500/15 text-red-400 border-red-500/30" 
-                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
+                    : "bg-[#1e1e1e] text-gray-400 border-[#2a2a2a] hover:bg-[#252525]"
                 }`}
                 onClick={() => {
                   setSelectedSide("sell");
@@ -508,33 +508,33 @@ const EditTradePopUp = () => {
             />
           </div>
 
-          <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-4">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Entry Date & Time</p>
-                <p className="text-sm font-semibold text-purple-400 mt-1">
+                <p className="text-[11px] uppercase tracking-wider text-gray-500 font-medium">Entry Date & Time</p>
+                <p className="text-sm font-semibold text-emerald-400 mt-1">
                   {formatDateForDisplay(tradeEntry.OpenTime || "")}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowDateTimePickerFor(`open-${tradeEntry.id || 'edit'}`)}
-                className="w-10 h-10 rounded-xl bg-white/[0.05] hover:bg-purple-500/20 flex items-center justify-center transition-colors duration-200 group"
+                className="w-10 h-10 rounded-xl bg-[#252525] hover:bg-emerald-500/20 flex items-center justify-center transition-colors duration-200 group"
               >
-                <FontAwesomeIcon icon={faCalendarAlt} className="text-white/50 group-hover:text-purple-400" />
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400 group-hover:text-emerald-400" />
               </button>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Trade Status</label>
+            <label className="text-[11px] uppercase tracking-wider text-gray-500 font-medium">Trade Status</label>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
                   tradeEntry.status === "completed"
                     ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
+                    : "bg-[#1e1e1e] text-gray-400 border-[#2a2a2a] hover:bg-[#252525]"
                 } ${!tradeEntry.OpenPrice ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={() => toggleEntryStatus("completed")}
                 disabled={!tradeEntry.OpenPrice}
@@ -547,7 +547,7 @@ const EditTradePopUp = () => {
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
                   tradeEntry.status === "pending"
                     ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
+                    : "bg-[#1e1e1e] text-gray-400 border-[#2a2a2a] hover:bg-[#252525]"
                 } ${!tradeEntry.OpenPrice ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={() => toggleEntryStatus("pending")}
                 disabled={!tradeEntry.OpenPrice}
@@ -577,20 +577,20 @@ const EditTradePopUp = () => {
 
           {tradeEntry.status === "completed" && (
             <>
-              <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-4">
+              <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Close Date & Time</p>
-                    <p className="text-sm font-semibold text-purple-400 mt-1">
+                    <p className="text-[11px] uppercase tracking-wider text-gray-500 font-medium">Close Date & Time</p>
+                    <p className="text-sm font-semibold text-emerald-400 mt-1">
                       {tradeEntry.CloseTime ? formatDateForDisplay(tradeEntry.CloseTime) : "Not set"}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowDateTimePickerFor(`close-${tradeEntry.id || 'edit'}`)}
-                    className="w-10 h-10 rounded-xl bg-white/[0.05] hover:bg-purple-500/20 flex items-center justify-center transition-colors duration-200 group"
+                    className="w-10 h-10 rounded-xl bg-[#252525] hover:bg-emerald-500/20 flex items-center justify-center transition-colors duration-200 group"
                   >
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-white/50 group-hover:text-purple-400" />
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400 group-hover:text-emerald-400" />
                   </button>
                 </div>
               </div>
@@ -631,15 +631,15 @@ const EditTradePopUp = () => {
           />
         </div>
 
-        <div className="px-6 py-4 border-t border-white/5">
+        <div className="px-6 py-4 border-t border-[#2a2a2a]">
           <button
             type="button"
             onClick={handleEntrySubmit}
             disabled={!isFormValid() || isSubmitting}
             className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all duration-300 ${
               isFormValid() && !isSubmitting
-                ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-[1.02]"
-                : "bg-white/[0.05] text-white/30 cursor-not-allowed"
+                ? "bg-emerald-500 hover:bg-emerald-400 text-white"
+                : "bg-[#1e1e1e] text-gray-500 cursor-not-allowed"
             }`}
           >
             {isSubmitting ? (
