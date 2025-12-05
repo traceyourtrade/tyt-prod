@@ -1,331 +1,388 @@
+"use client"
 import { useState, useRef, useEffect } from "react";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import notifications from "@/store/notifications";
-// Add these imports at the top (alongside the existing MoreVertIcon import):
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-    faPlus, 
-    faCirclePlus, 
-    faChevronDown, 
-    faChevronRight, 
-    faFolder,
-    faTrashCan,
-    faPenToSquare,
-    faPaperPlane
-} from '@fortawesome/free-solid-svg-icons';
+  File, 
+  FilePlus, 
+  ChevronDown, 
+  ChevronRight, 
+  MoreVertical,
+  Trash2,
+  Pencil,
+  Check,
+  X,
+  FileText,
+  Calendar
+} from "lucide-react";
+import notifications from "@/store/notifications";
+
 interface FileType {
-    filename: string;
-    created: string;
+  filename: string;
+  created: string;
 }
 
 interface NoteType {
-    folderName: string;
-    files: FileType[];
+  folderName: string;
+  files: FileType[];
 }
 
 interface FilesProps {
-    userId: string;
-    bkurl: string;
-    tokenn: string;
-    notes: NoteType[];
-    setNotes: (userId: string, tokenn: string) => void;
-    setFile: (filename: string) => void;
-    newFolder: string;
-    setNewFolder: (folder: string) => void;
-    setNewFile: (file: string) => void;
-    setFileShow: (show: boolean) => void;
-    newFile: string;
-    selectedFolder: string;
-    changeMode: (mode: string) => void;
-    fileShow: boolean;
+  notes: NoteType[];
+  setNotes: () => Promise<void>;
+  setFile: (filename: string) => void;
+  newFolder: string;
+  setNewFolder: (folder: string) => void;
+  setNewFile: (file: string) => void;
+  setFileShow: (show: boolean) => void;
+  newFile: string;
+  selectedFolder: string;
+  changeMode: (mode: string) => void;
+  fileShow: boolean;
 }
 
 const Files = ({ 
-    userId, 
-    bkurl, 
-    tokenn, 
-    notes, 
-    setNotes, 
-    setFile, 
-    newFolder, 
-    setNewFolder, 
-    setNewFile, 
-    setFileShow, 
-    newFile, 
-    selectedFolder, 
-    changeMode, 
-    fileShow 
+  notes, 
+  setNotes, 
+  setFile, 
+  setNewFile, 
+  setFileShow, 
+  newFile, 
+  selectedFolder, 
+  changeMode, 
+  fileShow 
 }: FilesProps) => {
-    console.log("Rendering Files Component");
-    console.log("Selected Folder:", selectedFolder);
-    console.log("Notes:", notes);
-    console.log("New File:", newFile);
-    console.log("File Show:", fileShow);
-    console.log("User ID:", userId);
-    console.log("BK URL:", bkurl);
-    
-    const { setAlertBoxG } = notifications();
-    const [isFileOpen, setIsFileOpen] = useState(true);
+  const { setAlertBoxG } = notifications();
+  const [isFileOpen, setIsFileOpen] = useState(true);
 
-    const uploadFile = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const uploadFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFile.trim()) return;
 
-        try {
-            const response = await fetch(`/api/notebook/post`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ tokenn, newFile, folderName: selectedFolder, apiName:'createFile' }),
-            });
+    try {
+      const response = await fetch(`/api/notebook/post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ newFile, folderName: selectedFolder, apiName: 'createFile' }),
+      });
 
-            const data = await response.json();
+      const data = await response.json();
 
-            if (response.ok) {
-                setNewFile("")
-                setFileShow(false);
-                setNotes(userId, tokenn);
-                changeMode("VIEW")
-            } else {
-                if (data.error === "Folder already exists") {
-                    setAlertBoxG("Folder already exists", "error");
-                }
-            }
-        } catch (error) {
-            console.error("Error saving notebook:", error);
+      if (response.ok) {
+        setNewFile("")
+        setFileShow(false);
+        setNotes();
+        changeMode("VIEW")
+      } else {
+        if (data.error === "File already exists") {
+          setAlertBoxG("File already exists", "error");
         }
+      }
+    } catch (error) {
+      console.error("Error creating file:", error);
     }
+  }
 
-    const filteredFiles = notes
-        .filter(note => note.folderName === selectedFolder)
-        .flatMap(note => note.files);
+  const filteredFiles = notes
+    .filter(note => note.folderName === selectedFolder)
+    .flatMap(note => note.files);
 
-    // Dropdown
-    const [dropdownCoords, setDropdownCoords] = useState({ x: 0, y: 0 });
-    const [showFr, setShowFr] = useState(false)
-    const [visibleOptions, setVisibleOptions] = useState<number | null>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const [delConfirm, setDelConfirm] = useState(false)
-    const [delFolder, setDelFolder] = useState("")
-    const [folderRename, setFolderRename] = useState("")
+  const [dropdownCoords, setDropdownCoords] = useState({ x: 0, y: 0 });
+  const [showFr, setShowFr] = useState(false)
+  const [visibleOptions, setVisibleOptions] = useState<number | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [delConfirm, setDelConfirm] = useState(false)
+  const [delFile, setDelFile] = useState("")
+  const [fileRename, setFileRename] = useState("")
 
-    const handleMenuClick = (e: React.MouseEvent, index: number, filename: string) => {
-        e.stopPropagation();
-        setShowFr(false)
-        setDelFolder(filename)
+  const handleMenuClick = (e: React.MouseEvent, index: number, filename: string) => {
+    e.stopPropagation();
+    setShowFr(false)
+    setDelFile(filename)
+    setDelConfirm(false)
 
-        if (visibleOptions === index) {
-            setVisibleOptions(null);
-        } else {
-            const rect = e.currentTarget.getBoundingClientRect();
-            setDropdownCoords({ x: rect.left, y: rect.bottom });
-            setVisibleOptions(index);
-        }
+    if (visibleOptions === index) {
+      setVisibleOptions(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setDropdownCoords({ x: rect.right + 8, y: rect.top });
+      setVisibleOptions(index);
+    }
+  };
+
+  const deleteFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch(`/api/notebook/post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ folderName: selectedFolder, fileName: delFile, apiName: 'deleteFile' }),
+      });
+
+      if (response.ok) {
+        setVisibleOptions(null);
+        setDelConfirm(false)
+        setNewFile("")
+        setFileShow(false);
+        setNotes();
+        changeMode("VIEW")
+      } else {
+        setAlertBoxG("Failed to delete file", "error");
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+    }
+  }
+
+  const renameFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fileRename.trim()) return;
+
+    try {
+      const response = await fetch(`/api/notebook/post`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ folderName: selectedFolder, fileName: delFile, renameFile: fileRename, apiName: 'renameFile' }),
+      });
+
+      if (response.ok) {
+        setVisibleOptions(null);
+        setShowFr(false);
+        setNotes();
+        changeMode("VIEW")
+      } else {
+        setAlertBoxG("Failed to rename file", "error");
+      }
+    } catch (error) {
+      console.error("Error renaming file:", error);
+    }
+  }
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      visibleOptions !== null &&
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target as Node)
+    ) {
+      setVisibleOptions(null);
+      setShowFr(false);
+      setDelConfirm(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
     };
+  }, [visibleOptions]);
 
-    const deleteFolder = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+  };
 
-        try {
-            const response = await fetch(`/api/notebook/post`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ tokenn, folderName: selectedFolder, fileName: delFolder ,apiName:'deleteFile' }),
-            });
+  return (
+    <div className="h-full">
+      {/* Header with folder name */}
+      <div className="mb-4 pb-3 border-b border-border">
+        <h3 className="text-base font-semibold text-foreground truncate">{selectedFolder}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {filteredFiles.length} {filteredFiles.length === 1 ? 'note' : 'notes'}
+        </p>
+      </div>
 
-            const data = await response.json();
-
-            if (response.ok) {
-                setVisibleOptions(null);
-                setDelConfirm(false)
-                setNewFile("")
-                setFileShow(false);
-                setNotes(userId, tokenn);
-                changeMode("VIEW")
-            } else {
-                if (data.error === "Folder already exists") {
-                    setAlertBoxG("Folder already exists", "error");
-                }
-            }
-        } catch (error) {
-            console.error("Error saving notebook:", error);
-        }
-    }
-
-    const renameFolder = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        try {
-            const response = await fetch(`/api/notebook/post`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ tokenn, folderName: selectedFolder, fileName: delFolder, renameFile: folderRename ,apiName:'renameFile' }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setVisibleOptions(null);
-                setDelConfirm(false)
-                setNewFile("")
-                setFileShow(false);
-                setNotes(userId, tokenn);
-                changeMode("VIEW")
-            } else {
-                if (data.error === "Folder already exists") {
-                    setAlertBoxG("Folder already exists", "error");
-                }
-            }
-        } catch (error) {
-            console.error("Error saving notebook:", error);
-        }
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-        if (
-            visibleOptions !== null &&
-            dropdownRef.current &&
-            !dropdownRef.current.contains(event.target as Node)
-        ) {
-            setVisibleOptions(null);
-        }
-    };
-
-    useEffect(() => {
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [visibleOptions]);
-
-    return (
-        <div className="w-[16%] h-[70vh] bg-[rgba(114,113,113,0.268)] rounded-[25px] font-['Inter'] shadow-[rgba(100,100,111,0.2)_0px_7px_29px_0px]">
-            {selectedFolder === "Daily Journal" ? "" :
-                fileShow ? 
-                <div className="w-[85%] flex bg-[rgba(122,122,122,0.214)] mx-auto mt-[20px] mb-[20px] p-[8px_10px] rounded-[15px] cursor-pointer justify-between transition-colors duration-300 ease-in-out text-white hover:bg-[rgba(122,122,122,0.551)]">
-                    <span className="w-[90%]">
-                        <FontAwesomeIcon icon={faFolder} className="ml-[10px] text-white" />
-                        <input 
-                            className="w-[75%] bg-transparent border-none outline-none ml-[10px] text-white font-['Inter']" 
-                            placeholder="Enter File Name" 
-                            value={newFile} 
-                            name="newFile" 
-                            onChange={(e) => setNewFile(e.target.value)} 
-                            maxLength={20} 
-                        />
-                    </span>
-                   <FontAwesomeIcon 
-                        icon={faCirclePlus} 
-                        className="mr-[5px] mt-[3px] cursor-pointer" 
-                        onClick={uploadFile} 
-                    />
-                </div> : 
-                <div 
-                    onClick={() => setFileShow(true)} 
-                    className="w-[85%] flex bg-[rgba(122,122,122,0.214)] mx-auto mt-[20px] mb-[20px] p-[8px_10px] rounded-[15px] cursor-pointer justify-between transition-colors duration-300 ease-in-out text-white hover:bg-[rgba(122,122,122,0.551)]"
-                >
-                    <span className="w-[90%]">
-                       <FontAwesomeIcon icon={faFolder} className="ml-[10px] text-white" />
-                        <span className="text-white font-semibold ml-[20px] text-[12px] relative top-[-2px]">ADD FILE</span>
-                    </span>
-                    <FontAwesomeIcon icon={faPlus} className="mr-[5px] mt-[3px]" />
-                </div>
-            }
-
-            <div className="mt-[10px]">
-                <div className="flex justify-between cursor-pointer p-[5px_20px] font-medium transition-colors duration-300 ease-in-out text-white" onClick={() => setIsFileOpen(!isFileOpen)}>
-                    <span className="font-medium text-[13px]">FILES</span>
-                   <FontAwesomeIcon icon={isFileOpen ? faChevronDown : faChevronRight} className="text-white" />
-                </div>
-
-                <div className={`max-h-0 overflow-hidden transition-[max-height] duration-400 ease-in-out ${isFileOpen ? "max-h-[calc(70vh-130px)] overflow-y-auto" : ""} mt-[5px]`}>
-                    {filteredFiles.length === 0 ? (
-                        <div className="w-full h-[50vh] flex items-center justify-center text-white text-[12px]">
-                            <p>No Files Found</p>
-                        </div>
-                    ) : (
-                        filteredFiles.map((file, index) => (
-                            <div key={file.filename}>
-                                <div className="w-[90%] h-auto mx-auto flex flex-row items-center">
-                                    <div 
-                                        className="w-full h-[40px] rounded-[10px] bg-[rgba(122,122,122,0.214)] ml-[10px] pl-[10px] cursor-pointer"
-                                        onClick={() => setFile(file.filename)}
-                                    >
-                                        <p className="text-[12px] text-white font-medium mt-[2px]">{file.filename}</p>
-                                        <span className="text-[#bebebe] text-[10px] font-medium relative top-[-5px]">
-                                            {new Date(file.created).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                    <MoreVertIcon
-                                        className="cursor-pointer text-[#bebebe] relative transition-all duration-1000 ease-in-out p-[2px] ml-[10px]"
-                                        fontSize="small"
-                                        onClick={(e) => handleMenuClick(e, index, file.filename)}
-                                    />
-                                </div>
-                                <br />
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                {visibleOptions !== null && (
-                    <div
-                        ref={dropdownRef}
-                        className="w-[150px] h-auto bg-white flex flex-col items-start p-[10px] rounded-[10px] absolute mt-[10px] ml-[-150px] z-10 opacity-0 invisible translate-y-[-10px] transition-all duration-200 ease-in-out visible:opacity-100 visible:visible visible:translate-y-0"
-                        style={{
-                            position: "fixed",
-                            left: dropdownCoords.x,
-                            top: dropdownCoords.y,
-                        }}
-                    >
-                        {selectedFolder === "Daily Journal" ? "" : 
-                            showFr ? 
-                            <span className="flex w-[90%] text-[12px] p-[5px] text-[#555] font-semibold text-left mx-auto rounded-[10px] cursor-pointer">
-                                <input 
-                                    maxLength={20} 
-                                    placeholder="New Name" 
-                                    className="w-[80%] border-none outline-none bg-transparent mt-[-2px]" 
-                                    name="folderRename" 
-                                    value={folderRename} 
-                                    onChange={(e) => setFolderRename(e.target.value)} 
-                                /> 
-                                <FontAwesomeIcon 
-                                    icon={faPaperPlane} 
-                                    className="ml-[5px] cursor-pointer" 
-                                    onClick={renameFolder} 
-                                />  
-                            </span> : 
-                            <span 
-                                onClick={() => { setShowFr(true); setFolderRename(delFolder) }} 
-                                className="w-[90%] text-[12px] p-[5px] text-[#555] font-semibold text-left mx-auto rounded-[10px] cursor-pointer hover:bg-[#ededed]"
-                            >
-                                <FontAwesomeIcon icon={faPenToSquare} className="mr-[5px] ml-[5px] text-[#333] cursor-pointer"/> Rename
-                            </span>
-                        }
-
-                        {delConfirm ? 
-                            <span 
-                                onClick={deleteFolder} 
-                                className="w-[90%] text-[12px] p-[5px] text-left mx-auto rounded-[10px] cursor-pointer bg-[#ff6c6cce] text-white hover:bg-[#ff6c6cce]"
-                            >
-                                <FontAwesomeIcon icon={faTrashCan} className="text-white mr-[5px] ml-[5px]"/> Confirm Delete
-                            </span> : 
-                            <span 
-                                onClick={() => setDelConfirm(true)} 
-                                className="w-[90%] text-[12px] p-[5px] text-[#555] font-semibold text-left mx-auto rounded-[10px] cursor-pointer hover:bg-[#ededed]"
-                            >
-                                <FontAwesomeIcon icon={faTrashCan} className="mr-[5px] ml-[5px] text-[#333]"/> Delete
-                            </span>
-                        }
-                    </div>
-                )}
+      {/* Add File Button - Only show if not Daily Journal */}
+      {selectedFolder !== "Daily Journal" && (
+        fileShow ? (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 p-2.5 bg-muted rounded-lg border border-border">
+              <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+              <input 
+                className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
+                placeholder="Note name..." 
+                value={newFile} 
+                name="newFile" 
+                onChange={(e) => setNewFile(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && uploadFile(e)}
+                maxLength={30}
+                autoFocus
+              />
+              <button 
+                onClick={uploadFile}
+                className="p-1.5 rounded-md bg-primary text-white hover:bg-primary-dark transition-colors"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button 
+                onClick={() => { setFileShow(false); setNewFile(""); }}
+                className="p-1.5 rounded-md hover:bg-muted-foreground/20 transition-colors"
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </button>
             </div>
+          </div>
+        ) : (
+          <button 
+            onClick={() => setFileShow(true)} 
+            className="w-full flex items-center gap-2 px-3 py-2.5 mb-4 bg-card border border-border border-dashed rounded-lg hover:bg-muted hover:border-primary/30 transition-all group"
+          >
+            <FilePlus className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">New Note</span>
+          </button>
+        )
+      )}
+
+      {/* Files Header */}
+      <div className="mb-2">
+        <button 
+          className="flex items-center gap-2 w-full px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+          onClick={() => setIsFileOpen(!isFileOpen)}
+        >
+          {isFileOpen ? (
+            <ChevronDown className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5" />
+          )}
+          Notes
+        </button>
+      </div>
+
+      {/* File List */}
+      <div className={`space-y-2 transition-all duration-300 overflow-hidden ${isFileOpen ? "max-h-[calc(100vh-300px)] overflow-y-auto" : "max-h-0"}`}>
+        {filteredFiles.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3">
+              <FileText className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground mb-1">No notes yet</p>
+            {selectedFolder !== "Daily Journal" && (
+              <button 
+                onClick={() => setFileShow(true)}
+                className="text-sm text-primary hover:underline"
+              >
+                Create your first note
+              </button>
+            )}
+            {selectedFolder === "Daily Journal" && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Notes from trades will appear here
+              </p>
+            )}
+          </div>
+        ) : (
+          filteredFiles.map((file, index) => (
+            <div
+              key={file.filename}
+              className="group relative"
+            >
+              <button 
+                onClick={() => setFile(file.filename)}
+                className="w-full p-3 bg-card border border-border rounded-lg hover:border-primary/30 hover:shadow-sm transition-all text-left"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {file.filename}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>{formatDate(file.created)}</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Menu Button */}
+              <button
+                onClick={(e) => handleMenuClick(e, index, file.filename)}
+                className={`absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all ${
+                  visibleOptions === index ? "opacity-100 bg-muted" : ""
+                }`}
+              >
+                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Context Menu */}
+      {visibleOptions !== null && (
+        <div
+          ref={dropdownRef}
+          className="fixed z-50 w-44 bg-card border border-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200"
+          style={{
+            left: dropdownCoords.x,
+            top: dropdownCoords.y,
+          }}
+        >
+          {selectedFolder !== "Daily Journal" && (
+            showFr ? (
+              <div className="p-2">
+                <div className="flex items-center gap-2">
+                  <input 
+                    maxLength={30} 
+                    placeholder="New name..." 
+                    className="flex-1 px-2 py-1.5 text-sm bg-muted border border-border rounded-md outline-none focus:border-primary text-foreground" 
+                    name="fileRename" 
+                    value={fileRename} 
+                    onChange={(e) => setFileRename(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && renameFile(e)}
+                    autoFocus
+                  />
+                  <button 
+                    onClick={renameFile}
+                    className="p-1.5 rounded-md bg-primary text-white hover:bg-primary-dark transition-colors"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={() => { setShowFr(true); setFileRename(delFile) }} 
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+                Rename
+              </button>
+            )
+          )}
+
+          {delConfirm ? (
+            <button 
+              onClick={deleteFile} 
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white bg-red-500 hover:bg-red-600 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Confirm Delete
+            </button>
+          ) : (
+            <button 
+              onClick={() => setDelConfirm(true)} 
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+            >
+              <Trash2 className="h-4 w-4 text-muted-foreground" />
+              Delete
+            </button>
+          )}
         </div>
-    )
+      )}
+    </div>
+  )
 }
 
 export default Files;
