@@ -77,26 +77,34 @@ const DashboardMonth: React.FC = () => {
       />
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-        {/* Calendar - Takes 3 columns */}
-        <div className="xl:col-span-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {/* Calendar - Takes full width on mobile, 2 cols on lg, 2 cols on xl */}
+        <div className="lg:col-span-2">
           <Calendar />
         </div>
 
-        {/* Charts & Trades - Takes 2 columns */}
-        <div className="xl:col-span-2 space-y-6">
+        {/* Net Cumulative P&L Chart */}
+        <div className="lg:col-span-1">
           <PnLDailyChart data={data} />
-          <TradesWidget data={thisMonthData} />
-          <Radar />
         </div>
-      </div>
 
-      {/* Insights Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Daily P&L Bar Chart */}
         <DailyPnLBarChart data={thisMonthData} />
+
+        {/* Day of Week Chart */}
         <DayOfWeekChart data={thisMonthData} />
+
+        {/* Symbol P&L Chart */}
         <SymbolPnLChart data={thisMonthData} />
+
+        {/* Recent Trades Widget */}
+        <TradesWidget data={thisMonthData} />
+
+        {/* Hourly Performance Chart */}
         <HourlyPnLChart data={thisMonthData} />
+
+        {/* Performance Radar */}
+        <Radar />
       </div>
     </div>
   );
