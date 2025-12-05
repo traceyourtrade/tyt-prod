@@ -1,234 +1,110 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faChevronDown, faDollarSign, faReceipt } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faDollarSign } from "@fortawesome/free-solid-svg-icons";
 
-interface Account {
-  tradeNo: number;
-  name: string;
-  subtext: string;
-  brokerIcon: string;
-  type: string;
-  balance: string;
-  lastUpdate: string;
+interface Trade {
+  id: number;
   instrument: string;
-  LorS: string;
-  lotSize: number;
-  comissions: number;
+  side: string;
+  lots: number;
+  commission: number;
   fees: number;
+  date: string;
 }
 
 const CommissionNfees = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [selectedAccount, setSelectedAccount] = useState<string>("All Accounts");
+  const [filter, setFilter] = useState("All");
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const accounts: Account[] = [
-    {
-      tradeNo: 1123,
-      name: "Himanshu MT5",
-      subtext: "Meta Trader 5",
-      brokerIcon: "https://upload.wikimedia.org/wikipedia/commons/2/27/MetaTrader_5.png?20220616130717",
-      type: "Autosync",
-      balance: "$43,698.55",
-      lastUpdate: "10/02/2025, 12:05 AM",
-      instrument: "XAUUSD",
-      LorS: "Long",
-      lotSize: 1,
-      comissions: 33,
-      fees: 30,
-    },
-    {
-      tradeNo: 1124,
-      name: "Tanmay Zerodha",
-      subtext: "Kite - Zerodha",
-      brokerIcon: "https://images.seeklogo.com/logo-png/48/2/zerodha-kite-logo-png_seeklogo-487028.png",
-      type: "Autosync",
-      balance: "₹75,446.05",
-      lastUpdate: "13/02/2025, 02:05 PM",
-      instrument: "BANKNIFTY",
-      LorS: "Long",
-      lotSize: 2,
-      comissions: 26,
-      fees: 23,
-    },
-    {
-      tradeNo: 1125,
-      name: "Tate Crypto",
-      subtext: "Binance",
-      brokerIcon: "https://logowik.com/content/uploads/images/binance-black-icon5996.logowik.com.webp",
-      type: "File upload",
-      balance: "$559.90",
-      lastUpdate: "01/03/2025, 04:05 PM",
-      instrument: "BTCUSDT",
-      LorS: "Short",
-      lotSize: 10,
-      comissions: 20,
-      fees: 17,
-    },
+  const trades: Trade[] = [
+    { id: 1123, instrument: "XAUUSD", side: "Long", lots: 1, commission: 33, fees: 30, date: "10/02/2025" },
+    { id: 1124, instrument: "BANKNIFTY", side: "Long", lots: 2, commission: 26, fees: 23, date: "13/02/2025" },
+    { id: 1125, instrument: "BTCUSDT", side: "Short", lots: 10, commission: 20, fees: 17, date: "01/03/2025" },
   ];
 
-  const totalCommissions = accounts.reduce((sum, account) => sum + account.comissions, 0);
-  const totalFees = accounts.reduce((sum, account) => sum + account.fees, 0);
-
-  const TradeCard = ({ account }: { account: Account }) => (
-    <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-gray-900 dark:text-white font-medium">
-            Trade <span className="text-emerald-500">#{account.tradeNo}</span>
-          </p>
-          <p className="text-gray-500 text-xs mt-0.5">{account.lastUpdate}</p>
-        </div>
-        <span className="px-3 py-1 bg-gray-100 dark:bg-[#1e1e1e] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg">
-          {account.instrument}
-        </span>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-gray-100 dark:bg-[#141414] rounded-lg p-3">
-          <p className="text-xs text-gray-500 mb-1">Side</p>
-          <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${
-            account.LorS === "Long" 
-              ? "bg-emerald-500/15 text-emerald-500" 
-              : "bg-red-500/15 text-red-500"
-          }`}>
-            {account.LorS}
-          </span>
-        </div>
-        <div className="bg-gray-100 dark:bg-[#141414] rounded-lg p-3">
-          <p className="text-xs text-gray-500 mb-1">Lot Size</p>
-          <p className="text-sm text-gray-900 dark:text-white font-medium">{account.lotSize} Lots</p>
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-[#262626]">
-        <div>
-          <p className="text-xs text-gray-500">Commission</p>
-          <p className="text-sm text-emerald-500 font-semibold">${account.comissions}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-500">Fees</p>
-          <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">${account.fees}</p>
-        </div>
-      </div>
-    </div>
-  );
+  const totalCommission = trades.reduce((s, t) => s + t.commission, 0);
+  const totalFees = trades.reduce((s, t) => s + t.fees, 0);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white">Commissions & Fees</h2>
-        <p className="text-gray-500 text-xs lg:text-sm mt-1">Detailed insights of all your trading costs</p>
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Commissions & Fees</h2>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="relative">
-          <button 
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors w-full sm:w-auto"
-          >
-            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
-              <FontAwesomeIcon icon={faUser} className="text-gray-500 dark:text-gray-400 text-sm" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-6 h-6 rounded bg-emerald-500/10 flex items-center justify-center">
+              <FontAwesomeIcon icon={faDollarSign} className="text-emerald-500 text-xs" />
             </div>
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium flex-1 text-left">{selectedAccount}</span>
-            <FontAwesomeIcon icon={faChevronDown} className={`text-gray-400 text-xs transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
-          </button>
-
-          {isOpen && (
-            <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-xl shadow-2xl z-10 overflow-hidden">
-              {["All Accounts", "Himanshu MT5", "Tanmay Zerodha", "Tate Crypto"].map((acc, index) => (
-                <button
-                  key={index}
-                  onClick={() => { setSelectedAccount(acc); setIsOpen(false); }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors"
-                >
-                  {acc}
-                </button>
-              ))}
-            </div>
-          )}
+            <span className="text-xs text-gray-500">Commission</span>
+          </div>
+          <p className="text-xl font-bold text-gray-900 dark:text-white">${totalCommission}</p>
         </div>
-
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4">
-          <div className="flex items-center gap-3 px-3 sm:px-4 py-3 bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-              <FontAwesomeIcon icon={faDollarSign} className="text-emerald-400 text-sm" />
+        <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-6 h-6 rounded bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center">
+              <FontAwesomeIcon icon={faDollarSign} className="text-gray-400 text-xs" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs text-gray-500 truncate">Total Commission</p>
-              <p className="text-gray-900 dark:text-white font-semibold text-sm sm:text-base">${totalCommissions}</p>
-            </div>
+            <span className="text-xs text-gray-500">Fees</span>
           </div>
-
-          <div className="flex items-center gap-3 px-3 sm:px-4 py-3 bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
-              <FontAwesomeIcon icon={faReceipt} className="text-gray-500 dark:text-gray-400 text-sm" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-gray-500 truncate">Total Fees</p>
-              <p className="text-gray-900 dark:text-white font-semibold text-sm sm:text-base">${totalFees}</p>
-            </div>
-          </div>
+          <p className="text-xl font-bold text-gray-900 dark:text-white">${totalFees}</p>
         </div>
       </div>
 
-      <div className="lg:hidden space-y-3">
-        {accounts.map((account, index) => (
-          <TradeCard key={index} account={account} />
-        ))}
+      <div className="relative w-fit">
+        <button 
+          onClick={() => setFilterOpen(!filterOpen)}
+          className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-[#1a1a1a] rounded-lg text-sm text-gray-700 dark:text-gray-300"
+        >
+          {filter}
+          <FontAwesomeIcon icon={faChevronDown} className={`text-xs transition-transform ${filterOpen ? "rotate-180" : ""}`} />
+        </button>
+        {filterOpen && (
+          <div className="absolute top-full left-0 mt-1 w-36 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-lg shadow-lg overflow-hidden z-10">
+            {["All", "This Week", "This Month"].map((opt) => (
+              <button
+                key={opt}
+                onClick={() => { setFilter(opt); setFilterOpen(false); }}
+                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#252525]"
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="hidden lg:block bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-[#262626]">
-                <th className="px-6 py-4 text-left text-xs uppercase tracking-wider text-gray-500 font-semibold">Trade Details</th>
-                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Instrument</th>
-                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Side</th>
-                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Lot Size</th>
-                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Commission</th>
-                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Fees</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.map((account, index) => (
-                <tr key={index} className="border-b border-gray-200 dark:border-[#262626] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="text-gray-900 dark:text-white font-medium">
-                        Trade <span className="text-emerald-500">#{account.tradeNo}</span>
-                      </p>
-                      <p className="text-gray-500 text-xs mt-0.5">{account.lastUpdate}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-[#1e1e1e] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg">
-                      {account.instrument}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-lg ${
-                      account.LorS === "Long" 
-                        ? "bg-emerald-500/15 text-emerald-500" 
-                        : "bg-red-500/15 text-red-500"
-                    }`}>
-                      {account.LorS}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">{account.lotSize} Lots</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="text-emerald-500 font-semibold">${account.comissions}</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">${account.fees}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] overflow-hidden">
+        <div className="hidden sm:grid grid-cols-6 gap-2 px-4 py-2 bg-gray-50 dark:bg-[#0f0f0f] text-xs font-medium text-gray-500 uppercase">
+          <span>Trade</span>
+          <span>Instrument</span>
+          <span>Side</span>
+          <span className="text-right">Lots</span>
+          <span className="text-right">Commission</span>
+          <span className="text-right">Fees</span>
+        </div>
+        <div className="divide-y divide-gray-100 dark:divide-[#262626]">
+          {trades.map((t) => (
+            <div key={t.id} className="px-4 py-3">
+              <div className="sm:grid sm:grid-cols-6 sm:gap-2 sm:items-center">
+                <div className="flex justify-between sm:block mb-1 sm:mb-0">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">#{t.id}</span>
+                  <span className="sm:hidden text-xs text-gray-500">{t.date}</span>
+                </div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{t.instrument}</span>
+                <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
+                  t.side === "Long" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
+                }`}>{t.side}</span>
+                <span className="hidden sm:block text-sm text-right text-gray-700 dark:text-gray-300">{t.lots}</span>
+                <span className="hidden sm:block text-sm text-right text-emerald-500 font-medium">${t.commission}</span>
+                <span className="hidden sm:block text-sm text-right text-gray-700 dark:text-gray-300">${t.fees}</span>
+              </div>
+              <div className="sm:hidden flex justify-between mt-2 text-sm">
+                <span className="text-gray-500">{t.lots} lots</span>
+                <span className="text-emerald-500 font-medium">${t.commission} / ${t.fees}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

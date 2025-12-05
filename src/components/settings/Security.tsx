@@ -1,167 +1,120 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faEnvelope, faLock, faKey, faShield, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faShield, faKey } from "@fortawesome/free-solid-svg-icons";
 
 const Security = () => {
-  const [showCurr, setShowCurr] = useState<boolean>(false);
-  const [showNew, setShowNew] = useState<boolean>(false);
-  const [showRe, setShowRe] = useState<boolean>(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [rePassword, setRePassword] = useState("");
-  const [resetEmail, setResetEmail] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [currentPwd, setCurrentPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-  const PasswordInput = ({ 
-    label, 
-    value, 
-    onChange, 
-    show, 
-    onToggle 
-  }: { 
-    label: string; 
-    value: string;
-    onChange: (val: string) => void;
-    show: boolean; 
-    onToggle: () => void;
-  }) => (
-    <div className="space-y-2">
-      <label className="text-xs uppercase tracking-wider text-gray-500 font-medium">{label}</label>
-      <div className="relative">
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-xl px-4 py-3 pr-12 text-sm text-gray-900 dark:text-white font-medium placeholder:text-gray-400 focus:outline-none focus:border-emerald-500/50 transition-all duration-200"
-          placeholder="••••••••"
-        />
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        >
-          <FontAwesomeIcon icon={show ? faEyeSlash : faEye} className="text-sm" />
-        </button>
-      </div>
-    </div>
-  );
+  const handlePasswordChange = () => {
+    if (newPwd !== confirmPwd) return;
+    setCurrentPwd("");
+    setNewPwd("");
+    setConfirmPwd("");
+  };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white">Security Settings</h2>
-        <p className="text-gray-500 text-xs lg:text-sm mt-1">Manage your password and account security</p>
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Security</h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
-        <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-              <FontAwesomeIcon icon={faKey} className="text-emerald-400 text-sm" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Change Password</h3>
-              <p className="text-xs text-gray-500 truncate">Update your password regularly</p>
-            </div>
+      <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <FontAwesomeIcon icon={faKey} className="text-emerald-500 text-sm" />
           </div>
-
-          <div className="space-y-4">
-            <PasswordInput
-              label="Current Password"
-              value={currentPassword}
-              onChange={setCurrentPassword}
-              show={showCurr}
-              onToggle={() => setShowCurr(!showCurr)}
-            />
-            
-            <div className="h-px bg-gray-200 dark:bg-[#262626]" />
-
-            <PasswordInput
-              label="New Password"
-              value={newPassword}
-              onChange={setNewPassword}
-              show={showNew}
-              onToggle={() => setShowNew(!showNew)}
-            />
-
-            <PasswordInput
-              label="Confirm New Password"
-              value={rePassword}
-              onChange={setRePassword}
-              show={showRe}
-              onToggle={() => setShowRe(!showRe)}
-            />
-
-            <button className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors">
-              <FontAwesomeIcon icon={faCheck} className="text-xs" />
-              Update Password
-            </button>
-          </div>
+          <span className="font-medium text-gray-900 dark:text-white">Change Password</span>
         </div>
 
-        <div className="space-y-4 lg:space-y-6">
-          <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faLock} className="text-gray-500 dark:text-gray-400 text-sm" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Forgot Password</h3>
-                <p className="text-xs text-gray-500 truncate">Reset your password via email</p>
-              </div>
+        <div className="space-y-3">
+          <PasswordField 
+            label="Current Password"
+            value={currentPwd}
+            onChange={setCurrentPwd}
+            show={showCurrent}
+            onToggle={() => setShowCurrent(!showCurrent)}
+          />
+          <PasswordField 
+            label="New Password"
+            value={newPwd}
+            onChange={setNewPwd}
+            show={showNew}
+            onToggle={() => setShowNew(!showNew)}
+          />
+          <PasswordField 
+            label="Confirm Password"
+            value={confirmPwd}
+            onChange={setConfirmPwd}
+            show={showConfirm}
+            onToggle={() => setShowConfirm(!showConfirm)}
+          />
+          <button 
+            onClick={handlePasswordChange}
+            className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Update Password
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center">
+              <FontAwesomeIcon icon={faShield} className="text-gray-500 text-sm" />
             </div>
-
-            <div className="bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl p-3 sm:p-4 mb-4">
-              <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-                Enter your registered email address and we'll send you a password reset link.
-              </p>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <label className="text-xs uppercase tracking-wider text-gray-500 font-medium">Email Address</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="w-full bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-xl px-4 py-3 pr-12 text-sm text-gray-900 dark:text-white font-medium placeholder:text-gray-400 focus:outline-none focus:border-emerald-500/50 transition-all duration-200"
-                />
-                <FontAwesomeIcon icon={faEnvelope} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              </div>
-            </div>
-
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-[#141414] hover:bg-gray-200 dark:hover:bg-[#252525] border border-gray-200 dark:border-[#262626] text-gray-900 dark:text-white text-sm font-medium rounded-xl transition-colors">
-              <FontAwesomeIcon icon={faEnvelope} className="text-xs" />
-              Send Reset Link
-            </button>
-          </div>
-
-          <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faShield} className="text-gray-500 dark:text-gray-400 text-sm" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</h3>
-                <p className="text-xs text-gray-500 truncate">Add an extra layer of security</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl">
-              <div>
-                <p className="text-sm text-gray-900 dark:text-white font-medium">Status</p>
-                <p className="text-xs text-gray-500">Not enabled</p>
-              </div>
-              <button className="px-4 py-2 bg-gray-50 dark:bg-[#141414] hover:bg-gray-200 dark:hover:bg-[#252525] border border-gray-200 dark:border-[#262626] text-gray-900 dark:text-white text-sm font-medium rounded-lg transition-colors w-full sm:w-auto">
-                Enable
-              </button>
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">Two-Factor Authentication</p>
+              <p className="text-xs text-gray-500">Add an extra layer of security</p>
             </div>
           </div>
+          <button
+            onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
+            className={`w-10 h-6 rounded-full transition-colors relative ${
+              twoFactorEnabled ? "bg-emerald-500" : "bg-gray-300 dark:bg-[#262626]"
+            }`}
+          >
+            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+              twoFactorEnabled ? "right-1" : "left-1"
+            }`} />
+          </button>
         </div>
       </div>
     </div>
   );
 };
+
+const PasswordField = ({ label, value, onChange, show, onToggle }: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  show: boolean;
+  onToggle: () => void;
+}) => (
+  <div>
+    <label className="block text-xs text-gray-500 mb-1">{label}</label>
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2 pr-10 text-sm bg-gray-50 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#262626] rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-emerald-500"
+        placeholder="••••••••"
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+      >
+        <FontAwesomeIcon icon={show ? faEyeSlash : faEye} className="text-sm" />
+      </button>
+    </div>
+  </div>
+);
 
 export default Security;

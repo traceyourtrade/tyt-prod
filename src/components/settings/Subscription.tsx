@@ -1,194 +1,93 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faCrown, faCreditCard, faCalendarAlt, faArrowRight, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faCrown, faCheck, faStar } from "@fortawesome/free-solid-svg-icons";
 
 const Subscription = () => {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
-  const plans = {
-    monthly: [
-      { name: "Basic", price: 699, popular: false },
-      { name: "Premium", price: 1299, popular: true }
-    ],
-    yearly: [
-      { name: "Basic", price: 599, popular: false },
-      { name: "Premium", price: 1199, popular: true }
-    ]
-  };
-
-  const features = [
-    "Unlimited trade imports",
-    "Advanced analytics",
-    "Custom reports",
-    "Priority support",
-    "API access"
+  const plans = [
+    { name: "Basic", price: billing === "monthly" ? 699 : 599, features: ["Unlimited trades", "Basic analytics", "Email support"] },
+    { name: "Premium", price: billing === "monthly" ? 1299 : 1199, features: ["Everything in Basic", "Advanced analytics", "Priority support", "API access", "Custom reports"], popular: true }
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-6 lg:mb-8">
-        <h2 className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white">Subscription</h2>
-        <p className="text-gray-500 text-xs lg:text-sm mt-1">Manage your plan and billing details</p>
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Subscription</h2>
+
+      <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <FontAwesomeIcon icon={faCrown} className="text-emerald-500 text-sm" />
+          </div>
+          <div>
+            <p className="font-medium text-gray-900 dark:text-white">Current Plan</p>
+            <p className="text-xs text-gray-500">TYT Premium</p>
+          </div>
+          <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded">Expired</span>
+        </div>
+        <div className="flex items-center justify-between text-sm py-2 border-t border-gray-100 dark:border-[#262626]">
+          <span className="text-gray-500">Expires</span>
+          <span className="text-gray-900 dark:text-white">04/02/2025</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-8">
-        <div className="xl:col-span-5 space-y-4 lg:space-y-6">
-          <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faCrown} className="text-emerald-400 text-sm" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Current Plan</h3>
-                <p className="text-xs text-gray-500 truncate">Your active subscription</p>
-              </div>
-            </div>
+      <div className="flex items-center justify-center gap-2 p-1 bg-gray-100 dark:bg-[#1a1a1a] rounded-lg w-fit mx-auto">
+        <button
+          onClick={() => setBilling("monthly")}
+          className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            billing === "monthly" ? "bg-white dark:bg-[#262626] text-gray-900 dark:text-white shadow-sm" : "text-gray-500"
+          }`}
+        >
+          Monthly
+        </button>
+        <button
+          onClick={() => setBilling("yearly")}
+          className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            billing === "yearly" ? "bg-white dark:bg-[#262626] text-gray-900 dark:text-white shadow-sm" : "text-gray-500"
+          }`}
+        >
+          Yearly <span className="text-emerald-500 text-xs">-15%</span>
+        </button>
+      </div>
 
-            <div className="bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl p-3 sm:p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Plan</span>
-                <span className="text-xs sm:text-sm text-gray-900 dark:text-white font-medium">TYT Premium</span>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {plans.map((plan) => (
+          <div 
+            key={plan.name}
+            className={`relative bg-white dark:bg-[#141414] rounded-xl border p-4 ${
+              plan.popular ? "border-emerald-500" : "border-gray-200 dark:border-[#262626]"
+            }`}
+          >
+            {plan.popular && (
+              <div className="absolute -top-2.5 left-4 px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded flex items-center gap-1">
+                <FontAwesomeIcon icon={faStar} className="text-[10px]" /> Popular
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Price</span>
-                <span className="text-xs sm:text-sm text-gray-900 dark:text-white font-medium">₹1,400 / month</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Expires</span>
-                <span className="text-xs sm:text-sm text-red-500 font-medium">04/02/2025</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm text-gray-500">Status</span>
-                <span className="px-2 py-0.5 bg-red-500/15 text-red-500 text-xs font-medium rounded-md">Expired</span>
-              </div>
-            </div>
-
-            <button className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors">
-              <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
-              Renew Subscription
+            )}
+            <p className={`font-semibold ${plan.popular ? "text-emerald-500" : "text-gray-900 dark:text-white"}`}>
+              {plan.name}
+            </p>
+            <p className="mt-2">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">₹{plan.price}</span>
+              <span className="text-gray-500 text-sm">/mo</span>
+            </p>
+            <ul className="mt-4 space-y-2">
+              {plan.features.map((f, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <FontAwesomeIcon icon={faCheck} className={`text-xs ${plan.popular ? "text-emerald-500" : "text-gray-400"}`} />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <button className={`w-full mt-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              plan.popular 
+                ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
+                : "bg-gray-100 dark:bg-[#1a1a1a] hover:bg-gray-200 dark:hover:bg-[#252525] text-gray-900 dark:text-white"
+            }`}>
+              {plan.popular ? "Get Started" : "Select"}
             </button>
           </div>
-
-          <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gray-100 dark:bg-[#1e1e1e] flex items-center justify-center flex-shrink-0">
-                <FontAwesomeIcon icon={faCreditCard} className="text-gray-500 dark:text-gray-400 text-sm" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Payment Method</h3>
-                <p className="text-xs text-gray-500 truncate">Your billing details</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl p-3 sm:p-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-7 sm:w-12 sm:h-8 bg-gray-50 dark:bg-[#141414] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-bold text-gray-400">MC</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900 dark:text-white font-medium truncate">•••• •••• •••• 6969</p>
-                  <p className="text-xs text-gray-500">Expires 05/27</p>
-                </div>
-                <button className="text-xs text-emerald-500 hover:text-emerald-400 font-medium flex-shrink-0">Edit</button>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400 flex-shrink-0" />
-                <span className="truncate">Billed on the first of every month</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-400 flex-shrink-0" />
-                <span className="truncate">Next billing: <strong className="text-gray-900 dark:text-white">March 01, 2025</strong></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="xl:col-span-7">
-          <div className="bg-gray-50 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Available Plans</h3>
-                <p className="text-xs text-gray-500 mt-1">Choose the plan that works for you</p>
-              </div>
-
-              <div className="flex items-center bg-gray-100 dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl p-1 self-start sm:self-auto">
-                <button
-                  onClick={() => setBillingCycle("monthly")}
-                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all ${
-                    billingCycle === "monthly" 
-                      ? "bg-emerald-500 text-white" 
-                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setBillingCycle("yearly")}
-                  className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center gap-1 ${
-                    billingCycle === "yearly" 
-                      ? "bg-emerald-500 text-white" 
-                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  Yearly
-                  <span className="text-xs text-emerald-500">Save 15%</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {plans[billingCycle].map((plan, index) => (
-                <div 
-                  key={plan.name}
-                  className={`relative bg-gray-100 dark:bg-[#141414] border rounded-2xl p-4 sm:p-6 transition-all ${
-                    plan.popular 
-                      ? "border-emerald-500/50 ring-1 ring-emerald-500/20" 
-                      : "border-gray-200 dark:border-[#262626] hover:border-gray-300 dark:hover:border-gray-600"
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                      <FontAwesomeIcon icon={faStar} className="text-[10px]" />
-                      Popular
-                    </div>
-                  )}
-
-                  <h4 className={`text-base sm:text-lg font-bold ${plan.popular ? "text-emerald-500" : "text-gray-900 dark:text-white"}`}>
-                    {plan.name}
-                  </h4>
-                  
-                  <div className="mt-3 sm:mt-4 mb-4 sm:mb-6">
-                    <span className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">₹{plan.price}</span>
-                    <span className="text-gray-500 text-xs sm:text-sm">/month</span>
-                  </div>
-
-                  <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-                    {features.slice(0, plan.popular ? 5 : 3).map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-                        <FontAwesomeIcon icon={faCheck} className={`text-xs flex-shrink-0 ${plan.popular ? "text-emerald-400" : "text-gray-400"}`} />
-                        <span className="truncate">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <button 
-                    className={`w-full py-2.5 sm:py-3 rounded-xl text-sm font-semibold transition-colors ${
-                      plan.popular 
-                        ? "bg-emerald-500 hover:bg-emerald-400 text-white" 
-                        : "bg-gray-50 dark:bg-[#141414] hover:bg-gray-200 dark:hover:bg-[#252525] text-gray-900 dark:text-white border border-gray-200 dark:border-[#262626]"
-                    }`}
-                  >
-                    {plan.popular ? "Get Started" : "Select Plan"}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

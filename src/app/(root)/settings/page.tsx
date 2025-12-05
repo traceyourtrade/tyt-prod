@@ -1,20 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
-  faUser, 
-  faShield, 
-  faCrown, 
-  faWallet, 
-  faPercent, 
-  faGear, 
-  faClockRotateLeft, 
-  faListCheck, 
-  faCircleQuestion,
-  faChevronRight,
-  faChevronLeft,
-  faBars,
-  faTimes
+  faUser, faShield, faCrown, faWallet, faPercent, faGear,
+  faChevronRight, faBars, faXmark
 } from "@fortawesome/free-solid-svg-icons";
 
 import Profile from "@/components/settings/Profile";
@@ -25,161 +14,105 @@ import CommissionNfees from "@/components/settings/CommisionNFees";
 import GlobalSettings from "@/components/settings/GlobalSettings";
 import useAccountDetails from "@/store/accountdetails";
 
-type SettingOption = {
-  name: string;
-  icon: any;
-  description?: string;
-};
+type NavItem = { name: string; icon: any; };
 
 const Settings = () => {
-  const [settingCntxt, setSettingCntxt] = useState<string>("Profile");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [active, setActive] = useState("Profile");
+  const [mobileNav, setMobileNav] = useState(false);
   const { setAccounts } = useAccountDetails();
 
-  useEffect(() => {
-    setAccounts()
-  }, [setAccounts])
+  useEffect(() => { setAccounts(); }, [setAccounts]);
 
-  const userSetting: SettingOption[] = [
-    { name: "Profile", icon: faUser, description: "Manage your profile" }, 
-    { name: "Security", icon: faShield, description: "Password & authentication" }, 
-    { name: "Subscription", icon: faCrown, description: "Plan & billing" }
+  const navItems: NavItem[] = [
+    { name: "Profile", icon: faUser },
+    { name: "Security", icon: faShield },
+    { name: "Subscription", icon: faCrown },
+    { name: "Accounts", icon: faWallet },
+    { name: "Commissions & Fees", icon: faPercent },
+    { name: "Global Settings", icon: faGear },
   ];
 
-  const generalSetting: SettingOption[] = [
-    { name: "Accounts", icon: faWallet, description: "Trading accounts" },
-    { name: "Commissions & Fees", icon: faPercent, description: "Fee settings" },
-    { name: "Global Settings", icon: faGear, description: "App preferences" },
-    { name: "Import History", icon: faClockRotateLeft, description: "Import logs" },
-    { name: "Trade Log", icon: faListCheck, description: "Activity history" },
-    { name: "FAQ", icon: faCircleQuestion, description: "Help & support" },
-  ];
-
-  const handleNavClick = (name: string) => {
-    setSettingCntxt(name);
-    setSidebarOpen(false);
+  const handleNav = (name: string) => {
+    setActive(name);
+    setMobileNav(false);
   };
 
-  const NavItem = ({ item, isActive, onClick }: { item: SettingOption; isActive: boolean; onClick: () => void }) => (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 lg:px-4 lg:py-3 rounded-xl text-left transition-all duration-200 group ${
-        isActive 
-          ? "bg-emerald-500/15 border border-emerald-500/30" 
-          : "hover:bg-gray-100 dark:hover:bg-[#1a1a1a] border border-transparent"
-      }`}
-    >
-      <div className={`w-8 h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 ${
-        isActive ? "bg-emerald-500/20" : "bg-gray-100 dark:bg-[#1e1e1e] group-hover:bg-gray-200 dark:group-hover:bg-[#252525]"
-      }`}>
-        <FontAwesomeIcon 
-          icon={item.icon} 
-          className={`text-xs lg:text-sm ${isActive ? "text-emerald-400" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"}`} 
-        />
-      </div>
-      <div className="flex-1 min-w-0">
-        <span className={`block text-sm font-medium truncate ${isActive ? "text-emerald-500 dark:text-emerald-400" : "text-gray-900 dark:text-gray-100"}`}>
-          {item.name}
-        </span>
-        <span className="hidden sm:block text-xs text-gray-500 dark:text-gray-400 truncate">{item.description}</span>
-      </div>
-      <FontAwesomeIcon 
-        icon={faChevronRight} 
-        className={`text-[10px] transition-colors flex-shrink-0 ${isActive ? "text-emerald-400" : "text-gray-400 dark:text-gray-500"}`} 
-      />
-    </button>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-4 lg:mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
-            <p className="text-gray-500 text-xs lg:text-sm mt-1">Manage your account and preferences</p>
-          </div>
-          
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a]">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Settings</h1>
           <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden w-10 h-10 flex items-center justify-center bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+            onClick={() => setMobileNav(true)}
+            className="md:hidden p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white"
           >
-            <FontAwesomeIcon icon={sidebarOpen ? faTimes : faBars} />
+            <FontAwesomeIcon icon={faBars} />
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
-          {sidebarOpen && (
-            <div 
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
-          
-          <div className={`
-            fixed lg:relative inset-y-0 left-0 z-50
-            w-[280px] sm:w-[320px] lg:w-72 flex-shrink-0
-            transform transition-transform duration-300 ease-in-out
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          `}>
-            <div className="h-full lg:h-auto bg-white dark:bg-[#0f0f0f] border-r lg:border border-gray-200 dark:border-[#262626] lg:rounded-2xl p-4 overflow-y-auto lg:sticky lg:top-6">
-              <div className="flex items-center justify-between lg:hidden mb-4 pb-4 border-b border-gray-200 dark:border-[#262626]">
-                <span className="text-sm font-semibold text-gray-900 dark:text-white">Settings Menu</span>
-                <button 
-                  onClick={() => setSidebarOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+        <div className="flex gap-6">
+          <nav className="hidden md:block w-56 flex-shrink-0">
+            <div className="sticky top-6 space-y-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.name}
+                  onClick={() => setActive(item.name)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    active === item.name
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
+                  }`}
                 >
-                  <FontAwesomeIcon icon={faTimes} />
+                  <FontAwesomeIcon icon={item.icon} className="w-4 text-current opacity-70" />
+                  <span className="truncate">{item.name}</span>
+                  {active === item.name && (
+                    <FontAwesomeIcon icon={faChevronRight} className="ml-auto w-3 opacity-50" />
+                  )}
                 </button>
-              </div>
-
-              <div className="mb-6">
-                <div className="flex items-center gap-2 px-3 py-2 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User Settings</span>
-                </div>
-                <div className="space-y-1">
-                  {userSetting.map((item, index) => (
-                    <NavItem 
-                      key={index} 
-                      item={item} 
-                      isActive={settingCntxt === item.name}
-                      onClick={() => handleNavClick(item.name)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="h-px bg-gray-200 dark:bg-[#262626] my-4" />
-
-              <div>
-                <div className="flex items-center gap-2 px-3 py-2 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-gray-400" />
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">General Settings</span>
-                </div>
-                <div className="space-y-1">
-                  {generalSetting.map((item, index) => (
-                    <NavItem 
-                      key={index} 
-                      item={item} 
-                      isActive={settingCntxt === item.name}
-                      onClick={() => handleNavClick(item.name)}
-                    />
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
+          </nav>
 
-          <div className="flex-1 bg-white dark:bg-[#141414] border border-gray-200 dark:border-[#262626] rounded-2xl overflow-hidden min-h-[calc(100vh-180px)] lg:min-h-[calc(100vh-180px)]">
-            {settingCntxt === "Profile" && <Profile />}
-            {settingCntxt === "Subscription" && <Subscription />}
-            {settingCntxt === "Security" && <Security />}
-            {settingCntxt === "Accounts" && <Account />}
-            {settingCntxt === "Commissions & Fees" && <CommissionNfees />}
-            {settingCntxt === "Global Settings" && <GlobalSettings />}
-          </div>
+          <main className="flex-1 min-w-0">
+            {active === "Profile" && <Profile />}
+            {active === "Subscription" && <Subscription />}
+            {active === "Security" && <Security />}
+            {active === "Accounts" && <Account />}
+            {active === "Commissions & Fees" && <CommissionNfees />}
+            {active === "Global Settings" && <GlobalSettings />}
+          </main>
         </div>
       </div>
+
+      {mobileNav && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileNav(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-[#141414] p-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">Settings</span>
+              <button onClick={() => setMobileNav(false)} className="p-1 text-gray-500">
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+            <nav className="space-y-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.name}
+                  onClick={() => handleNav(item.name)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    active === item.name
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
+                  }`}
+                >
+                  <FontAwesomeIcon icon={item.icon} className="w-4 opacity-70" />
+                  <span>{item.name}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
