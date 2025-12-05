@@ -10,18 +10,23 @@ import {
   faPenToSquare, 
   faTrashCan, 
   faShareNodes, 
-  faCircleLeft, 
-  faCircleRight, 
-  faCircleXmark 
+  faChevronLeft, 
+  faChevronRight, 
+  faXmark,
+  faPlus,
+  faTrophy,
+  faChartLine,
+  faPercent,
+  faCoins,
+  faSkullCrossbones,
+  faScaleBalanced
 } from "@fortawesome/free-solid-svg-icons";
 
-// Store imports (you'll need to adjust these based on your store structure)
 import calendarPopUp from "@/store/calendarPopUp";
 import notifications from "@/store/notifications";
 import useAccountDetails from "@/store/accountdetails";
 import { useDataStore } from "@/store/store";
 
-// Import your logo
 import Logo from "@/images/Logo.png";
 
 interface Trade {
@@ -67,19 +72,18 @@ const CalendarPopup = () => {
     if (!dateString) return "";
     
     const dateObj = new Date(dateString);
-    const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     const dayOfWeek = days[dateObj.getDay()];
     const day = dateObj.getDate();
     const month = months[dateObj.getMonth()];
-    const year = dateObj.getFullYear();
 
-    return `${dayOfWeek}, ${month} ${day} ${year}`;
+    return `${dayOfWeek}, ${month} ${day}`;
   };
 
   const groupedTrades = selectedAccounts.flatMap(acc =>
-    acc.tradeData.map((trade: Trade) => ({
+    (acc.tradeData || []).map((trade: Trade) => ({
       ...trade,
       accountName: acc.accountName,
       accountId: acc._id
@@ -102,13 +106,17 @@ const CalendarPopup = () => {
   }, {});
 
   const calendarData: GroupedTrade[] = Object.values(groupedTrades);
-  const dataToday=calendarData.find(item => item.date === dataDate)?.trades || [];
-//   const [dataToday, setDataToday] = useState<Trade[]>([]);
+  const dataToday = calendarData.find(item => item.date === dataDate)?.trades || [];
 
   const wins = dataToday.filter(trade => trade.Profit > 0).length;
   const losses = dataToday.filter(trade => trade.Profit < 0).length;
   const totalTrades = wins + losses;
-  const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(2) : "0.00";
+  const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(1) : "0.0";
+  const grossPnL = dataToday.reduce((sum, trade) => sum + trade.Profit, 0);
+  const totalCommissions = dataToday.reduce((sum, trade) => sum + (Math.abs(trade.Commission) || 0), 0);
+  const grossWins = dataToday.filter(t => t.Profit > 0).reduce((a, t) => a + t.Profit, 0);
+  const grossLosses = Math.abs(dataToday.filter(t => t.Profit < 0).reduce((a, t) => a + t.Profit, 0));
+  const profitFactor = grossLosses > 0 ? (grossWins / grossLosses).toFixed(2) : grossWins > 0 ? "∞" : "0.00";
 
   const GraphComp = () => {
     let cumulativeSum = 0;
@@ -158,46 +166,62 @@ const CalendarPopup = () => {
     };
 
     return (
-      <div className="relative -left-2.5">
-        <ResponsiveContainer width="105%" height={150}>
-          <AreaChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+      <div className="w-full h-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="mixedGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgb(96, 187, 165)" stopOpacity={1} />
-                <stop offset={zeroOffset} stopColor="rgba(96, 187, 164, 0.04)" stopOpacity={1} />
-                <stop offset={zeroOffset} stopColor="rgba(179, 22, 22, 0.08)" stopOpacity={1} />
-                <stop offset="100%" stopColor="rgb(239, 92, 92)" stopOpacity={0.7} />
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
+                <stop offset={zeroOffset} stopColor="#10b981" stopOpacity={0.05} />
+                <stop offset={zeroOffset} stopColor="#ef4444" stopOpacity={0.05} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
               </linearGradient>
 
               <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgb(96, 187, 165)" stopOpacity={1} />
-                <stop offset="100%" stopColor="rgba(96, 187, 164, 0.04)" stopOpacity={1} />
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
               </linearGradient>
 
               <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(239, 92, 92, 0.35)" stopOpacity={1} />
-                <stop offset="100%" stopColor="rgba(179, 22, 22, 0.7)" stopOpacity={1} />
+                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.05} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid stroke="rgb(80, 80, 80)" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" vertical={false} />
             <XAxis 
               dataKey="time" 
-              stroke="rgba(255, 255, 255, 0.51)" 
-              tick={{ fill: "rgba(255, 255, 255, 0.51)" }} 
+              stroke="rgba(255, 255, 255, 0.3)" 
+              tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10 }}
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis
-              stroke="rgba(255, 255, 255, 0.51)"
-              tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
+              stroke="rgba(255, 255, 255, 0.3)"
+              tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10 }}
               tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+              axisLine={false}
+              tickLine={false}
             />
 
-            <Tooltip contentStyle={{ backgroundColor: "#222", color: "white", border: "1px solid white" }} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: "rgba(15, 15, 15, 0.95)", 
+                color: "white", 
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "12px",
+                backdropFilter: "blur(10px)",
+                padding: "8px 12px"
+              }}
+              labelStyle={{ color: "rgba(255,255,255,0.7)" }}
+              formatter={(value: number) => [`$${value.toFixed(2)}`, 'P&L']}
+            />
 
             <Area
               type="monotone"
               dataKey="value"
-              stroke="white"
+              stroke={status === true ? "#10b981" : status === false ? "#ef4444" : "#8b5cf6"}
+              strokeWidth={2}
               fill={`url(#${getGradientId()})`}
               fillOpacity={1}
               isAnimationActive={true}
@@ -208,15 +232,10 @@ const CalendarPopup = () => {
     );
   };
 
-//   useEffect(() => {
-//     const todayData = calendarData.find(item => item.date === dataDate)?.trades || [];
-//     setDataToday(todayData);
-//   }, [calendarData]);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
-        setShowTr(false);
+        setShowTr();
         document.body.classList.remove("no-scroll");
       }
     };
@@ -261,7 +280,7 @@ const CalendarPopup = () => {
     const originalBackdropFilter = element.style.backdropFilter;
 
     try {
-      element.style.background = "#1a1a1a";
+      element.style.background = "#0a0a0a";
       element.style.backdropFilter = "none";
 
       const canvas = await html2canvas(element, {
@@ -329,7 +348,6 @@ const CalendarPopup = () => {
       }
 
       const data = await response.json();
-      // Handle successful deletion
     } catch (error) {
       console.error("Error deleting trade:", error);
       setAlertBoxG("An error occurred while deleting the trade.", "error");
@@ -347,166 +365,265 @@ const CalendarPopup = () => {
     document.body.classList.remove("no-scroll");
   };
 
+  const StatCard = ({ icon, label, value, valueColor = "text-white", iconBg = "bg-white/5" }: { 
+    icon: any; 
+    label: string; 
+    value: string; 
+    valueColor?: string;
+    iconBg?: string;
+  }) => (
+    <div className="group relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl rounded-2xl p-4 border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/5">
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">{label}</span>
+          <span className={`text-xl font-bold ${valueColor}`}>{value}</span>
+        </div>
+        <div className={`w-9 h-9 ${iconBg} rounded-xl flex items-center justify-center`}>
+          <FontAwesomeIcon icon={icon} className="text-white/60 text-sm" />
+        </div>
+      </div>
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+    </div>
+  );
+
   return (
-    <div className={`fixed inset-0 bg-[#00000064] bg-opacity-40 z-50 flex flex-col items-center justify-center ${showTr ? "flex" : "hidden"}`}>
+    <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${showTr ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
       {dataToday.length === 0 ? (
         <div 
           ref={popupRef} 
-          className="w-4/5 h-3/4 mt-12 bg-[rgba(34,33,33,0.379) bg-opacity-40 backdrop-blur-3xl rounded-3xl flex flex-col items-center justify-start border border-gray-500 relative"
+          className="w-full max-w-2xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] backdrop-blur-2xl rounded-3xl flex flex-col items-center justify-center p-8 border border-white/10 shadow-2xl shadow-black/50 min-h-[400px]"
         >
-          <div className="w-11/12 flex flex-row items-center justify-between relative -top-4">
-            <p className="tr-menu-btns absolute top-0 right-0 w-12 h-auto flex flex-row items-center justify-between">
-              <FontAwesomeIcon 
-                icon={faCircleLeft} 
-                className="text-green-500 cursor-pointer relative -top-4 mr-1 text-base"
-                onClick={subtractOneDay}
-              />
-              <FontAwesomeIcon 
-                icon={faCircleRight} 
-                className="text-yellow-400 cursor-pointer relative -top-4 mr-1 text-base"
-                onClick={addOneDay}
-              />
-              <FontAwesomeIcon 
-                icon={faCircleXmark} 
-                className="text-red-500 cursor-pointer relative -top-4 text-base"
-                onClick={closePopup}
-              />
-            </p>
+          <button
+            onClick={closePopup}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors duration-200"
+          >
+            <FontAwesomeIcon icon={faXmark} className="text-white/60 hover:text-white/90" />
+          </button>
+
+          <div className="flex flex-row items-center gap-3 mb-4">
+            <button
+              onClick={subtractOneDay}
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors duration-200"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} className="text-white/60 text-xs" />
+            </button>
+            <span className="text-white/60 text-sm font-medium">{formatDate(dataDate)}</span>
+            <button
+              onClick={addOneDay}
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors duration-200"
+            >
+              <FontAwesomeIcon icon={faChevronRight} className="text-white/60 text-xs" />
+            </button>
           </div>
 
-          <div className="w-full h-5/6 flex flex-col-reverse items-center justify-center">
-            <button
-              onClick={() => {
-                closePopup();
-                setTimeout(() => setAddTrades(), 500);
-              }}
-              className="w-30 px-2 py-1 font-inter text-xs rounded-3xl bg-purple-500 text-white border-none cursor-pointer -mr-1"
-            >
-              ADD TRADES +
-            </button>
-            <p className="text-gray-400 text-xs font-medium mb-1">NO TRADES FOR THIS DAY</p>
-            <Image src={Logo} alt="logo" width={100} height={100} />
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center mb-4">
+            <Image src={Logo} alt="logo" width={50} height={50} className="opacity-60" />
           </div>
+          
+          <p className="text-white/40 text-sm font-medium mb-6">No trades recorded for this day</p>
+          
+          <button
+            onClick={() => {
+              closePopup();
+              setTimeout(() => setAddTrades(), 300);
+            }}
+            className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white text-sm font-semibold rounded-full transition-all duration-300 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-105"
+          >
+            <FontAwesomeIcon icon={faPlus} className="text-xs" />
+            Add Trade
+          </button>
         </div>
       ) : (
         <div 
           ref={popupRef} 
           id="trade-details"
-          className="w-4/5 h-3/4  bg-[rgba(34,33,33,0.379) bg-opacity-40 backdrop-blur-3xl rounded-3xl flex flex-col items-center justify-start border border-gray-500 relative"
+          className="w-full max-w-5xl max-h-[90vh] bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] backdrop-blur-2xl rounded-3xl flex flex-col border border-white/10 shadow-2xl shadow-black/50 overflow-hidden"
         >
-          <div className="w-11/12 mt-10 flex flex-row items-center justify-between relative -top-4">
-            <p className="text-white text-lg font-semibold mt-6">TRADE DETAILS</p>
-
-            <div className="w-7/10 h-auto flex flex-row items-center justify-end font-inter mt-4">
-              <FontAwesomeIcon 
-                icon={faShareNodes} 
-                className="text-gray-500 cursor-pointer mr-5 text-lg font-semibold"
-                onClick={handleShare}
-              />
-              <Image src={Logo} alt="logo" width={60} height={60} className="cursor-pointer" />
-            </div>
-
-            <p className="tr-menu-btns absolute top-3 right-[-20] w-12 h-auto flex flex-row items-center justify-between">
-              <FontAwesomeIcon 
-                icon={faCircleLeft} 
-                className="text-green-500 cursor-pointer relative -top-4 mr-1 text-base"
-                onClick={subtractOneDay}
-              />
-              <FontAwesomeIcon 
-                icon={faCircleRight} 
-                className="text-yellow-400 cursor-pointer relative -top-4 mr-1 text-base"
-                onClick={addOneDay}
-              />
-              <FontAwesomeIcon 
-                icon={faCircleXmark} 
-                className="text-red-500 cursor-pointer relative -top-4 text-base"
-                onClick={closePopup}
-              />
-            </p>
-          </div>
-
-          <div className="w-11/12 h-auto flex items-center justify-start">
-            <div className="w-60 h-7 flex items-center justify-between rounded-3xl bg-gray-900 text-xs px-4 py-0 text-gray-500 font-semibold">
-              <span className="text-gray-400">{formatDate(dataDate)}</span>
-              <span>
-                Net P&L :{" "}
-                <span 
-                  className={dataToday.reduce((sum, trade) => sum + trade.Profit, 0).toFixed(2) >= "0" ? "text-green-500" : "text-red-300"}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-bold text-white tracking-tight">Trade Details</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={subtractOneDay}
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors duration-200"
                 >
-                  {dataToday.reduce((sum, trade) => sum + trade.Profit, 0).toFixed(2)}
-                </span>
-              </span>
-            </div>
-            <p className="text-gray-500 text-xs font-semibold ml-5">TOTAL TRADES - {dataToday.length}</p>
-          </div>
-
-          <div className="w-11/12 h-auto flex flex-row items-center justify-between mt-6">
-            <div className="w-3/10 h-36 border border-dashed border-gray-500 rounded-3xl">
-              <GraphComp />
-            </div>
-            <div className="w-65/100 h-36 border border-dotted border-gray-500 bg-[#1d1b1b] rounded-3xl flex items-center justify-evenly flex-wrap">
-              {[
-                { label: "GROSS P&L", value: `$${dataToday.reduce((sum, trade) => sum + trade.Profit, 0).toFixed(2)}`, color: dataToday.reduce((sum, trade) => sum + trade.Profit, 0).toFixed(2) >= "0" ? "text-green-500" : "text-red-300" },
-                { label: "WINNERS", value: dataToday.filter(trade => trade.Profit > 0).length.toString() },
-                { label: "COMMISSIONS", value: dataToday.reduce((sum, trade) => sum + (Math.abs(trade.Commission) || 0), 0).toString() },
-                { label: "WIN RATE", value: `${winRate}%` },
-                { label: "LOSERS", value: dataToday.filter(trade => trade.Profit < 0).length.toString() },
-                { label: "PROFIT FACTOR", value: dataToday.filter(t => t.Profit > 0).reduce((a, t) => a + t.Profit, 0).toString() },
-              ].map((item, index) => (
-                <div key={index} className="w-3/10 h-15 rounded-3xl">
-                  <p className="text-white text-xs h-auto mt-2 ml-7 font-semibold">{item.label}</p>
-                  <p className={`text-sm mt-2 ml-7 font-semibold ${item.color || "text-gray-400"}`}>{item.value}</p>
+                  <FontAwesomeIcon icon={faChevronLeft} className="text-white/60 text-[10px]" />
+                </button>
+                <div className="px-3 py-1.5 bg-white/5 rounded-lg">
+                  <span className="text-white/70 text-xs font-medium">{formatDate(dataDate)}</span>
                 </div>
-              ))}
+                <button
+                  onClick={addOneDay}
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors duration-200"
+                >
+                  <FontAwesomeIcon icon={faChevronRight} className="text-white/60 text-[10px]" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className={`px-4 py-2 rounded-xl ${grossPnL >= 0 ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+                <span className="text-white/50 text-xs mr-2">Net P&L</span>
+                <span className={`text-sm font-bold ${grossPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {grossPnL >= 0 ? '+' : ''}{grossPnL.toFixed(2)}
+                </span>
+              </div>
+              
+              <div className="px-3 py-2 bg-white/5 rounded-xl">
+                <span className="text-white/50 text-xs">{dataToday.length} trades</span>
+              </div>
+
+              <button
+                onClick={handleShare}
+                className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors duration-200"
+              >
+                <FontAwesomeIcon icon={faShareNodes} className="text-white/50 hover:text-white/80 text-sm" />
+              </button>
+
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center">
+                <Image src={Logo} alt="logo" width={28} height={28} />
+              </div>
+
+              <button
+                onClick={closePopup}
+                className="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition-colors duration-200 group"
+              >
+                <FontAwesomeIcon icon={faXmark} className="text-white/50 group-hover:text-red-400 text-sm" />
+              </button>
             </div>
           </div>
 
-          <div className="w-11/12 overflow-x-auto mt-5">
-            <table className="w-full border-collapse rounded-3xl overflow-hidden">
-              <thead className="bg-purple-500 bg-opacity-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">OPEN TIME</th>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">SYMBOL</th>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">LONG / SHORT</th>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">NET P&L</th>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">NET ROI</th>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">RR RATIO</th>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">EDIT</th>
-                  <th className="px-4 py-2 text-left text-sm text-white font-semibold">DELETE</th>
-                </tr>
-              </thead>
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="grid grid-cols-12 gap-5 mb-6">
+              <div className="col-span-5 bg-gradient-to-br from-white/[0.05] to-transparent backdrop-blur-xl rounded-2xl p-4 border border-white/[0.08] h-48">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase tracking-wider text-white/40 font-medium">Cumulative P&L</span>
+                  <div className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${grossPnL >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                    {grossPnL >= 0 ? '+' : ''}{grossPnL.toFixed(2)}
+                  </div>
+                </div>
+                <div className="h-36">
+                  <GraphComp />
+                </div>
+              </div>
 
-              <tbody>
-                {dataToday.map((data, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2 text-left text-sm">{data.OpenTime}</td>
-                    <td className="px-4 py-2 text-left text-sm">
-                      <span className="px-2 py-1 bg-white text-black rounded-full text-xs relative -left-1">
-                        {data.Item}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-left text-sm">{data.Type}</td>
-                    <td className={`px-4 py-2 text-left text-sm ${data.Profit < 0 ? "text-red-300" : "text-green-500"}`}>
-                      {data.Profit < 0 ? `-$${Math.abs(data.Profit)}` : `$${data.Profit}`}
-                    </td>
-                    <td className="px-4 py-2 text-left text-sm">NET ROI</td>
-                    <td className="px-4 py-2 text-left text-sm">RR RATIO</td>
-                    <td 
-                      className="px-4 py-2 text-left text-sm cursor-pointer edit-trade-button hover:text-green-500"
-                      onClick={() => handleEdit(data)}
-                    >
-                      <FontAwesomeIcon icon={faPenToSquare} />
-                    </td>
-                    <td 
-                      className="px-4 py-2 text-left text-sm cursor-pointer delete-trade-button hover:text-red-500"
-                      onClick={() => confirmDelete(data.id)}
-                    >
-                      <FontAwesomeIcon icon={faTrashCan} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              <div className="col-span-7 grid grid-cols-3 gap-3">
+                <StatCard 
+                  icon={faChartLine} 
+                  label="Gross P&L" 
+                  value={`$${grossPnL.toFixed(2)}`}
+                  valueColor={grossPnL >= 0 ? "text-emerald-400" : "text-red-400"}
+                  iconBg={grossPnL >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
+                />
+                <StatCard 
+                  icon={faTrophy} 
+                  label="Winners" 
+                  value={wins.toString()}
+                  valueColor="text-emerald-400"
+                  iconBg="bg-emerald-500/10"
+                />
+                <StatCard 
+                  icon={faCoins} 
+                  label="Commissions" 
+                  value={`$${totalCommissions.toFixed(2)}`}
+                  valueColor="text-amber-400"
+                  iconBg="bg-amber-500/10"
+                />
+                <StatCard 
+                  icon={faPercent} 
+                  label="Win Rate" 
+                  value={`${winRate}%`}
+                  valueColor={parseFloat(winRate) >= 50 ? "text-emerald-400" : "text-red-400"}
+                  iconBg={parseFloat(winRate) >= 50 ? "bg-emerald-500/10" : "bg-red-500/10"}
+                />
+                <StatCard 
+                  icon={faSkullCrossbones} 
+                  label="Losers" 
+                  value={losses.toString()}
+                  valueColor="text-red-400"
+                  iconBg="bg-red-500/10"
+                />
+                <StatCard 
+                  icon={faScaleBalanced} 
+                  label="Profit Factor" 
+                  value={profitFactor.toString()}
+                  valueColor={parseFloat(profitFactor) >= 1 || profitFactor === "∞" ? "text-emerald-400" : "text-red-400"}
+                  iconBg="bg-purple-500/10"
+                />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-white/[0.05] to-transparent backdrop-blur-xl rounded-2xl border border-white/[0.08] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/5">
+                      <th className="px-5 py-4 text-left text-[10px] uppercase tracking-wider text-white/40 font-semibold">Open Time</th>
+                      <th className="px-5 py-4 text-left text-[10px] uppercase tracking-wider text-white/40 font-semibold">Symbol</th>
+                      <th className="px-5 py-4 text-left text-[10px] uppercase tracking-wider text-white/40 font-semibold">Side</th>
+                      <th className="px-5 py-4 text-left text-[10px] uppercase tracking-wider text-white/40 font-semibold">Net P&L</th>
+                      <th className="px-5 py-4 text-left text-[10px] uppercase tracking-wider text-white/40 font-semibold">Net ROI</th>
+                      <th className="px-5 py-4 text-left text-[10px] uppercase tracking-wider text-white/40 font-semibold">R:R Ratio</th>
+                      <th className="px-5 py-4 text-center text-[10px] uppercase tracking-wider text-white/40 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {dataToday.map((data, index) => (
+                      <tr 
+                        key={index} 
+                        className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors duration-150 group"
+                      >
+                        <td className="px-5 py-4">
+                          <span className="text-white/70 text-sm font-medium">{data.OpenTime}</span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-purple-500/20 to-purple-600/10 text-purple-300 rounded-lg text-xs font-semibold border border-purple-500/20">
+                            {data.Item}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                            data.Type?.toLowerCase() === 'buy' 
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                          }`}>
+                            {data.Type?.toLowerCase() === 'buy' ? 'Long' : 'Short'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`text-sm font-bold ${data.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                            {data.Profit >= 0 ? '+' : ''}{data.Profit < 0 ? `-$${Math.abs(data.Profit).toFixed(2)}` : `$${data.Profit.toFixed(2)}`}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-white/40 text-sm">—</span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-white/40 text-sm">—</span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <button 
+                              onClick={() => handleEdit(data)}
+                              className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center transition-all duration-200 opacity-60 group-hover:opacity-100"
+                            >
+                              <FontAwesomeIcon icon={faPenToSquare} className="text-white/60 hover:text-emerald-400 text-xs" />
+                            </button>
+                            <button 
+                              onClick={() => confirmDelete(data.id)}
+                              className="w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition-all duration-200 opacity-60 group-hover:opacity-100"
+                            >
+                              <FontAwesomeIcon icon={faTrashCan} className="text-white/60 hover:text-red-400 text-xs" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       )}

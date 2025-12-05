@@ -2,8 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCalendarAlt, faCheckCircle, faClock, faClose } from "@fortawesome/free-solid-svg-icons";
-// Import symbol data for profit calculation and symbol dropdown
+import { 
+  faCalendarAlt, 
+  faCheckCircle, 
+  faClock, 
+  faXmark,
+  faChevronDown,
+  faArrowTrendUp,
+  faArrowTrendDown
+} from "@fortawesome/free-solid-svg-icons";
 import symbols from "./components/symbols/Forex";
 import indianStocks from "./components/symbols/IndianStocks";
 import usStocks from "./components/symbols/USAStock";
@@ -45,30 +52,26 @@ interface SymbolData {
   name?: string;
   market?: string;
   curr?: string;
-  conversionRate?: number;
+  conversionRate?: number | null;
 }
 
-// --- Helper Functions ---
 const formatDateForDisplay = (dateString: string) => {
   if (!dateString) return new Date().toLocaleString();
   const options: Intl.DateTimeFormatOptions = {
     day: "numeric",
-    month: "long",
+    month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   };
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-GB", options)
-    .format(date)
-    .replace(/(\d+:\d+)/, " - $1");
+  return new Intl.DateTimeFormat("en-GB", options).format(date);
 };
 
 const isValidDecimal = (value: string) => {
   return value === "" || /^\d*\.?\d*$/.test(value);
 };
 
-// --- Profit Calculation Functions ---
 const calculateForexProfit = (symbol: string, entryPrice: number, exitPrice: number, lotSize: number, isBuy: boolean) => {
   const isMetal = symbol.startsWith('XAU') || symbol.startsWith('XAG');
   const isJPY = symbol.endsWith('JPY');
@@ -125,7 +128,6 @@ const calculateCryptoProfit = (entryPrice: number, exitPrice: number, quantity: 
   }
 };
 
-// --- Main Component ---
 const EditTradePopUp = () => {
   const popupRef = useRef<HTMLDivElement>(null);
   const { showEditTradePopUp, setShowEditTradePopUp, editTradeData } = calendarPopUp();
@@ -138,13 +140,11 @@ const EditTradePopUp = () => {
   const { bkurl } = useDataStore();
   const { setAlertBoxG } = notifications();
 
-  // --- Symbol Dropdown State and Refs ---
   const [openSymbolDropdown, setOpenSymbolDropdown] = useState(false);
   const [symbolSearch, setSymbolSearch] = useState("");
   const symbolInputRef = useRef<HTMLDivElement>(null);
   const symbolDropdownRef = useRef<HTMLDivElement>(null);
 
-  // --- Effect for Closing Symbol Dropdown on Outside Click ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -160,7 +160,6 @@ const EditTradePopUp = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // --- Effect for Closing Main Popup on Outside Click ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
@@ -176,7 +175,6 @@ const EditTradePopUp = () => {
     };
   }, [showEditTradePopUp, setShowEditTradePopUp]);
 
-  // --- Initialization Effect ---
   useEffect(() => {
     if (showEditTradePopUp && editTradeData) {
       setTradeEntry({ ...editTradeData, symbol: editTradeData.Item });
@@ -199,7 +197,6 @@ const EditTradePopUp = () => {
     }
   }, [showEditTradePopUp, editTradeData, accounts]);
 
-  // --- Symbol Filtering Helper ---
   const filteredSymbols = (): SymbolData[] => {
     const marketType = tradeEntry?.marketType || "OTHER";
     let symbolList: SymbolData[] = [];
@@ -222,7 +219,6 @@ const EditTradePopUp = () => {
     );
   };
 
-  // --- Input Change Handler ---
   const handleInputChange = (field: string, value: string) => {
     if (['OpenPrice', 'ClosePrice', 'StopLoss', 'TakeProfit', 'Commission', 'Swap', 'Size', 'Profit', 'symbol'].includes(field) && !isValidDecimal(value)) {
       if (field !== 'symbol') {
@@ -238,15 +234,14 @@ const EditTradePopUp = () => {
     });
   };
 
-  // --- Date Change Handlers ---
-  const handleDateChange = (dateType: 'OpenTime' | 'CloseTime', newDateISOString: string) => {
+  const handleDateChange = (dateType: 'OpenTime' | 'CloseTime', newDate: Date) => {
+    const newDateISOString = newDate.toISOString();
     setTradeEntry(prev => {
       if (!prev) return prev;
       if (dateType === 'OpenTime') {
         const updatedEntry = { ...prev, OpenTime: newDateISOString };
-        const openDate = new Date(newDateISOString);
-        updatedEntry.date = openDate.toISOString().slice(0, 10);
-        updatedEntry.time = openDate.toTimeString().slice(0, 8);
+        updatedEntry.date = newDate.toISOString().slice(0, 10);
+        updatedEntry.time = newDate.toTimeString().slice(0, 8);
         return updatedEntry;
       } else if (dateType === 'CloseTime') {
         return { ...prev, CloseTime: newDateISOString };
@@ -256,7 +251,6 @@ const EditTradePopUp = () => {
     setShowDateTimePickerFor(null);
   };
 
-  // --- Status Toggle Handlers ---
   const toggleEntryStatus = (status: string) => {
     setTradeEntry(prev => {
       if (!prev) return prev;
@@ -264,7 +258,6 @@ const EditTradePopUp = () => {
     });
   };
 
-  // --- Validation ---
   const isFormValid = () => {
     if (!tradeEntry || !selectedAccount) return false;
     const hasOpenPrice = tradeEntry.OpenPrice !== undefined && tradeEntry.OpenPrice !== null && tradeEntry.OpenPrice !== "";
@@ -279,7 +272,6 @@ const EditTradePopUp = () => {
     }
   };
 
-  // --- Submission Handler ---
   const handleEntrySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAccount || !tradeEntry || !isFormValid()) {
@@ -347,7 +339,7 @@ const EditTradePopUp = () => {
       const data = await response.json();
       setAlertBoxG("Trade updated successfully!", "success");
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting edited trade:", error);
       setAlertBoxG(`An error occurred while updating the trade: ${error.message}`, "error");
     } finally {
@@ -356,62 +348,69 @@ const EditTradePopUp = () => {
     }
   };
 
-  // --- Render Logic ---
   if (!showEditTradePopUp || !tradeEntry) {
     return null;
   }
 
   const marketType = tradeEntry.marketType || tradeEntry.market || "N/A";
-  const symbol = tradeEntry.Item || tradeEntry.symbol || "N/A";
+
+  const InputField = ({ label, value, onChange, placeholder, readOnly = false }: {
+    label: string;
+    value: string;
+    onChange?: (value: string) => void;
+    placeholder?: string;
+    readOnly?: boolean;
+  }) => (
+    <div className="space-y-2">
+      <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          className={`w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all duration-200 ${readOnly ? 'cursor-not-allowed opacity-60' : ''}`}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          readOnly={readOnly}
+          disabled={readOnly}
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <div className={`fixed w-screen h-screen top-0 left-0 bg-[#00000064] z-[1000] flex flex-col items-center justify-center ${showEditTradePopUp ? "flex" : "hidden"}`}>
+    <div className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4 transition-opacity duration-300 ${showEditTradePopUp ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
       <div 
-        className="w-[35%] h-[90%] p-5 overflow-y-auto flex flex-col justify-around bg-[rgba(34,33,33,0.379)] backdrop-blur-[30px] rounded-[25px]"
+        className="w-full max-w-md max-h-[90vh] bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] backdrop-blur-2xl rounded-3xl flex flex-col border border-white/10 shadow-2xl shadow-black/50 overflow-hidden"
         ref={popupRef}
       >
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-white">Edit Trade</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div>
+            <h2 className="text-lg font-bold text-white">Edit Trade</h2>
+            <p className="text-xs text-white/40 mt-0.5">{marketType} Market</p>
+          </div>
           <button 
-            className="bg-transparent border-none cursor-pointer p-2 text-[#aaaaaa]"
+            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition-colors duration-200 group"
             onClick={() => setShowEditTradePopUp(false)}
           >
-            <FontAwesomeIcon icon={faClose} />
+            <FontAwesomeIcon icon={faXmark} className="text-white/50 group-hover:text-red-400 text-sm" />
           </button>
         </div>
 
-        <div className="etp-form-section">
-          {/* Market Display */}
-          <div className="flex items-center gap-6 mb-3">
-            <label className="w-[90px] text-[12px] font-[500] text-white">Market</label>
-            <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-              <input
-                type="text"
-                className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                value={marketType}
-                readOnly
-                disabled
-              />
-            </div>
-          </div>
-
-          {/* Symbol Selection with Search */}
-          <div className="flex items-center gap-6 mb-3">
-            <label className="w-[90px] text-[12px] font-[500] text-white">Symbol</label>
-            <div
-              className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center relative"
-              ref={symbolInputRef}
-              onFocus={() => {
-                const marketType = tradeEntry?.marketType || "";
-                if (marketType && marketType !== "OTHER") {
-                  setOpenSymbolDropdown(true);
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <div className="relative" ref={symbolInputRef}>
+            <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium block mb-2">Symbol</label>
+            <div 
+              className="relative cursor-pointer"
+              onClick={() => {
+                const mt = tradeEntry?.marketType || "";
+                if (mt && mt !== "OTHER") {
+                  setOpenSymbolDropdown(!openSymbolDropdown);
                 }
               }}
             >
               <input
                 type="text"
-                className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
+                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-white/30 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.08] transition-all duration-200 pr-10 uppercase"
                 placeholder="Search symbol..."
                 value={tradeEntry.symbol || ""}
                 onChange={(e) => {
@@ -421,286 +420,241 @@ const EditTradePopUp = () => {
                   setOpenSymbolDropdown(true);
                 }}
               />
-
-              {/* Dropdown */}
-              {openSymbolDropdown && (
-                <div
-                  className="absolute top-full left-0 w-full max-h-[200px] bg-[#2a2a2a] rounded-[8px] mt-1 shadow-lg z-10 overflow-auto"
-                  ref={symbolDropdownRef}
-                  style={{ display: filteredSymbols().length ? "block" : "none" }}
-                >
-                  {filteredSymbols().map((symbolData, index) => (
-                    <div
-                      key={`${symbolData.symbol}-${index}`}
-                      className="px-4 py-2 cursor-pointer text-[#cccccc] border-b border-[#333333] hover:bg-[#333333] hover:text-white"
-                      onClick={() => {
-                        handleInputChange("symbol", symbolData.symbol);
-                        if (symbolData.market !== undefined) {
-                          handleInputChange("market", symbolData.market);
-                        }
-                        if (symbolData.curr !== undefined) {
-                          handleInputChange("curr", symbolData.curr);
-                        }
-                        setSymbolSearch("");
-                        setOpenSymbolDropdown(false);
-                      }}
-                    >
-                      {symbolData.symbol}
-                    </div>
-                  ))}
-                  {filteredSymbols().length === 0 && symbolSearch && (
-                    <div className="px-4 py-2 text-[#cccccc] border-b border-[#333333]">
-                      No symbols found
-                    </div>
-                  )}
-                </div>
-              )}
+              <FontAwesomeIcon 
+                icon={faChevronDown} 
+                className={`absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-xs transition-transform duration-200 ${openSymbolDropdown ? 'rotate-180' : ''}`}
+              />
             </div>
+
+            {openSymbolDropdown && filteredSymbols().length > 0 && (
+              <div
+                className="absolute top-full left-0 w-full max-h-48 bg-[#1a1a1a] border border-white/10 rounded-xl mt-2 shadow-2xl z-10 overflow-auto"
+                ref={symbolDropdownRef}
+              >
+                {filteredSymbols().map((symbolData, index) => (
+                  <div
+                    key={`${symbolData.symbol}-${index}`}
+                    className="px-4 py-3 cursor-pointer text-white/70 hover:bg-white/[0.05] hover:text-white transition-colors duration-150 text-sm border-b border-white/[0.03] last:border-0"
+                    onClick={() => {
+                      handleInputChange("symbol", symbolData.symbol);
+                      if (symbolData.market !== undefined) {
+                        handleInputChange("market", symbolData.market);
+                      }
+                      if (symbolData.curr !== undefined) {
+                        handleInputChange("curr", symbolData.curr);
+                      }
+                      setSymbolSearch("");
+                      setOpenSymbolDropdown(false);
+                    }}
+                  >
+                    <span className="font-medium">{symbolData.symbol}</span>
+                    {symbolData.name && (
+                      <span className="text-white/40 ml-2 text-xs">{symbolData.name}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Separator */}
-          <div className="w-full h-[1px] bg-gray-500 my-3"></div>
-
-          {/* Side Selection */}
-          <div className="flex items-center gap-6 mb-3">
-            <label className="w-[90px] text-[12px] font-[500] text-white">TYPE</label>
-            <div className="flex gap-2 flex-1">
+          <div className="space-y-2">
+            <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Position Type</label>
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                className={`flex-1 px-3 py-3 rounded-[8px] text-center font-bold text-[0.75rem] border-none cursor-pointer ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border transition-all duration-200 ${
                   selectedSide === "buy" 
-                    ? "bg-[#2f4f26] text-[#66ff66]" 
-                    : "bg-[#2a2a2a] text-white"
+                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" 
+                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
                 }`}
                 onClick={() => {
                   setSelectedSide("buy");
                   handleInputChange('Type', "buy");
                 }}
               >
-                Buy (long)
+                <FontAwesomeIcon icon={faArrowTrendUp} className="text-xs" />
+                Long
               </button>
               <button
                 type="button"
-                className={`flex-1 px-3 py-3 rounded-[8px] text-center font-bold text-[0.75rem] border-none cursor-pointer ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border transition-all duration-200 ${
                   selectedSide === "sell" 
-                    ? "bg-[#4f2626] text-[#ff6666]" 
-                    : "bg-[#2a2a2a] text-white"
+                    ? "bg-red-500/15 text-red-400 border-red-500/30" 
+                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
                 }`}
                 onClick={() => {
                   setSelectedSide("sell");
                   handleInputChange('Type', "sell");
                 }}
               >
-                Sell (Short)
+                <FontAwesomeIcon icon={faArrowTrendDown} className="text-xs" />
+                Short
               </button>
             </div>
           </div>
 
-          {/* Entry Price */}
-          <div className="flex items-center gap-6 mb-3">
-            <label className="w-[90px] text-[12px] font-[500] text-white">Entry Price</label>
-            <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-              <input
-                type="text"
-                className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                placeholder="Enter Entry Price"
-                value={tradeEntry.OpenPrice || ""}
-                onChange={(e) => handleInputChange("OpenPrice", e.target.value)}
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              label="Entry Price"
+              value={tradeEntry.OpenPrice || ""}
+              onChange={(value) => handleInputChange("OpenPrice", value)}
+              placeholder="0.00"
+            />
+            <InputField
+              label={marketType === "FOREX" ? "Lot Size" : "Quantity"}
+              value={tradeEntry.Size || tradeEntry.quantity || ""}
+              onChange={(value) => handleInputChange("Size", value)}
+              placeholder="0.00"
+            />
           </div>
 
-          {/* Entry Date Picker */}
-          <div className="flex justify-between items-center mt-4 mb-4">
-            <div>
-              <div className="text-[0.75rem] text-white">Entry Date and Time</div>
-              <div className="text-[0.9rem] font-bold text-[#4d6aff]">
-                {formatDateForDisplay(tradeEntry.OpenTime || "")}
+          <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Entry Date & Time</p>
+                <p className="text-sm font-semibold text-purple-400 mt-1">
+                  {formatDateForDisplay(tradeEntry.OpenTime || "")}
+                </p>
               </div>
-            </div>
-            <div onClick={() => setShowDateTimePickerFor(`open-${tradeEntry.id || 'edit'}`)}>
-              <label className="bg-[#2a2a2a] border-none rounded-[50%] p-2 cursor-pointer w-[35px] h-[35px] text-[#d4d4d4] flex items-center justify-center">
-                <FontAwesomeIcon icon={faCalendarAlt} />
-              </label>
-            </div>
-          </div>
-
-          {/* Lot Size / Contract Size */}
-          <div className="flex items-center gap-6 mb-3">
-            <label className="w-[90px] text-[12px] font-[500] text-white">
-              {marketType === "FOREX" ? "Lot Size" :
-                marketType === "CRYPTO" || marketType.includes("STOCK") ? "Quantity" :
-                  "Contract Size"}
-            </label>
-            <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-              <input
-                type="text"
-                className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                placeholder="Enter size"
-                value={tradeEntry.Size || tradeEntry.quantity || ''}
-                onChange={(e) => handleInputChange("Size", e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Status Display/Selection */}
-          <div className="flex justify-between items-center mt-4 mb-4">
-            <div>
-              <div className="text-[0.75rem] text-white">Status</div>
-              <div className="text-[0.9rem] font-bold text-[#aaaaaa]">
-                {tradeEntry.status === "completed"
-                  ? "Completed"
-                  : tradeEntry.status === "pending"
-                    ? "Pending"
-                    : "Waiting for entry"}
-              </div>
-            </div>
-            <div className="flex gap-2">
               <button
                 type="button"
-                className={`bg-[#2a2a2a] border-none rounded-[50%] p-2 cursor-pointer w-[35px] h-[35px] flex items-center justify-center ${
-                  !tradeEntry.OpenPrice ? "cursor-not-allowed text-[#555555]" : ""
-                }`}
+                onClick={() => setShowDateTimePickerFor(`open-${tradeEntry.id || 'edit'}`)}
+                className="w-10 h-10 rounded-xl bg-white/[0.05] hover:bg-purple-500/20 flex items-center justify-center transition-colors duration-200 group"
+              >
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-white/50 group-hover:text-purple-400" />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Trade Status</label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
+                  tradeEntry.status === "completed"
+                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
+                } ${!tradeEntry.OpenPrice ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={() => toggleEntryStatus("completed")}
                 disabled={!tradeEntry.OpenPrice}
-                style={{
-                  color: tradeEntry.status === "completed" ? "#66ff66" : "#474747",
-                }}
               >
-                <FontAwesomeIcon icon={faCheckCircle} />
+                <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
+                Completed
               </button>
               <button
                 type="button"
-                className={`bg-[#2a2a2a] border-none rounded-[50%] p-2 cursor-pointer w-[35px] h-[35px] flex items-center justify-center ${
-                  !tradeEntry.OpenPrice ? "cursor-not-allowed text-[#555555]" : ""
-                }`}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all duration-200 ${
+                  tradeEntry.status === "pending"
+                    ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                    : "bg-white/[0.03] text-white/50 border-white/[0.05] hover:bg-white/[0.05]"
+                } ${!tradeEntry.OpenPrice ? "opacity-50 cursor-not-allowed" : ""}`}
                 onClick={() => toggleEntryStatus("pending")}
                 disabled={!tradeEntry.OpenPrice}
-                style={{
-                  color: tradeEntry.status === "pending" ? "#4d6aff" : "#474747",
-                }}
               >
-                <FontAwesomeIcon icon={faClock} />
+                <FontAwesomeIcon icon={faClock} className="text-xs" />
+                Pending
               </button>
             </div>
           </div>
 
-          {/* Conditional Fields based on Status */}
           {(tradeEntry.status === "completed" || tradeEntry.status === "pending") && (
-            <>
-              {/* Stop Loss */}
-              <div className="flex items-center gap-6 mb-3">
-                <label className="w-[90px] text-[12px] font-[500] text-white">Stop Loss</label>
-                <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-                  <input
-                    type="text"
-                    className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                    placeholder="(Optional)"
-                    value={tradeEntry.StopLoss || ""}
-                    onChange={(e) => handleInputChange("StopLoss", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Take Profit / Target Price */}
-              <div className="flex items-center gap-6 mb-3">
-                <label className="w-[90px] text-[12px] font-[500] text-white">Take Profit / Target Price</label>
-                <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-                  <input
-                    type="text"
-                    className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                    placeholder="(Optional)"
-                    value={tradeEntry.TakeProfit || ""}
-                    onChange={(e) => handleInputChange("TakeProfit", e.target.value)}
-                  />
-                </div>
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-4">
+              <InputField
+                label="Stop Loss"
+                value={tradeEntry.StopLoss || ""}
+                onChange={(value) => handleInputChange("StopLoss", value)}
+                placeholder="Optional"
+              />
+              <InputField
+                label="Take Profit"
+                value={tradeEntry.TakeProfit || ""}
+                onChange={(value) => handleInputChange("TakeProfit", value)}
+                placeholder="Optional"
+              />
+            </div>
           )}
 
           {tradeEntry.status === "completed" && (
             <>
-              {/* Close Date Picker */}
-              <div className="flex justify-between items-center mt-4 mb-4">
-                <div>
-                  <div className="text-[0.75rem] text-white">Close Date and Time</div>
-                  <div className="text-[0.9rem] font-bold text-[#4d6aff]">
-                    {tradeEntry.CloseTime ? formatDateForDisplay(tradeEntry.CloseTime) : "N/A"}
+              <div className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wider text-white/40 font-medium">Close Date & Time</p>
+                    <p className="text-sm font-semibold text-purple-400 mt-1">
+                      {tradeEntry.CloseTime ? formatDateForDisplay(tradeEntry.CloseTime) : "Not set"}
+                    </p>
                   </div>
-                </div>
-                <div onClick={() => setShowDateTimePickerFor(`close-${tradeEntry.id || 'edit'}`)}>
-                  <label className="bg-[#2a2a2a] border-none rounded-[50%] p-2 cursor-pointer w-[35px] h-[35px] text-[#d4d4d4] flex items-center justify-center">
-                    <FontAwesomeIcon icon={faCalendarAlt} />
-                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowDateTimePickerFor(`close-${tradeEntry.id || 'edit'}`)}
+                    className="w-10 h-10 rounded-xl bg-white/[0.05] hover:bg-purple-500/20 flex items-center justify-center transition-colors duration-200 group"
+                  >
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-white/50 group-hover:text-purple-400" />
+                  </button>
                 </div>
               </div>
 
-              {/* Close Price */}
-              <div className="flex items-center gap-6 mb-3">
-                <label className="w-[90px] text-[12px] font-[500] text-white">Close Price</label>
-                <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-                  <input
-                    type="text"
-                    className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                    placeholder="Enter close price"
-                    value={tradeEntry.ClosePrice || ""}
-                    onChange={(e) => handleInputChange("ClosePrice", e.target.value)}
-                  />
-                </div>
-              </div>
+              <InputField
+                label="Close Price"
+                value={tradeEntry.ClosePrice || ""}
+                onChange={(value) => handleInputChange("ClosePrice", value)}
+                placeholder="0.00"
+              />
             </>
           )}
 
-          {/* Commission */}
-          <div className="flex items-center gap-6 mb-3">
-            <label className="w-[90px] text-[12px] font-[500] text-white">Commission</label>
-            <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-              <input
-                type="text"
-                className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                placeholder="(Optional)"
-                value={tradeEntry.Commission || ""}
-                onChange={(e) => handleInputChange("Commission", e.target.value)}
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              label="Commission"
+              value={tradeEntry.Commission || ""}
+              onChange={(value) => handleInputChange("Commission", value)}
+              placeholder="Optional"
+            />
+            <InputField
+              label="Swap / Fees"
+              value={tradeEntry.Swap || ""}
+              onChange={(value) => handleInputChange("Swap", value)}
+              placeholder="Optional"
+            />
           </div>
 
-          {/* Swap */}
-          <div className="flex items-center gap-6 mb-3">
-            <label className="w-[90px] text-[12px] font-[500] text-white">Swap / Other Fees</label>
-            <div className="flex-1 bg-[#2a2a2a] rounded-[8px] px-4 py-2 flex items-center">
-              <input
-                type="text"
-                className="bg-transparent border-none outline-none w-full text-[12px] text-white font-[500] uppercase"
-                placeholder="(Optional)"
-                value={tradeEntry.Swap || ""}
-                onChange={(e) => handleInputChange("Swap", e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Date Pickers */}
           <CustomDateTimePicker
             isOpen={showDateTimePickerFor === `open-${tradeEntry.id || 'edit'}`}
             onClose={() => setShowDateTimePickerFor(null)}
             onApply={(value) => handleDateChange('OpenTime', value)}
-            initialDateTime={tradeEntry.OpenTime ? new Date(tradeEntry.OpenTime) : new Date()}
           />
           <CustomDateTimePicker
             isOpen={showDateTimePickerFor === `close-${tradeEntry.id || 'edit'}`}
             onClose={() => setShowDateTimePickerFor(null)}
             onApply={(value) => handleDateChange('CloseTime', value)}
-            initialDateTime={tradeEntry.CloseTime ? new Date(tradeEntry.CloseTime) : new Date()}
           />
         </div>
 
-        {/* Submit Button */}
-        <SubmitButton
-          handleSubmit={handleEntrySubmit}
-          disabled={!isFormValid()}
-          isSubmitting={isSubmitting}
-          label="Update Trade"
-        />
+        <div className="px-6 py-4 border-t border-white/5">
+          <button
+            type="button"
+            onClick={handleEntrySubmit}
+            disabled={!isFormValid() || isSubmitting}
+            className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+              isFormValid() && !isSubmitting
+                ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-[1.02]"
+                : "bg-white/[0.05] text-white/30 cursor-not-allowed"
+            }`}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Updating...
+              </span>
+            ) : (
+              "Update Trade"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
