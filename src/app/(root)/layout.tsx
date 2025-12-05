@@ -143,19 +143,19 @@ export default function RootLayout({
     <>
       {/* Sidebar Header with Logo */}
       <div className={cn(
-        "flex items-center h-12 px-3 border-b border-border/50",
+        "flex items-center h-16 px-4 border-b border-border/50",
         collapsed && !mobileOpen ? "justify-center" : "justify-between"
       )}>
-        <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden group" onClick={() => setMobileOpen(false)}>
+        <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group" onClick={() => setMobileOpen(false)}>
           {/* Collapsed: Custom Lightning Bolt Image */}
           {(collapsed && !mobileOpen) && (
-            <div className="w-8 h-8 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+            <div className="w-9 h-9 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
               <Image 
                 src="/images/lightning-icon.png" 
-                width={28} 
-                height={28} 
+                width={32} 
+                height={32} 
                 alt="ProJournX" 
-                className="w-7 h-7 object-contain"
+                className="w-8 h-8 object-contain"
                 unoptimized
               />
             </div>
@@ -164,20 +164,20 @@ export default function RootLayout({
           {(!collapsed || mobileOpen) && (
             <Image 
               src="/images/logo-dark.png?v=2" 
-              width={140} 
-              height={35} 
+              width={180} 
+              height={45} 
               alt="ProJournX" 
-              className="h-7 w-auto"
+              className="h-10 w-auto"
               unoptimized
             />
           )}
         </Link>
         {(!collapsed || mobileOpen) && (
           <button
-            className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
             onClick={() => mobileOpen ? setMobileOpen(false) : setCollapsed(true)}
           >
-            {mobileOpen ? <X className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            {mobileOpen ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         )}
       </div>
@@ -185,23 +185,23 @@ export default function RootLayout({
       {/* Collapse button when collapsed (desktop only) */}
       {collapsed && !mobileOpen && (
         <button
-          className="mx-auto mt-2 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+          className="mx-auto mt-3 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
           onClick={() => setCollapsed(false)}
         >
-          <ChevronLeft className="h-3.5 w-3.5 rotate-180" />
+          <ChevronLeft className="h-4 w-4 rotate-180" />
         </button>
       )}
 
       {/* Add Trades Button */}
-      <div className={cn("px-2.5 mt-3", collapsed && !mobileOpen && "mt-2")}>
+      <div className={cn("px-3 mt-4", collapsed && !mobileOpen && "mt-2")}>
         <button
           className={cn(
-            "group relative w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium text-xs transition-all duration-300 overflow-hidden",
+            "group relative w-full flex items-center justify-center gap-2.5 py-3 rounded-xl font-semibold text-sm transition-all duration-300 overflow-hidden",
             "bg-gradient-to-r from-primary via-primary to-primary/90 text-primary-foreground",
-            "hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5",
-            "active:translate-y-0 active:shadow-md active:scale-[0.98]",
+            "hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1",
+            "active:translate-y-0 active:shadow-lg active:scale-[0.98]",
             "animate-pulse-glow",
-            collapsed && !mobileOpen ? "px-0" : "px-3"
+            collapsed && !mobileOpen ? "px-0" : "px-4"
           )}
           onClick={() => {
             setAddTrades()
@@ -210,24 +210,24 @@ export default function RootLayout({
           }}
         >
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent" />
-          <Plus className="h-3.5 w-3.5 relative z-10 transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110" />
+          <Plus className="h-4 w-4 relative z-10 transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110" />
           {(!collapsed || mobileOpen) && (
             <span className="relative z-10 tracking-wide">Add Trade</span>
           )}
-          <div className="absolute inset-0 rounded-lg bg-primary-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 rounded-xl bg-primary-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </button>
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2.5 scrollbar-hide">
+      <nav className="flex-1 overflow-y-auto py-4 px-3 scrollbar-hide">
         {(!collapsed || mobileOpen) && (
-          <div className="mb-1.5">
-            <span className="px-2.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+          <div className="mb-2">
+            <span className="px-3 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
               Menu
             </span>
           </div>
         )}
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {mainNavItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
@@ -237,7 +237,7 @@ export default function RootLayout({
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
+                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     active 
                       ? "bg-primary/10 text-primary" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
@@ -245,10 +245,10 @@ export default function RootLayout({
                   )}
                 >
                   {active && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r-full" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
                   )}
                   <Icon className={cn(
-                    "h-4 w-4 flex-shrink-0 transition-transform",
+                    "h-[18px] w-[18px] flex-shrink-0 transition-transform",
                     active ? "text-primary" : "group-hover:scale-110"
                   )} />
                   {(!collapsed || mobileOpen) && <span>{item.name}</span>}
@@ -260,15 +260,15 @@ export default function RootLayout({
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="py-1.5 px-2.5 border-t border-border/50">
+      <div className="py-2 px-3 border-t border-border/50">
         {(!collapsed || mobileOpen) && (
-          <div className="mb-1.5">
-            <span className="px-2.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+          <div className="mb-2">
+            <span className="px-3 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
               General
             </span>
           </div>
         )}
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {bottomNavItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
@@ -278,7 +278,7 @@ export default function RootLayout({
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
+                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     active 
                       ? "bg-primary/10 text-primary" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
@@ -286,10 +286,10 @@ export default function RootLayout({
                   )}
                 >
                   {active && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r-full" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
                   )}
                   <Icon className={cn(
-                    "h-4 w-4 flex-shrink-0 transition-transform",
+                    "h-[18px] w-[18px] flex-shrink-0 transition-transform",
                     active ? "text-primary" : "group-hover:scale-110"
                   )} />
                   {(!collapsed || mobileOpen) && <span>{item.name}</span>}
@@ -301,30 +301,30 @@ export default function RootLayout({
       </div>
 
       {/* User Section */}
-      <div className="p-2 border-t border-border/50">
+      <div className="p-3 border-t border-border/50">
         {profileData.fullName && (
           <Link 
             href="/settings"
             onClick={() => setMobileOpen(false)}
             className={cn(
-              "flex items-center gap-2 rounded-lg p-2 mb-1.5 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer",
-              collapsed && !mobileOpen && "justify-center p-1.5"
+              "flex items-center gap-3 rounded-xl p-2.5 mb-2 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer",
+              collapsed && !mobileOpen && "justify-center p-2"
             )}
           >
             <div className="relative flex-shrink-0">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-1 ring-primary/10">
-                <span className="text-xs font-bold text-primary">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-primary/10">
+                <span className="text-sm font-bold text-primary">
                   {userInitials}
                 </span>
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-profit rounded-full border-2 border-card" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-profit rounded-full border-2 border-card" />
             </div>
             {(!collapsed || mobileOpen) && (
               <div className="overflow-hidden flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-foreground truncate">
+                <p className="text-sm font-semibold text-foreground truncate">
                   {profileData.fullName}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {maskedEmail}
                 </p>
               </div>
@@ -334,13 +334,13 @@ export default function RootLayout({
         
         <button
           className={cn(
-            "group w-full flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
+            "group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
             "text-muted-foreground hover:text-loss hover:bg-loss/10",
             collapsed && !mobileOpen && "justify-center px-0"
           )}
           onClick={handleLogout}
         >
-          <LogOut className="h-4 w-4 flex-shrink-0 transition-transform group-hover:scale-110" />
+          <LogOut className="h-[18px] w-[18px] flex-shrink-0 transition-transform group-hover:scale-110" />
           {(!collapsed || mobileOpen) && <span>Log out</span>}
         </button>
       </div>
@@ -371,7 +371,7 @@ export default function RootLayout({
       <aside 
         className={cn(
           "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col bg-card/80 backdrop-blur-xl border-r border-border/50 transition-all duration-300 ease-out",
-          collapsed ? "w-[56px]" : "w-[200px]"
+          collapsed ? "w-[68px]" : "w-[260px]"
         )}
       >
         <SidebarContent />
@@ -380,7 +380,7 @@ export default function RootLayout({
       {/* Sidebar - Mobile */}
       <aside 
         className={cn(
-          "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[200px] flex-col bg-card border-r border-border/50 transition-transform duration-300 ease-out",
+          "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[260px] flex-col bg-card border-r border-border/50 transition-transform duration-300 ease-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -390,8 +390,8 @@ export default function RootLayout({
       {/* Main Content Area */}
       <div className={cn(
         "min-h-screen transition-all duration-300",
-        "lg:ml-[56px]",
-        !collapsed && "lg:ml-[200px]"
+        "lg:ml-[68px]",
+        !collapsed && "lg:ml-[260px]"
       )}>
         {/* Top Bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-6">
