@@ -9,11 +9,27 @@ This is a Next.js 16 trading journal application that allows users to track thei
 ## UI Redesign (Completed)
 The application features a complete UI redesign inspired by Notion, Linear, and Stripe aesthetics.
 
-### Design System
-- **Primary Color:** Teal (#0d9488) - Used for accents, buttons, and interactive elements
-- **Color Mode:** Dark theme with proper light theme support
+### Design System - Brand Colors
+**Primary Palette:**
+- Primary: #2563EB (blue) - Main brand color for buttons, links, accents
+- Dark: #1D4ED8 - Hover states, emphasized elements
+- Light: #60A5FA - Secondary accents, chart elements
+- Soft: #EFF6FF - Light mode backgrounds
+
+**Accent Colors:**
+- Profit (Green): #22C55E - Positive P&L, wins, success states
+- Loss (Red): #EF4444 - Negative P&L, losses, error states
+- Warning (Yellow): #FACC15 - Alerts, warnings
+
+**Dark Theme Backgrounds:**
+- Main App BG: #020617 - Primary dark background
+- Section BG: #020817 - Section containers
+- Cards/Panels: #0B1220 - Card surfaces
+
+### Design Tokens
+- **Color Mode:** Dark theme (default) with light theme support
 - **Typography:** Clean, modern fonts with consistent sizing
-- **Borders:** Subtle borders with `border-border` class (8% opacity)
+- **Borders:** Subtle borders with `border-border` class
 - **Cards:** Clean card components with consistent padding and rounded corners
 
 ### Redesigned Pages
