@@ -324,7 +324,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                         />
                         <Send
                           size={18}
-                          className="cursor-pointer transition-opacity duration-200 text-[#00bcd4] hover:opacity-80"
+                          className="cursor-pointer transition-opacity duration-200 text-primary hover:opacity-80"
                           onClick={(e) => { e.stopPropagation(); handleRename(e, name, s.id); }}
                         />
                         <X
@@ -462,7 +462,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                 Cancel
               </button>
               <button 
-                className="px-3.5 py-2 border-none rounded-lg cursor-pointer font-semibold bg-[#00bcd4] text-black transition-colors duration-200 hover:bg-[#00d8ff]"
+                className="px-3.5 py-2 border-none rounded-lg cursor-pointer font-semibold bg-primary text-primary-foreground transition-colors duration-200 hover:bg-primary/90"
                 onClick={handleAddStrategy}
               >
                 Save

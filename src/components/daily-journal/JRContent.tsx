@@ -812,10 +812,10 @@ const blob = await new Promise<Blob | null>((resolve) =>
                   </p>
                   <div className="flex flex-row items-center justify-start">
                     <p className="">
-                      <span className="text-gray-400 text-xs">PNL</span> <br />
+                      <span className="text-muted-foreground text-xs">PNL</span> <br />
                       <span
                         className={`font-semibold rounded-[10px] px-1.25 py-0.5 ${
-                          ele.Profit < 0 ? "text-red-400" : "text-green-500"
+                          ele.Profit < 0 ? "text-loss" : "text-profit"
                         }`}
                       >
                         {ele.Profit >= 0
@@ -849,11 +849,11 @@ const blob = await new Promise<Blob | null>((resolve) =>
                   <div className="w-full h-10 flex items-center justify-between font-extrabold">
                     <p className="w-1/3 block text-center">
                       {ele.Profit >= 0 ? (
-                        <span className="bg-green-400/35 border-none px-2.5 py-0.5 rounded-[10px] font-semibold uppercase text-xs">
+                        <span className="bg-profit/20 text-profit border-none px-2.5 py-0.5 rounded-[10px] font-semibold uppercase text-xs">
                           WIN
                         </span>
                       ) : (
-                        <span className="bg-red-400/35 border-none px-2.5 py-0.5 rounded-[10px] font-semibold uppercase text-xs">
+                        <span className="bg-loss/20 text-loss border-none px-2.5 py-0.5 rounded-[10px] font-semibold uppercase text-xs">
                           LOSS
                         </span>
                       )}
@@ -1072,7 +1072,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                   <th className="px-4 py-2">{ele.Size}</th>
                   <th
                     className={`px-4 py-2 text-center ${
-                      ele.Profit < 0 ? "text-red-400" : "text-green-500"
+                      ele.Profit < 0 ? "text-loss" : "text-profit"
                     }`}
                   >
                     {ele.Profit > 0
@@ -1129,7 +1129,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                 <div className="w-full flex h-10 items-start justify-start text-white">
                   <span
                     onClick={() => toggleRFE(ele.id)}
-                    className="bg-green-600/45 ml-5 text-xs px-1.25 py-0.5 rounded-[5px] cursor-pointer font-semibold mt-2.5"
+                    className="bg-profit/30 text-profit ml-5 text-xs px-1.25 py-0.5 rounded-[5px] cursor-pointer font-semibold mt-2.5"
                   >
                     {ele.rfe} <FontAwesomeIcon icon={faChevronDown} />
                   </span>
@@ -1179,7 +1179,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       value: ele.btm,
                       type: "btm",
                       toggle: toggleBtm,
-                      color: "bg-blue-400/30",
+                      color: "bg-primary/30",
                     },
                     {
                       time: "During Trade",
@@ -1187,7 +1187,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       value: ele.dtm,
                       type: "dtm",
                       toggle: toggleDtm,
-                      color: "bg-green-400/30",
+                      color: "bg-profit/30",
                     },
                     {
                       time: "After Trade",
@@ -1195,7 +1195,7 @@ const blob = await new Promise<Blob | null>((resolve) =>
                       value: ele.atm,
                       type: "atm",
                       toggle: toggleAtm,
-                      color: "bg-red-400/30",
+                      color: "bg-loss/30",
                     },
                   ].map((mood, idx) => (
                     <div
