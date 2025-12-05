@@ -20,6 +20,11 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  // Allow all hosts for Replit proxy environment
+  experimental: {
+    allowedOrigins: ["*"],
+  },
 };
 
 export default nextConfig;
