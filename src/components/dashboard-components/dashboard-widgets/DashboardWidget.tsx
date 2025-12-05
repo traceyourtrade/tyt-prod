@@ -65,8 +65,8 @@ const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3.5 transition-all duration-300 hover:bg-card/80 hover:border-border">
-      <div className="flex items-start justify-between mb-2">
+    <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-4 transition-all duration-300 hover:bg-card/80 hover:border-border">
+      <div className="flex items-start justify-between mb-2.5">
         <div className="flex items-center gap-2">
           {icon && (
             <div className={cn("p-2 rounded-lg", getIconColorClasses())}>
