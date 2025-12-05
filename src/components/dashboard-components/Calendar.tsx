@@ -111,7 +111,7 @@ const Calendar = () => {
 
     for (let i = 0; i < firstDayIndex; i++) {
       cells.push(
-        <div key={`empty-${i}`} className="aspect-square rounded-xl bg-[#1a1a1a]" />
+        <div key={`empty-${i}`} className="aspect-square sm:aspect-auto sm:h-[72px] rounded-xl bg-[#1a1a1a]" />
       );
     }
 
@@ -127,12 +127,12 @@ const Calendar = () => {
         <div
           key={day}
           className={cn(
-            "aspect-square rounded-xl flex flex-col justify-center items-center cursor-pointer transition-all duration-200 relative overflow-hidden",
+            "aspect-square sm:aspect-auto sm:h-[72px] rounded-xl flex flex-col justify-center items-center cursor-pointer transition-all duration-200 relative overflow-hidden",
             hasTrades
               ? isProfit
-                ? "bg-emerald-500/20 border-2 border-emerald-500/40"
+                ? "bg-[#065f46] border border-[#10b981]"
                 : isLoss
-                  ? "bg-red-500/20 border-2 border-red-500/40"
+                  ? "bg-[#7f1d1d] border border-[#ef4444]"
                   : "bg-[#1e1e1e] border border-[#333]"
               : "bg-[#1a1a1a] hover:bg-[#222]"
           )}
@@ -151,12 +151,12 @@ const Calendar = () => {
           {hasTrades && (
             <>
               <span className={cn(
-                "text-[10px] sm:text-sm font-bold",
+                "text-[10px] sm:text-base font-bold",
                 isProfit ? "text-emerald-400" : isLoss ? "text-red-400" : "text-gray-400"
               )}>
                 ${formatCurrency(Math.abs(dayData.profit))}
               </span>
-              <span className="text-[8px] sm:text-[9px] text-gray-400 hidden sm:block">
+              <span className="text-[8px] sm:text-[10px] text-gray-300/70 hidden sm:block">
                 {dayData.tradeLength} trades
               </span>
             </>
