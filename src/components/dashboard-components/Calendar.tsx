@@ -109,7 +109,7 @@ const Calendar = () => {
     const cells = [];
 
     for (let i = 0; i < firstDayIndex; i++) {
-      cells.push(<div key={`empty-${i}`} className="h-[68px] rounded-xl" />);
+      cells.push(<div key={`empty-${i}`} className="h-[80px] rounded-xl" />);
     }
 
     for (let day = 1; day <= days; day++) {
@@ -120,7 +120,7 @@ const Calendar = () => {
         <div
           key={day}
           className={cn(
-            "h-[68px] rounded-xl flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
+            "h-[80px] rounded-xl flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
             dayData 
               ? "bg-card/80 border border-border/50 hover:border-border hover:bg-card" 
               : "bg-muted/20 hover:bg-muted/40"
@@ -315,7 +315,7 @@ const Calendar = () => {
             <div
               key={index}
               className={cn(
-                "h-[68px] rounded-xl flex flex-col items-center justify-center text-center transition-all",
+                "h-[80px] rounded-xl flex flex-col items-center justify-center text-center transition-all",
                 profit !== 0 
                   ? "bg-card/80 border border-border/50" 
                   : "bg-muted/20"
