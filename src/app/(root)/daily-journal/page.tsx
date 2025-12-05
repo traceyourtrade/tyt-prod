@@ -12,9 +12,13 @@ import {
   BookOpen,
   Trophy,
   Target,
-  Zap
+  Zap,
+  BarChart3,
+  Flame
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
+import useCurrencyStore, { formatCurrencyValue, formatCompactCurrency } from "@/store/currencyStore";
 import QuickStats from "@/components/daily-journal/QuickStat";
 import JRContent from "@/components/daily-journal/JRContent";
 
@@ -32,6 +36,7 @@ interface Account {
 
 const DailyJournal = () => {
   const { selectedAccounts } = useAccountDetails();
+  const { currency, exchangeRate } = useCurrencyStore();
   
   const [dailyData, setDailyData] = useState<Trade[]>([]);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -140,7 +145,7 @@ const DailyJournal = () => {
   }, []);
 
   const filterOptions = [
-    { value: 'all', label: 'All Trades' },
+    { value: 'all', label: 'All Trades', icon: BarChart3 },
     { value: 'profitHighToLow', label: 'Best First', icon: TrendingUp },
     { value: 'profitLowToHigh', label: 'Worst First', icon: TrendingDown },
     { value: 'onlyProfit', label: 'Winners Only', icon: Trophy },
@@ -202,18 +207,18 @@ const DailyJournal = () => {
 
   const getHeatColor = (profit: number) => {
     if (profit > 200) return "bg-profit text-white";
-    if (profit > 0) return "bg-profit/50 text-profit-foreground dark:text-profit";
+    if (profit > 0) return "bg-profit/40 text-profit";
     if (profit < -200) return "bg-loss text-white";
-    if (profit < 0) return "bg-loss/50 text-loss-foreground dark:text-loss";
+    if (profit < 0) return "bg-loss/40 text-loss";
     return "";
   };
 
   const getMotivationalMessage = () => {
-    if (stats.currentStreak >= 5) return "You're on fire! 🔥";
-    if (stats.winRate >= 70) return "Trading machine! 🎯";
-    if (stats.winRate >= 50) return "Keep it up! 💪";
-    if (stats.totalTrades === 0) return "Ready to trade? ⚡";
-    return "Stay focused! 🧠";
+    if (stats.currentStreak >= 5) return "You're on fire!";
+    if (stats.winRate >= 70) return "Trading machine!";
+    if (stats.winRate >= 50) return "Keep it up!";
+    if (stats.totalTrades === 0) return "Ready to trade?";
+    return "Stay focused!";
   };
 
   const renderCalendar = () => {
@@ -222,7 +227,7 @@ const DailyJournal = () => {
     const cells = [];
 
     for (let i = 0; i < firstDay; i++) {
-      cells.push(<div key={`empty-${i}`} className="h-10" />);
+      cells.push(<div key={`empty-${i}`} className="h-9" />);
     }
 
     for (let day = 1; day <= days; day++) {
@@ -239,20 +244,16 @@ const DailyJournal = () => {
           key={day}
           onClick={() => !isDisabled && handleDateClick(day)}
           disabled={isDisabled}
-          className={`
-            h-10 rounded-lg text-sm font-medium transition-all relative
-            ${isDisabled ? 'text-muted-foreground/30 cursor-not-allowed' : 'cursor-pointer hover:bg-muted'}
-            ${isSelected || isEnd ? 'bg-primary text-primary-foreground' : ''}
-            ${isInRange ? 'bg-primary/20' : ''}
-            ${dayData && !isSelected && !isEnd ? getHeatColor(dayData.profit) : ''}
-          `}
+          className={cn(
+            "h-9 rounded-lg text-sm font-medium transition-all relative",
+            isDisabled && "text-muted-foreground/30 cursor-not-allowed",
+            !isDisabled && "cursor-pointer hover:bg-muted",
+            (isSelected || isEnd) && "bg-primary text-primary-foreground",
+            isInRange && "bg-primary/20",
+            dayData && !isSelected && !isEnd && getHeatColor(dayData.profit)
+          )}
         >
           {day}
-          {dayData && dayData.trades > 1 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-muted-foreground text-[10px] font-bold text-background rounded-full flex items-center justify-center">
-              {dayData.trades}
-            </span>
-          )}
         </button>
       );
     }
@@ -262,18 +263,25 @@ const DailyJournal = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header / Toolbar */}
-      <div className="sticky top-0 z-30 bg-background border-b border-border">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            {/* Title */}
+            {/* Title Section */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-1 ring-primary/20">
                 <BookOpen className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Daily Journal</h1>
-                <p className="text-sm text-muted-foreground">{getMotivationalMessage()}</p>
+                <h1 className="text-xl font-bold text-foreground tracking-tight">Daily Journal</h1>
+                <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  {getMotivationalMessage()}
+                  {stats.currentStreak >= 3 && (
+                    <span className="inline-flex items-center gap-1 text-orange-500">
+                      <Flame className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
 
@@ -282,54 +290,69 @@ const DailyJournal = () => {
               {/* Mobile Stats Toggle */}
               <button
                 onClick={() => setShowMobileStats(!showMobileStats)}
-                className="lg:hidden flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                className={cn(
+                  "lg:hidden flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all",
+                  "bg-card border border-border hover:bg-muted/50",
+                  showMobileStats && "bg-primary/10 border-primary/30 text-primary"
+                )}
               >
-                <Zap className="w-4 h-4 text-primary" />
-                Stats
+                <Zap className="w-4 h-4" />
+                <span>Stats</span>
               </button>
 
               {/* Filter Dropdown */}
               <div className="relative" ref={filterRef}>
                 <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all",
+                    "bg-card border border-border hover:bg-muted/50",
+                    isFilterOpen && "border-primary/30 ring-2 ring-primary/10"
+                  )}
                 >
                   <Filter className="w-4 h-4 text-muted-foreground" />
-                  <span className="hidden sm:inline">
+                  <span className="hidden sm:inline text-foreground">
                     {filterOptions.find(f => f.value === selectedFilter)?.label || 'Filter'}
                   </span>
-                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform",
+                    isFilterOpen && "rotate-180"
+                  )} />
                 </button>
 
                 <AnimatePresence>
                   {isFilterOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
+                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50"
+                      className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50"
                     >
-                      {filterOptions.map((option) => {
-                        const Icon = option.icon;
-                        return (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setSelectedFilter(option.value);
-                              setIsFilterOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                              selectedFilter === option.value 
-                                ? 'bg-primary/10 text-primary' 
-                                : 'text-foreground hover:bg-muted'
-                            }`}
-                          >
-                            {Icon && <Icon className="w-4 h-4" />}
-                            {option.label}
-                          </button>
-                        );
-                      })}
+                      <div className="p-1.5">
+                        {filterOptions.map((option) => {
+                          const Icon = option.icon;
+                          const isActive = selectedFilter === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                setSelectedFilter(option.value);
+                                setIsFilterOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors",
+                                isActive 
+                                  ? "bg-primary/10 text-primary" 
+                                  : "text-foreground hover:bg-muted/50"
+                              )}
+                            >
+                              <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                              <span className="font-medium">{option.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -339,41 +362,49 @@ const DailyJournal = () => {
               <div className="relative" ref={calendarRef}>
                 <button
                   onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                  className="flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all",
+                    "bg-card border border-border hover:bg-muted/50",
+                    isCalendarOpen && "border-primary/30 ring-2 ring-primary/10",
+                    selectedStartDate && selectedEndDate && "bg-primary/10 border-primary/30"
+                  )}
                 >
                   <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="hidden sm:inline">
+                  <span className="hidden sm:inline text-foreground">
                     {selectedStartDate && selectedEndDate 
                       ? `${selectedStartDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} - ${selectedEndDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`
                       : 'Date Range'
                     }
                   </span>
-                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isCalendarOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform",
+                    isCalendarOpen && "rotate-180"
+                  )} />
                 </button>
 
                 <AnimatePresence>
                   {isCalendarOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
+                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-[300px] bg-card border border-border rounded-lg shadow-lg p-4 z-50"
+                      className="absolute right-0 mt-2 w-[300px] bg-card border border-border rounded-xl shadow-xl p-4 z-50"
                     >
                       {/* Calendar Header */}
                       <div className="flex items-center justify-between mb-4">
                         <button
                           onClick={handlePrevMonth}
-                          className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                         >
                           <ChevronLeft className="w-4 h-4 text-muted-foreground" />
                         </button>
-                        <span className="text-sm font-medium text-foreground">
+                        <span className="text-sm font-semibold text-foreground">
                           {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
                         <button
                           onClick={handleNextMonth}
-                          className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-muted transition-colors"
                         >
                           <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </button>
@@ -396,11 +427,11 @@ const DailyJournal = () => {
                       {/* Legend */}
                       <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-border">
                         <div className="flex items-center gap-1.5">
-                          <span className="w-3 h-3 rounded bg-profit" />
+                          <span className="w-3 h-3 rounded-full bg-profit" />
                           <span className="text-xs text-muted-foreground">Profit</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="w-3 h-3 rounded bg-loss" />
+                          <span className="w-3 h-3 rounded-full bg-loss" />
                           <span className="text-xs text-muted-foreground">Loss</span>
                         </div>
                       </div>
@@ -437,7 +468,7 @@ const DailyJournal = () => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="lg:hidden overflow-hidden border-b border-border"
+            className="lg:hidden overflow-hidden border-b border-border bg-muted/20"
           >
             <div className="p-4">
               <QuickStats dailyData={filteredDailyData} streak={stats.currentStreak} />
@@ -447,63 +478,82 @@ const DailyJournal = () => {
       </AnimatePresence>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px]">
         {/* Trade Entries */}
         <div className="p-4 sm:p-6 min-h-screen">
           <JRContent dailyData={filteredDailyData} />
         </div>
 
         {/* Sidebar - Desktop Only */}
-        <div className="hidden lg:block border-l border-border sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
-          <div className="p-5 space-y-5">
-            {/* Performance Overview */}
-            <div className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">This Period</span>
+        <div className="hidden lg:block border-l border-border sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto bg-muted/10">
+          <div className="p-5 space-y-4">
+            {/* Period P&L Card */}
+            <div className="bg-card border border-border rounded-2xl p-5 overflow-hidden relative">
+              <div className={cn(
+                "absolute top-0 left-0 right-0 h-1",
+                stats.totalPnL >= 0 ? "bg-gradient-to-r from-profit/50 via-profit to-profit/50" : "bg-gradient-to-r from-loss/50 via-loss to-loss/50"
+              )} />
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">This Period</span>
                 {stats.currentStreak >= 3 && (
-                  <span className="text-xs font-medium text-orange-500">
-                    🔥 {stats.currentStreak} streak
+                  <span className="flex items-center gap-1 text-xs font-semibold text-orange-500">
+                    <Flame className="w-3.5 h-3.5" />
+                    {stats.currentStreak} streak
                   </span>
                 )}
               </div>
-              <div className={`text-3xl font-bold ${stats.totalPnL >= 0 ? 'text-profit' : 'text-loss'}`}>
-                {stats.totalPnL >= 0 ? '+' : ''}${Math.abs(stats.totalPnL).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className={cn(
+                "text-4xl font-bold tracking-tight mt-2",
+                stats.totalPnL >= 0 ? "text-profit" : "text-loss"
+              )}>
+                {formatCurrencyValue(stats.totalPnL, currency, exchangeRate)}
               </div>
-              <div className="flex items-center gap-4 mt-3">
-                <div className="flex items-center gap-1.5">
-                  <Trophy className="w-4 h-4 text-profit" />
-                  <span className="text-sm text-foreground">{stats.winners} wins</span>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-profit/10 flex items-center justify-center">
+                    <Trophy className="w-4 h-4 text-profit" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{stats.winners}</p>
+                    <p className="text-[10px] text-muted-foreground">wins</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Target className="w-4 h-4 text-loss" />
-                  <span className="text-sm text-foreground">{stats.losers} losses</span>
+                <div className="w-px h-8 bg-border" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-loss/10 flex items-center justify-center">
+                    <Target className="w-4 h-4 text-loss" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{stats.losers}</p>
+                    <p className="text-[10px] text-muted-foreground">losses</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Mini Calendar */}
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border rounded-2xl p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
                   Calendar
                 </h3>
-                <div className="flex items-center gap-1">
-                  <button onClick={handlePrevMonth} className="p-1 rounded hover:bg-muted transition-colors">
-                    <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-0.5">
+                  <button onClick={handlePrevMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                    <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
-                  <span className="text-xs font-medium text-muted-foreground px-2">
+                  <span className="text-xs font-medium text-muted-foreground px-2 min-w-[80px] text-center">
                     {new Date(selectedYear, selectedMonth).toLocaleString('default', { month: 'short', year: 'numeric' })}
                   </span>
-                  <button onClick={handleNextMonth} className="p-1 rounded hover:bg-muted transition-colors">
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <button onClick={handleNextMonth} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 gap-1 mb-2">
+              <div className="grid grid-cols-7 gap-1 mb-1.5">
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-                  <div key={i} className="h-6 flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+                  <div key={i} className="h-6 flex items-center justify-center text-[10px] font-semibold text-muted-foreground uppercase">
                     {d}
                   </div>
                 ))}
@@ -526,9 +576,10 @@ const DailyJournal = () => {
                     cells.push(
                       <div
                         key={day}
-                        className={`h-8 rounded-md flex items-center justify-center text-xs font-medium transition-colors cursor-pointer hover:bg-muted ${
-                          dayData ? getHeatColor(dayData.profit) : 'text-foreground'
-                        }`}
+                        className={cn(
+                          "h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-colors cursor-pointer",
+                          dayData ? getHeatColor(dayData.profit) : "text-muted-foreground hover:bg-muted/50"
+                        )}
                       >
                         {day}
                       </div>
@@ -542,28 +593,28 @@ const DailyJournal = () => {
               {/* Legend */}
               <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded bg-profit" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-profit" />
                   <span className="text-[10px] text-muted-foreground">Profit</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded bg-loss" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-loss" />
                   <span className="text-[10px] text-muted-foreground">Loss</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Stats */}
-            <QuickStats dailyData={filteredDailyData} streak={stats.currentStreak} />
+            <QuickStats dailyData={filteredDailyData} streak={stats.maxStreak} />
 
-            {/* Best Streak */}
-            {stats.maxStreak >= 3 && (
-              <div className="bg-card border border-border rounded-xl p-4">
+            {/* Best Streak Card */}
+            {stats.maxStreak >= 2 && (
+              <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-yellow-500/10 border border-amber-500/20 rounded-2xl p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                    <span className="text-lg">🏆</span>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <Trophy className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">Best Streak: {stats.maxStreak} wins</p>
+                    <p className="text-lg font-bold text-foreground">Best Streak: {stats.maxStreak} wins</p>
                     <p className="text-xs text-muted-foreground">Keep pushing your limits!</p>
                   </div>
                 </div>
