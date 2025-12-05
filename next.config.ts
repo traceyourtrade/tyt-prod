@@ -13,6 +13,21 @@ const nextConfig: NextConfig = {
         hostname: "images.seeklogo.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "s3-bucket-setup-test.s3.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.s3.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.s3.*.amazonaws.com",
+        pathname: "/**",
+      },
     ],
   },
 
