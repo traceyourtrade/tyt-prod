@@ -9,6 +9,7 @@ import {
   chartsGridClasses,
   legendClasses,
 } from "@mui/x-charts";
+import { formatCompactNumber } from "@/utils/formatNumber";
 
 const BarChartCard = ({
   title = "Bar Chart",
@@ -64,6 +65,12 @@ const BarChartCard = ({
             },
           ]}
           grid={{ horizontal: true }}
+          yAxis={[
+            {
+              tickFormat: (value) => `$${formatCompactNumber(value, 0)}`,
+              width: 65,
+            },
+          ]}
           series={[
             {
               data: positiveData,

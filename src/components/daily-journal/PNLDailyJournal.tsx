@@ -1,4 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { formatCompactNumber } from "@/utils/formatNumber";
 
 interface Trade {
   time: string;
@@ -79,7 +80,7 @@ const GradientAreaChart = ({ data }: GradientAreaChartProps) => {
             <YAxis
               stroke="rgba(255, 255, 255, 0.51)"
               tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-              tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+              tickFormatter={(value) => value < 0 ? `-$${formatCompactNumber(Math.abs(value), 0)}` : `$${formatCompactNumber(value, 0)}`}
               interval={0}
               minTickGap={2}
               tickCount={7}
@@ -116,7 +117,7 @@ const GradientAreaChart = ({ data }: GradientAreaChartProps) => {
             <YAxis
               stroke="rgba(255, 255, 255, 0.51)"
               tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-              tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+              tickFormatter={(value) => value < 0 ? `-$${formatCompactNumber(Math.abs(value), 0)}` : `$${formatCompactNumber(value, 0)}`}
               interval={0}
               minTickGap={2}
               tickCount={10}
@@ -153,7 +154,7 @@ const GradientAreaChart = ({ data }: GradientAreaChartProps) => {
             <YAxis
               stroke="rgba(255, 255, 255, 0.51)"
               tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-              tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+              tickFormatter={(value) => value < 0 ? `-$${formatCompactNumber(Math.abs(value), 0)}` : `$${formatCompactNumber(value, 0)}`}
               interval={0}
               minTickGap={2}
               tickCount={10}

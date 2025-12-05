@@ -7,6 +7,7 @@ import SummaryTable from './SummaryTable'
 import CrossAnalysisTable from './CrossAnalysisTable'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
 import useAccountDetails from '@/store/accountdetails'
+import { formatCompactNumber } from '@/utils/formatNumber'
 
 interface Trade {
   date: string
@@ -103,12 +104,12 @@ const SubReport = () => {
       bestDay: { 
         day: bestDay.day, 
         trades: bestDay.trades.length, 
-        pnl: `$${bestDay.metrics.netPnL.toFixed(2)}` 
+        pnl: `$${formatCompactNumber(bestDay.metrics.netPnL, 2)}` 
       },
       leastDay: { 
         day: leastDay.day, 
         trades: leastDay.trades.length, 
-        pnl: `-$${Math.abs(leastDay.metrics.netPnL).toFixed(2)}` 
+        pnl: `-$${formatCompactNumber(Math.abs(leastDay.metrics.netPnL), 2)}` 
       },
       mostActiveDay: { 
         day: mostActiveDay.day, 
@@ -125,11 +126,11 @@ const SubReport = () => {
   const summaryTableData = useMemo((): SummaryTableRow[] => dayMetrics.map(({ day, trades, metrics }) => ({
     day,
     winPercent: metrics.winPercentage.toFixed(2),
-    netPnl: `$${metrics.netPnL.toFixed(2)}`,
+    netPnl: `$${formatCompactNumber(metrics.netPnL, 2)}`,
     tradeCount: trades.length,
-    avgDailyVolume: metrics.avgDailyVolume.toFixed(2),
-    avgWin: `$${metrics.avgTradeWinLoss > 0 ? metrics.avgTradeWinLoss.toFixed(2) : 0}`,
-    avgLoss: `-$${metrics.avgTradeWinLoss < 0 ? Math.abs(metrics.avgTradeWinLoss).toFixed(2) : 0}`
+    avgDailyVolume: formatCompactNumber(metrics.avgDailyVolume, 2),
+    avgWin: `$${formatCompactNumber(metrics.avgTradeWinLoss > 0 ? metrics.avgTradeWinLoss : 0, 2)}`,
+    avgLoss: `-$${formatCompactNumber(metrics.avgTradeWinLoss < 0 ? Math.abs(metrics.avgTradeWinLoss) : 0, 2)}`
   })), [dayMetrics])
 
   const crossAnalysisData = useMemo((): CrossAnalysisRow[] => {
@@ -145,7 +146,7 @@ const SubReport = () => {
 
       return {
         day,
-        values: symbolPnL.map(pnl => pnl > 0 ? `$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`)
+        values: symbolPnL.map(pnl => pnl > 0 ? `$${formatCompactNumber(pnl, 2)}` : `-$${formatCompactNumber(Math.abs(pnl), 2)}`)
       }
     })
   }, [dayMetrics, trades])

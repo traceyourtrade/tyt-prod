@@ -11,6 +11,7 @@ import {
   useYScale
 } from "@mui/x-charts";
 import { markElementClasses } from "@mui/x-charts";
+import { formatCompactNumber } from "@/utils/formatNumber";
 
 interface ChartData {
   date?: string;
@@ -125,7 +126,7 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
           grid={{ horizontal: true }}
           yAxis={[
             {
-              tickFormat: (value: number) => `$${value.toLocaleString()}`,
+              tickFormat: (value: number) => `$${formatCompactNumber(value, 0)}`,
               width: 65,
             },
           ]}

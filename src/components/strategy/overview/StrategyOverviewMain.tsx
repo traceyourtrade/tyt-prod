@@ -16,6 +16,7 @@ import {
   Legend,
 } from "recharts";
 import { TrendingUp, Percent, BarChart3, Clock, DollarSign, Target, PieChartIcon, Activity } from "lucide-react";
+import { formatCompactNumber } from "@/utils/formatNumber";
 
 interface Trade {
   date: string;
@@ -115,7 +116,7 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
   const stats = [
     {
       label: "Total P&L",
-      value: `$${totalProfit.toLocaleString("en-US")}`,
+      value: `$${formatCompactNumber(totalProfit, 2)}`,
       sub: "Net Profit",
       icon: DollarSign,
       color: totalProfit >= 0 ? "profit" : "loss",

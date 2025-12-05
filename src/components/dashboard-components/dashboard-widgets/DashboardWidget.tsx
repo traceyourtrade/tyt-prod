@@ -6,6 +6,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, DoughnutController } fro
 import { DollarSign, Target, Activity, Wallet, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TinyChart from "./TinyChart";
+import { formatCompactNumber } from "@/utils/formatNumber";
 
 ChartJS.register(DoughnutController, ArcElement, Tooltip, Legend);
 
@@ -121,19 +122,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   const winrate = winners || losers ? ((winners / (winners + losers)) * 100).toFixed(1) : '0';
   const totalTrades = winners + losers;
   
-  const pnlFormatted = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Math.abs(numericPnl));
+  const pnlFormatted = '$' + formatCompactNumber(Math.abs(numericPnl), 2);
 
-  const balanceFormatted = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(typeof accBal === 'string' ? parseFloat(accBal) : accBal);
+  const balanceValue = typeof accBal === 'string' ? parseFloat(accBal) : accBal;
+  const balanceFormatted = '$' + formatCompactNumber(balanceValue, 2);
 
   const dataWinLoss = {
     labels: ["Wins", "Losses"],
@@ -256,10 +248,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
           </div>
           <div className="flex justify-between mt-1.5">
             <span className="text-[9px] text-profit font-medium">
-              +${avgProfits?.toFixed(0) || 0}
+              +${formatCompactNumber(avgProfits || 0, 0)}
             </span>
             <span className="text-[9px] text-loss font-medium">
-              -${Math.abs(avgLoses || 0).toFixed(0)}
+              -${formatCompactNumber(Math.abs(avgLoses || 0), 0)}
             </span>
           </div>
         </div>

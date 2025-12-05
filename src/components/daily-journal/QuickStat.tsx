@@ -1,6 +1,7 @@
 "use client";
 
 import { TrendingUp, TrendingDown, Zap, BarChart3 } from "lucide-react";
+import { formatCompactNumber } from "@/utils/formatNumber";
 
 interface Trade {
   Profit: number;
@@ -81,7 +82,7 @@ const QuickStats = ({ dailyData, streak = 0 }: QuickStatsProps) => {
             <TrendingUp className="w-3.5 h-3.5 text-profit" />
             <span className="text-[10px] text-muted-foreground uppercase">Avg Win</span>
           </div>
-          <p className="text-lg font-bold text-profit">${avgWin.toFixed(0)}</p>
+          <p className="text-lg font-bold text-profit">${formatCompactNumber(avgWin, 0)}</p>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-3">
@@ -89,7 +90,7 @@ const QuickStats = ({ dailyData, streak = 0 }: QuickStatsProps) => {
             <TrendingDown className="w-3.5 h-3.5 text-loss" />
             <span className="text-[10px] text-muted-foreground uppercase">Avg Loss</span>
           </div>
-          <p className="text-lg font-bold text-loss">${avgLoss.toFixed(0)}</p>
+          <p className="text-lg font-bold text-loss">${formatCompactNumber(avgLoss, 0)}</p>
         </div>
       </div>
 

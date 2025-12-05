@@ -30,6 +30,7 @@ import useAccountDetails from "@/store/accountdetails";
 import { useDataStore } from "@/store/store";
 import notebookStore from "@/store/notebookStore";
 import notifications from "@/store/notifications";
+import { formatPnL } from "@/utils/formatNumber";
 
 interface Trade {
   id: string;
@@ -565,7 +566,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                   {/* P&L Display with Background */}
                   <div className={`px-4 py-2 rounded-xl ${isProfitable ? 'bg-profit/10' : 'bg-loss/10'}`}>
                     <p className={`text-xl font-bold tabular-nums ${isProfitable ? 'text-profit' : 'text-loss'}`}>
-                      {isProfitable ? '+' : ''}{trade.Profit?.toFixed(2) || '0.00'}
+                      {formatPnL(trade.Profit || 0)}
                     </p>
                   </div>
 

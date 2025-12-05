@@ -3,6 +3,7 @@
 import { BarChart2, TrendingUp, TrendingDown, Activity } from 'lucide-react'
 import StatGroup from './StatGroup'
 import StatTable from './StatTable'
+import { formatCompactNumber } from "@/utils/formatNumber"
 
 type Props = {
   trades: any[]
@@ -13,7 +14,7 @@ export default function StatsCard({ trades, metrics }: Props) {
   const statsData = {
     bestMonth: { value: '$0.00', date: '' },
     lowestMonth: { value: '$0.00', date: '' },
-    average: { value: `$${metrics?.avgDailyNetPnL?.toFixed?.(2) ?? '0.00'}`, unit: 'per Day' },
+    average: { value: `$${formatCompactNumber(metrics?.avgDailyNetPnL ?? 0, 2)}`, unit: 'per Day' },
   }
 
   return (
