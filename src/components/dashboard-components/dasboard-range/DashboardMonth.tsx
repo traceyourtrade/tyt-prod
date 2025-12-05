@@ -76,35 +76,29 @@ const DashboardMonth: React.FC = () => {
         accBal={calculateBalance(selectedAccounts).toFixed(2)}
       />
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-        {/* Calendar - Takes full width on mobile, 2 cols on lg, 2 cols on xl */}
-        <div className="lg:col-span-2">
+      {/* Main Content Grid - Row 1: Calendar + Stacked Charts */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Calendar - Takes 2 columns */}
+        <div className="xl:col-span-2">
           <Calendar />
         </div>
 
-        {/* Net Cumulative P&L Chart */}
-        <div className="lg:col-span-1">
+        {/* Right Column - Stacked Charts */}
+        <div className="xl:col-span-1 flex flex-col gap-4">
           <PnLDailyChart data={data} />
+          <TradesWidget data={thisMonthData} />
         </div>
+      </div>
 
-        {/* Daily P&L Bar Chart */}
+      {/* Insights Row - 3 Column Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <DailyPnLBarChart data={thisMonthData} />
-
-        {/* Day of Week Chart */}
         <DayOfWeekChart data={thisMonthData} />
-
-        {/* Symbol P&L Chart */}
         <SymbolPnLChart data={thisMonthData} />
-
-        {/* Recent Trades Widget */}
-        <TradesWidget data={thisMonthData} />
-
-        {/* Hourly Performance Chart */}
         <HourlyPnLChart data={thisMonthData} />
-
-        {/* Performance Radar */}
-        <Radar />
+        <div className="md:col-span-2 xl:col-span-2">
+          <Radar />
+        </div>
       </div>
     </div>
   );
