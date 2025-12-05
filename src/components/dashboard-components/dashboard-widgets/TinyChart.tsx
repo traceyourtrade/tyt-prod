@@ -7,7 +7,7 @@ interface TinyChartProps {
   color?: string;
 }
 
-const TinyChart: React.FC<TinyChartProps> = ({ data, color = "#0d9488" }) => {
+const TinyChart: React.FC<TinyChartProps> = ({ data, color = "#2563EB" }) => {
   if (!data || data.length < 2) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -34,7 +34,7 @@ const TinyChart: React.FC<TinyChartProps> = ({ data, color = "#0d9488" }) => {
   const areaPoints = `${padding},${height - padding} ${points} ${width - padding},${height - padding}`;
   
   const isPositive = values[values.length - 1] >= values[0];
-  const lineColor = isPositive ? "#10b981" : "#ef4444";
+  const lineColor = isPositive ? "#22C55E" : "#EF4444";
   const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
 
   return (

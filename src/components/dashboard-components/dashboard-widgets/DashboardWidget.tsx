@@ -131,8 +131,8 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
     datasets: [
       {
         data: [winners, losers],
-        backgroundColor: ["#10b981", "#ef4444"],
-        hoverBackgroundColor: ["#34d399", "#f87171"],
+        backgroundColor: ["#22C55E", "#EF4444"],
+        hoverBackgroundColor: ["#4ADE80", "#F87171"],
         borderWidth: 0,
         spacing: 2,
       },

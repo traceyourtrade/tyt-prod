@@ -40,13 +40,13 @@ const YearlyCalendar: React.FC<YearlyCalendarProps> = ({
     const pnlValue = data?.[dateKey]?.pnl;
     
     if (pnlValue === undefined || pnlValue === null) {
-      return '#161616';
+      return '#0B1220';
     } else if (pnlValue > 0) {
-      return '#10b981';
+      return '#22C55E';
     } else if (pnlValue < 0) {
-      return '#ef4444';
+      return '#EF4444';
     } else {
-      return '#1e3a8a';
+      return '#2563EB';
     }
   };
 

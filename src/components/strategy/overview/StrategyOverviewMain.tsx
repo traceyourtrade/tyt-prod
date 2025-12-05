@@ -50,7 +50,9 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
 
   // Avg duration (in mins/hours/days auto-scaled)
   const avgDurationFormatted = (() => {
-    const valid = allTrades.filter((t) => t.OpenTime && t.CloseTime);
+    const valid = allTrades.filter((t): t is Trade & { OpenTime: string; CloseTime: string } => 
+      Boolean(t.OpenTime) && Boolean(t.CloseTime)
+    );
     if (!valid.length) return "—";
 
     const totalDurationMs = valid.reduce((sum, t) => {
@@ -87,7 +89,7 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
     value: strategiesDataObj[name]?.length || 0,
   }));
 
-  const COLORS = ["#d57eeb", "#22c55e", "#facc15", "#60a5fa", "#f472b6", "#34d399"];
+  const COLORS = ["#2563EB", "#22C55E", "#FACC15", "#60A5FA", "#EF4444", "#1D4ED8"];
 
   // -------------------------------
   // 🧠 Stats cards
@@ -123,9 +125,9 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
   // 🧱 JSX Render
   // -------------------------------
   return (
-    <div className="w-full min-h-[70vh] bg-[#0f0f0f] text-white flex flex-col p-6 rounded-xl box-border animate-fadeIn">
+    <div className="w-full min-h-[70vh] bg-card text-card-foreground flex flex-col p-6 rounded-xl box-border animate-fadeIn border border-border">
       <div className="overview-header">
-        <h2 className="text-2xl font-semibold mb-1.5 bg-gradient-to-r from-[#d57eeb] to-[#fccb90] bg-clip-text text-transparent">
+        <h2 className="text-2xl font-semibold mb-1.5 bg-gradient-to-r from-[#2563EB] to-[#60A5FA] bg-clip-text text-transparent">
           Strategy Overview
         </h2>
       </div>
@@ -135,12 +137,12 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
         {stats.map((s, i) => (
           <div 
             key={i} 
-            className="bg-[#1a1a1a] border border-[#262626] rounded-xl p-5 transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-[0_0_16px_rgba(213,126,235,0.2)]"
+            className="bg-secondary/50 border border-border rounded-xl p-5 transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-[0_0_16px_rgba(37,99,235,0.2)]"
           >
-            <div className="text-[#aaa] text-sm">{s.label}</div>
-            <div className="text-white text-2xl font-semibold my-1.5">{s.value}</div>
-            <div className="text-[#888] text-xs">
-              {s.sub} <span className="text-[#8fffac]">{s.trend}</span>
+            <div className="text-muted-foreground text-sm">{s.label}</div>
+            <div className="text-foreground text-2xl font-semibold my-1.5">{s.value}</div>
+            <div className="text-muted-foreground text-xs">
+              {s.sub} <span className="text-profit">{s.trend}</span>
             </div>
           </div>
         ))}
@@ -149,44 +151,44 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
       {/* Charts section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-8">
         {/* Profit by Strategy */}
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(255,255,255,0.08)]">
-          <div className="font-medium text-[#ccc] mb-2.5">Profit by Strategy</div>
+        <div className="bg-secondary/30 border border-border rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(37,99,235,0.1)]">
+          <div className="font-medium text-muted-foreground mb-2.5">Profit by Strategy</div>
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={profitByStrategy}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2b2b2b" />
-              <XAxis dataKey="name" stroke="#aaa" />
-              <YAxis stroke="#aaa" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="name" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
               <Tooltip
                 contentStyle={{
-                  background: "#1a1a1a",
-                  border: "1px solid #333",
+                  background: "#0B1220",
+                  border: "1px solid #1e293b",
                   color: "#fff",
                 }}
               />
-              <Bar dataKey="pnl" fill="#d57eeb" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="pnl" fill="#2563EB" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Performance Over Time */}
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(255,255,255,0.08)]">
-          <div className="font-medium text-[#ccc] mb-2.5">Performance Over Time</div>
+        <div className="bg-secondary/30 border border-border rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(37,99,235,0.1)]">
+          <div className="font-medium text-muted-foreground mb-2.5">Performance Over Time</div>
           <ResponsiveContainer width="100%" height={230}>
             <LineChart data={performanceOverTime}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2b2b2b" />
-              <XAxis dataKey="date" stroke="#aaa" />
-              <YAxis stroke="#aaa" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis dataKey="date" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
               <Tooltip
                 contentStyle={{
-                  background: "#1a1a1a",
-                  border: "1px solid #333",
+                  background: "#0B1220",
+                  border: "1px solid #1e293b",
                   color: "#fff",
                 }}
               />
               <Line
                 type="monotone"
                 dataKey="profit"
-                stroke="#60a5fa"
+                stroke="#60A5FA"
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
@@ -195,8 +197,8 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
         </div>
 
         {/* Strategy Distribution */}
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(255,255,255,0.08)]">
-          <div className="font-medium text-[#ccc] mb-2.5">Strategy Distribution</div>
+        <div className="bg-secondary/30 border border-border rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(37,99,235,0.1)]">
+          <div className="font-medium text-muted-foreground mb-2.5">Strategy Distribution</div>
           <ResponsiveContainer width="100%" height={230}>
             <PieChart>
               <Pie
@@ -215,9 +217,9 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
               </Pie>
               <Tooltip
                 contentStyle={{
-                  background: "#c9ffdeff",
-                  border: "1px solid #70ff68ff",
-                  color: "#2201b5ff",
+                  background: "#0B1220",
+                  border: "1px solid #1e293b",
+                  color: "#fff",
                 }}
               />
               <Legend />

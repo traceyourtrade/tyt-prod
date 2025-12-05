@@ -25,9 +25,9 @@ const PnLPerWeekChart: React.FC<PnLPerWeekChartProps> = ({
 
   const getColor = (pnl: number): string => {
     if (pnl > 0) {
-      return '#10b981';
+      return '#22C55E';
     } else if (pnl < 0) {
-      return '#ef4444';
+      return '#EF4444';
     }
     return '#94a3b8';
   };
