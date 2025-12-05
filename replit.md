@@ -3,11 +3,11 @@
 ## Overview
 This is a Next.js 16 trading journal application that allows users to track their trades, analyze performance, and maintain a trading notebook. The application uses MongoDB for data storage, AWS S3 for image uploads, and Google OAuth for authentication.
 
-**Current State:** UI Redesign in Progress - Modern SaaS aesthetic
+**Current State:** UI Redesign Complete - Modern SaaS aesthetic
 **Last Updated:** December 5, 2025
 
-## UI Redesign Progress
-The application is undergoing a complete UI redesign inspired by Notion, Linear, and Stripe aesthetics.
+## UI Redesign (Completed)
+The application features a complete UI redesign inspired by Notion, Linear, and Stripe aesthetics.
 
 ### Design System
 - **Primary Color:** Teal (#0d9488) - Used for accents, buttons, and interactive elements
@@ -16,13 +16,15 @@ The application is undergoing a complete UI redesign inspired by Notion, Linear,
 - **Borders:** Subtle borders with `border-border` class (8% opacity)
 - **Cards:** Clean card components with consistent padding and rounded corners
 
-### Completed Redesigns
+### Redesigned Pages
 1. **Sidebar Navigation** - Modern collapsible sidebar with clean icons and hover effects
 2. **Root Layout** - New header with accounts dropdown, date range selector, and theme toggle
 3. **Dashboard Page** - Stat cards, charts, calendar, and trades widget with new styling
 4. **Daily Journal Page** - Filter toolbar, calendar sidebar, quick stats with modern design
 5. **Settings Page** - Sidebar navigation with user/general settings sections
 6. **Reports Page** - Updated with background styling
+7. **Notebook Page** - Three-column layout with folders, files, and content area
+8. **Strategies Page** - Tab navigation, strategy dropdown, and date range picker with modern styling
 
 ### UI Component Library
 Located in `src/components/ui/`:
