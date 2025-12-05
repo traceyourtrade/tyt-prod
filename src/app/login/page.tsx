@@ -100,11 +100,18 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 xl:px-24">
           <div className="mb-12">
             <Image
-              width={200}
-              height={50}
-              src="/images/logoDarkFull.png"
-              alt="Logo"
-              className="h-10 w-auto"
+              width={280}
+              height={70}
+              src="/images/logo-dark.png"
+              alt="ProJournX Logo"
+              className="h-12 w-auto dark:block hidden"
+            />
+            <Image
+              width={280}
+              height={70}
+              src="/images/logo-light.png"
+              alt="ProJournX Logo"
+              className="h-12 w-auto dark:hidden block"
             />
           </div>
 
@@ -159,11 +166,18 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex justify-center mb-10">
             <Image
-              width={180}
-              height={45}
-              src="/images/logoDarkFull.png"
-              alt="Logo"
-              className="h-9 w-auto"
+              width={200}
+              height={50}
+              src="/images/logo-dark.png"
+              alt="ProJournX Logo"
+              className="h-10 w-auto dark:block hidden"
+            />
+            <Image
+              width={200}
+              height={50}
+              src="/images/logo-light.png"
+              alt="ProJournX Logo"
+              className="h-10 w-auto dark:hidden block"
             />
           </div>
 
