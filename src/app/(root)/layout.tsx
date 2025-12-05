@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import axios from "axios"
 import "../globals.css"
+import PageLoading from "@/components/ui/page-loading"
 
 import { cn } from "@/lib/utils"
 import {
@@ -349,6 +350,11 @@ export default function RootLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page Loading Indicator */}
+      <Suspense fallback={null}>
+        <PageLoading />
+      </Suspense>
+
       {/* Popups */}
       <AddtradesMain />
       <DeleteAccPopup />
