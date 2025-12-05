@@ -12,7 +12,8 @@ import {
   NotebookPen,
   Layers,
   BarChart2,
-  PlusCircle
+  PlusCircle,
+  Zap
 } from "lucide-react";
 import DashHome from "./images/DashHome.png";
 
@@ -69,11 +70,15 @@ export default function Sidebar({ expanded }: SidebarProps) {
         {/* Top */}
         <div>
 
-          <div className={`w-[200px] flex items-center justify-center gap-2 p-4 h-[50px] overflow-hidden mt-3 ${expanded ? "visible" : "hidden"} mx-auto`}>
-            <Image src={"/images/logo2.png"} width={150} height={50} alt="logo" />
+          {/* Logo - Expanded */}
+          <div className={`w-[180px] flex items-center justify-center p-4 h-[50px] overflow-hidden mt-3 ${expanded ? "visible" : "hidden"} mx-auto`}>
+            <Image src={"/images/logo-dark.png?v=2"} width={160} height={40} alt="ProJournX" className="h-8 w-auto" unoptimized />
           </div>
-          <div className={`w-full flex items-center justify-center gap-2 p-4 h-[50px] overflow-hidden mt-3 ${expanded ? "hidden" : "visible"}`}>
-            <Image src={"/pjLogo.png"} width={150} height={50} alt="logo" className="w-10" />
+          {/* Logo - Collapsed (Lightning Bolt) */}
+          <div className={`w-full flex items-center justify-center p-4 h-[50px] overflow-hidden mt-3 ${expanded ? "hidden" : "visible"}`}>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/20">
+              <Zap className="w-5 h-5 text-white fill-white" />
+            </div>
           </div>
 
           <div className="w-full h-px bg-[#1b1b1b] mt-1 mb-10" ></div>
