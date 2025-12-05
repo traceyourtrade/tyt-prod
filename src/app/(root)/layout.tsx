@@ -28,7 +28,9 @@ import {
   ChevronDown,
   Menu,
   X,
+  Zap,
 } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 
 import DeleteAccPopup from "@/components/dashboard-components/popups/DeleteAccPopup"
@@ -140,30 +142,28 @@ export default function RootLayout({
 
   const SidebarContent = () => (
     <>
-      {/* Sidebar Header with Custom Logo */}
+      {/* Sidebar Header with Logo */}
       <div className={cn(
         "flex items-center h-16 px-4 border-b border-border/50",
         collapsed && !mobileOpen ? "justify-center" : "justify-between"
       )}>
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group" onClick={() => setMobileOpen(false)}>
-          <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 group-hover:scale-105 transition-all duration-300">
-              <svg viewBox="0 0 40 40" fill="none" className="w-6 h-6 text-primary-foreground">
-                <path d="M8 28L16 20L22 24L32 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M26 12H32V18" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="16" cy="20" r="2.5" fill="currentColor" opacity="0.8" />
-              </svg>
+          {/* Collapsed: Lightning Bolt Icon */}
+          {(collapsed && !mobileOpen) && (
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/25 group-hover:shadow-yellow-500/40 group-hover:scale-105 transition-all duration-300">
+              <Zap className="w-5 h-5 text-white fill-white" />
             </div>
-          </div>
+          )}
+          {/* Expanded: Full Logo */}
           {(!collapsed || mobileOpen) && (
-            <div className="flex flex-col">
-              <span className="font-bold text-foreground tracking-tight text-[15px]">
-                Projournx
-              </span>
-              <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
-                Trading Journal
-              </span>
-            </div>
+            <Image 
+              src="/images/logo-dark.png?v=2" 
+              width={140} 
+              height={35} 
+              alt="ProJournX" 
+              className="h-8 w-auto"
+              unoptimized
+            />
           )}
         </Link>
         {(!collapsed || mobileOpen) && (
