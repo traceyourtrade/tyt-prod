@@ -2,196 +2,160 @@
 
 import React from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { TrendingUp, Info } from "lucide-react";
 
 interface DataPoint {
-    time: string;
-    value: number;
+  time: string;
+  value: number;
 }
 
 interface GradientAreaChartProps {
-    data: DataPoint[];
+  data: DataPoint[];
 }
 
 const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
+  const checkValueStatus = (data: DataPoint[]) => {
+    const hasPositive = data.some(d => d.value > 0);
+    const hasNegative = data.some(d => d.value < 0);
 
-    const checkValueStatus = (data: DataPoint[]) => {
-        const hasPositive = data.some(d => d.value > 0);
-        const hasNegative = data.some(d => d.value < 0);
+    if (hasPositive && hasNegative) return "both";
+    if (hasPositive) return "positive";
+    if (hasNegative) return "negative";
+    return "both";
+  };
 
-        if (hasPositive && hasNegative) return "both";
-        if (hasPositive) return true;
-        if (hasNegative) return false;
+  const status = checkValueStatus(data);
 
-        return "both";
-    };
+  const calculateOffset = (data: DataPoint[]) => {
+    const values = data.map(d => d.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
 
-    const status = checkValueStatus(data);
+    if (minValue >= 0) return "0%";
+    if (maxValue <= 0) return "100%";
 
-    const calculateOffset = (data: DataPoint[]) => {
-        const values = data.map(d => d.value);
-        const minValue = Math.min(...values);
-        const maxValue = Math.max(...values);
+    return `${(maxValue / (maxValue - minValue)) * 100}%`;
+  };
 
-        if (minValue >= 0) return "0%";
-        if (maxValue <= 0) return "100%";
+  const zeroOffset = calculateOffset(data);
 
-        return `${(maxValue / (maxValue - minValue)) * 100}%`;
-    };
+  const formatCompact = (num: number) => {
+    const formatted = Intl.NumberFormat("en", {
+      notation: "compact",
+      compactDisplay: "short",
+      maximumFractionDigits: 1,
+    }).format(Math.abs(num));
 
-    const zeroOffset = calculateOffset(data);
+    return num < 0 ? `-$${formatted}` : `$${formatted}`;
+  };
 
-    const formatCompact = (num: number) => {
-        const formatted = Intl.NumberFormat("en", {
-            notation: "compact",
-            compactDisplay: "short",
-            maximumFractionDigits: 1,
-        }).format(num);
-
-        return num < 0 ? `-$${formatted.replace("-", "")}` : `$${formatted}`;
-    };
-
-    return (
-        <div className="w-[95%] max-w-[600px] h-auto min-h-[350px] flex flex-col items-center justify-start font-['Inter'] bg-[#141414] rounded-xl border border-[#1b1b1b] ">
-            <p className="w-full text-white text-[18px] text-center border-b border-gray-500 pb-4 mt-3 font-bold">
-                Net Cumulative P&L <FontAwesomeIcon icon={faCircleInfo} className="text-xs relative -top-0.5 -right-1 cursor-pointer" />
-            </p>
-
-            {status === "both" ? (
-                <ResponsiveContainer width="100%" height={280}>
-                    <AreaChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="strictGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="rgb(96, 187, 165)" stopOpacity={1} />
-                                <stop offset={zeroOffset} stopColor="rgba(96, 187, 164, 0.04)" stopOpacity={1} />
-                                <stop offset={zeroOffset} stopColor="rgba(179, 22, 22, 0.08)" stopOpacity={1} />
-                                <stop offset="100%" stopColor="rgb(239, 92, 92)" stopOpacity={0.7} />
-                            </linearGradient>
-                        </defs>
-
-                        <CartesianGrid stroke="rgb(80, 80, 80)" strokeDasharray="3 3" vertical={false} />
-                        <XAxis
-                            dataKey="time"
-                            stroke="rgba(255, 255, 255, 0.51)"
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                        />
-                        <YAxis
-                            stroke="rgba(255, 255, 255, 0.51)"
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                            tickFormatter={(value) => formatCompact(value)}
-                            interval={0}
-                            minTickGap={2}
-                            tickCount={10}
-                        />
-
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: "#222",
-                                color: "white",
-                                border: "1px solid white"
-                            }}
-                        />
-
-                        <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke="white"
-                            fill="url(#strictGradient)"
-                            fillOpacity={1}
-                            isAnimationActive={true}
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
-            ) : status === true ? (
-                <ResponsiveContainer width="100%" height={280}>
-                    <AreaChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="rgb(96, 187, 165)" stopOpacity={1} />
-                                <stop offset="100%" stopColor="rgba(96, 187, 164, 0.04)" stopOpacity={1} />
-                            </linearGradient>
-                        </defs>
-
-                        <CartesianGrid stroke="rgb(80, 80, 80)" strokeDasharray="3 3" vertical={false} />
-                        <XAxis
-                            dataKey="time"
-                            stroke="rgba(255, 255, 255, 0.51)"
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                        />
-                        <YAxis
-                            stroke="rgba(255, 255, 255, 0.51)"
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                            tickFormatter={(value) => formatCompact(value)}
-                            interval={0}
-                            minTickGap={2}
-                            tickCount={10}
-                        />
-
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: "#222",
-                                color: "white",
-                                border: "1px solid white"
-                            }}
-                        />
-
-                        <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke="white"
-                            fill="url(#positiveGradient)"
-                            fillOpacity={1}
-                            isAnimationActive={true}
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
-            ) : status === false ? (
-                <ResponsiveContainer width="100%" height={280}>
-                    <AreaChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="rgba(239, 92, 92, 0.35)" stopOpacity={1} />
-                                <stop offset="100%" stopColor="rgba(179, 22, 22, 0.7)" stopOpacity={1} />
-                            </linearGradient>
-                        </defs>
-
-                        <CartesianGrid stroke="rgb(80, 80, 80)" strokeDasharray="3 3" vertical={false} />
-                        <XAxis
-                            dataKey="time"
-                            stroke="rgba(255, 255, 255, 0.51)"
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                        />
-                        <YAxis
-                            stroke="rgba(255, 255, 255, 0.51)"
-                            tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-                            tickFormatter={(value) => formatCompact(value)}
-                            interval={0}
-                            minTickGap={2}
-                            tickCount={10}
-                        />
-
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: "#222",
-                                color: "white",
-                                border: "1px solid white"
-                            }}
-                        />
-
-                        <Area
-                            type="monotone"
-                            dataKey="value"
-                            stroke="white"
-                            fill="url(#negativeGradient)"
-                            fillOpacity={1}
-                            isAnimationActive={true}
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
-            ) : null}
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
+    if (active && payload && payload.length) {
+      const value = payload[0].value;
+      return (
+        <div className="bg-card border border-border rounded-lg shadow-lg p-3">
+          <p className="text-xs text-muted-foreground mb-1">{label}</p>
+          <p className={`text-sm font-semibold ${value >= 0 ? 'text-profit' : 'text-loss'}`}>
+            {formatCompact(value)}
+          </p>
         </div>
+      );
+    }
+    return null;
+  };
+
+  const getGradientConfig = () => {
+    if (status === "positive") {
+      return (
+        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--profit)" stopOpacity={0.4} />
+          <stop offset="100%" stopColor="var(--profit)" stopOpacity={0} />
+        </linearGradient>
+      );
+    }
+    if (status === "negative") {
+      return (
+        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--loss)" stopOpacity={0.1} />
+          <stop offset="100%" stopColor="var(--loss)" stopOpacity={0.4} />
+        </linearGradient>
+      );
+    }
+    return (
+      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor="var(--profit)" stopOpacity={0.4} />
+        <stop offset={zeroOffset} stopColor="var(--profit)" stopOpacity={0} />
+        <stop offset={zeroOffset} stopColor="var(--loss)" stopOpacity={0} />
+        <stop offset="100%" stopColor="var(--loss)" stopOpacity={0.4} />
+      </linearGradient>
     );
+  };
+
+  const strokeColor = status === "negative" ? "var(--loss)" : status === "positive" ? "var(--profit)" : "var(--primary)";
+
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-primary" />
+          <h3 className="text-base font-semibold text-foreground">
+            Net Cumulative P&L
+          </h3>
+        </div>
+        <button className="p-1.5 rounded-md hover:bg-muted transition-colors">
+          <Info className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Chart */}
+      <div className="p-4">
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              {getGradientConfig()}
+            </defs>
+
+            <CartesianGrid 
+              stroke="var(--border)" 
+              strokeDasharray="3 3" 
+              vertical={false} 
+            />
+            
+            <XAxis
+              dataKey="time"
+              stroke="var(--muted-foreground)"
+              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            
+            <YAxis
+              stroke="var(--muted-foreground)"
+              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+              tickFormatter={formatCompact}
+              tickLine={false}
+              axisLine={false}
+              width={60}
+            />
+
+            <Tooltip content={<CustomTooltip />} />
+
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={strokeColor}
+              strokeWidth={2}
+              fill="url(#chartGradient)"
+              fillOpacity={1}
+              isAnimationActive={true}
+              animationDuration={750}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 };
 
 export default GradientAreaChart;

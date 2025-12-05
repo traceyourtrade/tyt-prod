@@ -41,7 +41,21 @@ interface DayData {
 const DashboardDay: React.FC = () => {
   const { selectedAccounts } = useAccountDetails();
 
-  const groupedTrades = selectedAccounts.flatMap((acc: Account) => acc.tradeData)
+  interface Trade {
+    date: string;
+    Profit: number;
+    Item: string;
+    [key: string]: unknown;
+  }
+  
+  interface GroupedTrade {
+    date: string;
+    trades: Trade[];
+    profit: number;
+    tradeLength: number;
+  }
+
+  const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: { [key: string]: GroupedTrade }, trade: Trade) => {
       if (!acc[trade.date]) acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
 

@@ -1,127 +1,128 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCircleExclamation,
-  faTriangleExclamation,
-  faDollarSign,
-  faCaretDown
-} from "@fortawesome/free-solid-svg-icons";
-import notifications from "@/store/notifications";
+import React, { useEffect, useState, useRef } from "react";
+import { ChevronDown, TrendingUp, TrendingDown, DollarSign, Target, Percent, Scale } from "lucide-react";
+
 import DashboardCustom from "@/components/dashboard-components/dasboard-range/DashboardCustom";
 import DashboardDay from "@/components/dashboard-components/dasboard-range/DashboardDay";
 import DashboardMonth from "@/components/dashboard-components/dasboard-range/DashboardMonth";
 import DashboardWeek from "@/components/dashboard-components/dasboard-range/DashboardWeek";
 import useAccountDetails from "@/store/accountdetails";
-import HorizontalBar from "../dashboard-components/popups/HorizontalBar";
+import notifications from "@/store/notifications";
 
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+const timeRangeOptions = [
+  { label: "Monthly", value: "Monthly" },
+  { label: "Weekly", value: "Weekly" },
+  { label: "Daily", value: "Daily" },
+  { label: "Custom", value: "Custom" },
+];
 
 const DashboardMain = () => {
-
-  const options = ["Monthly", "Weekly", "Daily", "Custom"];
   const [selected, setSelected] = useState("Monthly");
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { setAccounts } = useAccountDetails();
-
-  const [isCurrOpen, setCrr] = useState(false);
+  const { hrBarTxt, hrBarType } = notifications();
 
   useEffect(() => {
     setAccounts();
   }, [setAccounts]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getAlertStyles = () => {
+    switch (hrBarType) {
+      case "Alert":
+        return "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400";
+      case "Danger":
+        return "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400";
+      default:
+        return "bg-muted border-border text-muted-foreground";
+    }
+  };
 
   return (
-    <>
-      <div className="w-99/100 mx-auto h-auto flex items-start mt-2 justify-between">
-
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-white text-xl font-inter text-[24px] font-bold ml-2">
-            Dashboard
-          </h1>
-          <p className="font-inter text-[14px] ml-2 text-[#a6a6a6] mt-1 mb-2" >Overview of your trading performance</p>
+          <p className="text-muted-foreground text-sm">
+            Overview of your trading performance
+          </p>
         </div>
-
-        <div>
-          <button
-            className="flex items-center space-x-2 bg-[#252525] backdrop-blur-md border border-gray-600 rounded-lg px-3 py-2 text-white cursor-pointer transition-colors hover:bg-[#252525]/40 "
-            onClick={() => { setCrr(!isCurrOpen) }}
-          // ref={currButtonRef}
+        
+        {/* Time Range Selector */}
+        <div className="relative" ref={dropdownRef}>
+          <Button
+            variant="outline"
+            className="min-w-[140px] justify-between"
+            onClick={() => setIsOpen(!isOpen)}
           >
             {selected}
-            <FontAwesomeIcon icon={faCaretDown} className="text-white text-xs" />
-          </button>
-
-          {/* Currency Dropdown */}
-          <div
-            // ref={currDropdownRef}
-            className={`absolute right-10 mt-5 w-48 bg-[#252525] backdrop-blur-md border border-gray-600 rounded-lg shadow-2xl transition-all duration-300 transform origin-top ${isCurrOpen
-              ? "scale-100 opacity-100 visible"
-              : "scale-95 opacity-0 invisible"
-              }`}
-          >
-            <div className="p-2">
-              {options.map((ele, index) => (
-                <p
-                  key={index}
-                  className="w-full p-2 bg-[#252525] hover:bg-[#393939] cursor-pointer transition-colors rounded-xl"
-                  onClick={() => setSelected(ele)}
-                >
-                  {ele}
-                </p>
-              ))}
+            <ChevronDown className={cn(
+              "h-4 w-4 ml-2 transition-transform",
+              isOpen && "rotate-180"
+            )} />
+          </Button>
+          
+          {isOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
+              <div className="p-1">
+                {timeRangeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className={cn(
+                      "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
+                      selected === option.value 
+                        ? "bg-primary/10 text-primary" 
+                        : "hover:bg-muted text-foreground"
+                    )}
+                    onClick={() => {
+                      setSelected(option.value);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-
       </div>
-      <HorizontalBar />
 
-      {selected === "Daily" ? <DashboardDay /> :
-        selected === "Weekly" ? <DashboardWeek /> :
-          selected === "Monthly" ? <DashboardMonth /> :
-            selected === "Custom" ? <DashboardCustom /> : ""}
-    </>
+      {/* Notification Bar */}
+      {hrBarTxt && hrBarType && (
+        <div className={cn(
+          "rounded-lg border p-4 flex items-center gap-3",
+          getAlertStyles()
+        )}>
+          <div 
+            className="text-sm"
+            dangerouslySetInnerHTML={{ __html: hrBarTxt }} 
+          />
+        </div>
+      )}
+
+      {/* Dashboard Content */}
+      <div className="animate-fade-in">
+        {selected === "Daily" && <DashboardDay />}
+        {selected === "Weekly" && <DashboardWeek />}
+        {selected === "Monthly" && <DashboardMonth />}
+        {selected === "Custom" && <DashboardCustom />}
+      </div>
+    </div>
   );
 };
 
 export default DashboardMain;
-
-
-
-
-// export default HorizontalBar;
-
-// Additional components from your CSS
-const ProfileImageButtons = () => (
-  <div className="text-xl absolute z-2 top-10vh right-16/100 w-12.5 flex items-center justify-between">
-    <FontAwesomeIcon icon={faCircleExclamation} className="text-white cursor-pointer" />
-    <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-white cursor-pointer" />
-  </div>
-);
-
-const ProfileDarkMain = ({ show, children }: { show: boolean; children: React.ReactNode }) => (
-  <div className={`w-screen h-screen fixed top-0 left-0 bg-[rgba(0,0,0,0.427)] z-1000 flex-col items-center justify-center ${show ? "flex" : "hidden"}`}>
-    {children}
-  </div>
-);
-
-
-// Add the keyframes animation to your global CSS or use a style tag
-const GlobalStyles = () => (
-  <style jsx global>{`
-    @keyframes loadPlain {
-      from { width: 0px; }
-      to { width: 350px; }
-    }
-    .animate-loadPlain {
-      animation: loadPlain 5s linear forwards;
-    }
-    .no-scroll {
-      overflow: hidden;
-      height: 100vh;
-    }
-  `}</style>
-);
-
-export { ProfileImageButtons, ProfileDarkMain, GlobalStyles };

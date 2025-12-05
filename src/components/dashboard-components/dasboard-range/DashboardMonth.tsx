@@ -6,34 +6,33 @@ import Calendar from "../Calendar";
 import TradesWidget from "../TradesWidget";
 import PnLDailyChart from "./Graphs/PnLDailyChart";
 import Radar from "./Graphs/Radar";
-// Functions 
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
-// Stores
 import useAccountDetails from '@/store/accountdetails';
 import datesforcal from '@/store/datesforcal';
 
 interface TradeData {
   date: string;
   Profit: number;
+  Item: string;
+  [key: string]: unknown;
 }
 
 interface Account {
   tradeData?: TradeData[];
+  [key: string]: unknown;
 }
 
 const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useAccountDetails();
   const { calMonth, calYear } = datesforcal();
 
-  // Function to check if a date string is in the current month and year
   function isCurrentMonth(dateString: string): boolean {
     const date = new Date(dateString);
     return date.getFullYear() === calYear && (date.getMonth() + 1) === calMonth;
   }
 
-  // Extract and filter trade data from all selectedAccounts
-  const thisMonthData = selectedAccounts.flatMap((account: Account) => {
+  const thisMonthData = (selectedAccounts as Account[]).flatMap((account) => {
     if (!account.tradeData) return [];
     return account.tradeData.filter(trade => isCurrentMonth(trade.date));
   });
@@ -47,7 +46,6 @@ const DashboardMonth: React.FC = () => {
     .map(([time, value]) => ({ time, value }))
     .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
-  // Add an initial value of 0 and compute cumulative sum
   let cumulativeProfit = 0;
   data = [{ time: "", value: 0 }, ...data].map(({ time, value }) => {
     cumulativeProfit += value;
@@ -57,8 +55,7 @@ const DashboardMonth: React.FC = () => {
   const metrics = calculateRiskRewardRatio(thisMonthData);
 
   return (
-    <div className="w-full h-auto flex flex-col rounded-[25px]">
-
+    <div className="space-y-6">
       {/* Dashboard Widgets */}
       <DashWidgets
         data={data}
@@ -75,10 +72,15 @@ const DashboardMonth: React.FC = () => {
         accBal={calculateBalance(selectedAccounts).toFixed(2)}
       />
 
-      {/* Part next to widgets */}
-      <div className="w-full max-w-[1710px] h-auto flex items-start justify-center mx-auto">
-        <Calendar />
-        <div className="w-2/5 h-auto flex flex-col items-center justify-end font-inter lg:max-2xl:w-[calc(100%-950px)] mt-5">
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        {/* Calendar - Takes 3 columns */}
+        <div className="xl:col-span-3">
+          <Calendar />
+        </div>
+
+        {/* Charts & Trades - Takes 2 columns */}
+        <div className="xl:col-span-2 space-y-6">
           <PnLDailyChart data={data} />
           <TradesWidget data={thisMonthData} />
           <Radar />

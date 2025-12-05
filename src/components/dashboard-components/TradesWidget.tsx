@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDays, faChartLine, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { cn } from "@/lib/utils";
+import { Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface TradeData {
   date: string;
   Profit: number;
   Item: string;
+  Type?: string;
 }
 
 interface TradesWidgetProps {
@@ -16,85 +17,126 @@ interface TradesWidgetProps {
 
 const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
   const [activeTab, setActiveTab] = useState<"recentTrades" | "openPositions">("recentTrades");
-  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleTabSwitch = (tab: "recentTrades" | "openPositions") => {
-    setLoading(true);
-    setTimeout(() => {
-      setActiveTab(tab);
-      setLoading(false);
-    }, 0);
+  const formatProfit = (profit: number) => {
+    const formatted = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    }).format(Math.abs(profit));
+    
+    if (profit < 0) return `-${formatted}`;
+    if (profit > 0) return `+${formatted}`;
+    return formatted;
   };
 
-  const skeletonPlaceholder = (
-    <div className="space-y-3">
-      <div className="skeleton skeleton-line skeleton-short bg-gray-600 animate-pulse h-4 rounded"></div>
-      <div className="skeleton skeleton-line skeleton-medium bg-gray-600 animate-pulse h-4 rounded"></div>
-      <div className="skeleton skeleton-line skeleton-long bg-gray-600 animate-pulse h-4 rounded"></div>
-      <div className="skeleton skeleton-line skeleton-medium bg-gray-600 animate-pulse h-4 rounded"></div>
-    </div>
-  );
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+    });
+  };
 
-  const tableContent = (
-    <table className="w-[95%] border-collapse">
-      <thead>
-        <tr className="w-4/5 mx-auto rounded-full overflow-hidden">
-          <th className="px-3 py-2 text-center bg-[#52525257] bg-opacity-55 font-bold text-xs uppercase text-gray-200 rounded-l-full">
-            Close Date
-          </th>
-          <th className="px-3 py-2 text-center bg-[#52525257] bg-opacity-55 font-bold text-xs uppercase text-gray-200">
-            Symbol
-          </th>
-          <th className="px-3 py-2 text-center bg-[#52525257] bg-opacity-55 font-bold text-xs uppercase text-gray-200 rounded-r-full">
-            Net P&L
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((row, index) => (
-          <tr key={index} className="border-b border-gray-700">
-            <td className="px-3 py-2 text-center text-gray-300">{row.date}</td>
-            <td className="px-3 py-2 text-center font-semibold text-gray-300">{row.Item}</td>
-            <td className={`px-3 py-2 text-center font-semibold ${parseFloat(row.Profit.toString()) < 0 ? "text-red-400" :
-                parseFloat(row.Profit.toString()) > 0 ? "text-green-500" : "text-gray-300"
-              }`}>
-              {parseFloat(row.Profit.toString()) < 0 ? `-$${Math.abs(row.Profit)}` : `$${row.Profit}`}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+  const recentTrades = [...data].slice(-10).reverse();
 
   return (
-    <div className="w-[95%] max-w-[600px] h-[300px] flex flex-col font-['Inter'] bg-[#141414] rounded-xl mt-5 shadow-[0_25px_45px_rgba(0,0,0,0.1)] border border-[#1b1b1b] shadow-lg">
-      <div className="tab-header relative flex border-b-2 border-gray-500">
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      {/* Tab Header */}
+      <div className="flex border-b border-border">
         <button
-          className={`tab-button flex-1 px-2.5 py-2.5 text-center cursor-pointer text-base bg-transparent border-none outline-none transition-colors duration-300 font-['Inter'] text-white ${activeTab === "recentTrades" ? "font-bold text-gray-200" : ""
-            }`}
-          onClick={() => handleTabSwitch("recentTrades")}
+          className={cn(
+            "flex-1 px-4 py-3 text-sm font-medium transition-colors relative",
+            activeTab === "recentTrades" 
+              ? "text-foreground" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setActiveTab("recentTrades")}
         >
           Recent Trades
+          {activeTab === "recentTrades" && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+          )}
         </button>
         <button
-          className={`tab-button flex-1 px-2.5 py-2.5 text-center cursor-pointer text-base bg-transparent border-none outline-none transition-colors duration-300 font-['Inter'] text-white ${activeTab === "openPositions" ? "font-bold text-gray-200" : ""
-            }`}
-          onClick={() => handleTabSwitch("openPositions")}
+          className={cn(
+            "flex-1 px-4 py-3 text-sm font-medium transition-colors relative",
+            activeTab === "openPositions" 
+              ? "text-foreground" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setActiveTab("openPositions")}
         >
           Open Positions
+          {activeTab === "openPositions" && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+          )}
         </button>
-        <div
-          className="tab-indicator absolute bottom-0 h-0.5 w-1/2 bg-gray-500 transition-transform duration-300"
-          style={{
-            transform: activeTab === "recentTrades" ? "translateX(0)" : "translateX(100%)",
-          }}
-        ></div>
       </div>
 
-      <div className="tab-container w-full overflow-y-auto overflow-x-hidden mt-2.5 rounded-xl" >
-        <div className="tab-content min-h-[150px] text-sm text-white rounded-xl px-2.5 py-5">
-          {activeTab === "recentTrades" ? tableContent : <p>No open positions.</p>}
-        </div>
+      {/* Content */}
+      <div className="max-h-[280px] overflow-y-auto scrollbar-thin">
+        {activeTab === "recentTrades" ? (
+          recentTrades.length > 0 ? (
+            <table className="w-full">
+              <thead className="bg-muted/50 sticky top-0">
+                <tr>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Symbol
+                  </th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    P&L
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {recentTrades.map((trade, index) => (
+                  <tr key={index} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {formatDate(trade.date)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-medium text-foreground">
+                        {trade.Item}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={cn(
+                        "text-sm font-semibold flex items-center justify-end gap-1",
+                        trade.Profit > 0 ? "text-profit" : 
+                        trade.Profit < 0 ? "text-loss" : "text-muted-foreground"
+                      )}>
+                        {trade.Profit > 0 && <TrendingUp className="w-3.5 h-3.5" />}
+                        {trade.Profit < 0 && <TrendingDown className="w-3.5 h-3.5" />}
+                        {trade.Profit === 0 && <Minus className="w-3.5 h-3.5" />}
+                        {formatProfit(trade.Profit)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Clock className="w-10 h-10 text-muted-foreground/50 mb-3" />
+              <p className="text-sm font-medium text-foreground mb-1">No trades yet</p>
+              <p className="text-xs text-muted-foreground">
+                Your recent trades will appear here
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <TrendingUp className="w-10 h-10 text-muted-foreground/50 mb-3" />
+            <p className="text-sm font-medium text-foreground mb-1">No open positions</p>
+            <p className="text-xs text-muted-foreground">
+              Your active trades will appear here
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

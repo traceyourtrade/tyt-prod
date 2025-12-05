@@ -1,27 +1,99 @@
+"use client";
+
 import React from 'react';
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, DoughnutController } from "chart.js";
-
-// Components
+import { TrendingUp, TrendingDown, DollarSign, Target, Percent, Scale, Activity, Wallet } from "lucide-react";
+import { cn } from "@/lib/utils";
 import TinyChart from "./TinyChart";
-import Donut from "./Donut";
-
 
 ChartJS.register(DoughnutController, ArcElement, Tooltip, Legend);
 
 interface DashWidgetsProps {
   data: { value: number }[];
-  pnl: number;
+  pnl: number | string;
+  winrate?: number | string;
   winners?: number;
   losers?: number;
-  profitF: number;
+  profitF: number | string;
   avgProfits: number;
   avgLoses: number;
-  rrRatio: number;
-  accBal: number;
+  rrRatio: number | string;
+  accBal: number | string;
   totalProfits: number;
   totalLoses: number;
 }
+
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon?: React.ReactNode;
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: string;
+  valueColor?: 'profit' | 'loss' | 'default';
+  children?: React.ReactNode;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ 
+  title, 
+  value, 
+  subtitle, 
+  icon, 
+  trend, 
+  trendValue,
+  valueColor = 'default',
+  children 
+}) => {
+  const getValueColor = () => {
+    switch (valueColor) {
+      case 'profit': return 'text-profit';
+      case 'loss': return 'text-loss';
+      default: return 'text-foreground';
+    }
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-5 transition-all duration-200 hover:shadow-md hover:border-border/80">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {icon && (
+            <div className="p-2 rounded-lg bg-muted">
+              {icon}
+            </div>
+          )}
+          <span className="text-sm font-medium text-muted-foreground">
+            {title}
+          </span>
+        </div>
+        {trend && trendValue && (
+          <div className={cn(
+            "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+            trend === 'up' ? "bg-profit/10 text-profit" : 
+            trend === 'down' ? "bg-loss/10 text-loss" : 
+            "bg-muted text-muted-foreground"
+          )}>
+            {trend === 'up' && <TrendingUp className="w-3 h-3" />}
+            {trend === 'down' && <TrendingDown className="w-3 h-3" />}
+            {trendValue}
+          </div>
+        )}
+      </div>
+      
+      <div className="flex items-end justify-between">
+        <div>
+          <p className={cn("text-2xl font-bold tracking-tight", getValueColor())}>
+            {value}
+          </p>
+          {subtitle && (
+            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+          )}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const DashWidgets: React.FC<DashWidgetsProps> = ({ 
   data, 
@@ -36,189 +108,135 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   totalProfits, 
   totalLoses 
 }) => {
-  const winrate = winners || losers ? ((winners / (winners + losers)) * 100).toFixed(2) : 0;
+  const numericPnl = typeof pnl === 'string' ? parseFloat(pnl) : pnl;
+  const winrate = winners || losers ? ((winners / (winners + losers)) * 100).toFixed(1) : '0';
+  const totalTrades = winners + losers;
+  
+  const pnlFormatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.abs(numericPnl));
+
+  const balanceFormatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(typeof accBal === 'string' ? parseFloat(accBal) : accBal);
 
   const dataWinLoss = {
     labels: ["Wins", "Losses"],
     datasets: [
       {
         data: [winners, losers],
-        backgroundColor: ["#2fa87a", "lightcoral"],
-        hoverBackgroundColor: ["#6dcbb4", "#F08080"],
-        borderWidth: 5,
-        borderColor: "transparent",
-        spacing: 5,
+        backgroundColor: ["#10b981", "#ef4444"],
+        hoverBackgroundColor: ["#34d399", "#f87171"],
+        borderWidth: 0,
+        spacing: 2,
       },
     ],
   };
 
   const optionsWinLoss = {
     responsive: true,
-    cutout: "80%",
+    maintainAspectRatio: true,
+    cutout: "75%",
     rotation: -90,
     circumference: 180,
     plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        enabled: true,
-      },
+      legend: { display: false },
+      tooltip: { enabled: true },
     },
     elements: {
-      arc: {
-        borderRadius: 2,
-      },
+      arc: { borderRadius: 4 },
     },
   };
 
-  const profitColor = pnl < 0 ? "text-red-400" : "text-[#2fa87aff]";
-  const pnlFormatted = new Intl.NumberFormat('en', {
-    notation: "compact",
-    compactDisplay: "short",
-    maximumFractionDigits: 1
-  }).format(Math.abs(pnl));
-
-  const avgProfitPercentage = avgProfits && avgLoses ? (avgProfits / (avgProfits + avgLoses)) * 100 : 0;
-  const avgLossPercentage = avgProfits && avgLoses ? (avgLoses / (avgProfits + avgLoses)) * 100 : 0;
+  const avgProfitPercentage = avgProfits && avgLoses ? (avgProfits / (Math.abs(avgProfits) + Math.abs(avgLoses))) * 100 : 50;
 
   return (
-    <div className="w-full h-auto p-2.5 flex flex-wrap justify-between cursor-pointer ">
-      {/* Net P&L Widget */}
-      <div className="w-[18%] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b] ">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]">
-          <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
-              Net P&L
-              <label className="w-14 bg-green-500/10 flex items-center justify-evenly text-[#2fa87aff] text-xs rounded-lg absolute mt-[-19px] ml-14 border border-green-500">
-                <svg viewBox="64 64 896 896" focusable="false" data-icon="rise" width="1em" height="1em" fill="currentColor" aria-hidden="true" >
-                                    <path d="M917 211.1l-199.2 24c-6.6.8-9.4 8.9-4.7 13.6l59.3 59.3-226 226-101.8-101.7c-6.3-6.3-16.4-6.2-22.6 0L100.3 754.1a8.03 8.03 0 000 11.3l45 45.2c3.1 3.1 8.2 3.1 11.3 0L433.3 534 535 635.7c6.3 6.2 16.4 6.2 22.6 0L829 364.5l59.3 59.3a8.01 8.01 0 0013.6-4.7l24-199.2c.7-5.1-3.7-9.5-8.9-8.8z" ></path>
-                                </svg>
-                70.5%
-              </label>
-            </span>
-            <p className={`font-inter text-xl font-medium mt-5 ml-5 ${profitColor}`}>
-              {pnl >= 0 ? `$${pnlFormatted}` : `-$${pnlFormatted}`}
-            </p>
-          </div>
-          <div className="w-3/5 flex flex-col items-center justify-center">
-            <TinyChart data={data} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+      {/* Net P&L */}
+      <StatCard
+        title="Net P&L"
+        value={numericPnl >= 0 ? pnlFormatted : `-${pnlFormatted}`}
+        icon={<DollarSign className="w-4 h-4 text-muted-foreground" />}
+        trend={numericPnl >= 0 ? 'up' : 'down'}
+        trendValue={numericPnl >= 0 ? '+' + ((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1) + '%' : ((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1) + '%'}
+        valueColor={numericPnl >= 0 ? 'profit' : 'loss'}
+      >
+        <div className="w-24 h-12">
+          <TinyChart data={data} />
+        </div>
+      </StatCard>
+
+      {/* Win Rate */}
+      <StatCard
+        title="Win Rate"
+        value={`${winrate}%`}
+        subtitle={`${totalTrades} trades`}
+        icon={<Target className="w-4 h-4 text-muted-foreground" />}
+      >
+        <div className="relative w-16 h-10">
+          <Doughnut data={dataWinLoss} options={optionsWinLoss} />
+          <div className="absolute -bottom-2 left-0 right-0 flex justify-between px-1">
+            <span className="text-[10px] font-medium text-profit">{winners}W</span>
+            <span className="text-[10px] font-medium text-loss">{losers}L</span>
           </div>
         </div>
-      </div>
+      </StatCard>
 
-      {/* Win-Rate Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]/60 ">
-          <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
-              Win-Rate %
-              {/* <InformationCircleIcon className="w-3 h-3 text-gray-400 ml-1" /> */}
-            </span>
-            <p className="font-inter text-xl text-gray-400 font-medium mt-5 ml-5">
-              {winrate}%
-            </p>
-          </div>
-          <div className="w-3/5 flex flex-col items-center justify-center">
-            <div className="w-full h-auto flex flex-col items-center justify-center">
-              <div className="w-20 h-20">
-                <Doughnut data={dataWinLoss} options={optionsWinLoss} />
-              </div>
-              <div className="w-28 flex relative top-[-25px] items-center justify-between font-semibold">
-                <span className="px-1 text-xs rounded text-green-500 bg-green-500/20">
-                  {winners}
-                </span>
-                <span className="px-1 text-xs rounded text-red-400 bg-red-500/20">
-                  {losers}
-                </span>
-              </div>
-            </div>
-          </div>
+      {/* Profit Factor */}
+      <StatCard
+        title="Profit Factor"
+        value={typeof profitF === 'number' ? profitF.toFixed(2) : profitF}
+        subtitle={parseFloat(profitF as string) >= 1.5 ? "Good" : parseFloat(profitF as string) >= 1 ? "Breakeven" : "Needs work"}
+        icon={<Activity className="w-4 h-4 text-muted-foreground" />}
+        trend={parseFloat(profitF as string) >= 1.5 ? 'up' : parseFloat(profitF as string) < 1 ? 'down' : 'neutral'}
+        trendValue={parseFloat(profitF as string) >= 1.5 ? "Profitable" : parseFloat(profitF as string) < 1 ? "Losing" : "Even"}
+      />
+
+      {/* Account Balance */}
+      <StatCard
+        title="Account Balance"
+        value={balanceFormatted}
+        icon={<Wallet className="w-4 h-4 text-muted-foreground" />}
+        valueColor={numericPnl >= 0 ? 'profit' : 'default'}
+      >
+        <div className="w-24 h-12">
+          <TinyChart data={data} />
         </div>
-      </div>
+      </StatCard>
 
-      {/* Profit Factor Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]/60  ">
-          <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
-              Profit Factor
-              {/* <InformationCircleIcon className="w-3 h-3 text-gray-400 ml-1" /> */}
+      {/* Risk:Reward */}
+      <StatCard
+        title="Risk : Reward"
+        value={typeof rrRatio === 'number' ? `1:${rrRatio.toFixed(1)}` : `1:${rrRatio}`}
+        icon={<Scale className="w-4 h-4 text-muted-foreground" />}
+      >
+        <div className="w-full mt-2">
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden flex">
+            <div 
+              className="h-full bg-profit rounded-l-full transition-all"
+              style={{ width: `${avgProfitPercentage}%` }}
+            />
+            <div 
+              className="h-full bg-loss rounded-r-full transition-all"
+              style={{ width: `${100 - avgProfitPercentage}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-profit font-medium">
+              +${avgProfits?.toFixed(0) || 0}
             </span>
-            <p className="font-inter text-xl text-gray-400 font-medium mt-5 ml-5">
-              {profitF}
-            </p>
-          </div>
-          <div className="w-3/5 flex flex-col items-center justify-center">
-            {/* <Donut totalProfits={totalProfits} totalLoses={totalLoses} /> */}
-          </div>
-        </div>
-      </div>
-
-      {/* Account Balance Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
-        <div className="w-full h-28 rounded-xl flex flex-row items-start justify-start bg-[#141414]/60 p-5">
-          <div className="w-2/5 flex flex-col items-start justify-center">
-            <span className="absolute pt-10 font-inter text-xs font-semibold text-[#a6a6a6]">
-              Account Balance
-              <label className="ml-28 w-14 bg-green-500/10 flex items-center justify-evenly text-[#2fa87aff] text-xs rounded-lg border border-green-500">
-                <svg viewBox="64 64 896 896" focusable="false" data-icon="rise" width="1em" height="1em" fill="currentColor" aria-hidden="true" >
-                                    <path d="M917 211.1l-199.2 24c-6.6.8-9.4 8.9-4.7 13.6l59.3 59.3-226 226-101.8-101.7c-6.3-6.3-16.4-6.2-22.6 0L100.3 754.1a8.03 8.03 0 000 11.3l45 45.2c3.1 3.1 8.2 3.1 11.3 0L433.3 534 535 635.7c6.3 6.2 16.4 6.2 22.6 0L829 364.5l59.3 59.3a8.01 8.01 0 0013.6-4.7l24-199.2c.7-5.1-3.7-9.5-8.9-8.8z" ></path>
-                                </svg>
-                70.5%
-              </label>
-            </span>
-            <p className="absolute pt-28 text-[#2fa87aff] text-xl font-inter font-medium">
-              $ {accBal}
-            </p>
-          </div>
-          <div className="w-3/5 flex flex-col items-center justify-center">
-            <TinyChart data={data} />
-          </div>
-        </div>
-      </div>
-
-      {/* Risk-to-Reward Widget */}
-      <div className="w-[18%] mx-[5] h-28 bg-[#141414] bg-cover bg-center bg-no-repeat rounded-xl transition-all duration-200 border border-[#1b1b1b]">
-        <div className="w-full h-28 rounded-xl flex flex-col items-start justify-start bg-[#141414]/60">
-          <div className="w-full flex flex-col items-start justify-center">
-            <span className="font-inter text-xs font-semibold text-[#a6a6a6] mt-5 ml-5">
-              Risk-to-Reward ratio
-              {/* <InformationCircleIcon className="w-3 h-3 text-gray-400 ml-1" /> */}
+            <span className="text-[10px] text-loss font-medium">
+              -${Math.abs(avgLoses || 0).toFixed(0)}
             </span>
           </div>
-          <div className="w-full flex flex-row items-center justify-start h-16">
-            <p className="w-10 font-inter text-xl text-gray-400 font-medium mt-5 ml-5">
-              {rrRatio}
-            </p>
-
-            <div className="w-2/3 h-2 bg-white/15 rounded-full ml-5 mt-4 flex">
-              <div 
-                className="h-2 rounded-l-full transition-all duration-300 hover:bg-green-500/80"
-                style={{ 
-                  width: `${avgProfitPercentage}%`,
-                  backgroundColor: avgProfits ? "rgb(51, 157, 84)" : "transparent"
-                }}
-              >
-                <p className="bg-green-500/10 text-[#2fa87aff] text-xs rounded border border-green-500 px-1 mt-4 float-left">
-                  ${avgProfits || ""}
-                </p>
-              </div>
-              <div 
-                className="h-2 rounded-r-full transition-all duration-300 hover:bg-red-400/80"
-                style={{ 
-                  width: `${avgLossPercentage}%`,
-                  backgroundColor: avgLoses ? "rgb(255, 99, 99)" : "transparent"
-                }}
-              >
-                <p className="bg-red-500/10 text-red-400 text-xs rounded border border-red-400 px-1 mt-4 float-right">
-                  -${avgLoses || ""}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
+      </StatCard>
     </div>
   );
 };

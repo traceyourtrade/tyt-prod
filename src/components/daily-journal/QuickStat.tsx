@@ -1,3 +1,5 @@
+"use client";
+
 interface Trade {
   Profit: number;
 }
@@ -6,51 +8,62 @@ interface QuickStatsProps {
   dailyData: Trade[];
 }
 
-
 const QuickStats = ({ dailyData }: QuickStatsProps) => {
   const totalPnL = (dailyData || []).reduce((sum, trade) => sum + (trade.Profit || 0), 0);
   const formattedPnL = totalPnL < 0 ? `-$${Math.abs(totalPnL).toFixed(2)}` : `$${totalPnL.toFixed(2)}`;
+  const winners = (dailyData || []).filter(trade => trade.Profit > 0).length;
+  const losers = (dailyData || []).filter(trade => trade.Profit < 0).length;
+  const winRate = dailyData?.length ? Math.round((winners / dailyData.length) * 100) : 0;
+  
+  const totalWins = (dailyData || []).filter(t => t.Profit > 0).reduce((sum, t) => sum + t.Profit, 0);
+  const totalLosses = Math.abs((dailyData || []).filter(t => t.Profit < 0).reduce((sum, t) => sum + t.Profit, 0));
+  const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : "N/A";
 
   return (
-    <>
-      <h2 className="font-sans text-gray-200 relative top-2.5 z-[-1] text-2xl font-semibold">Quick Stats</h2>
+    <div className="space-y-4">
+      <h2 className="text-lg font-semibold text-foreground">Quick Stats</h2>
 
-      <div className="w-[90%] max-w-[500px] h-auto min-h-[200px] flex flex-col bg-gray-500/25 backdrop-blur-sm shadow-lg border-b border-white/20 rounded-[20px] p-0.5 mt-5 relative">
-        <div className="w-full h-auto flex flex-wrap items-center justify-evenly pt-3.5">
-          <div className="w-1/3 h-auto mx-1.25 my-2.5 text-center">
-            <span className="text-xs text-white font-semibold">GROSS P&L</span>
-            <p className={`font-semibold ${
-              totalPnL > 0 ? "text-teal-500" : totalPnL < 0 ? "text-red-400" : "text-gray-400"
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="text-center p-3 rounded-lg bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Gross P&L</span>
+            <p className={`text-xl font-bold mt-1 ${
+              totalPnL > 0 ? "text-profit" : totalPnL < 0 ? "text-loss" : "text-muted-foreground"
             }`}>
               {formattedPnL}
             </p>
           </div>
-          <div className="w-1/3 h-auto mx-1.25 my-2.5 text-center">
-            <span className="text-xs text-white font-semibold">LOSERS</span>
-            <p className="font-semibold text-gray-400">{(dailyData || []).filter(trade => trade.Profit < 0).length}</p>
+          <div className="text-center p-3 rounded-lg bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Win Rate</span>
+            <p className="text-xl font-bold text-foreground mt-1">{winRate}%</p>
           </div>
-          <div className="w-1/3 h-auto mx-1.25 my-2.5 text-center">
-            <span className="text-xs text-white font-semibold">WINRATE</span>
-            <p className="font-semibold text-gray-400">
-              {Math.round(((dailyData || []).filter(trade => trade.Profit > 0).length / (dailyData?.length || 1)) * 100)}%
-            </p>
+          <div className="text-center p-3 rounded-lg bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Winners</span>
+            <p className="text-xl font-bold text-profit mt-1">{winners}</p>
           </div>
-          <div className="w-1/3 h-auto mx-1.25 my-2.5 text-center">
-            <span className="text-xs text-white font-semibold">WINNERS</span>
-            <p className="font-semibold text-gray-400">{(dailyData || []).filter(trade => trade.Profit > 0).length}</p>
+          <div className="text-center p-3 rounded-lg bg-muted/30">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Losers</span>
+            <p className="text-xl font-bold text-loss mt-1">{losers}</p>
           </div>
         </div>
 
-        <div className="w-[70%] h-auto p-2.5 mx-auto bg-gray-500/20 flex flex-row items-center justify-between rounded-[25px] shadow-lg mb-3.5 mt-2.5">
-          <p className="text-center text-xs text-white font-semibold leading-6 mx-5">
-            Profit Factor <br /> <span className="text-xl text-purple-400 font-semibold">34.02</span>
-          </p>
-          <p className="text-center text-xs text-white font-semibold leading-6 mx-5">
-            Your Accuracy <br /> <span className="text-xl text-purple-400 font-semibold">5%</span>
-          </p>
+        <div className="flex items-center justify-around p-4 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="text-center">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">
+              Profit Factor
+            </span>
+            <span className="text-2xl font-bold text-primary">{profitFactor}</span>
+          </div>
+          <div className="w-px h-10 bg-border" />
+          <div className="text-center">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">
+              Total Trades
+            </span>
+            <span className="text-2xl font-bold text-primary">{dailyData?.length || 0}</span>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

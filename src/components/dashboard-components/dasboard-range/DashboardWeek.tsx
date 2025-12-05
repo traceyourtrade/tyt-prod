@@ -19,12 +19,13 @@ import { faCaretLeft, faCaretRight,faCaretDown } from '@fortawesome/free-solid-s
 interface TradeData {
   date: string;
   Profit: number;
-  [Key : string]: any;
+  Item: string;
+  [key: string]: unknown;
 }
 
 interface Account {
   tradeData?: TradeData[];
-  [Key : string]: any;
+  [key: string]: unknown;
 }
 
 interface DayData {
@@ -32,14 +33,14 @@ interface DayData {
   trades: TradeData[];
   profit: number;
   tradeLength: number;
-  [Key : string]: any;
+  [key: string]: unknown;
 }
 
 interface Trade {
   date: string;
   Profit: number;
-  [Key : string]: any;
-  // Add other trade properties as needed
+  Item: string;
+  [key: string]: unknown;
 }
 
 interface GroupedTrade {
@@ -47,7 +48,7 @@ interface GroupedTrade {
   trades: Trade[];
   profit: number;
   tradeLength: number;
-  [Key : string]: any;
+  [key: string]: unknown;
 }
 
 
@@ -55,7 +56,7 @@ const DashboardWeek: React.FC = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { selectedAccounts } = useAccountDetails();
 
-  const groupedTrades = selectedAccounts.flatMap((acc: Account) => acc.tradeData)
+  const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: { [key: string]: GroupedTrade }, trade: Trade) => {
       if (!acc[trade.date]) acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
 

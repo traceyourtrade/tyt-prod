@@ -1,102 +1,110 @@
 "use client"
 import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
-import { faMagnifyingGlass, faFilter } from '@fortawesome/free-solid-svg-icons';
-// Stores
-
-import { useDataStore } from "@/store/store";
+import { Search, Filter, Plus } from "lucide-react";
 import notebookStore from "@/store/notebookStore";
 import Files from "@/components/notebook/Files";
 import Folder from "@/components/notebook/Folder";
 import ViewMode from "@/components/notebook/ViewMode";
 import EditMode from "@/components/notebook/EditMode";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const Notebook = () => {
+  const { notes, setNotes, selectedFolder, setFolder, selectedFile, setFile } = notebookStore();
 
-    const { notes, setNotes, selectedFolder, setFolder, selectedFile, setFile } = notebookStore();
+  const [fileShow, setFileShow] = useState(false);
+  const [mode, setMode] = useState("VIEW");
+  const [searchQuery, setSearchQuery] = useState("");
 
-    const [fileShow, setFileShow] = useState(false);
-    const [mode, setMode] = useState("VIEW");
+  const changeMode = (mode: string) => {
+    setMode(mode)
+  }
 
-    const changeMode = (mode: string) => {
-        setMode(mode)
-    }
+  const [newFile, setNewFile] = useState("")
+  const [newFolder, setNewFolder] = useState("")
+  
+  useEffect(() => {
+    setNotes();
+  }, [setNotes])
 
-
-    const [newFile, setNewFile] = useState("")
-    const [newFolder, setNewFolder] = useState("")
-    useEffect(() => {
-        setNotes();
-    }, [ setNotes])
-    return (
-        <div className="w-full h-auto min-h-[calc(100vh)] absolute z-[1] top-[50px] left-[10px]">
-            <div className="w-full h-auto flex flex-col items-start justify-start">
-                <div className="flex">
-                    <div className="w-[320px] flex flex-row items-center h-auto bg-[rgba(122,122,122,0.551)] rounded-[25px] pl-[20px] cursor-pointer shadow-[rgba(100,100,111,0.2)_0px_7px_29px_0px]">
-                        <FontAwesomeIcon icon={faMagnifyingGlass} />
-                        <input
-                            name="search"
-                            type="text"
-                            placeholder="Search your Notes here..."
-                            className="text-[14px] p-[10px] border-none outline-none font-['Inter'] cursor-pointer bg-transparent text-white placeholder:text-white w-full"
-                        />
-                    </div>
-                    <FontAwesomeIcon
-                        icon={faFilter}
-                        className="relative right-[-20px] bg-[rgba(122,122,122,0.551)] p-[12.5px] rounded-full cursor-pointer text-[#b191fc] shadow-[rgba(100,100,111,0.2)_0px_7px_29px_0px]"
-                    />
-                </div>
-
-                <div className="w-full h-auto flex items-center justify-between mt-[20px]">
-                    <Folder
-                        notes={notes}
-                        setNotes={setNotes}
-                        selectedFolder={selectedFolder}
-                        changeMode={changeMode}
-                        setFolder={setFolder}
-                        newFolder={newFolder}
-                        setNewFolder={setNewFolder}
-                        setNewFile={setNewFile}
-                        setFileShow={setFileShow}
-                        newFile={newFile}
-                    />
-
-                    <Files
-                        newFile={newFile}
-                        notes={notes}
-                        setNotes={setNotes}
-                        selectedFolder={selectedFolder}
-                        newFolder={newFolder}
-                        setNewFolder={setNewFolder}
-                        fileShow={fileShow}
-                        setNewFile={setNewFile}
-                        setFileShow={setFileShow}
-                        changeMode={changeMode}
-                        setFile={setFile}
-                    />
-
-                    {(mode === "VIEW") ?
-                        <ViewMode
-                            notes={notes}
-                            selectedFolder={selectedFolder}
-                            selectedFile={selectedFile}
-                            changeMode={changeMode}
-                        /> :
-                        (mode === "EDIT") ?
-                            <EditMode
-                                notes={notes}
-                                selectedFolder={selectedFolder}
-                                selectedFile={selectedFile}
-                                changeMode={changeMode}
-                                setNotes={setNotes}
-                            /> :
-                            ""
-                    }
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-6 py-4">
+        <div className="flex items-center gap-4">
+          <div className="flex-1 max-w-md relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              name="search"
+              type="text"
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            />
+          </div>
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg hover:bg-muted transition-colors">
+            <Filter className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Filter</span>
+          </button>
         </div>
-    )
+      </div>
+
+      {/* Main Content */}
+      <div className="flex h-[calc(100vh-73px)]">
+        {/* Left Sidebar - Folders */}
+        <div className="w-64 flex-shrink-0 border-r border-border p-4 overflow-y-auto">
+          <Folder
+            notes={notes}
+            setNotes={setNotes}
+            selectedFolder={selectedFolder}
+            changeMode={changeMode}
+            setFolder={setFolder}
+            newFolder={newFolder}
+            setNewFolder={setNewFolder}
+            setNewFile={setNewFile}
+            setFileShow={setFileShow}
+            newFile={newFile}
+          />
+        </div>
+
+        {/* Middle - Files */}
+        <div className="w-72 flex-shrink-0 border-r border-border p-4 overflow-y-auto">
+          <Files
+            newFile={newFile}
+            notes={notes}
+            setNotes={setNotes}
+            selectedFolder={selectedFolder}
+            newFolder={newFolder}
+            setNewFolder={setNewFolder}
+            fileShow={fileShow}
+            setNewFile={setNewFile}
+            setFileShow={setFileShow}
+            changeMode={changeMode}
+            setFile={setFile}
+          />
+        </div>
+
+        {/* Right - Content */}
+        <div className="flex-1 overflow-y-auto">
+          {mode === "VIEW" ? (
+            <ViewMode
+              notes={notes}
+              selectedFolder={selectedFolder}
+              selectedFile={selectedFile}
+              changeMode={changeMode}
+            />
+          ) : mode === "EDIT" ? (
+            <EditMode
+              notes={notes}
+              selectedFolder={selectedFolder}
+              selectedFile={selectedFile}
+              changeMode={changeMode}
+              setNotes={setNotes}
+            />
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default Notebook;

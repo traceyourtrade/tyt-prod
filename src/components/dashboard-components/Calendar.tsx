@@ -1,119 +1,100 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
+"use client";
 
-// Font Awesome imports
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCaretLeft,
-  faCaretRight,
-  faChevronDown,
-  faCaretDown,
-  faCircleXmark,
-  faCircleLeft,
-  faCircleRight,
-  faShareNodes
-} from "@fortawesome/free-solid-svg-icons";
+import React, { useState, useRef, useEffect } from "react";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 import useAccountDetails from "@/store/accountdetails";
 import calendarPopUp from "@/store/calendarPopUp";
 import datesforcal from "@/store/datesforcal";
 
+interface Trade {
+  date: string;
+  Profit: number;
+  [key: string]: unknown;
+}
+
+interface Account {
+  tradeData?: Trade[];
+  [key: string]: unknown;
+}
+
+interface GroupedTrade {
+  date: string;
+  trades: Trade[];
+  profit: number;
+  tradeLength: number;
+}
 
 const Calendar = () => {
-  const router = useRouter();
-
-  // Trade details opening and closing
   const { setShowTr, setDataDate } = calendarPopUp();
   const { setcalMonth, setcalYear } = datesforcal();
-
   const { selectedAccounts } = useAccountDetails();
 
-  const groupedTrades = selectedAccounts.flatMap((acc: any) => acc.tradeData)
-    .reduce((acc: any, trade: any) => {
-      if (!acc[trade.date]) acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
-
+  const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
+    .reduce((acc: Record<string, GroupedTrade>, trade: Trade) => {
+      if (!acc[trade.date]) {
+        acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
+      }
       acc[trade.date].trades.push(trade);
-      acc[trade.date].profit += trade.Profit; // Sum up profit
-      acc[trade.date].tradeLength += 1; // Count trades
-
+      acc[trade.date].profit += trade.Profit;
+      acc[trade.date].tradeLength += 1;
       return acc;
     }, {});
 
-  // Convert grouped object to array format
-  const calendarData = Object.values(groupedTrades);
+  const calendarData = Object.values(groupedTrades) as GroupedTrade[];
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [dropdownYear, setDropdownYear] = useState(true);
+  const [showYearView, setShowYearView] = useState(false);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-
-  const getBackgroundClass = (profit: number) => {
-    if (profit > 0) return "bg-[rgba(21,147,132,0.43)]";
-    if (profit < 0) return "bg-[rgba(255,119,119,0.32)]";
-    return "bg-[#323577ff]";
-  };
-
-  const getBackgroundHover = (profit: number) => {
-    if (profit > 0) return "hover:bg-[rgba(21,147,132,0.43)]/60";
-    if (profit < 0) return "hover:bg-[rgba(255,119,119,0.32)]/60";
-    return "hover:bg-[rgba(122,122,122,0.551)]";
-  };
-
-  const getTextClass = (profit: number) => {
-    if (profit > 0) return "text-[rgb(60,255,181)]";
-    if (profit < 0) return "text-[rgba(255,99,99)]";
-    return "text-[#323577ff]";
-  };
-
-  const getDateColor = (profit: number) => {
-    if (profit > 0) return "text-[#a6a6a6]/60";
-    if (profit < 0) return "text-[#a6a6a6]/60";
-    return "text-[#a6a6a6]";
-  };
-
-  function formatNumber(num: number) {
-    if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "b";
-    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "m";
-    if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "k";
-    return num.toString();
-  }
-
-  // Years should start from selected year
-  // Ref for the year container
   const yearContainerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to the active year when the dropdown is opened
   useEffect(() => {
-    if (isDropdownVisible && !dropdownYear && yearContainerRef.current) {
-      const activeYearElement = yearContainerRef.current.querySelector(".year-select.activee");
+    if (isDropdownVisible && showYearView && yearContainerRef.current) {
+      const activeYearElement = yearContainerRef.current.querySelector(".year-active");
       if (activeYearElement) {
         yearContainerRef.current.scrollTop =
-          (activeYearElement as HTMLElement).offsetTop - yearContainerRef.current.offsetTop;
+          (activeYearElement as HTMLElement).offsetTop - yearContainerRef.current.offsetTop - 40;
       }
     }
-  }, [isDropdownVisible, dropdownYear]);
+  }, [isDropdownVisible, showYearView]);
 
-  // Rendering calendar contents
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownVisible(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('en-US', {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1,
+    }).format(num);
+  };
+
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
-  // calculating weekly profits
   const calculateWeeklyProfits = (year: number, month: number) => {
     const days = daysInMonth(year, month);
     const weeks: number[] = [];
     let weekProfit = 0;
 
     for (let day = 1; day <= days; day++) {
-      const dateStr = `${year}-${(month + 1).toString().padStart(2, "0")}-${day
-        .toString()
-        .padStart(2, "0")}`;
-      const dayData = calendarData.find((d: any) => d.date === dateStr);
+      const dateStr = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+      const dayData = calendarData.find((d) => d.date === dateStr);
 
       if (dayData) {
         weekProfit += dayData.profit;
       }
 
-      // If it's the end of the week or the end of the month
       if (new Date(year, month, day).getDay() === 6 || day === days) {
         weeks.push(weekProfit);
         weekProfit = 0;
@@ -122,327 +103,230 @@ const Calendar = () => {
     return weeks;
   };
 
-  // Rendering the dates acc to days
   const renderCalendar = () => {
     const days = daysInMonth(selectedYear, selectedMonth);
     const firstDayIndex = new Date(selectedYear, selectedMonth, 1).getDay();
+    const cells = [];
 
-    const calendarCells = [];
     for (let i = 0; i < firstDayIndex; i++) {
-      calendarCells.push(
-        <div key={`empty-${i}`} className="h-20 rounded-lg bg-transparent border-none"></div>
-      );
+      cells.push(<div key={`empty-${i}`} className="h-[72px] rounded-lg" />);
     }
 
     for (let day = 1; day <= days; day++) {
-      const dateStr = `${selectedYear}-${(selectedMonth + 1)
-        .toString()
-        .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-      const dayData = calendarData.find((d: any) => d.date === dateStr);
+      const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+      const dayData = calendarData.find((d) => d.date === dateStr);
 
-      calendarCells.push(
+      const getStyles = () => {
+        if (!dayData) return "bg-muted/30 hover:bg-muted/50";
+        if (dayData.profit > 0) return "bg-profit/15 hover:bg-profit/25 border border-profit/20";
+        if (dayData.profit < 0) return "bg-loss/15 hover:bg-loss/25 border border-loss/20";
+        return "bg-muted/50 hover:bg-muted/70";
+      };
+
+      cells.push(
         <div
           key={day}
-          className={`h-20 rounded-lg flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200 hover:scale-105 hover:saturate-160 ${dayData ? getBackgroundClass(dayData.profit) : "bg-[rgba(50,50,50,0.21)]"} ${dayData ? getBackgroundHover(dayData.profit) : "hover:bg-[rgba(122,122,122,0.551)]"} `}
-          onClick={() => { setShowTr(); document.body.classList.add("no-scroll"); setDataDate(selectedYear, selectedMonth, day) }}
-        >
-          <div className={`text-base font-bold text-[14px] ${dayData ? getDateColor(dayData.profit) : "text-[#7a7a7a]"} `}>{day}</div>
-          {dayData && (
-            <div className="mt-2 text-[14px] text-center font-inter font-semibold relative bottom-[10px]">
-
-              <div className={`${dayData ? getTextClass(dayData.profit) : "text-[#a6a6a6]"} font-bold`}>
-                ${new Intl.NumberFormat('en', {
-                  notation: "compact",
-                  compactDisplay: "short",
-                  maximumFractionDigits: 1
-                }).format(dayData.profit)}
-              </div>
-
-              <div className="text-[#a6a6a6] text-[12px] font-medium">
-                {formatNumber(dayData.tradeLength)} trades
-              </div>
-
-            </div>
+          className={cn(
+            "h-[72px] rounded-lg flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
+            getStyles()
           )}
-
+          onClick={() => {
+            setShowTr();
+            document.body.classList.add("no-scroll");
+            setDataDate(selectedYear, selectedMonth, day);
+          }}
+        >
+          <span className={cn(
+            "text-xs font-medium",
+            dayData ? "text-foreground/60" : "text-muted-foreground"
+          )}>
+            {day}
+          </span>
+          {dayData && (
+            <>
+              <span className={cn(
+                "text-sm font-bold mt-0.5",
+                dayData.profit > 0 ? "text-profit" : 
+                dayData.profit < 0 ? "text-loss" : "text-muted-foreground"
+              )}>
+                ${formatCurrency(dayData.profit)}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {dayData.tradeLength} {dayData.tradeLength === 1 ? 'trade' : 'trades'}
+              </span>
+            </>
+          )}
         </div>
       );
     }
 
-    return calendarCells;
+    return cells;
   };
 
   const weeklyProfits = calculateWeeklyProfits(selectedYear, selectedMonth);
 
-  const handleYearMonthClick = () => {
-    setIsDropdownVisible((prev) => !prev);
-  };
-
-  const handleMonthSelect = (month: number) => {
-    setSelectedMonth(month);
-    setIsDropdownVisible(false); // Switch to year view after selecting month
-  };
-
-  const handleYearSelect = (year: number) => {
-    console.log("Selected year:", year);
-    setSelectedYear(year);
-    setDropdownYear(true); // Switch back to month view
-  };
-
   const handlePrevMonth = () => {
-    setIsDropdownVisible(false)
+    setIsDropdownVisible(false);
     if (selectedMonth === 0) {
-      setSelectedYear((prevYear) => prevYear - 1);
+      setSelectedYear((prev) => prev - 1);
       setSelectedMonth(11);
-      setcalYear(selectedYear - 1)
-      setcalMonth(12)
+      setcalYear(selectedYear - 1);
+      setcalMonth(12);
     } else {
-      setSelectedMonth((prevMonth) => prevMonth - 1);
-      setcalYear(selectedYear)
-      setcalMonth(selectedMonth)
+      setSelectedMonth((prev) => prev - 1);
+      setcalYear(selectedYear);
+      setcalMonth(selectedMonth);
     }
   };
 
   const handleNextMonth = () => {
-    setIsDropdownVisible(false)
+    setIsDropdownVisible(false);
     if (selectedMonth === 11) {
-      setSelectedYear((prevYear) => prevYear + 1);
+      setSelectedYear((prev) => prev + 1);
       setSelectedMonth(0);
-      setcalYear(selectedYear + 1)
-      setcalMonth(1)
+      setcalYear(selectedYear + 1);
+      setcalMonth(1);
     } else {
-      setSelectedMonth((prevMonth) => prevMonth + 1);
-      setcalYear(selectedYear)
-      setcalMonth(selectedMonth + 2)
+      setSelectedMonth((prev) => prev + 1);
+      setcalYear(selectedYear);
+      setcalMonth(selectedMonth + 2);
     }
   };
 
+  const monthName = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long" });
+
   return (
-    <>
-      <div className="w-3/5 max-w-930 h-auto flex flex-col rounded-xl mt-5 ml-2.5 p-2.5 pb-2.5 bg-[#141414] shadow-[0_25px_45px_rgba(0,0,0,0.1)] border border-[#1b1b1b] backdrop-blur-sm shadow-lg">
+    <div className="flex-1 bg-card border border-border rounded-xl p-5">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-4">
+        <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
 
-        <div className="flex justify-between items-center mb-4 cursor-pointer">
-
-          <button className="bg-[#4a6aff] text-white border-none py-1 px-2.5 text-sm rounded cursor-pointer mx-2.5 hover:bg-[#4a6aff]/80" onClick={handlePrevMonth}>
-            <FontAwesomeIcon icon={faCaretLeft} />
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsDropdownVisible(!isDropdownVisible)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted transition-colors"
+          >
+            <span className="text-lg font-semibold text-foreground">
+              {monthName} {selectedYear}
+            </span>
+            <ChevronDown className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform",
+              isDropdownVisible && "rotate-180"
+            )} />
           </button>
 
-          <div>
-
-            <h1 onClick={handleYearMonthClick} className="m-0 text-2xl text-white font-bold ">
-              {new Date(selectedYear, selectedMonth).toLocaleString("default", {
-                month: "long",
-              })}{" "}
-              {selectedYear} <FontAwesomeIcon icon={faChevronDown} className="text-xs relative top-[-5px] left-1" />
-            </h1>
-            {isDropdownVisible && (
-              <div>
-                <div className="absolute top-15 -ml-18 bg-[#2d2d2d] rounded-lg shadow-lg z-1000 p-1 px-4 w-70 max-h-100 overflow-y-hidden block animate-fadeIn">
-
-                  <div className="w-full h-auto flex items-center justify-center mt-2.5">
-                    <p onClick={() => setDropdownYear((prev) => !prev)} className="w-25 h-auto flex flex-row items-center justify-center cursor-pointer font-inter text-sm">
-                      {dropdownYear
-                        ? selectedYear
-                        : new Date(selectedYear, selectedMonth).toLocaleString("default", {
-                          month: "long",
-                        })}
-                      <FontAwesomeIcon icon={faCaretDown} className="text-sm relative -right-5" />
-                    </p>
-                  </div>
-
-                  {dropdownYear ? (
-                    <div className="grid grid-cols-3 gap-2 my-2.5">
-                      {Array.from({ length: 12 }, (_, i) => i).map((month) => (
-                        <div
-                          key={month}
-                          className={`p-[8px] text-[12px] text-center rounded-lg cursor-pointer transition-all duration-200 bg-[#2d2d2d] hover:bg-[#e3f2fd] hover:text-[#5a33b6] hover:scale-105 ${month === selectedMonth ? "activee bg-[#5a33b6] text-white" : ""
-                            }`}
-                          onClick={() => handleMonthSelect(month)}
-                        >
-                          {new Date(0, month).toLocaleString("default", {
-                            month: "long",
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div
-                      className="grid grid-cols-3 gap-2 my-4 mb-3 max-h-44 overflow-y-auto"
-                      ref={yearContainerRef}
-                    >
-                      {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map(
-                        (year) => (
-                          <div
-                            key={year}
-                            className={`text-base p-2 rounded-lg cursor-pointer bg-[#7a7a7a37] transition-all duration-200 hover:bg-[#eef6f9] hover:text-[#5a33b6] text-xs ${year === selectedYear ? "activee bg-[#5a33b6] text-white" : ""
-                              }`}
-                            onClick={() => handleYearSelect(year)}
-                          >
-                            {year}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )}
-
-                  <div className="w-full h-auto flex flex-col items-center justify-center">
-                    <button
-                      onClick={() => setIsDropdownVisible(false)}
-                      className="w-17 h-auto py-1 bg-[#444444] border-none outline-none text-white rounded-xl text-xs font-inter font-600 cursor-pointer transition-all duration-500 ease-in-out -mt-1 hover:bg-[#b386e5]"
-                    >
-                      OK
-                    </button>
-                  </div>
-
-                </div>
+          {isDropdownVisible && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-card border border-border rounded-xl shadow-lg z-50 p-4 w-64 animate-fade-in">
+              <div className="flex items-center justify-center mb-3">
+                <button
+                  onClick={() => setShowYearView(!showYearView)}
+                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {showYearView ? monthName : selectedYear}
+                  <ChevronDown className="h-3 w-3" />
+                </button>
               </div>
-            )}
 
-          </div>
-
-          <button className="bg-[#4a6aff] text-white border-none py-1 px-2.5 text-sm rounded cursor-pointer mx-2.5 hover:bg-[#4a6aff]/80" onClick={handleNextMonth}>
-            <FontAwesomeIcon icon={faCaretRight} />
-          </button>
-
+              {!showYearView ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <button
+                      key={i}
+                      className={cn(
+                        "px-2 py-2 text-xs rounded-lg transition-colors",
+                        i === selectedMonth
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted text-foreground"
+                      )}
+                      onClick={() => {
+                        setSelectedMonth(i);
+                        setcalMonth(i + 1);
+                        setIsDropdownVisible(false);
+                      }}
+                    >
+                      {new Date(0, i).toLocaleString("default", { month: "short" })}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto scrollbar-thin"
+                  ref={yearContainerRef}
+                >
+                  {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map(
+                    (year) => (
+                      <button
+                        key={year}
+                        className={cn(
+                          "px-2 py-2 text-xs rounded-lg transition-colors",
+                          year === selectedYear
+                            ? "bg-primary text-primary-foreground year-active"
+                            : "hover:bg-muted text-foreground"
+                        )}
+                        onClick={() => {
+                          setSelectedYear(year);
+                          setcalYear(year);
+                          setShowYearView(false);
+                        }}
+                      >
+                        {year}
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="w-full max-w-900 mx-auto rounded-xl flex flex-row justify-center">
+        <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+      </div>
 
-          <div className="w-95/100 h-auto grid grid-cols-7 gap-1.75">
-
+      {/* Calendar Grid */}
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <div className="grid grid-cols-7 gap-1 mb-1">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center font-bold text-[#a6a6a6] py-2">
+              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
                 {day}
               </div>
             ))}
-
-            {renderCalendar()}
-
           </div>
-
-          {weeklyProfits.length === 6 ? (
-            <div className="w-15/100 h-auto flex flex-col items-center justify-start relative top-10.5 pr-2">
-              {weeklyProfits.map((profit, index) => (
-                <div
-                  key={index}
-                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative -right-2.5 bg-[#52525257] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-[#a6a6a6] mt-[7px] hover:scale-105"
-                  style={{
-                    background: profit > 0
-                      ? "rgba(21, 147, 132, 0.43)"
-                      : profit < 0
-                        ? "rgba(255, 119, 119, 0.32)"
-                        : "",
-                  }}
-                >
-                  Week {index + 1}{" "}
-                  <span
-                    className="profit-value -mt-7.5 font-bold"
-                    style={{
-                      color: profit > 0
-                        ? "#3cffb5"
-                        : profit < 0
-                          ? "rgb(255, 99, 99)"
-                          : "rgb(31, 31, 31)",
-                    }}
-                  >
-                    ${new Intl.NumberFormat('en', {
-                      notation: "compact",
-                      compactDisplay: "short",
-                      maximumFractionDigits: 1
-                    }).format(profit)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : weeklyProfits.length === 5 ? (
-            <div className="w-15/100 h-auto flex flex-col items-center justify-start relative top-9 pr-2">
-              {weeklyProfits.map((profit, index) => (
-                <div
-                  key={index}
-                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative right-[-10px] bg-[#52525257] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-[#a6a6a6] mt-[7px] hover:scale-105"
-                  style={{
-                    background: profit > 0
-                      ? "rgba(21, 147, 132, 0.43)"
-                      : profit < 0
-                        ? "rgba(255, 119, 119, 0.32)"
-                        : "",
-                  }}
-                >
-                  Week {index + 1}{" "}
-                  <span
-                    className="profit-value -mt-7.5 font-bold"
-                    style={{
-                      color: profit > 0
-                        ? "#3cffb5"
-                        : profit < 0
-                          ? "rgb(255, 99, 99)"
-                          : "rgb(31, 31, 31)",
-                    }}
-                  >
-                    ${new Intl.NumberFormat('en', {
-                      notation: "compact",
-                      compactDisplay: "short",
-                      maximumFractionDigits: 1
-                    }).format(profit)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="w-15/100 h-auto flex flex-col items-center justify-start relative top-9 pr-2">
-              {weeklyProfits.map((profit, index) => (
-                <div
-                  key={index}
-                  className="w-90/100 h-20 rounded-xl flex flex-col items-center justify-around relative right-[-10px] bg-[#52525257] font-inter font-600 transition-all duration-300 ease-in-out cursor-pointer text-[#a6a6a6] mt-[7px] hover:scale-105"
-                  style={{
-                    background: profit > 0
-                      ? "rgba(21, 147, 132, 0.43)"
-                      : profit < 0
-                        ? "rgba(255, 119, 119, 0.32)"
-                        : "",
-                  }}
-                >
-                  Week {index + 1}{" "}
-                  <span
-                    className="profit-value -mt-7.5 font-bold"
-                    style={{
-                      color: profit > 0
-                        ? "#3cffb5"
-                        : profit < 0
-                          ? "rgb(255, 99, 99)"
-                          : "rgb(31, 31, 31)",
-                    }}
-                  >
-                    ${new Intl.NumberFormat('en', {
-                      notation: "compact",
-                      compactDisplay: "short",
-                      maximumFractionDigits: 1
-                    }).format(profit)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
+          <div className="grid grid-cols-7 gap-1">
+            {renderCalendar()}
+          </div>
         </div>
 
+        {/* Weekly Summary */}
+        <div className="w-20 flex flex-col gap-1 pt-8">
+          {weeklyProfits.map((profit, index) => (
+            <div
+              key={index}
+              className={cn(
+                "h-[72px] rounded-lg flex flex-col items-center justify-center text-center transition-all",
+                profit > 0 
+                  ? "bg-profit/15 border border-profit/20" 
+                  : profit < 0 
+                    ? "bg-loss/15 border border-loss/20" 
+                    : "bg-muted/30"
+              )}
+            >
+              <span className="text-[10px] text-muted-foreground">Week {index + 1}</span>
+              <span className={cn(
+                "text-xs font-bold",
+                profit > 0 ? "text-profit" : profit < 0 ? "text-loss" : "text-muted-foreground"
+              )}>
+                ${formatCurrency(profit)}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            max-height: 0px;
-          }
-          to {
-            max-height: 400px;
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-in-out forwards;
-        }
-      `}</style>
-    </>
+    </div>
   );
 };
 

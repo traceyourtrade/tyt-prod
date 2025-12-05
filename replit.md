@@ -3,8 +3,42 @@
 ## Overview
 This is a Next.js 16 trading journal application that allows users to track their trades, analyze performance, and maintain a trading notebook. The application uses MongoDB for data storage, AWS S3 for image uploads, and Google OAuth for authentication.
 
-**Current State:** Fully configured and running in Replit environment
+**Current State:** UI Redesign in Progress - Modern SaaS aesthetic
 **Last Updated:** December 5, 2025
+
+## UI Redesign Progress
+The application is undergoing a complete UI redesign inspired by Notion, Linear, and Stripe aesthetics.
+
+### Design System
+- **Primary Color:** Teal (#0d9488) - Used for accents, buttons, and interactive elements
+- **Color Mode:** Dark theme with proper light theme support
+- **Typography:** Clean, modern fonts with consistent sizing
+- **Borders:** Subtle borders with `border-border` class (8% opacity)
+- **Cards:** Clean card components with consistent padding and rounded corners
+
+### Completed Redesigns
+1. **Sidebar Navigation** - Modern collapsible sidebar with clean icons and hover effects
+2. **Root Layout** - New header with accounts dropdown, date range selector, and theme toggle
+3. **Dashboard Page** - Stat cards, charts, calendar, and trades widget with new styling
+4. **Daily Journal Page** - Filter toolbar, calendar sidebar, quick stats with modern design
+5. **Settings Page** - Sidebar navigation with user/general settings sections
+6. **Reports Page** - Updated with background styling
+
+### UI Component Library
+Located in `src/components/ui/`:
+- `button.tsx` - Primary, secondary, ghost, and outline button variants
+- `badge.tsx` - Status badges with color variants
+- `input.tsx` - Form inputs with proper styling
+- `select.tsx` - Dropdown selects
+- `stat-card.tsx` - Dashboard stat cards
+- `table.tsx` - Modern data tables
+- `modal.tsx` - Dialog modals
+- `tabs.tsx` - Tab navigation
+
+### CSS Configuration
+- Using Tailwind CSS v4 with CSS variables for theming
+- Theme variables defined in `src/app/globals.css`
+- Avoiding nested @apply directives for compatibility
 
 ## Tech Stack
 - **Frontend:** Next.js 16.0.1 with React 19, Tailwind CSS

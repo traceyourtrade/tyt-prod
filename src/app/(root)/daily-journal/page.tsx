@@ -465,73 +465,74 @@ const DailyJournal = () => {
   ];
 
   return (
-    <div className="w-full h-auto min-h-[80vh] bg-black">
-      <div className="w-full h-12.5 flex items-center justify-between fixed z-15 mt-10 ml-[10px] pt-2.5 pb-2.5 bg-black">
-        <div className="flex">
+    <div className="min-h-screen bg-background">
+      {/* Toolbar */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-6 py-4">
+        <div className="flex items-center gap-3">
           <div 
-            className="w-50 h-10 flex items-center justify-between bg-gray-500/45 rounded-[25px] px-2.5 text-white mr-2.5 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
             onClick={handleFilterDropDownOpenClose}
           >
-            <div>
-              <FontAwesomeIcon icon={faFilter} className="ml-1.25 mr-2.5 text-purple-400" />
-              <span className="text-sm relative top-[-0.25px]">
-                {selectedFilter === 'all'
-                  ? 'Filter'
-                  : filterOptions.find(opt => opt.value === selectedFilter)?.label || 'Filter'}
-              </span>
-            </div>
-            <FontAwesomeIcon icon={faChevronRight} />
+            <FontAwesomeIcon icon={faFilter} className="text-primary text-sm" />
+            <span className="text-sm font-medium text-foreground">
+              {selectedFilter === 'all'
+                ? 'Filter'
+                : filterOptions.find(opt => opt.value === selectedFilter)?.label || 'Filter'}
+            </span>
+            <FontAwesomeIcon icon={faChevronRight} className="text-muted-foreground text-xs" />
           </div>
 
           <div 
-            className={`w-62.5 h-auto invisible overflow-hidden flex flex-col absolute top-15 left-2.5 p-0 rounded-[10px] font-sans bg-gray-300/40 backdrop-blur-sm shadow-lg transition-all duration-500 ${
-              isFilterDropdownOpen ? "visible scale-100" : "scale-0"
+            className={`absolute top-16 left-6 w-56 bg-card border border-border rounded-xl shadow-lg overflow-hidden transition-all duration-200 ${
+              isFilterDropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
             }`}
             ref={filterDropdownRef}
           >
-            <div className="w-62.5 h-auto backdrop-blur-sm">
-              <div className="mt-2.5 text-sm">
-                {filterOptions.map((option) => (
-                  <div
-                    key={option.value}
-                    className={`flex items-center px-1.5 py-1.5 cursor-pointer w-full pl-2.5 text-white transition-colors duration-300 ${
-                      selectedFilter === option.value ? "bg-[#5a33b6] font-bold border-l-4 border-white pl-1.5" : ""
-                    }`}
-                    onClick={() => handleFilterSelect(option.value)}
-                  >
-                    <span>{option.label}</span>
-                  </div>
-                ))}
-              </div>
-              {selectedFilter !== 'all' && (
+            <div className="py-2">
+              {filterOptions.map((option) => (
                 <div
-                  className="mt-2.5 p-2 border-t border-gray-300 flex items-center text-white cursor-pointer text-sm no-underline"
-                  onClick={handleRemoveFilters}
+                  key={option.value}
+                  className={`flex items-center px-4 py-2.5 cursor-pointer text-sm transition-colors ${
+                    selectedFilter === option.value 
+                      ? "bg-primary/10 text-primary font-medium border-l-2 border-primary" 
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                  onClick={() => handleFilterSelect(option.value)}
                 >
-                  <FontAwesomeIcon icon={faBan} className="mr-2 ml-10" />
-                  <span>Remove Filters</span>
+                  <span>{option.label}</span>
                 </div>
-              )}
+              ))}
             </div>
+            {selectedFilter !== 'all' && (
+              <div
+                className="py-2.5 px-4 border-t border-border flex items-center text-muted-foreground hover:text-foreground cursor-pointer text-sm"
+                onClick={handleRemoveFilters}
+              >
+                <FontAwesomeIcon icon={faBan} className="mr-2" />
+                <span>Remove Filters</span>
+              </div>
+            )}
           </div>
 
-          <div className="w-37.5 h-10 flex items-center justify-between bg-gray-500/45 rounded-[25px] px-2.5 text-white mr-2.5 cursor-pointer" onClick={() => setShowDateRangePicker(!showDateRangePicker)}>
-            <div>
-              <FontAwesomeIcon icon={faCalendarDays} className="ml-1.25 mr-2.5 text-purple-400" />
-              <span className="text-sm relative top-[-0.25px]">Date Range</span>
-            </div>
-            <FontAwesomeIcon icon={faChevronRight} />
+          <div 
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg cursor-pointer hover:bg-muted transition-colors"
+            onClick={() => setShowDateRangePicker(!showDateRangePicker)}
+          >
+            <FontAwesomeIcon icon={faCalendarDays} className="text-primary text-sm" />
+            <span className="text-sm font-medium text-foreground">Date Range</span>
+            <FontAwesomeIcon icon={faChevronRight} className="text-muted-foreground text-xs" />
           </div>
         </div>
       </div>
 
-      <div className="w-full h-auto flex flex-row items-start justify-between">
-        <div className="w-[68%] h-auto flex flex-col pt-25 ml-[10px]">
+      {/* Main Content */}
+      <div className="flex">
+        <div className="flex-1 p-6">
           <JRContent dailyData={filteredDailyData} />
         </div>
 
-        <div className="w-[28%] fixed right-0 z-16">
-          <h2 className="font-sans text-gray-200 relative top-6.25 z-[-1] text-2xl font-semibold">Calendar</h2>
+        <div className="w-80 xl:w-96 flex-shrink-0 p-6 border-l border-border sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Calendar</h2>
 
           {showDateRangePicker ? (
             <DJCalendar  
@@ -556,63 +557,78 @@ const DailyJournal = () => {
               generateCalendar={generateCalendar}
             />
           ) : (
-            <>
-              <div className="w-[90%] max-w-[500px] h-auto flex flex-col rounded-[20px] shadow-lg p-0.5 pb-2.5 mt-7.5 relative bg-gray-500/25 backdrop-blur-sm border-b border-white/20">
-                <div className="flex justify-center items-center cursor-pointer mt-1">
-                  <button className="bg-[#7c51e1] rounded-[4px] mr-1.5 border-none text-xs cursor-pointer text-white-700 px-1 py-1.25" onClick={handlePrevMonth}>
-                    <FontAwesomeIcon icon={faCaretLeft} />
+            <div className="space-y-6">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <button 
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    onClick={handlePrevMonth}
+                  >
+                    <FontAwesomeIcon icon={faCaretLeft} className="text-muted-foreground" />
                   </button>
-                  <h1 className="m-0 text-base text-white" onClick={handleYearMonthClick}>
+                  <button 
+                    className="text-sm font-medium text-foreground hover:text-primary"
+                    onClick={handleYearMonthClick}
+                  >
                     {new Date(selectedYear, selectedMonth).toLocaleString("default", {
                       month: "long",
                     })}{" "}
                     {selectedYear}
-                  </h1>
-                  <button className="bg-[#7c51e1] rounded-[4px] ml-1.5 border-none text-xs cursor-pointer text-white-700 px-1 py-1.25" onClick={handleNextMonth}>
-                    <FontAwesomeIcon icon={faCaretRight} />
+                    <FontAwesomeIcon icon={faCaretDown} className="ml-2 text-xs" />
+                  </button>
+                  <button 
+                    className="p-2 rounded-lg hover:bg-muted transition-colors"
+                    onClick={handleNextMonth}
+                  >
+                    <FontAwesomeIcon icon={faCaretRight} className="text-muted-foreground" />
                   </button>
                 </div>
 
                 {isDropdownVisible && (
-                  <div className="w-full max-w-[350px] h-auto max-h-[350px] flex flex-col items-center justify-center absolute top-15 z-20 bg-[#2d2d2d] rounded-[12px] shadow-lg p-4 animate-fadeIn">
-                    <div className="w-full mb-4">
-                      <p className="cursor-pointer text-white-700" onClick={() => setDropdownYear((prev) => !prev)}>
+                  <div className="absolute z-20 bg-card border border-border rounded-xl shadow-lg p-4 mt-2 w-64 animate-fade-in">
+                    <div className="text-center mb-4">
+                      <button 
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground"
+                        onClick={() => setDropdownYear((prev) => !prev)}
+                      >
                         {dropdownYear
                           ? selectedYear
                           : new Date(selectedYear, selectedMonth).toLocaleString("default", {
                             month: "long",
                           })}
-                        <FontAwesomeIcon icon={faCaretDown} className="ml-2" />
-                      </p>
+                        <FontAwesomeIcon icon={faCaretDown} className="ml-2 text-xs" />
+                      </button>
                     </div>
 
                     {dropdownYear ? (
-                      <div className="grid grid-cols-3 gap-2 w-full ">
+                      <div className="grid grid-cols-3 gap-2">
                         {Array.from({ length: 12 }, (_, i) => i).map((month) => (
                           <div
                             key={month}
-                            className={`p-[8px] text-center cursor-pointer rounded-[8px] text-[12px] bg-[#7a7a7a37] ${
-                              month === selectedMonth ? "bg-[#5a33b6] text-white" : "hover:bg-gray-200 hover:text-purple-500"
+                            className={`p-2 text-center cursor-pointer rounded-lg text-xs transition-colors ${
+                              month === selectedMonth 
+                                ? "bg-primary text-primary-foreground" 
+                                : "hover:bg-muted text-foreground"
                             }`}
                             onClick={() => handleMonthSelect(month)}
                           >
-                            {new Date(0, month).toLocaleString("default", {
-                              month: "long",
-                            })}
+                            {new Date(0, month).toLocaleString("default", { month: "short" })}
                           </div>
                         ))}
                       </div>
                     ) : (
                       <div
-                        className="overflow-y-auto w-full max-h-[200px] grid grid-cols-3 gap-2 w-full bg-[#2d2d2d]"
+                        className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto"
                         ref={yearContainerRef}
                       >
                         {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map(
                           (year) => (
                             <div
                               key={year}
-                              className={` p-2 text-center cursor-pointer rounded-[8px]  bg-[#7a7a7a37] text-[12px] ${
-                                year === selectedYear ? "bg-[#5a33b6] text-white" : "hover:bg-gray-200 hover:text-purple-500"
+                              className={`p-2 text-center cursor-pointer rounded-lg text-xs transition-colors ${
+                                year === selectedYear 
+                                  ? "bg-primary text-primary-foreground" 
+                                  : "hover:bg-muted text-foreground"
                               }`}
                               onClick={() => handleYearSelect(year)}
                             >
@@ -623,10 +639,10 @@ const DailyJournal = () => {
                       </div>
                     )}
 
-                    <div className="w-full flex flex-col items-center justify-center mt-4">
+                    <div className="mt-4 text-center">
                       <button 
                         onClick={() => setIsDropdownVisible(false)}
-                        className="p-[5px] bg-[#5a33b6] text-white rounded-[12px] cursor-pointer text-[12px]"
+                        className="px-4 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
                       >
                         Select
                       </button>
@@ -634,20 +650,18 @@ const DailyJournal = () => {
                   </div>
                 )}
 
-                <div className="w-full max-w-[900px] mx-auto rounded-[12px] font-sans flex flex-row justify-center">
-                  <div className="w-[95%] h-auto grid grid-cols-7 gap-0.75">
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                      <div key={day} className="text-center font-normal text-white py-1.25 text-xs">
-                        {day}
-                      </div>
-                    ))}
-                    {renderCalendar()}
-                  </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                    <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+                      {day}
+                    </div>
+                  ))}
+                  {renderCalendar()}
                 </div>
               </div>
 
               <QuickStats dailyData={filteredDailyData} />
-            </>
+            </div>
           )}
         </div>
       </div>
