@@ -6,13 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
-import { motion } from "framer-motion";
 
 // zustand store
 import {useDataStore as store} from "@/store/store";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import { ArrowRight } from "lucide-react";
 
 type CountryCode = { country: string; code: string };
 
@@ -509,37 +507,12 @@ const SignUp: React.FC = () => {
 
           <p className="text-red-600 relative top-3 font-sans">{error}</p>
 
-          <motion.button
+          <button
             type="submit"
-            className="w-[90%] mt-5 px-4 py-3.5 rounded-[14px] font-semibold text-white relative overflow-hidden group"
-            style={{
-              background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)",
-              boxShadow: "0 4px 15px rgba(139, 92, 246, 0.4), 0 0 30px rgba(139, 92, 246, 0.2)",
-            }}
-            whileHover={{ 
-              scale: 1.02,
-              boxShadow: "0 8px 25px rgba(139, 92, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)",
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 400, 
-              damping: 17 
-            }}
+            className="w-[90%] mt-5 px-4 py-2 rounded-[12px] bg-[#DDDDDD] text-[#111] font-medium"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-            <span className="relative flex items-center justify-center gap-2">
-              Sign Up
-              <motion.span
-                className="inline-block"
-                initial={{ x: 0 }}
-                whileHover={{ x: 4 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <ArrowRight className="w-5 h-5" />
-              </motion.span>
-            </span>
-          </motion.button>
+            Sign Up
+          </button>
         </form>
 
         <p className="mt-5 text-sm text-slate-300">

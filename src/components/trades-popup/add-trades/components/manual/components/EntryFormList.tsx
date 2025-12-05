@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCalendarAlt, faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { motion } from "framer-motion";
+import { Plus } from "lucide-react";
 import StatusControls from "./StatusControls";
 import symbols from "./symbols/Forex";
 import usStocks from "./symbols/USAStock";
@@ -496,8 +498,22 @@ const EntryFormList: React.FC<EntryFormListProps> = ({
       {/* Add New Entry Button */}
       <div className="flex items-center justify-between gap-[24px] mb-[12px]">
         <div className="text-[1rem] font-bold text-white">Entries</div>
-        <button
-          className="bg-white text-[#1e1e1e] text-[0.75rem] font-bold px-[12px] py-[8px] rounded-[999px] border-none cursor-pointer float-right"
+        <motion.button
+          className="group relative overflow-hidden text-[0.8rem] font-semibold px-[16px] py-[10px] rounded-xl border-none cursor-pointer"
+          style={{
+            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)",
+            boxShadow: "0 4px 15px rgba(139, 92, 246, 0.35)",
+          }}
+          whileHover={{ 
+            scale: 1.05,
+            boxShadow: "0 6px 20px rgba(139, 92, 246, 0.5)",
+          }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 400, 
+            damping: 17 
+          }}
           onClick={() => {
             const getNextId = (arr: Entry[]) =>
               arr.length ? Math.max(...arr.map((item) => item.id)) + 1 : 1;
@@ -519,8 +535,12 @@ const EntryFormList: React.FC<EntryFormListProps> = ({
             setEntries([...entries, newEntry]);
           }}
         >
-          +Add
-        </button>
+          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500 ease-out" />
+          <span className="relative flex items-center gap-1.5 text-white">
+            <Plus className="w-4 h-4 transition-transform duration-300 group-hover:rotate-90" />
+            Add Trade
+          </span>
+        </motion.button>
       </div>
     </>
   );
