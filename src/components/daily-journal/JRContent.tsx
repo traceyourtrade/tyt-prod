@@ -74,6 +74,14 @@ const JRContent = ({ dailyData }: JRContentProps) => {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [strategySearch, setStrategySearch] = useState("");
   const [creatingStrategy, setCreatingStrategy] = useState(false);
+  const [screenshotModal, setScreenshotModal] = useState<{
+    isOpen: boolean;
+    url: string;
+    type: "before" | "after";
+    tradeId: string;
+    accountType: string;
+    tradeName: string;
+  } | null>(null);
 
   const itemsPerPage = 5;
   const totalPages = Math.ceil((dailyData?.length || 0) / itemsPerPage);
@@ -84,6 +92,16 @@ const JRContent = ({ dailyData }: JRContentProps) => {
   useEffect(() => {
     setAccounts();
   }, [setAccounts]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && screenshotModal) {
+        closeScreenshotModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [screenshotModal]);
 
   const updateTradeStrategy = async (tradeId: string, strategy: string, accountType: string) => {
     try {
@@ -227,12 +245,21 @@ const JRContent = ({ dailyData }: JRContentProps) => {
       });
       if (res.ok) {
         setAccounts();
+        setScreenshotModal(null);
         setAlertBoxG("Screenshot deleted", "success");
       }
     } catch (error) {
       console.error(error);
       setAlertBoxG("Failed to delete screenshot", "error");
     }
+  };
+
+  const openScreenshotModal = (url: string, type: "before" | "after", tradeId: string, accountType: string, tradeName: string) => {
+    setScreenshotModal({ isOpen: true, url, type, tradeId, accountType, tradeName });
+  };
+
+  const closeScreenshotModal = () => {
+    setScreenshotModal(null);
   };
 
   const postDropOptions = async (id: string, value: string, type: string, accountType: string) => {
@@ -613,36 +640,27 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                   {type === "before" ? "Entry" : "Exit"}
                                 </p>
                                 {trade[`${type}URL`] ? (
-                                  <div className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-muted border border-border">
+                                  <div 
+                                    className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-muted border border-border cursor-pointer"
+                                    onClick={() => openScreenshotModal(
+                                      trade[`${type}URL`], 
+                                      type as "before" | "after", 
+                                      trade.id, 
+                                      trade.accountType,
+                                      trade.Item
+                                    )}
+                                  >
                                     <Image
                                       src={trade[`${type}URL`]}
                                       alt={`${type} chart`}
                                       fill
                                       className="object-cover transition-transform group-hover:scale-105"
                                     />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
-                                    {/* Delete Button */}
-                                    <button
-                                      onClick={() => deleteScreenshot(trade.id, `${type}URL`, trade.accountType)}
-                                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-loss/90 text-white opacity-0 group-hover:opacity-100 hover:bg-loss transition-all shadow-lg"
-                                      title="Delete screenshot"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                    {/* Replace Button */}
-                                    <label className="absolute bottom-2 right-2 p-1.5 rounded-lg bg-white/90 dark:bg-card/90 text-foreground opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-card transition-all shadow-lg cursor-pointer">
-                                      <Upload className="w-3.5 h-3.5" />
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          if (e.target.files?.[0]) {
-                                            handleFileSelect(e.target.files[0], trade.id, `${type}URL`, trade.accountType);
-                                          }
-                                        }}
-                                      />
-                                    </label>
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                      <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 px-3 py-1.5 rounded-full">
+                                        Click to view
+                                      </span>
+                                    </div>
                                   </div>
                                 ) : (
                                   <label className="group flex flex-col items-center justify-center aspect-[4/3] rounded-lg border-2 border-dashed border-border/60 bg-muted/30 cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-all">
@@ -828,6 +846,114 @@ const JRContent = ({ dailyData }: JRContentProps) => {
           </button>
         </div>
       )}
+
+      {/* Screenshot Modal */}
+      <AnimatePresence>
+        {screenshotModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={closeScreenshotModal}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="relative w-full max-w-5xl max-h-[90vh] bg-card rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                onClick={closeScreenshotModal}
+                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Image Section */}
+              <div className="flex-1 relative min-h-[300px] lg:min-h-[500px] bg-black/20">
+                <Image
+                  src={screenshotModal.url}
+                  alt={`${screenshotModal.type} chart`}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 1024px) 100vw, 70vw"
+                />
+              </div>
+
+              {/* Action Panel */}
+              <div className="w-full lg:w-72 p-6 bg-card border-t lg:border-t-0 lg:border-l border-border flex flex-col">
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded ${
+                      screenshotModal.type === "before" 
+                        ? "bg-primary/10 text-primary" 
+                        : "bg-profit/10 text-profit"
+                    }`}>
+                      {screenshotModal.type === "before" ? "Entry Chart" : "Exit Chart"}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {screenshotModal.tradeName}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {screenshotModal.type === "before" 
+                      ? "Screenshot taken before entering the trade" 
+                      : "Screenshot taken after exiting the trade"}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-3 mt-auto">
+                  {/* Replace Button */}
+                  <label className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-xl text-sm font-medium cursor-pointer transition-colors">
+                    <Upload className="w-4 h-4" />
+                    Replace Screenshot
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleFileSelect(
+                            e.target.files[0], 
+                            screenshotModal.tradeId, 
+                            `${screenshotModal.type}URL`, 
+                            screenshotModal.accountType
+                          );
+                          closeScreenshotModal();
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={() => deleteScreenshot(
+                      screenshotModal.tradeId, 
+                      `${screenshotModal.type}URL`, 
+                      screenshotModal.accountType
+                    )}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-loss/10 hover:bg-loss/20 text-loss rounded-xl text-sm font-medium transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Screenshot
+                  </button>
+                </div>
+
+                {/* Keyboard Hint */}
+                <p className="text-[10px] text-muted-foreground text-center mt-4">
+                  Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">ESC</kbd> to close
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
