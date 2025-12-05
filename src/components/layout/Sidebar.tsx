@@ -15,9 +15,42 @@ import {
   ChevronLeft,
   Plus,
   LogOut,
-  LineChart,
-  Sparkles,
 } from "lucide-react"
+
+const ProjournxLogo = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 40 40" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <defs>
+      <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
+        <stop offset="100%" stopColor="currentColor" stopOpacity="0.7" />
+      </linearGradient>
+    </defs>
+    {/* Main chart line going up */}
+    <path 
+      d="M8 28L16 20L22 24L32 12" 
+      stroke="url(#logoGradient)" 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      className="drop-shadow-sm"
+    />
+    {/* Arrow head */}
+    <path 
+      d="M26 12H32V18" 
+      stroke="url(#logoGradient)" 
+      strokeWidth="3" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+    {/* Accent dot */}
+    <circle cx="16" cy="20" r="2.5" fill="currentColor" className="opacity-80" />
+  </svg>
+)
 
 interface SidebarProps {
   collapsed: boolean
@@ -74,17 +107,16 @@ export function Sidebar({
       )}>
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group">
           <div className="relative flex-shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
-              <LineChart className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 group-hover:scale-105 transition-all duration-300">
+              <ProjournxLogo className="w-6 h-6 text-primary-foreground" />
             </div>
-            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-profit rounded-full border-2 border-card" />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-bold text-foreground tracking-tight">
+              <span className="font-bold text-foreground tracking-tight text-[15px]">
                 Projournx
               </span>
-              <span className="text-[10px] text-muted-foreground font-medium">
+              <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
                 Trading Journal
               </span>
             </div>
@@ -114,10 +146,11 @@ export function Sidebar({
       <div className={cn("px-3 mt-4", collapsed && "mt-2")}>
         <button
           className={cn(
-            "group relative w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all duration-200",
-            "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground",
-            "hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5",
-            "active:translate-y-0 active:shadow-md",
+            "group relative w-full flex items-center justify-center gap-2.5 py-3 rounded-xl font-semibold text-sm transition-all duration-300 overflow-hidden",
+            "bg-gradient-to-r from-primary via-primary to-primary/90 text-primary-foreground",
+            "hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1",
+            "active:translate-y-0 active:shadow-lg active:scale-[0.98]",
+            "animate-pulse-glow",
             collapsed ? "px-0" : "px-4"
           )}
           onClick={() => {
@@ -125,9 +158,18 @@ export function Sidebar({
             document.body.classList.add("no-scroll")
           }}
         >
-          <Plus className="h-4 w-4" />
-          {!collapsed && <span>Add Trade</span>}
-          <div className="absolute inset-0 rounded-xl bg-primary-foreground/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent" />
+          
+          {/* Icon with animation */}
+          <Plus className="h-4.5 w-4.5 relative z-10 transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110" />
+          
+          {!collapsed && (
+            <span className="relative z-10 tracking-wide">Add Trade</span>
+          )}
+          
+          {/* Hover overlay */}
+          <div className="absolute inset-0 rounded-xl bg-primary-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </button>
       </div>
 
