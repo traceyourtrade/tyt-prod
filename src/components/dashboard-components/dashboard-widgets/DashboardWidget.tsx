@@ -29,6 +29,7 @@ interface StatCardProps {
   value: string | number;
   subtitle?: string;
   icon?: React.ReactNode;
+  iconColor?: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose' | 'neutral';
   status?: string;
   valueType?: 'profit' | 'loss' | 'neutral';
   children?: React.ReactNode;
@@ -39,6 +40,7 @@ const StatCard: React.FC<StatCardProps> = ({
   value, 
   subtitle, 
   icon, 
+  iconColor = 'neutral',
   status,
   valueType = 'neutral',
   children 
@@ -51,12 +53,23 @@ const StatCard: React.FC<StatCardProps> = ({
     }
   };
 
+  const getIconColorClasses = () => {
+    switch (iconColor) {
+      case 'blue': return 'bg-blue-500/10 text-blue-400';
+      case 'emerald': return 'bg-emerald-500/10 text-emerald-400';
+      case 'amber': return 'bg-amber-500/10 text-amber-400';
+      case 'violet': return 'bg-violet-500/10 text-violet-400';
+      case 'rose': return 'bg-rose-500/10 text-rose-400';
+      default: return 'bg-muted/50 text-muted-foreground';
+    }
+  };
+
   return (
     <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 transition-all duration-300 hover:bg-card/80 hover:border-border">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           {icon && (
-            <div className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground">
+            <div className={cn("p-2.5 rounded-xl", getIconColorClasses())}>
               {icon}
             </div>
           )}
@@ -163,6 +176,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         title="Net P&L"
         value={numericPnl >= 0 ? pnlFormatted : `-${pnlFormatted}`}
         icon={<DollarSign className="w-4 h-4" />}
+        iconColor="emerald"
         valueType={numericPnl > 0 ? 'profit' : numericPnl < 0 ? 'loss' : 'neutral'}
         subtitle={numericPnl !== 0 ? `${numericPnl >= 0 ? '+' : ''}${((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1)}% return` : 'No change'}
       >
@@ -177,6 +191,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         value={`${winrate}%`}
         subtitle={`${totalTrades} trades`}
         icon={<Target className="w-4 h-4" />}
+        iconColor="blue"
       >
         <div className="relative w-14 h-8">
           <Doughnut data={dataWinLoss} options={optionsWinLoss} />
@@ -193,6 +208,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         value={typeof profitF === 'number' ? profitF.toFixed(2) : profitF}
         subtitle={profitFactorStatus}
         icon={<Activity className="w-4 h-4" />}
+        iconColor="amber"
         status={profitFactorNum >= 1.5 ? "Profitable" : profitFactorNum < 1 ? "Losing" : "Breakeven"}
       />
 
@@ -201,6 +217,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         title="Account Balance"
         value={balanceFormatted}
         icon={<Wallet className="w-4 h-4" />}
+        iconColor="violet"
         subtitle="Current balance"
       >
         <div className="w-20 h-10">
@@ -213,6 +230,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         title="Risk : Reward"
         value={typeof rrRatio === 'number' ? `1:${rrRatio.toFixed(1)}` : `1:${rrRatio}`}
         icon={<Scale className="w-4 h-4" />}
+        iconColor="rose"
       >
         <div className="w-full">
           <div className="w-full h-1.5 bg-muted/30 rounded-full overflow-hidden flex">
