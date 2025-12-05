@@ -41,17 +41,19 @@ const Settings = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a]">
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Settings</h1>
-          <button 
-            onClick={() => setMobileNav(true)}
-            className="md:hidden p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white"
-          >
-            <FontAwesomeIcon icon={faBars} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setMobileNav(true)}
+              className="lg:hidden p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white"
+            >
+              <FontAwesomeIcon icon={faBars} />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Settings</h1>
+          </div>
         </div>
 
         <div className="flex gap-6">
-          <nav className="hidden md:block w-56 flex-shrink-0">
+          <nav className="hidden lg:block w-56 flex-shrink-0">
             <div className="sticky top-6 space-y-1">
               {navItems.map((item) => (
                 <button
@@ -85,7 +87,7 @@ const Settings = () => {
       </div>
 
       {mobileNav && (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileNav(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-[#141414] p-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
