@@ -212,15 +212,15 @@ const Profile = () => {
 
   return (
     <>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
           <div>
-            <h2 className="text-xl font-bold text-white">Profile Details</h2>
-            <p className="text-gray-500 text-sm mt-1">Manage your personal information</p>
+            <h2 className="text-lg lg:text-xl font-bold text-white">Profile Details</h2>
+            <p className="text-gray-500 text-xs lg:text-sm mt-1">Manage your personal information</p>
           </div>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all w-full sm:w-auto ${
               isEditing 
                 ? "bg-gray-700 text-gray-300 hover:bg-gray-600" 
                 : "bg-[#1e1e1e] text-gray-300 hover:bg-[#252525] border border-[#2a2a2a]"
@@ -239,62 +239,62 @@ const Profile = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-4">
-            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
-              <div className="flex flex-col items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
+          <div className="lg:col-span-4">
+            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
+              <div className="flex flex-row lg:flex-col items-center gap-4 lg:gap-0">
                 {profilePicture ? (
                   <div 
-                    className="w-40 h-40 rounded-2xl bg-cover bg-center bg-no-repeat cursor-pointer hover:opacity-90 transition-opacity"
+                    className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl bg-cover bg-center bg-no-repeat cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0"
                     style={{ backgroundImage: `url(${profilePicture})` }}
                     onClick={() => { setProImg(); document.body.classList.add("no-scroll"); setProUrl(profilePicture) }}
                   />
                 ) : (
-                  <div className="w-40 h-40 rounded-2xl bg-[#252525] flex items-center justify-center">
-                    <span className="text-5xl font-bold text-gray-400">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-2xl bg-[#252525] flex items-center justify-center flex-shrink-0">
+                    <span className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-400">
                       {profileData.fullName ? `${profileData.fullName.charAt(0)}${profileData.fullName.split(" ")[1]?.charAt(0) || ""}` : <FontAwesomeIcon icon={faUser} />}
                     </span>
                   </div>
                 )}
                 
-                <label
-                  htmlFor="file-upload"
-                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#252525] hover:bg-[#2a2a2a] text-gray-300 text-sm font-medium rounded-xl cursor-pointer transition-colors"
-                >
-                  <FontAwesomeIcon icon={faCamera} className="text-xs" />
-                  Upload Photo
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileSelect(file);
-                    }}
-                    className="hidden"
-                  />
-                </label>
-
-                <div className="mt-6 text-center">
-                  <h3 className="text-lg font-semibold text-white">
+                <div className="flex-1 lg:flex-initial text-left lg:text-center">
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
                     {profileDetails.firstName} {profileDetails.lastName}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">{profileDetails.email}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{profileDetails.email}</p>
                   {profileDetails.country && (
                     <span className="inline-block mt-2 px-3 py-1 bg-[#252525] text-gray-400 text-xs rounded-full">
                       {profileDetails.country}
                     </span>
                   )}
+                  
+                  <label
+                    htmlFor="file-upload"
+                    className="mt-3 lg:mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[#252525] hover:bg-[#2a2a2a] text-gray-300 text-sm font-medium rounded-xl cursor-pointer transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faCamera} className="text-xs" />
+                    Upload Photo
+                    <input
+                      id="file-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileSelect(file);
+                      }}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="col-span-8 space-y-6">
-            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+          <div className="lg:col-span-8 space-y-4 lg:space-y-6">
+            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
               <h3 className="text-sm font-semibold text-white mb-4">Personal Information</h3>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField
                   label="First Name"
                   name="firstName"
@@ -321,7 +321,7 @@ const Profile = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <InputField
                   label="Country"
                   name="country"
@@ -340,7 +340,7 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
               <h3 className="text-sm font-semibold text-white mb-4">Trader Bio</h3>
               <textarea 
                 placeholder="Tell us more about yourself and your trading journey..." 
@@ -348,7 +348,7 @@ const Profile = () => {
                 value={bio} 
                 onChange={(e) => setBio(e.target.value)}
                 disabled={!isEditing}
-                className={`w-full h-32 bg-[#252525] border border-[#2a2a2a] rounded-xl p-4 text-sm text-white placeholder:text-gray-600 resize-none focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
+                className={`w-full h-24 sm:h-32 bg-[#252525] border border-[#2a2a2a] rounded-xl p-3 sm:p-4 text-sm text-white placeholder:text-gray-600 resize-none focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
                   !isEditing ? 'opacity-60 cursor-not-allowed' : ''
                 }`}
               />

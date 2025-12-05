@@ -47,21 +47,21 @@ const Security = () => {
   );
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-white">Security Settings</h2>
-        <p className="text-gray-500 text-sm mt-1">Manage your password and account security</p>
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 lg:mb-8">
+        <h2 className="text-lg lg:text-xl font-bold text-white">Security Settings</h2>
+        <p className="text-gray-500 text-xs lg:text-sm mt-1">Manage your password and account security</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
-        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-              <FontAwesomeIcon icon={faKey} className="text-emerald-400" />
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faKey} className="text-emerald-400 text-sm" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="text-sm font-semibold text-white">Change Password</h3>
-              <p className="text-xs text-gray-500">Update your password regularly</p>
+              <p className="text-xs text-gray-500 truncate">Update your password regularly</p>
             </div>
           </div>
 
@@ -99,21 +99,21 @@ const Security = () => {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+        <div className="space-y-4 lg:space-y-6">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
-                <FontAwesomeIcon icon={faLock} className="text-amber-400" />
+              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-[#252525] flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faLock} className="text-gray-400 text-sm" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-white">Forgot Password</h3>
-                <p className="text-xs text-gray-500">Reset your password via email</p>
+                <p className="text-xs text-gray-500 truncate">Reset your password via email</p>
               </div>
             </div>
 
-            <div className="bg-[#252525] border border-[#2a2a2a] rounded-xl p-4 mb-4">
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Enter your registered email address and we'll send you a password reset link. Follow the instructions in the email to reset your password.
+            <div className="bg-[#252525] border border-[#2a2a2a] rounded-xl p-3 sm:p-4 mb-4">
+              <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                Enter your registered email address and we'll send you a password reset link.
               </p>
             </div>
 
@@ -137,23 +137,23 @@ const Security = () => {
             </button>
           </div>
 
-          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#252525] flex items-center justify-center">
-                <FontAwesomeIcon icon={faShield} className="text-gray-400" />
+              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-[#252525] flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faShield} className="text-gray-400 text-sm" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-white">Two-Factor Authentication</h3>
-                <p className="text-xs text-gray-500">Add an extra layer of security</p>
+                <p className="text-xs text-gray-500 truncate">Add an extra layer of security</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-[#252525] border border-[#2a2a2a] rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 bg-[#252525] border border-[#2a2a2a] rounded-xl">
               <div>
                 <p className="text-sm text-gray-300 font-medium">Status</p>
                 <p className="text-xs text-gray-500">Not enabled</p>
               </div>
-              <button className="px-4 py-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#2a2a2a] text-gray-300 text-sm font-medium rounded-lg transition-colors">
+              <button className="px-4 py-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#2a2a2a] text-gray-300 text-sm font-medium rounded-lg transition-colors w-full sm:w-auto">
                 Enable
               </button>
             </div>

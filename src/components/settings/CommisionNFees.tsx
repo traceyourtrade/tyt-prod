@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faChevronDown, faDollarSign, faPercent, faReceipt } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faChevronDown, faDollarSign, faReceipt } from "@fortawesome/free-solid-svg-icons";
 
 interface Account {
   tradeNo: number;
@@ -70,26 +70,68 @@ const CommissionNfees = () => {
   const totalCommissions = accounts.reduce((sum, account) => sum + account.comissions, 0);
   const totalFees = accounts.reduce((sum, account) => sum + account.fees, 0);
 
-  return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+  const TradeCard = ({ account }: { account: Account }) => (
+    <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="text-xl font-bold text-white">Commissions & Fees</h2>
-          <p className="text-gray-500 text-sm mt-1">Detailed insights of all your trading costs</p>
+          <p className="text-white font-medium">
+            Trade <span className="text-emerald-400">#{account.tradeNo}</span>
+          </p>
+          <p className="text-gray-500 text-xs mt-0.5">{account.lastUpdate}</p>
+        </div>
+        <span className="px-3 py-1 bg-[#252525] text-gray-300 text-sm font-medium rounded-lg">
+          {account.instrument}
+        </span>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-[#252525] rounded-lg p-3">
+          <p className="text-xs text-gray-500 mb-1">Side</p>
+          <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded ${
+            account.LorS === "Long" 
+              ? "bg-emerald-500/15 text-emerald-400" 
+              : "bg-red-500/15 text-red-400"
+          }`}>
+            {account.LorS}
+          </span>
+        </div>
+        <div className="bg-[#252525] rounded-lg p-3">
+          <p className="text-xs text-gray-500 mb-1">Lot Size</p>
+          <p className="text-sm text-white font-medium">{account.lotSize} Lots</p>
         </div>
       </div>
+      
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2a2a2a]">
+        <div>
+          <p className="text-xs text-gray-500">Commission</p>
+          <p className="text-sm text-emerald-400 font-semibold">${account.comissions}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-gray-500">Fees</p>
+          <p className="text-sm text-gray-300 font-medium">${account.fees}</p>
+        </div>
+      </div>
+    </div>
+  );
 
-      <div className="flex items-center justify-between mb-6">
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mb-6 lg:mb-8">
+        <h2 className="text-lg lg:text-xl font-bold text-white">Commissions & Fees</h2>
+        <p className="text-gray-500 text-xs lg:text-sm mt-1">Detailed insights of all your trading costs</p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="relative">
           <button 
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-3 px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl hover:bg-[#252525] transition-colors"
+            className="flex items-center gap-3 px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl hover:bg-[#252525] transition-colors w-full sm:w-auto"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#252525] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0">
               <FontAwesomeIcon icon={faUser} className="text-gray-400 text-sm" />
             </div>
-            <span className="text-gray-300 text-sm font-medium">{selectedAccount}</span>
-            <FontAwesomeIcon icon={faChevronDown} className={`text-gray-500 text-xs transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            <span className="text-gray-300 text-sm font-medium flex-1 text-left">{selectedAccount}</span>
+            <FontAwesomeIcon icon={faChevronDown} className={`text-gray-500 text-xs transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`} />
           </button>
 
           {isOpen && (
@@ -107,79 +149,87 @@ const CommissionNfees = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-              <FontAwesomeIcon icon={faDollarSign} className="text-emerald-400" />
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-4">
+          <div className="flex items-center gap-3 px-3 sm:px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faDollarSign} className="text-emerald-400 text-sm" />
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Total Commission</p>
-              <p className="text-white font-semibold">${totalCommissions}</p>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500 truncate">Total Commission</p>
+              <p className="text-white font-semibold text-sm sm:text-base">${totalCommissions}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center">
-              <FontAwesomeIcon icon={faReceipt} className="text-amber-400" />
+          <div className="flex items-center gap-3 px-3 sm:px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#252525] flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faReceipt} className="text-gray-400 text-sm" />
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Total Fees</p>
-              <p className="text-white font-semibold">${totalFees}</p>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500 truncate">Total Fees</p>
+              <p className="text-white font-semibold text-sm sm:text-base">${totalFees}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-[#2a2a2a]">
-              <th className="px-6 py-4 text-left text-xs uppercase tracking-wider text-gray-500 font-semibold">Trade Details</th>
-              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Instrument</th>
-              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Side</th>
-              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Lot Size</th>
-              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Commission</th>
-              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Fees</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts.map((account, index) => (
-              <tr key={index} className="border-b border-[#2a2a2a] hover:bg-[#252525] transition-colors">
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="text-white font-medium">
-                      Trade <span className="text-emerald-400">#{account.tradeNo}</span>
-                    </p>
-                    <p className="text-gray-500 text-xs mt-0.5">{account.lastUpdate}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="px-3 py-1 bg-[#252525] text-gray-300 text-sm font-medium rounded-lg">
-                    {account.instrument}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-lg ${
-                    account.LorS === "Long" 
-                      ? "bg-emerald-500/15 text-emerald-400" 
-                      : "bg-red-500/15 text-red-400"
-                  }`}>
-                    {account.LorS}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="text-gray-300 font-medium">{account.lotSize} Lots</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="text-amber-400 font-semibold">${account.comissions}</span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span className="text-gray-300 font-medium">${account.fees}</span>
-                </td>
+      <div className="lg:hidden space-y-3">
+        {accounts.map((account, index) => (
+          <TradeCard key={index} account={account} />
+        ))}
+      </div>
+
+      <div className="hidden lg:block bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead>
+              <tr className="border-b border-[#2a2a2a]">
+                <th className="px-6 py-4 text-left text-xs uppercase tracking-wider text-gray-500 font-semibold">Trade Details</th>
+                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Instrument</th>
+                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Side</th>
+                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Lot Size</th>
+                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Commission</th>
+                <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Fees</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {accounts.map((account, index) => (
+                <tr key={index} className="border-b border-[#2a2a2a] hover:bg-[#252525] transition-colors">
+                  <td className="px-6 py-4">
+                    <div>
+                      <p className="text-white font-medium">
+                        Trade <span className="text-emerald-400">#{account.tradeNo}</span>
+                      </p>
+                      <p className="text-gray-500 text-xs mt-0.5">{account.lastUpdate}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="px-3 py-1 bg-[#252525] text-gray-300 text-sm font-medium rounded-lg">
+                      {account.instrument}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-lg ${
+                      account.LorS === "Long" 
+                        ? "bg-emerald-500/15 text-emerald-400" 
+                        : "bg-red-500/15 text-red-400"
+                    }`}>
+                      {account.LorS}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-gray-300 font-medium">{account.lotSize} Lots</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-emerald-400 font-semibold">${account.comissions}</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-gray-300 font-medium">${account.fees}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
