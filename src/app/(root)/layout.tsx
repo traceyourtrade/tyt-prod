@@ -43,6 +43,7 @@ import CalendarPopup from "@/components/dashboard-components/popups/CalendarPopU
 import AlertBox from "@/components/dashboard-components/popups/AlertBox"
 import DjImgPopup from "@/components/dashboard-components/popups/DjImgPopup"
 import AccountsDropdown from "@/components/dashboard-components/AccountsDropdown"
+import CurrencyDropdown from "@/components/dashboard-components/CurrencyDropdown"
 
 import useAccountDetails from "@/store/accountdetails"
 import calendarPopUp from "@/store/calendarPopUp"
@@ -436,6 +437,9 @@ export default function RootLayout({
 
           {/* Right side */}
           <div className="flex items-center gap-1 lg:gap-2">
+            {/* Currency Dropdown */}
+            <CurrencyDropdown />
+
             {/* Accounts Dropdown */}
             <div className="hidden sm:block">
               <AccountsDropdown />
