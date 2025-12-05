@@ -636,40 +636,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                     {/* Main Content Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                       
-                      {/* Left Column: Journal Notes (spans 7 cols) */}
-                      <div className="lg:col-span-7 space-y-4">
-                        <div className="flex items-center gap-2 mb-4">
-                          <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <FileText className="w-3.5 h-3.5 text-primary" />
-                          </div>
-                          <h4 className="text-sm font-semibold text-foreground">Trade Journal</h4>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {[
-                            { key: "rfe", label: "Setup & Entry", placeholder: "What setup did you see? Why did you enter?", icon: Target },
-                            { key: "widw", label: "What Went Well", placeholder: "What did you execute correctly?", icon: TrendingUp },
-                            { key: "wni", label: "Areas to Improve", placeholder: "What could be better next time?", icon: Zap },
-                            { key: "lfnt", label: "Key Takeaway", placeholder: "Main lesson from this trade", icon: FileText },
-                          ].map(({ key, label, placeholder, icon: Icon }) => (
-                            <div key={key} className="group">
-                              <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-2 group-focus-within:text-primary transition-colors">
-                                <Icon className="w-3 h-3" />
-                                {label}
-                              </label>
-                              <textarea
-                                value={jrData[key as keyof typeof jrData]}
-                                onChange={(e) => setJrData({ ...jrData, [key]: e.target.value })}
-                                placeholder={placeholder}
-                                rows={3}
-                                className="w-full px-3.5 py-3 bg-muted/20 border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 focus:bg-muted/30 resize-none transition-all"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Right Column: Screenshots & Mindset (spans 5 cols) */}
+                      {/* Left Column: Screenshots & Mindset (spans 5 cols) */}
                       <div className="lg:col-span-5 space-y-5">
                         
                         {/* Screenshots */}
@@ -681,7 +648,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                             <h4 className="text-sm font-semibold text-foreground">Screenshots</h4>
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-4">
                             {["before", "after"].map((type) => (
                               <div key={type} className="relative">
                                 <span className="absolute -top-2 left-2 z-10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-card text-muted-foreground rounded">
@@ -689,7 +656,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                 </span>
                                 {trade[`${type}URL`] ? (
                                   <div 
-                                    className="group relative aspect-video rounded-xl overflow-hidden bg-muted/30 border border-border/50 cursor-pointer hover:border-primary/30 transition-all"
+                                    className="group relative aspect-[4/3] rounded-xl overflow-hidden bg-muted/30 border border-border/50 cursor-pointer hover:border-primary/30 transition-all"
                                     onClick={() => openScreenshotModal(
                                       trade[`${type}URL`], 
                                       type as "before" | "after", 
@@ -704,19 +671,19 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                       fill
                                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                                      <span className="flex items-center gap-1.5 text-white text-xs font-medium">
-                                        <Eye className="w-3.5 h-3.5" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                                      <span className="flex items-center gap-1.5 text-white text-sm font-medium">
+                                        <Eye className="w-4 h-4" />
                                         View
                                       </span>
                                     </div>
                                   </div>
                                 ) : (
-                                  <label className="group flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed border-border/40 bg-muted/10 cursor-pointer hover:bg-muted/20 hover:border-primary/30 transition-all">
-                                    <div className="w-10 h-10 rounded-xl bg-muted/40 flex items-center justify-center mb-2 group-hover:bg-primary/10 transition-colors">
-                                      <Upload className="w-5 h-5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                                  <label className="group flex flex-col items-center justify-center aspect-[4/3] rounded-xl border-2 border-dashed border-border/40 bg-muted/10 cursor-pointer hover:bg-muted/20 hover:border-primary/30 transition-all">
+                                    <div className="w-12 h-12 rounded-xl bg-muted/40 flex items-center justify-center mb-2 group-hover:bg-primary/10 transition-colors">
+                                      <Upload className="w-6 h-6 text-muted-foreground/50 group-hover:text-primary transition-colors" />
                                     </div>
-                                    <span className="text-[10px] text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
+                                    <span className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">
                                       Add chart
                                     </span>
                                     <input
@@ -798,6 +765,39 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                               ))}
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Journal Notes (spans 7 cols) */}
+                      <div className="lg:col-span-7 space-y-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <FileText className="w-3.5 h-3.5 text-primary" />
+                          </div>
+                          <h4 className="text-sm font-semibold text-foreground">Trade Journal</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                            { key: "rfe", label: "Setup & Entry", placeholder: "What setup did you see? Why did you enter?", icon: Target },
+                            { key: "widw", label: "What Went Well", placeholder: "What did you execute correctly?", icon: TrendingUp },
+                            { key: "wni", label: "Areas to Improve", placeholder: "What could be better next time?", icon: Zap },
+                            { key: "lfnt", label: "Key Takeaway", placeholder: "Main lesson from this trade", icon: FileText },
+                          ].map(({ key, label, placeholder, icon: Icon }) => (
+                            <div key={key} className="group">
+                              <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-2 group-focus-within:text-primary transition-colors">
+                                <Icon className="w-3 h-3" />
+                                {label}
+                              </label>
+                              <textarea
+                                value={jrData[key as keyof typeof jrData]}
+                                onChange={(e) => setJrData({ ...jrData, [key]: e.target.value })}
+                                placeholder={placeholder}
+                                rows={3}
+                                className="w-full px-3.5 py-3 bg-muted/20 border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 focus:bg-muted/30 resize-none transition-all"
+                              />
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
