@@ -3,7 +3,7 @@
 ## Overview
 This is a Next.js 16 trading journal application that allows users to track their trades, analyze performance, and maintain a trading notebook. The application uses MongoDB for data storage, AWS S3 for image uploads, and Google OAuth for authentication.
 
-**Current State:** UI Redesign Complete - Premium Neutral Dashboard Aesthetic
+**Current State:** UI Redesign Complete - Premium Neutral Dashboard Aesthetic + Prop Firm Mode
 **Last Updated:** December 5, 2025
 
 ## UI Redesign (Completed)
@@ -145,6 +145,34 @@ The application runs on port 5000 and binds to 0.0.0.0 to work with Replit's pro
 4. **Reports** - Performance analytics and comparisons
 5. **Strategies** - Strategy tracking and analysis
 6. **Settings** - User profile and preferences
+7. **Lot Size Calculator** - Forex position sizing tool with pip value calculations
+8. **Prop Firm Mode** - Track prop firm challenge progress with profit targets and drawdown limits
+
+## Prop Firm Mode (New Feature)
+Located in `src/components/prop-firm/`:
+
+### Components
+- `PropFirmModeToggle.tsx` - Segmented control to switch between Live Trading and Prop Firm modes
+- `PropFirmSettings.tsx` - Configure challenge parameters (starting balance, profit target %, max drawdown %, daily drawdown %)
+- `PropFirmDashboard.tsx` - Main dashboard with calculations and breach detection
+- `PropFirmProgressBars.tsx` - Visual progress bars for profit target and drawdown usage
+- `PropFirmSummaryCard.tsx` - Challenge summary with current equity, targets, and status
+- `PropFirmStatusPill.tsx` - Status indicator (Active, At Risk, Breached, Completed)
+- `PropFirmBreachBanner.tsx` - Alert banner when challenge is breached
+
+### State Management
+- `src/store/propFirmStore.ts` - Zustand store with persistence for prop firm state
+- Stores: isEnabled, settings, peakEquity, challengeStatus
+- Preserves peakEquity across settings changes (only resets when starting balance changes)
+
+### Features
+- **Mode Toggle**: Switch between Live Trading (normal dashboard) and Prop Firm mode
+- **Challenge Settings**: Configure starting balance, profit target %, max drawdown %, optional daily drawdown %
+- **Progress Tracking**: Visual progress bars showing target achievement and drawdown usage
+- **Drawdown Detection**: Tracks both max drawdown (from peak) and daily drawdown
+- **Status Indicators**: Active (green), At Risk (yellow when >70% drawdown), Breached (red), Completed (green)
+- **Breach Alerts**: Full-width banner when challenge is breached with reset option
+- **Reset Challenge**: Start a new challenge with current settings
 
 ## Notes
 - The application uses TypeScript with strict mode enabled
