@@ -65,35 +65,35 @@ const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 transition-all duration-300 hover:bg-card/80 hover:border-border">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
+    <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3.5 transition-all duration-300 hover:bg-card/80 hover:border-border">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
           {icon && (
-            <div className={cn("p-2.5 rounded-xl", getIconColorClasses())}>
+            <div className={cn("p-2 rounded-lg", getIconColorClasses())}>
               {icon}
             </div>
           )}
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             {title}
           </span>
         </div>
         {status && (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-muted/50 text-muted-foreground">
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide bg-muted/50 text-muted-foreground">
             {status}
           </span>
         )}
       </div>
       
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex items-end justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className={cn(
-            "text-2xl font-bold tracking-tight truncate",
+            "text-xl font-bold tracking-tight truncate",
             getValueColor()
           )}>
             {value}
           </p>
           {subtitle && (
-            <p className="text-xs text-muted-foreground mt-1.5">{subtitle}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{subtitle}</p>
           )}
         </div>
         {children && (
@@ -180,7 +180,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         valueType={numericPnl > 0 ? 'profit' : numericPnl < 0 ? 'loss' : 'neutral'}
         subtitle={numericPnl !== 0 ? `${numericPnl >= 0 ? '+' : ''}${((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1)}% return` : 'No change'}
       >
-        <div className="w-20 h-10">
+        <div className="w-16 h-8">
           <TinyChart data={data} />
         </div>
       </StatCard>
@@ -193,11 +193,11 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         icon={<Target className="w-4 h-4" />}
         iconColor="blue"
       >
-        <div className="relative w-14 h-8">
+        <div className="relative w-12 h-7">
           <Doughnut data={dataWinLoss} options={optionsWinLoss} />
-          <div className="absolute -bottom-1 left-0 right-0 flex justify-between px-0.5">
-            <span className="text-[9px] font-medium text-muted-foreground">{winners}W</span>
-            <span className="text-[9px] font-medium text-muted-foreground">{losers}L</span>
+          <div className="absolute -bottom-0.5 left-0 right-0 flex justify-between px-0.5">
+            <span className="text-[8px] font-medium text-muted-foreground">{winners}W</span>
+            <span className="text-[8px] font-medium text-muted-foreground">{losers}L</span>
           </div>
         </div>
       </StatCard>
@@ -220,7 +220,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         iconColor="violet"
         subtitle="Current balance"
       >
-        <div className="w-20 h-10">
+        <div className="w-16 h-8">
           <TinyChart data={data} />
         </div>
       </StatCard>
