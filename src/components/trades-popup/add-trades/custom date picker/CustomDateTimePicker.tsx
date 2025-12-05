@@ -1,12 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronLeft,
-  faChevronRight,
-  faClose,
-} from "@fortawesome/free-solid-svg-icons";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  X, 
+  Calendar,
+  Clock,
+  Check
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CustomDateTimePickerProps {
   isOpen: boolean;
@@ -14,7 +18,6 @@ interface CustomDateTimePickerProps {
   onApply: (date: Date) => void;
 }
 
-// Helper function to get an array of hours (0-23) and minutes (0-59)
 const getHours = () => Array.from({ length: 24 }, (_, i) => i);
 const getMinutes = () => Array.from({ length: 60 }, (_, i) => i);
 
@@ -23,43 +26,36 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
   onClose, 
   onApply 
 }) => {
-  // State for the currently viewed month in the calendar
   const [viewDate, setViewDate] = useState(new Date());
-  // State for the user's selected date and time
   const [selectedDateTime, setSelectedDateTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState<'date' | 'time'>('date');
 
   const hourRef = useRef<HTMLDivElement>(null);
   const minuteRef = useRef<HTMLDivElement>(null);
 
-  // Effect to scroll the selected time into view when the dialog opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && activeTab === 'time') {
       const selectedHour = selectedDateTime.getHours();
       const selectedMinute = selectedDateTime.getMinutes();
 
-      // Scroll the hour wheel
       if (hourRef.current) {
-        const hourElement = hourRef.current.children[selectedHour];
+        const hourElement = hourRef.current.children[selectedHour] as HTMLElement;
         if (hourElement) {
-          hourElement.scrollIntoView({ block: "center" });
+          hourElement.scrollIntoView({ block: "center", behavior: "smooth" });
         }
       }
 
-      // Scroll the minute wheel
       if (minuteRef.current) {
-        const minuteElement = minuteRef.current.children[selectedMinute];
+        const minuteElement = minuteRef.current.children[selectedMinute] as HTMLElement;
         if (minuteElement) {
-          minuteElement.scrollIntoView({ block: "center" });
+          minuteElement.scrollIntoView({ block: "center", behavior: "smooth" });
         }
       }
     }
-  }, [isOpen, selectedDateTime]);
+  }, [isOpen, activeTab, selectedDateTime]);
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
-  // Handlers for month navigation
   const handlePrevMonth = () => {
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
   };
@@ -68,7 +64,6 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
   };
 
-  // Handlers for selecting date and time
   const handleDateSelect = (day: number) => {
     const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
     setSelectedDateTime(
@@ -84,12 +79,8 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
 
   const handleTimeSelect = (type: "hour" | "minute", value: number) => {
     const newDate = new Date(selectedDateTime);
-    if (type === "hour") {
-      newDate.setHours(value);
-    }
-    if (type === "minute") {
-      newDate.setMinutes(value);
-    }
+    if (type === "hour") newDate.setHours(value);
+    if (type === "minute") newDate.setMinutes(value);
     setSelectedDateTime(newDate);
   };
 
@@ -99,216 +90,317 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
     setViewDate(today);
   };
 
+  const handleSetNow = () => {
+    const now = new Date();
+    setSelectedDateTime(now);
+  };
+
   const handleApply = () => {
     onApply(selectedDateTime);
     onClose();
   };
 
-  // Calendar grid generation logic
   const generateCalendarGrid = () => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const firstDayOfMonth = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    // Get today's date for comparison
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time part for accurate date comparison
-
-    // Adjust for Sunday being 0
+    today.setHours(0, 0, 0, 0);
     const startDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
     const grid: JSX.Element[] = [];
-    // Add empty cells for days before the start of the month
+    
     for (let i = 0; i < startDay; i++) {
-      grid.push(
-        <div 
-          key={`empty-${i}`} 
-          className="bg-transparent border border-[#333333] text-white p-1 cursor-pointer aspect-square invisible" 
-        />
-      );
+      grid.push(<div key={`empty-${i}`} className="aspect-square" />);
     }
 
-    // Add cells for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(year, month, day);
       const isSelected =
         day === selectedDateTime.getDate() &&
         month === selectedDateTime.getMonth() &&
         year === selectedDateTime.getFullYear();
-
-      // Check if the date is in the future
+      const isToday =
+        day === today.getDate() &&
+        month === today.getMonth() &&
+        year === today.getFullYear();
       const isFutureDate = currentDate > today;
 
       grid.push(
-        <button
+        <motion.button
           key={day}
-          className={`
-            text-sm bg-transparent border border-[#333333] text-white p-1 cursor-pointer transition-colors duration-200 aspect-square
-            ${isSelected 
-              ? "bg-[#4d6aff] text-white border-[#4d6aff]" 
-              : "hover:bg-[#333333]"
-            }
-            ${isFutureDate 
-              ? "opacity-50 cursor-not-allowed pointer-events-none" 
-              : ""
-            }
-          `}
+          whileHover={{ scale: isFutureDate ? 1 : 1.1 }}
+          whileTap={{ scale: isFutureDate ? 1 : 0.95 }}
+          className={cn(
+            "aspect-square rounded-xl text-sm font-medium transition-all duration-200",
+            "flex items-center justify-center",
+            isSelected
+              ? "bg-primary text-white shadow-lg shadow-primary/30"
+              : isToday
+                ? "bg-primary/20 text-primary border border-primary/30"
+                : "hover:bg-muted/50 text-foreground",
+            isFutureDate && "opacity-30 cursor-not-allowed"
+          )}
           onClick={() => !isFutureDate && handleDateSelect(day)}
           disabled={isFutureDate}
         >
           {day}
-        </button>
+        </motion.button>
       );
     }
     return grid;
   };
 
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const monthName = viewDate.toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
-  const todayFormatted = selectedDateTime.toLocaleString("default", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  const daysOfWeek = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  const monthName = viewDate.toLocaleString("default", { month: "long", year: "numeric" });
+  
+  const formatSelectedDate = () => {
+    return selectedDateTime.toLocaleString("default", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  };
+
+  const formatSelectedTime = () => {
+    return selectedDateTime.toLocaleString("default", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+  };
 
   return (
-    <div 
-      className="fixed inset-0 bg-[rgba(0,0,0,0.7)] z-[1000] flex items-center justify-center"
-      onClick={onClose}
-    >
-      <div 
-        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[rgba(34,33,33,0.379)] backdrop-blur-[30px] rounded-2xl shadow-2xl p-8 max-w-[650px] text-white animate-[contentShow_150ms_cubic-bezier(0.16,1,0.3,1)] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+    <AnimatePresence>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4"
+        onClick={onClose}
       >
-        {/* Header */}
-        <div className="flex justify-between items-center w-full">
-          <h2 className="text-2xl font-bold m-0">Choose date and time</h2>
-          <button
-            className="bg-none border-none text-[#aaaaaa] cursor-pointer flex items-center justify-center w-8 h-8 p-2 rounded-xl hover:bg-[#333333]"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <FontAwesomeIcon icon={faClose} className="text-xl" />
-          </button>
-        </div>
-
-        {/* Main Content */}
-        <div className="p-6 mt-2 border border-[#333333] rounded-xl">
-          <div className="flex gap-6">
-            {/* Calendar Section */}
-            <div className="flex-1 flex flex-col">
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-xl font-bold">{monthName}</div>
-                <div className="flex gap-4">
-                  <button 
-                    onClick={handlePrevMonth}
-                    className="bg-none border-none text-white cursor-pointer"
-                  >
-                    <FontAwesomeIcon icon={faChevronLeft} className="text-xl" />
-                  </button>
-                  <button 
-                    onClick={handleNextMonth}
-                    className="bg-none border-none text-white cursor-pointer"
-                  >
-                    <FontAwesomeIcon icon={faChevronRight} className="text-xl" />
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-7 gap-0.5">
-                {daysOfWeek.map((day) => (
-                  <div key={day} className="text-sm text-[#aaaaaa] font-semibold text-center py-2">
-                    {day}
-                  </div>
-                ))}
-                {generateCalendarGrid()}
-              </div>
-            </div>
-
-            {/* Time Picker Section */}
-            <div className="flex gap-4">
-              <div className="text-center">
-                <div className="font-semibold mb-4">Hour</div>
-                <div 
-                  className="max-h-[350px] overflow-y-auto flex flex-col gap-2 scrollbar-hide scroll-snap-y-mandatory px-2"
-                  ref={hourRef}
-                >
-                  {getHours().map((hour) => {
-                    const isSelected = hour === selectedDateTime.getHours();
-                    return (
-                      <button
-                        key={hour}
-                        className={`
-                          bg-none border-none text-[#aaaaaa] font-semibold text-[0.55rem] px-2 py-1 rounded transition-all duration-200 ease-in-out scroll-snap-align-center
-                          ${isSelected 
-                            ? "text-white font-bold text-base bg-[#333333]" 
-                            : ""
-                          }
-                        `}
-                        onClick={() => handleTimeSelect("hour", hour)}
-                      >
-                        {String(hour).padStart(2, "0")}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold mb-4">Minute</div>
-                <div 
-                  className="max-h-[350px] overflow-y-auto flex flex-col gap-2 scrollbar-hide scroll-snap-y-mandatory px-2"
-                  ref={minuteRef}
-                >
-                  {getMinutes().map((minute) => {
-                    const isSelected = minute === selectedDateTime.getMinutes();
-                    return (
-                      <button
-                        key={minute}
-                        className={`
-                          bg-none border-none text-[#aaaaaa] font-semibold text-[0.55rem] px-2 py-1 rounded transition-all duration-200 ease-in-out scroll-snap-align-center
-                          ${isSelected 
-                            ? "text-white font-bold text-base bg-[#333333]" 
-                            : ""
-                          }
-                        `}
-                        onClick={() => handleTimeSelect("minute", minute)}
-                      >
-                        {String(minute).padStart(2, "0")}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Footer */}
-          <div className="flex justify-between items-center text-lg font-bold mt-6">
-            <button 
-              className="bg-none border-none text-[#4d6aff] cursor-pointer text-base font-bold p-0"
-              onClick={handleSetToday}
-            >
-              Today
-            </button>
-            <div className="text-base font-normal">{todayFormatted}</div>
-          </div>
-        </div>
-
-        {/* Apply Button */}
-        <button 
-          className="h-14 w-full rounded-lg bg-[#4d6aff] text-white font-bold border-none cursor-pointer mt-4 transition-all duration-200 hover:brightness-110"
-          onClick={handleApply}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
         >
-          Apply
-        </button>
-      </div>
-    </div>
+          {/* Header */}
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Select Date & Time</h2>
+                <p className="text-xs text-muted-foreground">{formatSelectedDate()} at {formatSelectedTime()}</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg hover:bg-muted/50 flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+
+          {/* Tab Switcher */}
+          <div className="p-3 border-b border-border">
+            <div className="flex gap-1 p-1 bg-muted/30 rounded-xl">
+              <button
+                onClick={() => setActiveTab('date')}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                  activeTab === 'date'
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Calendar className="w-4 h-4" />
+                Date
+              </button>
+              <button
+                onClick={() => setActiveTab('time')}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                  activeTab === 'time'
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Clock className="w-4 h-4" />
+                Time
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="p-4">
+            <AnimatePresence mode="wait">
+              {activeTab === 'date' ? (
+                <motion.div
+                  key="date"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {/* Month Navigation */}
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={handlePrevMonth}
+                      className="w-9 h-9 rounded-lg hover:bg-muted/50 flex items-center justify-center transition-colors"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                    <span className="font-semibold text-foreground">{monthName}</span>
+                    <button
+                      onClick={handleNextMonth}
+                      className="w-9 h-9 rounded-lg hover:bg-muted/50 flex items-center justify-center transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                  </div>
+
+                  {/* Days of Week */}
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {daysOfWeek.map((day) => (
+                      <div key={day} className="aspect-square flex items-center justify-center text-xs font-medium text-muted-foreground">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Calendar Grid */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {generateCalendarGrid()}
+                  </div>
+
+                  {/* Today Button */}
+                  <button
+                    onClick={handleSetToday}
+                    className="w-full mt-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 rounded-xl transition-colors"
+                  >
+                    Jump to Today
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="time"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-4"
+                >
+                  {/* Time Display */}
+                  <div className="text-center py-4 bg-muted/20 rounded-xl border border-border/50">
+                    <div className="text-4xl font-bold text-foreground tracking-wider">
+                      {String(selectedDateTime.getHours()).padStart(2, '0')}
+                      <span className="text-primary mx-1">:</span>
+                      {String(selectedDateTime.getMinutes()).padStart(2, '0')}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">24-hour format</p>
+                  </div>
+
+                  {/* Time Wheels */}
+                  <div className="flex gap-4">
+                    {/* Hour Wheel */}
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-muted-foreground mb-2 text-center">Hour</div>
+                      <div 
+                        ref={hourRef}
+                        className="h-48 overflow-y-auto rounded-xl bg-muted/20 border border-border/50 scrollbar-hide"
+                      >
+                        <div className="p-1 space-y-0.5">
+                          {getHours().map((hour) => {
+                            const isSelected = hour === selectedDateTime.getHours();
+                            return (
+                              <button
+                                key={hour}
+                                onClick={() => handleTimeSelect("hour", hour)}
+                                className={cn(
+                                  "w-full py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                                  isSelected
+                                    ? "bg-primary text-white"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                )}
+                              >
+                                {String(hour).padStart(2, "0")}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Minute Wheel */}
+                    <div className="flex-1">
+                      <div className="text-xs font-medium text-muted-foreground mb-2 text-center">Minute</div>
+                      <div 
+                        ref={minuteRef}
+                        className="h-48 overflow-y-auto rounded-xl bg-muted/20 border border-border/50 scrollbar-hide"
+                      >
+                        <div className="p-1 space-y-0.5">
+                          {getMinutes().map((minute) => {
+                            const isSelected = minute === selectedDateTime.getMinutes();
+                            return (
+                              <button
+                                key={minute}
+                                onClick={() => handleTimeSelect("minute", minute)}
+                                className={cn(
+                                  "w-full py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                                  isSelected
+                                    ? "bg-primary text-white"
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                )}
+                              >
+                                {String(minute).padStart(2, "0")}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Now Button */}
+                  <button
+                    onClick={handleSetNow}
+                    className="w-full py-2.5 text-sm font-medium text-primary hover:bg-primary/10 rounded-xl transition-colors"
+                  >
+                    Set to Now
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-border flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
+              Cancel
+            </button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleApply}
+              className="flex-1 py-3 rounded-xl font-medium bg-primary text-white hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+            >
+              <Check className="w-4 h-4" />
+              Apply
+            </motion.button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
