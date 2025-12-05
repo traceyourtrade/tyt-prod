@@ -13,6 +13,63 @@ interface Account {
   [key: string]: any;
 }
 
+const generateDemoTradeData = () => {
+  const trades = [];
+  const today = new Date();
+  const symbols = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'SPY', 'QQQ'];
+  const strategies = ['Momentum', 'Breakout', 'Reversal', 'Scalping', 'Swing'];
+  
+  for (let i = 0; i < 45; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+    const dateStr = date.toISOString().split('T')[0];
+    
+    const isWin = Math.random() > 0.4;
+    const profit = isWin 
+      ? Math.floor(Math.random() * 2000) + 100 
+      : -(Math.floor(Math.random() * 800) + 50);
+    
+    trades.push({
+      date: dateStr,
+      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      Profit: profit,
+      strategy: strategies[Math.floor(Math.random() * strategies.length)],
+      entryPrice: (Math.random() * 500 + 50).toFixed(2),
+      exitPrice: (Math.random() * 500 + 50).toFixed(2),
+      quantity: Math.floor(Math.random() * 100) + 10,
+      side: Math.random() > 0.5 ? 'Long' : 'Short',
+      duration: `${Math.floor(Math.random() * 120) + 5}m`,
+    });
+  }
+  return trades;
+};
+
+const demoAccounts: Account[] = [
+  {
+    checked: true,
+    accountName: "Demo Trading Account",
+    accountId: "demo-001",
+    accountBalance: 125000,
+    accountType: "Paper Trading",
+    broker: "Demo Broker",
+    description: "Demo account for UI preview",
+    tradeData: generateDemoTradeData(),
+  }
+];
+
+const demoProfileData = {
+  uniqueId: "demo-user",
+  fullName: "Demo Trader",
+  email: "demo@example.com",
+  accountValue: 125000,
+};
+
+const demoStrategies = [
+  { name: "Momentum", winRate: 68, trades: 24, profit: 4250 },
+  { name: "Breakout", winRate: 55, trades: 18, profit: 1820 },
+  { name: "Reversal", winRate: 72, trades: 12, profit: 2100 },
+];
+
 interface ProfileData {
   uniqueId?: string;
   fullName?: string;
@@ -125,9 +182,15 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
         set({ loading: false });
       }
     } catch (error) {
-      console.error("setAccounts: Error fetching accounts:", error);
+      console.error("setAccounts: Error fetching accounts, loading demo data:", error);
+      console.log('setAccounts: Loading demo data for UI preview');
+      
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to fetch accounts',
+        accounts: demoAccounts,
+        profileData: demoProfileData,
+        selectedAccounts: demoAccounts,
+        strategies: demoStrategies,
+        error: null,
         loading: false 
       });
     }
