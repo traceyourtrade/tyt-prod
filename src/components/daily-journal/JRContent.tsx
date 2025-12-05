@@ -604,23 +604,28 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="mx-4 mb-4 p-4 bg-muted/20 rounded-xl border border-border/50">
-                    {/* Trade Stats Bar */}
-                    <div className="flex flex-wrap items-center gap-4 pb-4 mb-4 border-b border-border/50">
-                      {[
-                        { label: "Size", value: trade.Size, icon: "📊" },
-                        { label: "Time", value: trade.OpenTime, icon: "🕐" },
-                        { label: "Commission", value: trade.Commission ? `$${trade.Commission}` : '-', icon: "💰" },
-                        { label: "Account", value: trade.accountType, icon: "👤" },
-                      ].map(({ label, value, icon }) => (
-                        <div key={label} className="flex items-center gap-2">
-                          <span className="text-sm">{icon}</span>
-                          <div>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
-                            <p className="text-sm font-medium text-foreground">{value || '-'}</p>
-                          </div>
-                        </div>
-                      ))}
+                  <div className="mx-4 mb-4 p-5 bg-muted/20 rounded-xl border border-border/50">
+                    {/* Trade Stats Bar - Clean Linear/Notion Style */}
+                    <div className="flex items-center gap-6 pb-4 mb-5 border-b border-border/30">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Size</span>
+                        <span className="text-xs font-semibold text-foreground tabular-nums">{trade.Size || '-'}</span>
+                      </div>
+                      <span className="w-px h-3.5 bg-border/60" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Time</span>
+                        <span className="text-xs font-semibold text-foreground">{trade.OpenTime || '-'}</span>
+                      </div>
+                      <span className="w-px h-3.5 bg-border/60" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Commission</span>
+                        <span className="text-xs font-semibold text-foreground tabular-nums">{trade.Commission ? `$${trade.Commission}` : '-'}</span>
+                      </div>
+                      <span className="w-px h-3.5 bg-border/60" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Account</span>
+                        <span className="text-xs font-semibold text-foreground">{trade.accountType || '-'}</span>
+                      </div>
                     </div>
 
                     {/* Two Column Layout */}
