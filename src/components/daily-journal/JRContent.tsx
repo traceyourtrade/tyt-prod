@@ -411,46 +411,46 @@ const JRContent = ({ dailyData }: JRContentProps) => {
             <div className="pl-5 pr-4 py-4">
               <div className="flex items-center justify-between">
                 {/* Left: Symbol & Meta */}
-                <div className="flex items-center gap-4 min-w-0">
-                  {/* Symbol & Type */}
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-base font-semibold text-foreground tracking-tight">
+                <div className="flex-1 min-w-0">
+                  {/* Top Row: Symbol & Type */}
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-foreground tracking-tight">
                       {trade.Item}
                     </h3>
-                    <span className={`text-[10px] font-medium uppercase ${
-                      trade.Type?.toLowerCase() === 'buy' ? 'text-profit' : 'text-loss'
+                    <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded ${
+                      trade.Type?.toLowerCase() === 'buy' 
+                        ? 'bg-profit/10 text-profit' 
+                        : 'bg-loss/10 text-loss'
                     }`}>
                       {trade.Type}
                     </span>
                   </div>
                   
-                  {/* Separator */}
-                  <span className="w-px h-4 bg-border/40 hidden sm:block" />
-                  
-                  {/* Date - Clean text only */}
-                  <span className="text-xs text-muted-foreground hidden sm:block">
-                    {formattedDate}
-                  </span>
-                  
-                  {/* Separator */}
-                  <span className="w-px h-4 bg-border/40 hidden md:block" />
-                  
-                  {/* Strategy Tag - Refined */}
-                  <div className="relative hidden md:block">
-                    <button
-                      onClick={() => {
-                        setActiveDropdown(activeDropdown === `strategy-${trade.id}` ? null : `strategy-${trade.id}`);
-                        setStrategySearch("");
-                      }}
-                      className={`flex items-center gap-1.5 text-xs transition-colors ${
-                        trade.strategy && trade.strategy !== "Select"
-                          ? "text-primary hover:text-primary/80"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span>{trade.strategy && trade.strategy !== "Select" ? trade.strategy : "Strategy"}</span>
-                      <ChevronDown className="w-3 h-3 opacity-60" />
-                    </button>
+                  {/* Bottom Row: Date, Strategy, Quality */}
+                  <div className="flex items-center gap-4 mt-2">
+                    {/* Date */}
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Clock className="w-3.5 h-3.5" />
+                      {formattedDate}
+                    </span>
+                    
+                    {/* Strategy Tag */}
+                    <div className="relative">
+                      <button
+                        onClick={() => {
+                          setActiveDropdown(activeDropdown === `strategy-${trade.id}` ? null : `strategy-${trade.id}`);
+                          setStrategySearch("");
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 text-sm font-medium rounded-lg transition-all ${
+                          trade.strategy && trade.strategy !== "Select"
+                            ? "bg-primary/10 text-primary hover:bg-primary/15"
+                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <Target className="w-3.5 h-3.5" />
+                        <span>{trade.strategy && trade.strategy !== "Select" ? trade.strategy : "Strategy"}</span>
+                        <ChevronDown className="w-3 h-3 opacity-60" />
+                      </button>
                       <AnimatePresence>
                         {activeDropdown === `strategy-${trade.id}` && (
                           <motion.div
@@ -523,17 +523,13 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                       </AnimatePresence>
                     </div>
 
-                    {/* Quality Badge - Refined */}
-                    <div className="relative hidden md:block">
+                    {/* Quality Badge */}
+                    <div className="relative">
                       <button
                         onClick={() => setActiveDropdown(activeDropdown === `quality-${trade.id}` ? null : `quality-${trade.id}`)}
-                        className={`flex items-center gap-1.5 text-xs transition-colors ${
-                          quality.label !== "Rate" 
-                            ? quality.style.includes('profit') ? 'text-profit' : quality.style.includes('yellow') ? 'text-yellow-500' : 'text-loss'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`flex items-center gap-1 px-2.5 py-1 text-sm font-medium rounded-lg transition-all ${quality.style.split(' ').filter(c => !c.startsWith('border')).join(' ')}`}
                       >
-                        <span>{quality.label}</span>
+                        {quality.label}
                         <ChevronDown className="w-3 h-3 opacity-60" />
                       </button>
                       <AnimatePresence>
@@ -562,19 +558,22 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                       </AnimatePresence>
                     </div>
                   </div>
+                </div>
 
                 {/* Right: P&L & Actions */}
-                <div className="flex items-center gap-4">
-                  {/* P&L Display - Clean Typography */}
-                  <p className={`text-lg font-semibold tabular-nums ${isProfitable ? 'text-profit' : 'text-loss'}`}>
-                    {isProfitable ? '+' : ''}{trade.Profit?.toFixed(2) || '0.00'}
-                  </p>
+                <div className="flex items-center gap-3">
+                  {/* P&L Display with Background */}
+                  <div className={`px-4 py-2 rounded-xl ${isProfitable ? 'bg-profit/10' : 'bg-loss/10'}`}>
+                    <p className={`text-xl font-bold tabular-nums ${isProfitable ? 'text-profit' : 'text-loss'}`}>
+                      {isProfitable ? '+' : ''}{trade.Profit?.toFixed(2) || '0.00'}
+                    </p>
+                  </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center">
                     <button
                       onClick={() => handleShare(index)}
-                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       title="Share"
                     >
                       <Share2 className="w-4 h-4" />
@@ -583,11 +582,11 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                       onClick={() => toggleExpand(trade.id, trade)}
                       className={`p-2 rounded-lg transition-all ${
                         isExpanded 
-                          ? 'bg-primary/10 text-primary' 
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                          ? 'bg-primary text-primary-foreground rotate-180' 
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
                     >
-                      <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown className="w-4 h-4 transition-transform" />
                     </button>
                   </div>
                 </div>
