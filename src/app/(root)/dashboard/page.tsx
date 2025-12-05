@@ -1,16 +1,7 @@
-import AddAccPopup from "@/components/dashboard-components/popups/AddAccPopup";
-import DeleteAccPopup from "@/components/dashboard-components/popups/DeleteAccPopup";
-import EditAccPopup from "@/components/dashboard-components/popups/EditAccPopup";
+import DashboardMain from "@/components/dashboard/DashboardMain";
 
 const DashboardHome = () => {
-   
-    return (
-        <>
-            {/* <DeleteAccPopup/> */}
-            {/* <EditAccPopup/> */}
-            <AddAccPopup/>
-        </>
-    );
+    return <DashboardMain />;
 }
 
 export default DashboardHome;
