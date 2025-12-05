@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 
 type Props = {
   initialFrom?: string
@@ -13,23 +14,23 @@ export default function PnLFilter({ initialFrom = '', initialTo = '', onApply }:
   const [to, setTo] = useState(initialTo)
 
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex gap-3 items-center">
       <input
         type="date"
         value={from}
         onChange={(e) => setFrom(e.target.value)}
-        className="rounded-md border px-3 py-1 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+        className="rounded-lg border border-border px-3 py-2 bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
       />
-      <span className="text-sm text-slate-500 dark:text-slate-300">to</span>
+      <span className="text-sm text-muted-foreground">to</span>
       <input
         type="date"
         value={to}
         onChange={(e) => setTo(e.target.value)}
-        className="rounded-md border px-3 py-1 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+        className="rounded-lg border border-border px-3 py-2 bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
       />
       <button
         onClick={() => onApply?.(from, to)}
-        className="ml-2 rounded-md bg-indigo-600 text-white px-3 py-1 text-sm"
+        className="rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
       >
         Apply
       </button>

@@ -1,3 +1,6 @@
+"use client"
+
+import { BarChart2, TrendingUp, TrendingDown, Activity } from 'lucide-react'
 import StatGroup from './StatGroup'
 import StatTable from './StatTable'
 
@@ -7,8 +10,6 @@ type Props = {
 }
 
 export default function StatsCard({ trades, metrics }: Props) {
-  const monthlyPnL = {} as any // placeholder - original computed from trades
-
   const statsData = {
     bestMonth: { value: '$0.00', date: '' },
     lowestMonth: { value: '$0.00', date: '' },
@@ -16,12 +17,20 @@ export default function StatsCard({ trades, metrics }: Props) {
   }
 
   return (
-    <div className="bg-[#1e1e1e] rounded-xl shadow-md p-6 mb-6 border border-[#333] transition">
-      <div className="flex items-center gap-2 mb-4 px-2">
-        <h2 className="text-base font-semibold text-white m-0">YOUR STATS <span className="text-gray-400 text-sm">ⓘ</span></h2>
-        <p className="text-sm uppercase text-gray-400 m-0">(ALL DATES)</p>
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 p-4 border-b border-border">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <BarChart2 className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Your Stats</h2>
+          <span className="text-xs text-muted-foreground uppercase">All Dates</span>
+        </div>
       </div>
-      <div className="flex flex-col gap-6">
+
+      {/* Content */}
+      <div className="p-4 md:p-6 space-y-6">
         <StatGroup stats={statsData} />
         <StatTable trades={trades} metrics={metrics} />
       </div>

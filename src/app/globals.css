@@ -35,6 +35,10 @@
   --color-profit: var(--profit);
   --color-loss: var(--loss);
   --color-breakeven: var(--breakeven);
+  --color-warning: var(--warning);
+  
+  --color-chart-profit: var(--chart-2);
+  --color-chart-loss: var(--chart-4);
   
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

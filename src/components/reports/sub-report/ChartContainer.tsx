@@ -1,77 +1,119 @@
-// ChartContainer.tsx
-import React, { useMemo } from 'react';
-import LineChartCard from '../charts/LineChartCard';
-import BarChartCard from '../charts/BarChartCard';
-import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics';
+"use client"
+
+import React, { useMemo } from 'react'
+import { LineChart, BarChart3, ChevronDown, Plus } from 'lucide-react'
+import LineChartCard from '../charts/LineChartCard'
+import BarChartCard from '../charts/BarChartCard'
+import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
 
 interface Trade {
-  date: string;
-  // Add other trade properties as needed
+  date: string
 }
 
 interface ChartContainerProps {
-  trades: Trade[];
+  trades: Trade[]
 }
 
 const ChartContainer: React.FC<ChartContainerProps> = ({ trades }) => {
-  // Group trades by day
   const dayData = useMemo(() => {
     const tradesByDay = trades.reduce((acc: Record<string, Trade[]>, trade: Trade) => {
-      const day = trade.date;
+      const day = trade.date
       if (!acc[day]) {
-        acc[day] = [];
+        acc[day] = []
       }
-      acc[day].push(trade);
-      return acc;
-    }, {});
+      acc[day].push(trade)
+      return acc
+    }, {})
 
-    // Calculate metrics for each day
     const chartData = Object.entries(tradesByDay).map(([day, dayTrades]) => {
-      const metrics = calculatePerformanceMetrics(dayTrades);
+      const metrics = calculatePerformanceMetrics(dayTrades)
       return {
         date: day,
         tradeCount: dayTrades.length,
         winPercentage: metrics.winPercentage
-      };
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      }
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
     return {
       tradeCount: chartData.map(d => ({ date: d.date, value: d.tradeCount })),
       winPercentage: chartData.map(d => ({ date: d.date, value: d.winPercentage }))
-    };
-  }, [trades]);
+    }
+  }, [trades])
 
   return (
-    <div className="flex justify-around w-full gap-6 mb-6">
-      <div className="flex-1 bg-gray-900 rounded-xl p-5 shadow-lg border border-gray-800 transition-all duration-200 hover:border-green-500">
-        <div className="flex items-center gap-2 mb-4">
-          <select className="px-4 py-2 border border-gray-700 rounded-lg bg-gray-900 text-sm text-white cursor-not-allowed opacity-50" disabled>
-            <option>Net P&L</option>
-            <option>Trade count</option>
-          </select>
-          <button className="bg-transparent text-gray-400 border-none px-4 py-2 text-sm cursor-not-allowed opacity-50">
-            + Add metric
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      {/* Trade Count Chart */}
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <LineChart className="h-4 w-4 text-primary" />
+            </div>
+            <div className="relative">
+              <select 
+                className="appearance-none px-3 py-1.5 pr-8 border border-border rounded-lg bg-muted text-sm font-medium text-foreground cursor-not-allowed opacity-50"
+                disabled
+              >
+                <option>Net P&L</option>
+                <option>Trade Count</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+          <button 
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground opacity-50 cursor-not-allowed"
+            disabled
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add metric
           </button>
         </div>
-        <div className="h-72 w-full bg-gray-800 rounded-3xl overflow-hidden">
-          <LineChartCard data={dayData.tradeCount} isArea={false} xLabel={'Day'} yLabel='Trade Count' />
+
+        {/* Chart */}
+        <div className="p-4">
+          <div className="h-72 w-full">
+            <LineChartCard data={dayData.tradeCount} isArea={false} xLabel="Day" yLabel="Trade Count" />
+          </div>
         </div>
       </div>
-      <div className="flex-1 bg-gray-900 rounded-xl p-5 shadow-lg border border-gray-800 transition-all duration-200 hover:border-green-500">
-        <div className="flex items-center gap-2 mb-4">
-          <select className="px-4 py-2 border border-gray-700 rounded-lg bg-gray-900 text-sm text-white cursor-not-allowed opacity-50" disabled>
-            <option>Win %</option>
-          </select>
-          <button className="bg-transparent text-gray-400 border-none px-4 py-2 text-sm cursor-not-allowed opacity-50" disabled>
-            + Add metric
+
+      {/* Win Percentage Chart */}
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-profit/10 flex items-center justify-center">
+              <BarChart3 className="h-4 w-4 text-profit" />
+            </div>
+            <div className="relative">
+              <select 
+                className="appearance-none px-3 py-1.5 pr-8 border border-border rounded-lg bg-muted text-sm font-medium text-foreground cursor-not-allowed opacity-50"
+                disabled
+              >
+                <option>Win %</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+          <button 
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground opacity-50 cursor-not-allowed"
+            disabled
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add metric
           </button>
         </div>
-        <div className="h-72 w-full bg-gray-800 rounded-3xl overflow-hidden">
-          <BarChartCard data={dayData.winPercentage} xLabel={'Day'} yLabel='Win %' />
+
+        {/* Chart */}
+        <div className="p-4">
+          <div className="h-72 w-full">
+            <BarChartCard data={dayData.winPercentage} xLabel="Day" yLabel="Win %" />
+          </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ChartContainer;
+export default ChartContainer

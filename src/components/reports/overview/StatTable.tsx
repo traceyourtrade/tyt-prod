@@ -1,3 +1,5 @@
+"use client"
+
 type Props = {
   trades: any[]
   metrics: any
@@ -13,10 +15,10 @@ export default function StatTable({ trades, metrics }: Props) {
   const largestLoss = Math.min(...trades.map((t) => t.Profit || 0))
 
   const leftColumn = [
-    { label: 'Total P&L', value: `$${metrics.netPnL.toFixed(2)}` },
-    { label: 'Average daily volume', value: metrics.avgDailyVolume.toFixed(2) },
-    { label: 'Average winning trade', value: `$${metrics.avgTradeWinLoss.toFixed(2)}` },
-    { label: 'Average losing trade', value: `-$${Math.abs(metrics.avgTradeWinLoss).toFixed(2)}` },
+    { label: 'Total P&L', value: `$${metrics.netPnL?.toFixed(2) ?? '0.00'}`, highlight: true, isProfit: metrics.netPnL >= 0 },
+    { label: 'Average daily volume', value: metrics.avgDailyVolume?.toFixed(2) ?? '0' },
+    { label: 'Average winning trade', value: `$${metrics.avgTradeWinLoss?.toFixed(2) ?? '0.00'}` },
+    { label: 'Average losing trade', value: `-$${Math.abs(metrics.avgTradeWinLoss || 0).toFixed(2)}` },
     { label: 'Total number of trades', value: trades.length.toString() },
     { label: 'Number of winning trades', value: trades.filter(t => (t.Profit || 0) > 0).length.toString() },
     { label: 'Number of losing trades', value: trades.filter(t => (t.Profit || 0) < 0).length.toString() },
@@ -26,55 +28,65 @@ export default function StatTable({ trades, metrics }: Props) {
     { label: 'Total commissions', value: `$${totalCommissions.toFixed(2)}` },
     { label: 'Total fees', value: '$0' },
     { label: 'Total swap', value: `$${totalSwap.toFixed(2)}` },
-    { label: 'Largest profit', value: `$${largestProfit.toFixed(2)}` },
-    { label: 'Largest loss', value: `-$${Math.abs(largestLoss).toFixed(2)}` },
-    { label: 'Average hold time (All trades)', value: metrics.avgHoldTime },
+    { label: 'Largest profit', value: `$${largestProfit.toFixed(2)}`, highlight: true, isProfit: true },
+    { label: 'Largest loss', value: `-$${Math.abs(largestLoss).toFixed(2)}`, highlight: true, isProfit: false },
+    { label: 'Average hold time (All trades)', value: metrics.avgHoldTime ?? 'N/A' },
     { label: 'Average hold time (Winning trades)', value: 'N/A' },
     { label: 'Average hold time (Losing trades)', value: 'N/A' },
     { label: 'Average hold time (Scratch trades)', value: 'N/A' },
-    { label: 'Average trade P&L', value: `$${metrics.avgNetTradePnL.toFixed(2)}` },
-    { label: 'Profit factor', value: metrics.profitFactor.toFixed(2) },
+    { label: 'Average trade P&L', value: `$${metrics.avgNetTradePnL?.toFixed(2) ?? '0.00'}` },
+    { label: 'Profit factor', value: metrics.profitFactor?.toFixed(2) ?? '0' },
   ]
 
   const rightColumn = [
     { label: 'Open trades', value: trades.filter(t => !t.CloseTime).length.toString() },
-    { label: 'Total trading days', value: metrics.loggedDays.toString() },
+    { label: 'Total trading days', value: metrics.loggedDays?.toString() ?? '0' },
     { label: 'Winning days', value: 'N/A' },
     { label: 'Losing days', value: 'N/A' },
     { label: 'Breakeven days', value: 'N/A' },
-    { label: 'Logged days', value: metrics.loggedDays.toString() },
+    { label: 'Logged days', value: metrics.loggedDays?.toString() ?? '0' },
     { label: 'Max consecutive winning days', value: 'N/A' },
     { label: 'Max consecutive losing days', value: 'N/A' },
-    { label: 'Average daily P&L', value: `$${metrics.avgDailyNetPnL.toFixed(2)}` },
-    { label: 'Average winning day P&L', value: `$${metrics.avgDailyWinLoss > 0 ? metrics.avgDailyWinLoss.toFixed(2) : 0}` },
-    { label: 'Average losing day P&L', value: `-$${metrics.avgDailyWinLoss < 0 ? Math.abs(metrics.avgDailyWinLoss).toFixed(2) : 0}` },
-    { label: 'Largest profitable day (Profits)', value: `$${Math.max(...trades.map(t => t.Profit || 0)).toFixed(2)}` },
-    { label: 'Largest losing day (Losses)', value: `-$${Math.abs(Math.min(...trades.map(t => t.Profit || 0))).toFixed(2)}` },
-    { label: 'Average planned R-Multiple', value: `${metrics.avgPlannedRMultiple.toFixed(2)}R` },
-    { label: 'Average realized R-Multiple', value: `${metrics.avgRealizedRMultiple.toFixed(2)}R` },
-    { label: 'Trade expectancy', value: `$${metrics.tradeExpectancy.toFixed(2)}` },
-    { label: 'Max drawdown', value: `$${metrics.maxDailyNetDrawdown.toFixed(2)}` },
+    { label: 'Average daily P&L', value: `$${metrics.avgDailyNetPnL?.toFixed(2) ?? '0.00'}` },
+    { label: 'Average winning day P&L', value: `$${metrics.avgDailyWinLoss > 0 ? metrics.avgDailyWinLoss?.toFixed(2) : '0.00'}` },
+    { label: 'Average losing day P&L', value: `-$${metrics.avgDailyWinLoss < 0 ? Math.abs(metrics.avgDailyWinLoss).toFixed(2) : '0.00'}` },
+    { label: 'Largest profitable day', value: `$${Math.max(...trades.map(t => t.Profit || 0)).toFixed(2)}` },
+    { label: 'Largest losing day', value: `-$${Math.abs(Math.min(...trades.map(t => t.Profit || 0))).toFixed(2)}` },
+    { label: 'Average planned R-Multiple', value: `${metrics.avgPlannedRMultiple?.toFixed(2) ?? '0'}R` },
+    { label: 'Average realized R-Multiple', value: `${metrics.avgRealizedRMultiple?.toFixed(2) ?? '0'}R` },
+    { label: 'Trade expectancy', value: `$${metrics.tradeExpectancy?.toFixed(2) ?? '0.00'}` },
+    { label: 'Max drawdown', value: `$${metrics.maxDailyNetDrawdown?.toFixed(2) ?? '0.00'}` },
     { label: 'Max drawdown, %', value: 'N/A' },
-    { label: 'Average drawdown', value: `$${metrics.avgDailyNetDrawdown.toFixed(2)}` },
+    { label: 'Average drawdown', value: `$${metrics.avgDailyNetDrawdown?.toFixed(2) ?? '0.00'}` },
     { label: 'Average drawdown, %', value: 'N/A' },
   ]
 
+  const StatRow = ({ item, idx }: { item: any; idx: number }) => (
+    <div 
+      key={idx} 
+      className="flex justify-between items-center py-2.5 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors px-2 rounded"
+    >
+      <span className="text-sm text-muted-foreground">{item.label}</span>
+      <span className={`text-sm font-medium ${
+        item.highlight 
+          ? item.isProfit ? 'text-profit' : 'text-loss'
+          : 'text-foreground'
+      }`}>
+        {item.value}
+      </span>
+    </div>
+  )
+
   return (
-    <div className="flex gap-6 w-full">
-      <div className="flex-1 flex flex-col gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-0">
         {leftColumn.map((item, idx) => (
-          <div key={idx} className="flex justify-between py-2 border-b border-[#333]">
-            <div className="text-sm text-gray-400 font-medium">{item.label}</div>
-            <div className="text-sm text-white font-semibold">{item.value}</div>
-          </div>
+          <StatRow key={idx} item={item} idx={idx} />
         ))}
       </div>
-      <div className="flex-1 flex flex-col gap-2">
+      <div className="space-y-0">
         {rightColumn.map((item, idx) => (
-          <div key={idx} className="flex justify-between py-2 border-b border-[#333]">
-            <div className="text-sm text-gray-400 font-medium">{item.label}</div>
-            <div className="text-sm text-white font-semibold">{item.value}</div>
-          </div>
+          <StatRow key={idx} item={item} idx={idx} />
         ))}
       </div>
     </div>

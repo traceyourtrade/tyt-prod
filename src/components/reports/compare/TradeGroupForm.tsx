@@ -1,98 +1,124 @@
-// TradeInputGroup.tsx
-import React from 'react';
+"use client"
+
+import React from 'react'
+import { ChevronDown } from 'lucide-react'
 
 interface FormValues {
-  symbol: string;
-  startDate: string;
-  endDate: string;
-  tradeType: string;
-  tradePL: string;
+  symbol: string
+  startDate: string
+  endDate: string
+  tradeType: string
+  tradePL: string
 }
 
 interface EnteredValues {
-  group1: FormValues;
-  group2: FormValues;
+  group1: FormValues
+  group2: FormValues
 }
 
 interface TradeGroupFormProps {
-  title: string;
-  values: EnteredValues;
-  updateValues: (group: keyof EnteredValues, field: keyof FormValues, value: string) => void;
-  group: keyof EnteredValues;
+  title: string
+  values: EnteredValues
+  updateValues: (group: keyof EnteredValues, field: keyof FormValues, value: string) => void
+  group: keyof EnteredValues
 }
 
 const TradeGroupForm: React.FC<TradeGroupFormProps> = ({ title, values, updateValues, group }) => {
+  const inputClass = "w-full px-3 py-2.5 border border-border rounded-lg text-sm bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-muted-foreground"
+  const selectClass = "w-full px-3 py-2.5 pr-10 border border-border rounded-lg text-sm bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer"
+  const labelClass = "text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5 block"
+
   return (
-    <div className="bg-gray-900 p-5 rounded-xl shadow-lg border border-gray-800 transition-all duration-200 hover:border-green-500 m-4 w-full">
-      <h3 className="text-base font-semibold text-white mb-5 pb-3 border-b border-gray-800">{title}</h3>
-
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-sm text-gray-500 w-18 text-left">Symbol</label>
-        <input 
-          type="text" 
-          className="px-4 py-3 border border-gray-800 rounded-lg text-sm bg-gray-800 text-white outline-none transition-all duration-200 w-50 hover:bg-gray-700 hover:border-green-500 focus:border-green-500 focus:shadow-lg focus:shadow-green-500/20 focus:bg-gray-700" 
-          placeholder="Enter Symbol" 
-          value={values[group].symbol} 
-          onChange={e => updateValues(group, "symbol", e.target.value)} 
-        />
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-border">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-sm text-gray-500 w-18 text-left">Tags</label>
-        <input 
-          type="text" 
-          className="px-4 py-3 border border-gray-800 rounded-lg text-sm bg-gray-800 text-white outline-none transition-all duration-200 w-50 hover:bg-gray-700 hover:border-green-500 focus:border-green-500 focus:shadow-lg focus:shadow-green-500/20 focus:bg-gray-700" 
-          placeholder="" 
-        />
-      </div>
+      {/* Form Fields */}
+      <div className="p-4 space-y-4">
+        {/* Symbol */}
+        <div>
+          <label className={labelClass}>Symbol</label>
+          <input
+            type="text"
+            className={inputClass}
+            placeholder="Enter Symbol (e.g., EURUSD)"
+            value={values[group].symbol}
+            onChange={e => updateValues(group, "symbol", e.target.value)}
+          />
+        </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-sm text-gray-500 w-18 text-left">Side</label>
-        <select 
-          className={`px-4 py-3 border border-gray-800 rounded-lg text-sm bg-gray-800 text-white outline-none transition-all duration-200 w-50 hover:bg-gray-700 hover:border-green-500 focus:border-green-500 focus:shadow-lg focus:shadow-green-500/20 focus:bg-gray-700 appearance-none cursor-pointer pr-10 bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"%3e%3cpath d=\"M7 10l5 5 5-5z\" fill=\"%234ebf94\"/%3e%3c/svg%3e')] bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem]"`}
-          value={values[group].tradeType} 
-          onChange={e => updateValues(group, "tradeType", e.target.value)}
-        >
-          <option value="buy">Long</option>
-          <option value="sell">Short</option>
-        </select>
-      </div>
+        {/* Tags */}
+        <div>
+          <label className={labelClass}>Tags</label>
+          <input
+            type="text"
+            className={inputClass}
+            placeholder="Enter tags..."
+          />
+        </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-sm text-gray-500 w-18 text-left">Start date</label>
-        <input 
-          type="text" 
-          className="px-4 py-3 border border-gray-800 rounded-lg text-sm bg-gray-800 text-white outline-none transition-all duration-200 w-50 hover:bg-gray-700 hover:border-green-500 focus:border-green-500 focus:shadow-lg focus:shadow-green-500/20 focus:bg-gray-700" 
-          placeholder="DD-MM-YYYY" 
-          value={values[group].startDate} 
-          onChange={e => updateValues(group, "startDate", e.target.value)} 
-        />
-      </div>
+        {/* Side */}
+        <div>
+          <label className={labelClass}>Side</label>
+          <div className="relative">
+            <select
+              className={selectClass}
+              value={values[group].tradeType}
+              onChange={e => updateValues(group, "tradeType", e.target.value)}
+            >
+              <option value="buy">Long</option>
+              <option value="sell">Short</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          </div>
+        </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-sm text-gray-500 w-18 text-left">Trade P&L</label>
-        <select 
-          className={`px-4 py-3 border border-gray-800 rounded-lg text-sm bg-gray-800 text-white outline-none transition-all duration-200 w-50 hover:bg-gray-700 hover:border-green-500 focus:border-green-500 focus:shadow-lg focus:shadow-green-500/20 focus:bg-gray-700 appearance-none cursor-pointer pr-10 bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"%3e%3cpath d=\"M7 10l5 5 5-5z\" fill=\"%234ebf94\"/%3e%3c/svg%3e')] bg-no-repeat bg-[right_0.75rem_center] bg-[length:1rem]"`}
-          value={values[group].tradePL} 
-          onChange={e => updateValues(group, "tradePL", e.target.value)}
-        >
-          <option value="win">Win</option>
-          <option value="loss">Loss</option>
-        </select>
-      </div>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Start Date */}
+          <div>
+            <label className={labelClass}>Start Date</label>
+            <input
+              type="text"
+              className={inputClass}
+              placeholder="DD-MM-YYYY"
+              value={values[group].startDate}
+              onChange={e => updateValues(group, "startDate", e.target.value)}
+            />
+          </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-sm text-gray-500 w-18 text-left">End date</label>
-        <input 
-          type="text" 
-          className="px-4 py-3 border border-gray-800 rounded-lg text-sm bg-gray-800 text-white outline-none transition-all duration-200 w-50 hover:bg-gray-700 hover:border-green-500 focus:border-green-500 focus:shadow-lg focus:shadow-green-500/20 focus:bg-gray-700" 
-          placeholder="DD-MM-YYYY" 
-          value={values[group].endDate} 
-          onChange={e => updateValues(group, "endDate", e.target.value)} 
-        />
+          {/* End Date */}
+          <div>
+            <label className={labelClass}>End Date</label>
+            <input
+              type="text"
+              className={inputClass}
+              placeholder="DD-MM-YYYY"
+              value={values[group].endDate}
+              onChange={e => updateValues(group, "endDate", e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Trade P&L */}
+        <div>
+          <label className={labelClass}>Trade P&L</label>
+          <div className="relative">
+            <select
+              className={selectClass}
+              value={values[group].tradePL}
+              onChange={e => updateValues(group, "tradePL", e.target.value)}
+            >
+              <option value="win">Win</option>
+              <option value="loss">Loss</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          </div>
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default TradeGroupForm;
+export default TradeGroupForm
