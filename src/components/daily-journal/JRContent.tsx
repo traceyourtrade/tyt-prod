@@ -803,7 +803,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                     </div>
 
                     {/* Footer Action Bar - Glassmorphism */}
-                    <div className="flex items-center justify-between gap-4 mt-6 pt-5 border-t border-border/30">
+                    <div className="sticky bottom-0 flex items-center justify-between gap-4 mt-6 pt-5 pb-1 -mx-5 px-5 border-t border-border/30 bg-card/80 backdrop-blur-xl">
                       <div className="flex items-center">
                         {trade.noteName ? (
                           <button
