@@ -102,16 +102,18 @@ export default function LoginPage() {
             <Image
               width={280}
               height={70}
-              src="/images/logo-dark.png"
+              src="/images/logo-dark.png?v=2"
               alt="ProJournX Logo"
               className="h-12 w-auto dark:block hidden"
+              unoptimized
             />
             <Image
               width={280}
               height={70}
-              src="/images/logo-light.png"
+              src="/images/logo-light.png?v=2"
               alt="ProJournX Logo"
               className="h-12 w-auto dark:hidden block"
+              unoptimized
             />
           </div>
 
@@ -168,16 +170,18 @@ export default function LoginPage() {
             <Image
               width={200}
               height={50}
-              src="/images/logo-dark.png"
+              src="/images/logo-dark.png?v=2"
               alt="ProJournX Logo"
               className="h-10 w-auto dark:block hidden"
+              unoptimized
             />
             <Image
               width={200}
               height={50}
-              src="/images/logo-light.png"
+              src="/images/logo-light.png?v=2"
               alt="ProJournX Logo"
               className="h-10 w-auto dark:hidden block"
+              unoptimized
             />
           </div>
 
