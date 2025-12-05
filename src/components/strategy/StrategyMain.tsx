@@ -115,7 +115,7 @@ const handleTabChange = (tabIndex: number) => {
     }, [selectedAccounts, fDate, toDate]);
 
     return (
-        <div className="w-[98%] min-h-[80vh] bg-[#0f0f0f] text-white flex flex-col p-5 rounded-xl mt-[50px]">
+        <div className="w-full min-h-[80vh] bg-background text-foreground flex flex-col p-6">
             <TopSection
                 selectedTab={selectedTab}
                 handleTabChange={handleTabChange}
@@ -150,15 +150,15 @@ const TopSection = ({
 
 
   return (
-    <div className="flex justify-between items-center p-[15px_0] flex-wrap">
-      <div className="flex gap-[15px]">
+    <div className="flex justify-between items-center py-4 flex-wrap gap-4 border-b border-border mb-4">
+      <div className="flex gap-2">
         {tabs.map((tab,index) => (
           <button
             key={tab.id}
-            className={`px-[18px] py-2 rounded-lg border-none cursor-pointer transition-all duration-200 ${
+            className={`px-4 py-2 rounded-lg border cursor-pointer transition-all duration-200 text-sm font-medium ${
               selectedTab === tab.id 
-                ? "bg-[#8477f3] text-white shadow-[0_0_24px_rgba(255,255,255,0.158)] transition-transform duration-200 ease-[ease] hover:transform hover:scale-105" 
-                : "bg-[#1f1f1f] text-[#aaa]"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
             }`}
             onClick={() => handleTabChange(index)}
           >
@@ -167,7 +167,7 @@ const TopSection = ({
         ))}
       </div>
 
-      <div className="flex">
+      <div className="flex gap-2">
         <StrategyDropdown allStrategies={allStrategies} selected={selected} setSelected={setSelected} />
         <DateRangeDropdown setFDate={setFDate} setTDate={setTDate} />
       </div>
@@ -184,7 +184,7 @@ const BottomSection = ({
 }: BottomSectionProps) => {
 
     return (
-        <div className="flex-1 mt-5 bg-[#1a1a1a] rounded-xl p-6">
+        <div className="flex-1 bg-card border border-border rounded-xl p-6">
             {selectedTab === "strategies" && (
                 <Strategies
                     selected={selected} 
