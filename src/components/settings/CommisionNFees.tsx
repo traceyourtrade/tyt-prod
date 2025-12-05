@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import Image from "next/image"
+import { faUser, faChevronDown, faDollarSign, faPercent, faReceipt } from "@fortawesome/free-solid-svg-icons";
 
 interface Account {
   tradeNo: number;
@@ -21,10 +20,7 @@ interface Account {
 
 const CommissionNfees = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
+  const [selectedAccount, setSelectedAccount] = useState<string>("All Accounts");
 
   const accounts: Account[] = [
     {
@@ -71,89 +67,115 @@ const CommissionNfees = () => {
     },
   ];
 
+  const totalCommissions = accounts.reduce((sum, account) => sum + account.comissions, 0);
+  const totalFees = accounts.reduce((sum, account) => sum + account.fees, 0);
+
   return (
-    <div className="w-[95%] h-[80vh] mx-auto">
-      <div className="w-[95%] h-[100px] flex items-center justify-between font-inter mx-auto">
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h3 className="text-[20px]">Commission & Fees</h3>
-          <p className="text-[12px] text-[#bebebe] font-[550]">Detailed Insights of all the Commissions & Fees on your Trades.</p>
+          <h2 className="text-xl font-bold text-white">Commissions & Fees</h2>
+          <p className="text-gray-500 text-sm mt-1">Detailed insights of all your trading costs</p>
         </div>
       </div>
 
-      <div className="w-[95%] h-[80px] flex items-start justify-between mx-auto">
-        <div className="w-[180px] h-[50px] bg-[rgba(122,122,122,0.214)] rounded-[15px] relative">
-          <div className="w-full h-[45px] flex items-center justify-evenly text-[13px] cursor-pointer font-[550]" onClick={toggleDropdown}>
-            <FontAwesomeIcon icon={faUser} />
-            <span>Select Accounts</span>
-            <FontAwesomeIcon icon={faChevronDown} />
-          </div>
-          <div
-            className="w-[180px] flex flex-col items-center justify-evenly text-[13px] cursor-pointer font-[550] absolute z-10 bg-[rgba(196,196,196,0.366)] backdrop-blur-[8px] rounded-[10px] mt-[10px] overflow-hidden transition-[height] duration-1000 ease-in-out"
-            style={{ height: isOpen ? 'auto' : '0px' }}
+      <div className="flex items-center justify-between mb-6">
+        <div className="relative">
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex items-center gap-3 px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl hover:bg-[#252525] transition-colors"
           >
-            <span className="w-full text-center py-[5px]">Select Accounts</span>
-            <span className="w-full text-center py-[5px]">Select Accounts</span>
-            <span className="w-full text-center py-[5px]">Select Accounts</span>
-            <span className="w-full text-center py-[5px]">Select Accounts</span>
-          </div>
+            <div className="w-8 h-8 rounded-lg bg-[#252525] flex items-center justify-center">
+              <FontAwesomeIcon icon={faUser} className="text-gray-400 text-sm" />
+            </div>
+            <span className="text-gray-300 text-sm font-medium">{selectedAccount}</span>
+            <FontAwesomeIcon icon={faChevronDown} className={`text-gray-500 text-xs transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {isOpen && (
+            <div className="absolute top-full left-0 mt-2 w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl shadow-2xl z-10 overflow-hidden">
+              {["All Accounts", "Himanshu MT5", "Tanmay Zerodha", "Tate Crypto"].map((acc, index) => (
+                <button
+                  key={index}
+                  onClick={() => { setSelectedAccount(acc); setIsOpen(false); }}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-[#252525] transition-colors"
+                >
+                  {acc}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="w-1/2 h-auto flex items-start justify-end">
-          <div className="w-[180px] h-[50px] bg-[rgba(122,122,122,0.214)] ml-[20px] rounded-[15px] flex items-center justify-start">
-            <span className="text-[21px] font-[550] text-green-600 ml-[15px] mr-[15px]">$</span>
-            <p className="text-[13px] flex flex-col font-[550]">
-              Total Commission
-              <span className="text-[12px] text-[#bebebe]">${accounts.reduce((sum, account) => sum + account.comissions, 0)}</span>
-            </p>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+              <FontAwesomeIcon icon={faDollarSign} className="text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Total Commission</p>
+              <p className="text-white font-semibold">${totalCommissions}</p>
+            </div>
           </div>
-          <div className="w-[180px] h-[50px] bg-[rgba(122,122,122,0.214)] ml-[20px] rounded-[15px] flex items-center justify-start">
-            <span className="text-[21px] font-[550] text-green-600 ml-[15px] mr-[15px]">$</span>
-            <p className="text-[13px] flex flex-col font-[550]">
-              Total Fees
-              <span className="text-[12px] text-[#bebebe]">${accounts.reduce((sum, account) => sum + account.fees, 0)}</span>
-            </p>
+
+          <div className="flex items-center gap-3 px-4 py-3 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl">
+            <div className="w-10 h-10 rounded-lg bg-amber-500/15 flex items-center justify-center">
+              <FontAwesomeIcon icon={faReceipt} className="text-amber-400" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Total Fees</p>
+              <p className="text-white font-semibold">${totalFees}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="w-[95%] h-[calc(80vh-200px)] flex items-start justify-between font-inter mx-auto bg-[rgba(122,122,122,0.214)] rounded-[25px]">
-        <table className="w-full border-collapse rounded-[8px] overflow-hidden">
+      <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+        <table className="w-full">
           <thead>
-            <tr className="bg-gradient-to-r from-[#a857d8] to-[#ff9b81] text-white rounded-[25px]">
-              <th className="p-[12px] text-center font-bold"><FontAwesomeIcon icon={faChevronDown} /></th>
-              <th className="p-[12px] text-center font-bold">Trade Details</th>
-              <th className="p-[12px] text-center font-bold">Instrument</th>
-              <th className="p-[12px] text-center font-bold">Trade</th>
-              <th className="p-[12px] text-center font-bold">Lotsize</th>
-              <th className="p-[12px] text-center font-bold">Commissions</th>
-              <th className="p-[12px] text-center font-bold">Fees</th>
+            <tr className="border-b border-[#2a2a2a]">
+              <th className="px-6 py-4 text-left text-xs uppercase tracking-wider text-gray-500 font-semibold">Trade Details</th>
+              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Instrument</th>
+              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Side</th>
+              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Lot Size</th>
+              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Commission</th>
+              <th className="px-6 py-4 text-center text-xs uppercase tracking-wider text-gray-500 font-semibold">Fees</th>
             </tr>
           </thead>
           <tbody>
             {accounts.map((account, index) => (
-              <tr key={index} className="cursor-pointer">
-                <td className="p-[12px] text-center">
-                  {/* <Image src={account.brokerIcon} alt="Broker" className="w-[30px] h-auto rounded-full" width={100} height={100} /> */}
+              <tr key={index} className="border-b border-[#2a2a2a] hover:bg-[#252525] transition-colors">
+                <td className="px-6 py-4">
+                  <div>
+                    <p className="text-white font-medium">
+                      Trade <span className="text-emerald-400">#{account.tradeNo}</span>
+                    </p>
+                    <p className="text-gray-500 text-xs mt-0.5">{account.lastUpdate}</p>
+                  </div>
                 </td>
-                <td className="p-[12px] text-left font-bold">
-                  <strong>Trade <span style={{ color: "#9d83dd", fontWeight: "400" }}>#{account.tradeNo}</span></strong>
-                  <div className="text-[10px] text-[#bebebe] relative left-[30px]">{account.lastUpdate}</div>
+                <td className="px-6 py-4 text-center">
+                  <span className="px-3 py-1 bg-[#252525] text-gray-300 text-sm font-medium rounded-lg">
+                    {account.instrument}
+                  </span>
                 </td>
-                <td className="p-[12px] text-center text-[14px] text-[#bebebe] font-[550]">{account.instrument}</td>
-                <td className="p-[12px] text-center">
-                  <span 
-                    className="px-[10px] py-[3px] rounded-[25px]"
-                    style={{ 
-                      background: account.LorS === "Long" ? "rgba(85, 209, 23, 0.66)" : "rgba(240, 101, 101, 0.55)",
-                      color: account.LorS === "Long" ? "#0a7000" : "#ff3131"
-                    }}
-                  >
+                <td className="px-6 py-4 text-center">
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-lg ${
+                    account.LorS === "Long" 
+                      ? "bg-emerald-500/15 text-emerald-400" 
+                      : "bg-red-500/15 text-red-400"
+                  }`}>
                     {account.LorS}
                   </span>
                 </td>
-                <td className="p-[12px] text-center text-[#bebebe] font-[550]">{account.lotSize} Lots</td>
-                <td className="p-[12px] text-center text-[14px] text-[#bebebe] font-[550]">${account.comissions}</td>
-                <td className="p-[12px] text-center text-[14px] text-[#bebebe] font-[550]">${account.fees}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className="text-gray-300 font-medium">{account.lotSize} Lots</span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="text-amber-400 font-semibold">${account.comissions}</span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="text-gray-300 font-medium">${account.fees}</span>
+                </td>
               </tr>
             ))}
           </tbody>

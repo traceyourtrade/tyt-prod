@@ -2,15 +2,11 @@
 import { useState } from "react";
 import Cookies from "js-cookie";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCamera, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faCamera, faCheck, faUser, faPen } from "@fortawesome/free-solid-svg-icons";
 import useAccountDetails from "@/store/accountdetails";
-
-// store
 import {useDataStore} from "@/store/store";
 import calendarPopUp from "@/store/calendarPopUp";
 import ProfilePopup from "../dashboard-components/popups/ProfilePopup";
-
-// import ProfilePopup from "@components/popups/ProfilePopup";
 
 interface ProfileDetails {
   firstName: string;
@@ -25,20 +21,21 @@ const Profile = () => {
   const { setProImg, setProUrl, proImgUrl } = calendarPopUp();
   const { bkurl } = useDataStore();
 
-  const [profilePicture, setProfilePic] = useState<string>(profileData.profilePicture 
-    || ""
-  );
+  const [profilePicture, setProfilePic] = useState<string>(profileData.profilePicture || "");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [profileDetails, setProfileDetails] = useState<ProfileDetails>({
     firstName: profileData.fullName ? profileData.fullName.split(" ")[0] : "",
     lastName: profileData.fullName ? profileData.fullName.split(" ")[1] : "",
     email: profileData.email || "",
-    phone: profileData.phone ||"",
-    country: profileData.country ||"",
+    phone: profileData.phone || "",
+    country: profileData.country || "",
   });
 
   const [bio, setBio] = useState<string>(profileData?.bio || "");
   const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   const setProfileVal = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,6 +44,9 @@ const Profile = () => {
 
   const updateData = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
+    setError("");
+    setSuccess("");
 
     const { firstName, lastName, phone, country } = profileDetails;
     const tokenn = Cookies.get("Trace Your Trades");
@@ -58,24 +58,26 @@ const Profile = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          fullName: `${firstName} ${lastName}`, phone, bio, tokenn,apiName:'editProfile'
+          fullName: `${firstName} ${lastName}`, phone, bio, tokenn, apiName:'editProfile'
         })
       });
 
       const data = await res.json();
 
       if (res.status === 200) {
-        setError("");
+        setSuccess("Profile updated successfully!");
+        setIsEditing(false);
+        setTimeout(() => setSuccess(""), 3000);
       } else {
-        setError("Failed, please try later");
+        setError("Failed to update profile. Please try again.");
       }
-
     } catch (error) {
       console.error(error);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
-
-  // Uploading img
 
   const handleFileSelect = (file: File) => {
     if (!file || !file.type.startsWith('image/')) {
@@ -110,7 +112,7 @@ const Profile = () => {
 
         canvas.width = width;
         canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
+        ctx?.drawImage(img, 0, 0, width, height);
 
         let quality = 0.9;
         let dataUrl: string;
@@ -135,7 +137,6 @@ const Profile = () => {
                 if (!response.ok) {
                   throw new Error('Network response was not ok');
                 }
-                console.log('Response received:', response);
                 setAccounts();
                 return response.json();
               })
@@ -162,7 +163,7 @@ const Profile = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          url: proImgUrl, tokenn,apiName:"deleteProfilePicture"
+          url: proImgUrl, tokenn, apiName:"deleteProfilePicture"
         })
       });
 
@@ -179,141 +180,209 @@ const Profile = () => {
     }
   };
 
+  const InputField = ({ 
+    label, 
+    name, 
+    value, 
+    onChange, 
+    disabled = false,
+    type = "text" 
+  }: { 
+    label: string; 
+    name: string;
+    value: string | number; 
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    disabled?: boolean;
+    type?: string;
+  }) => (
+    <div className="space-y-2">
+      <label className="text-xs uppercase tracking-wider text-gray-500 font-medium">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        className={`w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
+          disabled ? 'opacity-60 cursor-not-allowed' : ''
+        }`}
+      />
+    </div>
+  );
+
   return (
     <>
-      <div className="w-[98%] h-[80vh] flex">
-        <div className="w-[90%] h-[80vh] flex flex-col items-start justify-between">
-          <div className="w-full h-auto flex items-start justify-between">
-            <div className="flex flex-col mt-[20px] ml-[20px] items-start w-[30%] h-auto">
-              {profilePicture ? (
-                <div 
-                  className="w-full h-[35vh] overflow-hidden rounded-[25px] bg-cover bg-center bg-no-repeat"
-                  style={{ backgroundImage: `url(${profilePicture})` }}
-                  onClick={() => { setProImg(); document.body.classList.add("no-scroll"); setProUrl(profilePicture) }}
-                />
-              ) : (
-                <div className="mx-auto bg-transparent shadow-[0px_8px_28px_-9px_rgba(0,0,0,0.45)] relative w-[240px] h-[35vh] rounded-[16px] overflow-hidden cursor-pointer font-inter">
-                  <div className="absolute w-[540px] h-[700px] opacity-60 left-0 top-0 ml-[-50%] mt-[-70%] bg-gradient-to-r from-[#af40ff] via-[#5b42f3] to-[#00ddeb] rounded-[40%] animate-[wave_55s_infinite_linear]" />
-                  <div className="absolute w-[540px] h-[700px] opacity-60 left-0 top-[210px] ml-[-50%] mt-[-70%] bg-gradient-to-r from-[#af40ff] via-[#5b42f3] to-[#00ddeb] rounded-[40%] animate-[wave_50s_infinite_linear]" />
-                  <div className="absolute w-[540px] h-[700px] opacity-60 left-0 top-[210px] ml-[-50%] mt-[-70%] bg-gradient-to-r from-[#af40ff] via-[#5b42f3] to-[#00ddeb] rounded-[40%] animate-[wave_45s_infinite_linear]" />
-                  <div className="absolute top-[4.6em] left-0 right-0 text-white font-[600] text-center">
-                    <h1 className="text-[72px]">
-                      {profileData.fullName ? `${profileData.fullName.charAt(0)}` : ""}  {profileData.fullName ? `${profileData.fullName.split(" ")[1]?.charAt(0)}` : ""}
-                    </h1>
-                  </div>
-                </div>
-              )}
-              
-              <label
-                htmlFor="file-upload"
-                className="w-[150px] h-auto text-[12px] px-[10px] py-[5px] font-inter font-[550] border-none rounded-[25px] bg-[rgba(215,170,248,0.622)] cursor-pointer mx-auto mt-[15px]"
-              >
-                <FontAwesomeIcon icon={faCamera} /> Upload New Photo
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      handleFileSelect(file);
-                    }
-                  }}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            <div className="w-[80%] h-auto font-inter">
-              <h2 className="font-inter mt-[20px] ml-[10px]">PROFILE DETAILS 🧑🏻‍💻</h2>
-              <div className="w-full h-auto flex items-center justify-between">
-                <div className="w-[45%] flex flex-col mt-[10px]">
-                  <label className="text-[12px] text-[#bebebe] font-[550] ml-[10px]">First Name</label>
-                  <input 
-                    type="text" 
-                    name="firstName" 
-                    value={profileDetails.firstName} 
-                    onChange={setProfileVal}
-                    className="w-full mt-[5px] px-[10px] py-[7px] text-[14px] rounded-[25px] bg-[rgba(122,122,122,0.214)] font-inter border-none text-white font-[550] outline-none ml-[10px]"
-                  />
-                </div>
-                <div className="w-[45%] flex flex-col mt-[10px]">
-                  <label className="text-[12px] text-[#bebebe] font-[550] ml-[10px]">Last Name</label>
-                  <input 
-                    type="text" 
-                    name="lastName" 
-                    value={profileDetails.lastName} 
-                    onChange={setProfileVal}
-                    className="w-full mt-[5px] px-[10px] py-[7px] text-[14px] rounded-[25px] bg-[rgba(122,122,122,0.214)] font-inter border-none text-white font-[550] outline-none ml-[10px]"
-                  />
-                </div>
-              </div>
-              
-              <div className="w-full flex flex-col mt-[20px]">
-                <label className="text-[12px] text-[#bebebe] font-[550] ml-[10px]">Email Address</label>
-                <input 
-                  disabled 
-                  style={{ cursor: "not-allowed" }} 
-                  type="text" 
-                  name="email" 
-                  value={profileDetails.email} 
-                  onChange={setProfileVal}
-                  className="w-full mt-[5px] px-[10px] py-[7px] text-[14px] rounded-[25px] bg-[rgba(122,122,122,0.214)] font-inter border-none text-white font-[550] outline-none ml-[10px]"
-                />
-              </div>
-              
-              <div className="w-full flex items-center justify-between mt-[15px]">
-                <div className="w-[45%] flex flex-col mt-[10px]">
-                  <label className="text-[12px] text-[#bebebe] font-[550] ml-[10px]">Country</label>
-                  <input 
-                    disabled 
-                    style={{ cursor: "not-allowed" }} 
-                    type="text" 
-                    name="country" 
-                    value={profileDetails.country} 
-                    onChange={setProfileVal}
-                    className="w-full mt-[5px] px-[10px] py-[7px] text-[14px] rounded-[25px] bg-[rgba(122,122,122,0.214)] font-inter border-none text-white font-[550] outline-none ml-[10px]"
-                  />
-                </div>
-                <div className="w-[45%] flex flex-col mt-[10px]">
-                  <label className="text-[12px] text-[#bebebe] font-[550] ml-[10px]">Contact Number</label>
-                  <input 
-                    type="number" 
-                    name="phone" 
-                    value={profileDetails.phone} 
-                    onChange={setProfileVal}
-                    className="w-full mt-[5px] px-[10px] py-[7px] text-[14px] rounded-[25px] bg-[rgba(122,122,122,0.214)] font-inter border-none text-white font-[550] outline-none ml-[10px]"
-                  />
-                </div>
-              </div>
-            </div>
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-xl font-bold text-white">Profile Details</h2>
+            <p className="text-gray-500 text-sm mt-1">Manage your personal information</p>
           </div>
-
-          <div className="w-full h-auto">
-            <h2 className="my-[10px] ml-[35px] text-[21px]">Trader BIO 🚀</h2>
-            <textarea 
-              autoComplete="off" 
-              placeholder="Tell us more about yourself ..." 
-              name="bio" 
-              value={bio} 
-              onChange={(e) => setBio(e.target.value)}
-              className="w-[95%] h-[20vh] rounded-[25px] p-[15px] border-none bg-[rgba(122,122,122,0.214)] resize-none ml-[20px] mb-[20px] outline-none font-inter text-white font-[550]"
-            />
-          </div>
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              isEditing 
+                ? "bg-gray-700 text-gray-300 hover:bg-gray-600" 
+                : "bg-[#1e1e1e] text-gray-300 hover:bg-[#252525] border border-[#2a2a2a]"
+            }`}
+          >
+            <FontAwesomeIcon icon={faPen} className="text-xs" />
+            {isEditing ? "Cancel" : "Edit Profile"}
+          </button>
         </div>
 
-        <div className="w-[10%] h-[80vh] flex flex-col items-center justify-end">
-          <p className="text-center text-tomato text-[12px]">{error}</p>
-          <button 
-            className="w-[100px] h-auto text-[16px] px-[10px] py-[5px] font-inter font-[550] border-none rounded-[25px] bg-[rgba(215,170,248,0.622)] relative top-[-100px] cursor-pointer"
-            onClick={updateData}
-          >
-            SAVE
-          </button>
+        {(error || success) && (
+          <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium ${
+            error ? "bg-red-500/15 text-red-400 border border-red-500/30" : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+          }`}>
+            {error || success}
+          </div>
+        )}
+
+        <div className="grid grid-cols-12 gap-8">
+          <div className="col-span-4">
+            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+              <div className="flex flex-col items-center">
+                {profilePicture ? (
+                  <div 
+                    className="w-40 h-40 rounded-2xl bg-cover bg-center bg-no-repeat cursor-pointer hover:opacity-90 transition-opacity"
+                    style={{ backgroundImage: `url(${profilePicture})` }}
+                    onClick={() => { setProImg(); document.body.classList.add("no-scroll"); setProUrl(profilePicture) }}
+                  />
+                ) : (
+                  <div className="w-40 h-40 rounded-2xl bg-[#252525] flex items-center justify-center">
+                    <span className="text-5xl font-bold text-gray-400">
+                      {profileData.fullName ? `${profileData.fullName.charAt(0)}${profileData.fullName.split(" ")[1]?.charAt(0) || ""}` : <FontAwesomeIcon icon={faUser} />}
+                    </span>
+                  </div>
+                )}
+                
+                <label
+                  htmlFor="file-upload"
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-[#252525] hover:bg-[#2a2a2a] text-gray-300 text-sm font-medium rounded-xl cursor-pointer transition-colors"
+                >
+                  <FontAwesomeIcon icon={faCamera} className="text-xs" />
+                  Upload Photo
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="mt-6 text-center">
+                  <h3 className="text-lg font-semibold text-white">
+                    {profileDetails.firstName} {profileDetails.lastName}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">{profileDetails.email}</p>
+                  {profileDetails.country && (
+                    <span className="inline-block mt-2 px-3 py-1 bg-[#252525] text-gray-400 text-xs rounded-full">
+                      {profileDetails.country}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-8 space-y-6">
+            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+              <h3 className="text-sm font-semibold text-white mb-4">Personal Information</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <InputField
+                  label="First Name"
+                  name="firstName"
+                  value={profileDetails.firstName}
+                  onChange={setProfileVal}
+                  disabled={!isEditing}
+                />
+                <InputField
+                  label="Last Name"
+                  name="lastName"
+                  value={profileDetails.lastName}
+                  onChange={setProfileVal}
+                  disabled={!isEditing}
+                />
+              </div>
+
+              <div className="mt-4">
+                <InputField
+                  label="Email Address"
+                  name="email"
+                  value={profileDetails.email}
+                  onChange={setProfileVal}
+                  disabled={true}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <InputField
+                  label="Country"
+                  name="country"
+                  value={profileDetails.country}
+                  onChange={setProfileVal}
+                  disabled={true}
+                />
+                <InputField
+                  label="Contact Number"
+                  name="phone"
+                  value={profileDetails.phone}
+                  onChange={setProfileVal}
+                  disabled={!isEditing}
+                  type="tel"
+                />
+              </div>
+            </div>
+
+            <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+              <h3 className="text-sm font-semibold text-white mb-4">Trader Bio</h3>
+              <textarea 
+                placeholder="Tell us more about yourself and your trading journey..." 
+                name="bio" 
+                value={bio} 
+                onChange={(e) => setBio(e.target.value)}
+                disabled={!isEditing}
+                className={`w-full h-32 bg-[#252525] border border-[#2a2a2a] rounded-xl p-4 text-sm text-white placeholder:text-gray-600 resize-none focus:outline-none focus:border-emerald-500/50 transition-all duration-200 ${
+                  !isEditing ? 'opacity-60 cursor-not-allowed' : ''
+                }`}
+              />
+            </div>
+
+            {isEditing && (
+              <div className="flex justify-end">
+                <button 
+                  onClick={updateData}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faCheck} className="text-xs" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <ProfilePopup deleteImg={deleteImg} />
+      <ProfilePopup deleteImg={() => deleteImg({} as React.FormEvent)} />
     </>
   );
 };

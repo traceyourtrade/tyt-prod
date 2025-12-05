@@ -1,92 +1,213 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClock, faWallet, faChevronUp, faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { faClock, faWallet, faChevronDown, faCheck, faGlobe, faPalette, faBell } from "@fortawesome/free-solid-svg-icons";
 
 const GlobalSettings = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedTimezone, setSelectedTimezone] = useState<string>("(GMT+05:30) Asia/Calcutta");
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("USD ($)");
+  const [timezoneOpen, setTimezoneOpen] = useState(false);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-    setIsOpenCurr(false);
+  const timezones = [
+    "(GMT+05:30) Asia/Calcutta",
+    "(GMT-04:00) America/New_York",
+    "(GMT+00:00) Europe/London",
+    "(GMT+08:00) Asia/Singapore",
+    "(GMT+09:00) Asia/Tokyo"
+  ];
+
+  const currencies = [
+    "USD ($)",
+    "INR (₹)",
+    "EUR (€)",
+    "GBP (£)"
+  ];
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsSaving(false);
   };
 
-  const handleSelect = (timezone: string) => {
-    setSelectedTimezone(timezone);
-    setIsOpen(false);
-  };
-
-  const [isOpenCurr, setIsOpenCurr] = useState<boolean>(false);
-  const [selectedTimezoneCurr, setSelectedTimezoneCurr] = useState<string>("DOLLAR");
-
-  const toggleDropdownCurr = () => {
-    setIsOpenCurr(!isOpenCurr);
-    setIsOpen(false);
-  };
-
-  const handleSelectCurr = (timezone: string) => {
-    setSelectedTimezoneCurr(timezone);
-    setIsOpenCurr(false);
-  };
-
-  return (
-    <div className="flex flex-row items-center justify-between w-[98%] h-[80vh]">
-      <div className="w-1/2 h-[80vh]">
-        <h2 className="ml-[5%] mt-[20px] text-white">GLOBAL SETTINGS</h2>
-        <p className="text-[12px] font-[550] ml-[5%] text-[#bebebe]">Set your Display Settings</p>
-
-        <div className="w-[90%] bg-[rgba(122,122,122,0.214)] p-[15px] rounded-[20px] ml-[5%] mt-[50px]">
-          <div className="flex items-center gap-[10px] cursor-pointer" onClick={toggleDropdown}>
-            <div>
-              <FontAwesomeIcon icon={faClock} className="text-[#7d55c7] text-[18px] ml-[10px]" />
-              <span className="font-bold text-[16px] ml-[10px]">TIMEZONE</span>
-              <p className="text-[10px] text-[#bebebe] ml-[40px]">Select the Timezone, you want your data to be displayed in</p>
-            </div>
-          </div>
-          <div className="flex justify-between items-center bg-[#b6b6b657] p-[12px] rounded-[8px] cursor-pointer mt-[10px]" onClick={toggleDropdown}>
-            {selectedTimezone}
-            <FontAwesomeIcon icon={isOpen ? faChevronUp : faChevronDown} />
-          </div>
-          {isOpen && (
-            <div className="bg-[rgba(0,0,0,0.366)] backdrop-blur-[8px] rounded-[8px] mt-[5px] overflow-hidden">
-              {["(GMT+05:30) Asia/Calcutta", "(GMT-04:00) America/New_York", "(GMT+00:00) Europe/London"].map((tz, index) => (
-                <div key={index} className="p-[10px] cursor-pointer transition-colors duration-300 hover:bg-[#b6b6b671]" onClick={() => handleSelect(tz)}>
-                  {tz}
-                </div>
-              ))}
-            </div>
-          )}
+  const SettingCard = ({ 
+    icon, 
+    iconColor, 
+    iconBg, 
+    title, 
+    description, 
+    value, 
+    options, 
+    isOpen, 
+    onToggle, 
+    onSelect 
+  }: { 
+    icon: any;
+    iconColor: string;
+    iconBg: string;
+    title: string;
+    description: string;
+    value: string;
+    options: string[];
+    isOpen: boolean;
+    onToggle: () => void;
+    onSelect: (val: string) => void;
+  }) => (
+    <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+      <div className="flex items-start gap-4 mb-4">
+        <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+          <FontAwesomeIcon icon={icon} className={`text-lg ${iconColor}`} />
         </div>
-
-        <div className="w-[90%] bg-[rgba(122,122,122,0.214)] p-[15px] rounded-[20px] ml-[5%] mt-[50px]">
-          <div className="flex items-center gap-[10px] cursor-pointer" onClick={toggleDropdownCurr}>
-            <div>
-              <FontAwesomeIcon icon={faWallet} className="text-[#7d55c7] text-[18px] ml-[10px]" />
-              <span className="font-bold text-[16px] ml-[10px]">CURRENCY</span>
-              <p className="text-[10px] text-[#bebebe] ml-[40px]">Select the currency, you want your data to be displayed in</p>
-            </div>
-          </div>
-          <div className="flex justify-between items-center bg-[#b6b6b657] p-[12px] rounded-[8px] cursor-pointer mt-[10px]" onClick={toggleDropdownCurr}>
-            {selectedTimezoneCurr}
-            <FontAwesomeIcon icon={isOpenCurr ? faChevronUp : faChevronDown} />
-          </div>
-          {isOpenCurr && (
-            <div className="bg-[rgba(0,0,0,0.366)] backdrop-blur-[8px] rounded-[8px] mt-[5px] overflow-hidden">
-              {["DOLLAR", "RUPEES"].map((tz, index) => (
-                <div key={index} className="p-[10px] cursor-pointer transition-colors duration-300 hover:bg-[#b6b6b671]" onClick={() => handleSelectCurr(tz)}>
-                  {tz}
-                </div>
-              ))}
-            </div>
-          )}
+        <div>
+          <h3 className="text-white font-semibold">{title}</h3>
+          <p className="text-gray-500 text-sm mt-1">{description}</p>
         </div>
       </div>
-      
-      <div className="w-1/2 h-[80vh]">
-        <button className="w-[100px] h-auto text-[16px] px-[10px] py-[5px] font-inter font-[550] border-none rounded-[25px] bg-[rgba(215,170,248,0.622)] relative cursor-pointer top-[60vh] left-[70%]">
-          SAVE
+
+      <div className="relative">
+        <button
+          onClick={onToggle}
+          className="w-full flex items-center justify-between px-4 py-3 bg-[#252525] border border-[#2a2a2a] rounded-xl hover:bg-[#2a2a2a] transition-colors"
+        >
+          <span className="text-gray-300 text-sm font-medium">{value}</span>
+          <FontAwesomeIcon 
+            icon={faChevronDown} 
+            className={`text-gray-500 text-xs transition-transform ${isOpen ? "rotate-180" : ""}`} 
+          />
         </button>
+
+        {isOpen && (
+          <div className="absolute top-full left-0 w-full mt-2 bg-[#1e1e1e] border border-[#2a2a2a] rounded-xl shadow-2xl z-10 overflow-hidden">
+            {options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => onSelect(option)}
+                className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm transition-colors ${
+                  value === option 
+                    ? "bg-emerald-500/10 text-emerald-400" 
+                    : "text-gray-300 hover:bg-[#252525]"
+                }`}
+              >
+                {option}
+                {value === option && (
+                  <FontAwesomeIcon icon={faCheck} className="text-emerald-400 text-xs" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-xl font-bold text-white">Global Settings</h2>
+          <p className="text-gray-500 text-sm mt-1">Configure your display preferences</p>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50"
+        >
+          {isSaving ? (
+            <>
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Saving...
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faCheck} className="text-xs" />
+              Save Changes
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <SettingCard
+          icon={faClock}
+          iconColor="text-blue-400"
+          iconBg="bg-blue-500/15"
+          title="Timezone"
+          description="Select the timezone for displaying your trade data"
+          value={selectedTimezone}
+          options={timezones}
+          isOpen={timezoneOpen}
+          onToggle={() => { setTimezoneOpen(!timezoneOpen); setCurrencyOpen(false); }}
+          onSelect={(val) => { setSelectedTimezone(val); setTimezoneOpen(false); }}
+        />
+
+        <SettingCard
+          icon={faWallet}
+          iconColor="text-emerald-400"
+          iconBg="bg-emerald-500/15"
+          title="Currency"
+          description="Select the currency for displaying monetary values"
+          value={selectedCurrency}
+          options={currencies}
+          isOpen={currencyOpen}
+          onToggle={() => { setCurrencyOpen(!currencyOpen); setTimezoneOpen(false); }}
+          onSelect={(val) => { setSelectedCurrency(val); setCurrencyOpen(false); }}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 mt-6">
+        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faPalette} className="text-lg text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Theme</h3>
+              <p className="text-gray-500 text-sm mt-1">Choose your preferred color theme</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm font-medium rounded-xl">
+              <div className="w-4 h-4 rounded-full bg-[#141414] border-2 border-emerald-500" />
+              Dark
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#252525] border border-[#2a2a2a] text-gray-400 text-sm font-medium rounded-xl hover:bg-[#2a2a2a] transition-colors">
+              <div className="w-4 h-4 rounded-full bg-white border-2 border-gray-400" />
+              Light
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon icon={faBell} className="text-lg text-amber-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-semibold">Notifications</h3>
+              <p className="text-gray-500 text-sm mt-1">Manage your notification preferences</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-4 py-3 bg-[#252525] border border-[#2a2a2a] rounded-xl">
+              <span className="text-gray-300 text-sm">Email notifications</span>
+              <button className="w-10 h-6 bg-emerald-500 rounded-full relative">
+                <div className="w-4 h-4 bg-white rounded-full absolute right-1 top-1" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between px-4 py-3 bg-[#252525] border border-[#2a2a2a] rounded-xl">
+              <span className="text-gray-300 text-sm">Push notifications</span>
+              <button className="w-10 h-6 bg-[#2a2a2a] rounded-full relative">
+                <div className="w-4 h-4 bg-gray-500 rounded-full absolute left-1 top-1" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

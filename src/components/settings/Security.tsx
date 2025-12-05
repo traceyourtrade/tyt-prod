@@ -1,89 +1,163 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faEnvelope, faLock, faKey, faShield, faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const Security = () => {
   const [showCurr, setShowCurr] = useState<boolean>(false);
   const [showNew, setShowNew] = useState<boolean>(false);
   const [showRe, setShowRe] = useState<boolean>(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [rePassword, setRePassword] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+
+  const PasswordInput = ({ 
+    label, 
+    value, 
+    onChange, 
+    show, 
+    onToggle 
+  }: { 
+    label: string; 
+    value: string;
+    onChange: (val: string) => void;
+    show: boolean; 
+    onToggle: () => void;
+  }) => (
+    <div className="space-y-2">
+      <label className="text-xs uppercase tracking-wider text-gray-500 font-medium">{label}</label>
+      <div className="relative">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-[#252525] border border-[#2a2a2a] rounded-xl px-4 py-3 pr-12 text-sm text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all duration-200"
+          placeholder="••••••••"
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          <FontAwesomeIcon icon={show ? faEyeSlash : faEye} className="text-sm" />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="flex flex-row items-center justify-between w-[98%] h-[80vh]">
-      <div className="w-1/2 h-[80vh]">
-        <h2 className="ml-[5%] mt-[20px] text-white">PASSWORD & SECURITY</h2>
-        <h5 className="inline ml-[5%] text-white bg-[rgba(122,122,122,0.214)] px-[10px] py-[5px] rounded-[25px] relative top-[50px] text-[12px]">CHANGE PASSWORD</h5>
-        
-        <div className="w-[90%] ml-[5%] h-auto bg-[rgba(122,122,122,0.214)] relative top-[70px] rounded-[25px] p-[10px] flex flex-col items-center pb-[20px]">
-          <div className="w-[90%] flex flex-col my-[10px]">
-            <label className="text-[12px] text-white font-[550] ml-[10px]">Current Password</label>
-            <div className="w-full flex flex-row mt-[5px]">
-              <input 
-                type={showCurr ? "text" : "password"} 
-                className="w-full h-auto text-[14px] px-[10px] py-[5px] rounded-[25px] bg-[#b6b6b657] text-white outline-none border-none"
-              />
-              <FontAwesomeIcon 
-                icon={showCurr ? faEyeSlash : faEye} 
-                onClick={() => setShowCurr(!showCurr)}
-                className="relative cursor-pointer left-[-30px] top-[5px]"
-              />
+    <div className="p-8">
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-white">Security Settings</h2>
+        <p className="text-gray-500 text-sm mt-1">Manage your password and account security</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-8">
+        <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+              <FontAwesomeIcon icon={faKey} className="text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-white">Change Password</h3>
+              <p className="text-xs text-gray-500">Update your password regularly</p>
             </div>
           </div>
-          
-          <hr className="w-[90%] h-[1px] bg-[#ededed] border-none rounded-[25px] mx-auto my-[20px]" />
-          
-          <div className="w-[90%] flex flex-col my-[10px]">
-            <label className="text-[12px] text-white font-[550] ml-[10px]">New Password</label>
-            <div className="w-full flex flex-row mt-[5px]">
-              <input 
-                type={showNew ? "text" : "password"} 
-                className="w-full h-auto text-[14px] px-[10px] py-[5px] rounded-[25px] bg-[#b6b6b657] text-white outline-none border-none"
-              />
-              <FontAwesomeIcon 
-                icon={showNew ? faEyeSlash : faEye} 
-                onClick={() => setShowNew(!showNew)}
-                className="relative cursor-pointer left-[-30px] top-[5px]"
-              />
-            </div>
-          </div>
-          
-          <div className="w-[90%] flex flex-col my-[10px]">
-            <label className="text-[12px] text-white font-[550] ml-[10px]">Re-enter New Password</label>
-            <div className="w-full flex flex-row mt-[5px]">
-              <input 
-                type={showRe ? "text" : "password"} 
-                className="w-full h-auto text-[14px] px-[10px] py-[5px] rounded-[25px] bg-[#b6b6b657] text-white outline-none border-none"
-              />
-              <FontAwesomeIcon 
-                icon={showRe ? faEyeSlash : faEye} 
-                onClick={() => setShowRe(!showRe)}
-                className="relative cursor-pointer left-[-30px] top-[5px]"
-              />
-            </div>
+
+          <div className="space-y-4">
+            <PasswordInput
+              label="Current Password"
+              value={currentPassword}
+              onChange={setCurrentPassword}
+              show={showCurr}
+              onToggle={() => setShowCurr(!showCurr)}
+            />
+            
+            <div className="h-px bg-[#2a2a2a]" />
+
+            <PasswordInput
+              label="New Password"
+              value={newPassword}
+              onChange={setNewPassword}
+              show={showNew}
+              onToggle={() => setShowNew(!showNew)}
+            />
+
+            <PasswordInput
+              label="Confirm New Password"
+              value={rePassword}
+              onChange={setRePassword}
+              show={showRe}
+              onToggle={() => setShowRe(!showRe)}
+            />
+
+            <button className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors">
+              <FontAwesomeIcon icon={faCheck} className="text-xs" />
+              Update Password
+            </button>
           </div>
         </div>
-      </div>
-      
-      <div className="w-1/2 h-[80vh]">
-        <h5 className="inline ml-[5%] text-white bg-[rgba(122,122,122,0.214)] px-[10px] py-[5px] rounded-[25px] relative top-[105px] z-[2] text-[12px]">FORGOT PASSWORD</h5>
-        
-        <div className="w-[85%] ml-[5%] h-auto bg-[rgba(122,122,122,0.214)] relative top-[125px] rounded-[25px] p-[10px] flex flex-col items-center pb-[20px]">
-          <p className="w-[90%] text-[13px] font-[550] text-left text-white mt-[10px]">
-            Please enter your registered email ID, and we will send you a password reset link.
-          </p>
-          <p className="w-[90%] text-[13px] font-[550] text-left text-white mt-[10px]">
-            Follow the instructions in the email to reset your password.
-          </p>
-          <div className="w-full flex items-center justify-center mt-[20px] mb-[20px]">
-            <input 
-              placeholder="Enter your Email Address" 
-              className="w-[85%] h-auto text-[12px] p-[10px] rounded-[25px] bg-[#b6b6b657] outline-none border-none font-[550] text-white"
-            />
-            <FontAwesomeIcon icon={faEnvelope} className="relative left-[-35px]" />
+
+        <div className="space-y-6">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                <FontAwesomeIcon icon={faLock} className="text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Forgot Password</h3>
+                <p className="text-xs text-gray-500">Reset your password via email</p>
+              </div>
+            </div>
+
+            <div className="bg-[#252525] border border-[#2a2a2a] rounded-xl p-4 mb-4">
+              <p className="text-sm text-gray-400 leading-relaxed">
+                Enter your registered email address and we'll send you a password reset link. Follow the instructions in the email to reset your password.
+              </p>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <label className="text-xs uppercase tracking-wider text-gray-500 font-medium">Email Address</label>
+              <div className="relative">
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full bg-[#252525] border border-[#2a2a2a] rounded-xl px-4 py-3 pr-12 text-sm text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-emerald-500/50 transition-all duration-200"
+                />
+                <FontAwesomeIcon icon={faEnvelope} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
+              </div>
+            </div>
+
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#252525] hover:bg-[#2a2a2a] border border-[#2a2a2a] text-gray-300 text-sm font-medium rounded-xl transition-colors">
+              <FontAwesomeIcon icon={faEnvelope} className="text-xs" />
+              Send Reset Link
+            </button>
           </div>
-          <button className="text-[12px] px-[10px] py-[5px] rounded-[25px] bg-[#555] border-none text-white font-[550] cursor-pointer mx-auto my-[5px]">
-            SEND RESET LINK
-          </button>
+
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#252525] flex items-center justify-center">
+                <FontAwesomeIcon icon={faShield} className="text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Two-Factor Authentication</h3>
+                <p className="text-xs text-gray-500">Add an extra layer of security</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-[#252525] border border-[#2a2a2a] rounded-xl">
+              <div>
+                <p className="text-sm text-gray-300 font-medium">Status</p>
+                <p className="text-xs text-gray-500">Not enabled</p>
+              </div>
+              <button className="px-4 py-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] border border-[#2a2a2a] text-gray-300 text-sm font-medium rounded-lg transition-colors">
+                Enable
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

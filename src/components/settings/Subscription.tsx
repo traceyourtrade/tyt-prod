@@ -1,178 +1,192 @@
 "use client";
 import { useState } from "react";
-import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
-
-import MasterCard from "@/images/Mastercard-Logo.png";
+import { faCheck, faCrown, faCreditCard, faCalendarAlt, faArrowRight, faStar } from "@fortawesome/free-solid-svg-icons";
 
 const Subscription = () => {
-  const [isOn, setIsOn] = useState<boolean>(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+
+  const plans = {
+    monthly: [
+      { name: "Basic", price: 699, popular: false },
+      { name: "Premium", price: 1299, popular: true }
+    ],
+    yearly: [
+      { name: "Basic", price: 599, popular: false },
+      { name: "Premium", price: 1199, popular: true }
+    ]
+  };
+
+  const features = [
+    "Unlimited trade imports",
+    "Advanced analytics",
+    "Custom reports",
+    "Priority support",
+    "API access"
+  ];
 
   return (
-    <div className="flex flex-row items-center justify-between w-[98%] h-[80vh]">
-      <div className="w-[400px] h-[80vh] flex flex-col font-inter">
-        <h2 className="mt-[20px] ml-[20px] text-white">SUBSCRIPTION</h2>
+    <div className="p-8">
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-white">Subscription</h2>
+        <p className="text-gray-500 text-sm mt-1">Manage your plan and billing details</p>
+      </div>
 
-        <div className="ml-[20px] mt-[30px]">
-          <h4 className="w-[100px] bg-[rgba(122,122,122,0.214)] text-center text-white rounded-[25px] px-[5px] py-[2px] text-[13px] cursor-pointer">
-            Your Plan
-          </h4>
-          <div className="w-[300px] p-[10px] bg-[rgba(122,122,122,0.214)] rounded-[15px] mt-[20px] pb-[25px]">
-            <p className="text-[13px] font-[550] mt-[5px]">
-              <FontAwesomeIcon icon={faChevronRight} className="mx-[10px] text-[#777]" />
-              TYT Premium (Rs. 1400 / Month)
-            </p>
-            <p className="text-[13px] font-[550] mt-[5px]">
-              <FontAwesomeIcon icon={faChevronRight} className="mx-[10px] text-[#777]" />
-              Your Plan expires on 04/02/2025
-            </p>
-            <p className="text-[13px] font-[550] mt-[5px]">
-              <FontAwesomeIcon icon={faChevronRight} className="mx-[10px] text-[#777]" />
-              Your Subscription has ended
-            </p>
-            <span className="mx-[10px] mt-[25px] bg-[rgba(215,170,248,0.622)] text-[13px] px-[10px] py-[5px] rounded-[25px] font-[550] relative top-[10px] cursor-pointer">
-              Renew
-            </span>
-          </div>
-        </div>
-
-        <div className="ml-[20px] mt-[30px]">
-          <h4 className="w-[130px] bg-[rgba(122,122,122,0.214)] text-center text-white rounded-[25px] px-[5px] py-[2px] text-[13px] cursor-pointer">
-            Billing Details
-          </h4>
-          <div className="w-[400px] p-[10px] bg-[rgba(122,122,122,0.214)] rounded-[15px] mt-[20px] pb-[25px]">
-            <h5 className="text-[16px] text-white mt-[10px] ml-[10px]">Payment Details</h5>
-            <span className="text-[12px] text-[#1abbe4] float-right relative top-[-20px] left-[-10px] font-[550] cursor-pointer">
-              Edit
-            </span>
-            <div className="mt-[10px] w-[80%] flex items-center ml-[10px]">
-              <Image 
-                src={MasterCard} 
-                alt="masterCard" 
-                width={50}
-                height={30}
-                className="w-[50px] h-auto"
-              />
-              <div className="ml-[10px]">
-                <p className="text-[13px] font-[700]">
-                  <em className="text-[16px] relative top-[-3px] tracking-[1px]">.... .... ....</em> 6969
-                </p>
-                <p className="text-[10px] font-[700] text-[#bebebe] relative top-[-7px]">
-                  MasterCard - Expired 05/27
-                </p>
+      <div className="grid grid-cols-12 gap-8">
+        <div className="col-span-5 space-y-6">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                <FontAwesomeIcon icon={faCrown} className="text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Current Plan</h3>
+                <p className="text-xs text-gray-500">Your active subscription</p>
               </div>
             </div>
-            <span className="text-[12px] text-[#bebebe] ml-[10px]">
-              Billed on the first of every month.
-            </span>
-            <br />
-            <span className="text-[12px] text-[#bebebe] ml-[10px] relative top-[-5px]">
-              Next billing on <strong>March 01, 2025</strong>
-            </span>
+
+            <div className="bg-[#252525] border border-[#2a2a2a] rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Plan</span>
+                <span className="text-sm text-white font-medium">TYT Premium</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Price</span>
+                <span className="text-sm text-white font-medium">₹1,400 / month</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Expires</span>
+                <span className="text-sm text-red-400 font-medium">04/02/2025</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-400">Status</span>
+                <span className="px-2 py-0.5 bg-red-500/15 text-red-400 text-xs font-medium rounded-md">Expired</span>
+              </div>
+            </div>
+
+            <button className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors">
+              <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
+              Renew Subscription
+            </button>
+          </div>
+
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-[#252525] flex items-center justify-center">
+                <FontAwesomeIcon icon={faCreditCard} className="text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">Payment Method</h3>
+                <p className="text-xs text-gray-500">Your billing details</p>
+              </div>
+            </div>
+
+            <div className="bg-[#252525] border border-[#2a2a2a] rounded-xl p-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-8 bg-[#1e1e1e] rounded-lg flex items-center justify-center">
+                  <span className="text-xs font-bold text-gray-400">MC</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-white font-medium">•••• •••• •••• 6969</p>
+                  <p className="text-xs text-gray-500">Expires 05/27</p>
+                </div>
+                <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">Edit</button>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-600" />
+                <span>Billed on the first of every month</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-600" />
+                <span>Next billing: <strong className="text-gray-400">March 01, 2025</strong></span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="w-1/2 h-[80vh] flex flex-col items-center">
-        <div className="w-[320px] h-auto flex items-center justify-center mx-auto mt-[50px] mb-[30px] bg-white text-black rounded-[25px] py-[10px] shadow-[rgba(0,0,0,0.24)_0px_3px_8px]">
-          <h5 className="font-[550] text-[16px] font-['SF_Pro_Display'] mx-[20px]">Pay Monthly</h5>
-          <div 
-            className={`w-[50px] h-[20px] bg-[#5325c3] rounded-[15px] flex items-center justify-start p-[3px] cursor-pointer transition-colors duration-300 ease-in-out ${
-              isOn ? "on" : ""
-            }`} 
-            onClick={() => setIsOn(!isOn)}
-          >
-            <div className={`w-[15px] h-[15px] bg-yellow-400 rounded-full transition-transform duration-300 ease-in-out ${
-              isOn ? "translate-x-[30px]" : ""
-            }`} />
-          </div>
-          <h5 className="font-[550] text-[16px] font-['SF_Pro_Display'] mx-[20px]">Pay Yearly</h5>
-        </div>
 
-        <div className="w-full flex items-center justify-center">
-          <div className="w-[600px] h-[400px] bg-white flex flex-row items-center justify-evenly rounded-[20px] relative bottom-[-70px] shadow-[rgba(0,0,0,0.24)_0px_3px_8px]">
-            {isOn ? (
-              <>
-                <div className="w-[250px] h-[460px] bg-[#7e30e1] rounded-[25px] relative top-[-60px] font-['SF_Pro_Display'] flex flex-col items-start justify-evenly">
-                  <h2 className="text-[1.5em] font-bold ml-[20px] mt-[5px]">Basic</h2>
-                  <p className="text-[1.2em] ml-[20px] font-[500] text-[#e0d4fc]">
-                    <span className="font-bold">₹ </span>
-                    <span className="font-bold text-[1.4em] text-white">599</span>/month
-                  </p>
-                  <ul className="ml-[20px] list-none p-0">
-                    {["Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here"].map((feature, index) => (
-                      <li key={index} className="text-[0.9em] my-[5px] mb-[20px] font-[600]">
-                        <FontAwesomeIcon icon={faChevronRight} /> {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <button className="w-[170px] px-[20px] text-black py-[10px] border-none rounded-[25px] text-[1em] cursor-pointer bg-[#f4f4f4] font-bold transition-colors duration-300 mx-auto hover:bg-[#d1d1d1]">
-                    SELECT
-                  </button>
-                  <hr className="w-[50%] h-[0.5px] rounded-[25px] mx-auto my-[2px] bg-[#777]" />
-                </div>
+        <div className="col-span-7">
+          <div className="bg-[#1e1e1e] border border-[#2a2a2a] rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-sm font-semibold text-white">Available Plans</h3>
+                <p className="text-xs text-gray-500 mt-1">Choose the plan that works for you</p>
+              </div>
 
-                <div className="w-[250px] h-[460px] bg-[#7e30e1] text-white rounded-[25px] relative top-[-60px] font-['SF_Pro_Display'] flex flex-col items-start justify-evenly">
-                  <h2 className="text-[1.5em] font-bold ml-[20px] mt-[5px] text-[#fee500]">Premium</h2>
-                  <p className="text-[1.2em] ml-[20px] font-[500] text-[#e0d4fc]">
-                    <span className="font-bold">₹ </span>
-                    <span className="font-bold text-[1.4em] text-white">1199</span>/month
-                  </p>
-                  <ul className="ml-[20px] list-none p-0">
-                    {["Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here"].map((feature, index) => (
-                      <li key={index} className="text-[0.9em] my-[5px] mb-[20px] font-[600]">
-                        <FontAwesomeIcon icon={faChevronRight} /> {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <button className="w-[170px] px-[20px] text-black py-[10px] border-none rounded-[25px] text-[1em] cursor-pointer bg-[#f4f4f4] font-bold transition-colors duration-300 mx-auto hover:bg-[#d1d1d1]">
-                    SELECT
-                  </button>
-                  <hr className="w-[50%] h-[0.5px] rounded-[25px] mx-auto my-[2px] bg-white" />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-[250px] h-[460px] bg-[#7e30e1] rounded-[25px] relative top-[-60px] font-['SF_Pro_Display'] flex flex-col items-start justify-evenly">
-                  <h2 className="text-[1.5em] font-bold ml-[20px] mt-[5px]">Basic</h2>
-                  <p className="text-[1.2em] ml-[20px] font-[500] text-[#e0d4fc]">
-                    <span className="font-bold">₹ </span>
-                    <span className="font-bold text-[1.4em] text-white">699</span>/month
-                  </p>
-                  <ul className="ml-[20px] list-none p-0">
-                    {["Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here"].map((feature, index) => (
-                      <li key={index} className="text-[0.9em] my-[5px] mb-[20px] font-[600]">
-                        <FontAwesomeIcon icon={faChevronRight} /> {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <button className="w-[170px] px-[20px]  py-[10px] text-black border-none rounded-[25px] text-[1em] cursor-pointer bg-[#f4f4f4] font-bold transition-colors duration-300 mx-auto hover:bg-[#d1d1d1]">
-                    SELECT
-                  </button>
-                  <hr className="w-[50%] h-[0.5px] rounded-[25px] mx-auto my-[2px] bg-[#777]" />
-                </div>
+              <div className="flex items-center bg-[#252525] border border-[#2a2a2a] rounded-xl p-1">
+                <button
+                  onClick={() => setBillingCycle("monthly")}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                    billingCycle === "monthly" 
+                      ? "bg-emerald-500 text-white" 
+                      : "text-gray-400 hover:text-gray-300"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingCycle("yearly")}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                    billingCycle === "yearly" 
+                      ? "bg-emerald-500 text-white" 
+                      : "text-gray-400 hover:text-gray-300"
+                  }`}
+                >
+                  Yearly
+                  <span className="ml-1 text-xs text-emerald-400">Save 15%</span>
+                </button>
+              </div>
+            </div>
 
-                <div className="w-[250px] h-[460px] bg-[#7e30e1] text-white rounded-[25px] relative top-[-60px] font-['SF_Pro_Display'] flex flex-col items-start justify-evenly">
-                  <h2 className="text-[1.5em] font-bold ml-[20px] mt-[5px] text-[#fee500]">Premium</h2>
-                  <p className="text-[1.2em] ml-[20px] font-[500] text-[#e0d4fc]">
-                    <span className="font-bold">₹ </span>
-                    <span className="font-bold text-[1.4em] text-white">1299</span>/month
-                  </p>
-                  <ul className="ml-[20px] list-none p-0">
-                    {["Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here", "Demo Text is here"].map((feature, index) => (
-                      <li key={index} className="text-[0.9em] my-[5px] mb-[20px] font-[600]">
-                        <FontAwesomeIcon icon={faChevronRight} /> {feature}
+            <div className="grid grid-cols-2 gap-4">
+              {plans[billingCycle].map((plan, index) => (
+                <div 
+                  key={plan.name}
+                  className={`relative bg-[#252525] border rounded-2xl p-6 transition-all ${
+                    plan.popular 
+                      ? "border-emerald-500/50 ring-1 ring-emerald-500/20" 
+                      : "border-[#2a2a2a] hover:border-[#3a3a3a]"
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                      <FontAwesomeIcon icon={faStar} className="text-[10px]" />
+                      Popular
+                    </div>
+                  )}
+
+                  <h4 className={`text-lg font-bold ${plan.popular ? "text-emerald-400" : "text-white"}`}>
+                    {plan.name}
+                  </h4>
+                  
+                  <div className="mt-4 mb-6">
+                    <span className="text-3xl font-bold text-white">₹{plan.price}</span>
+                    <span className="text-gray-500 text-sm">/month</span>
+                  </div>
+
+                  <ul className="space-y-3 mb-6">
+                    {features.slice(0, plan.popular ? 5 : 3).map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm text-gray-400">
+                        <FontAwesomeIcon icon={faCheck} className={`text-xs ${plan.popular ? "text-emerald-400" : "text-gray-500"}`} />
+                        {feature}
                       </li>
                     ))}
                   </ul>
-                  <button className="w-[170px] px-[20px] text-black py-[10px] border-none rounded-[25px] text-[1em] cursor-pointer bg-[#f4f4f4] font-bold transition-colors duration-300 mx-auto hover:bg-[#d1d1d1]">
-                    SELECT
+
+                  <button 
+                    className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
+                      plan.popular 
+                        ? "bg-emerald-500 hover:bg-emerald-400 text-white" 
+                        : "bg-[#1e1e1e] hover:bg-[#2a2a2a] text-gray-300 border border-[#2a2a2a]"
+                    }`}
+                  >
+                    {plan.popular ? "Get Started" : "Select Plan"}
                   </button>
-                  <hr className="w-[50%] h-[0.5px] rounded-[25px] mx-auto my-[2px] bg-white" />
                 </div>
-              </>
-            )}
+              ))}
+            </div>
           </div>
         </div>
       </div>
