@@ -1,0 +1,234 @@
+You are a senior product designer + front-end engineer.
+You already have access to my full Projournx project files and GitHub code in this Replit.
+
+Goal:
+Redesign the entire UI of Projournx into a clean, modern, professional SaaS product for traders, without breaking any core logic or backend APIs. Projournx is a trading journal / trade analytics app (earlier called TraceYourTrade / TYT). It includes things like:
+
+Dashboard (equity curve, PnL, winrate, streaks etc.)
+
+Journal / Trade Log
+
+Notebook (notes, screenshots, playbooks)
+
+Reports / Analytics (graphs, filters)
+
+Backtesting
+
+Auto Broker Sync settings
+
+User profile, billing, settings
+
+1. Tech & Refactor Rules
+
+Keep the existing tech stack used in this repo (React / Next / whatever is currently used). Do not rewrite the whole app from scratch or change routing.
+
+Only refactor UI components, layout, styling and UX.
+
+Do not break existing business logic, API calls, database models, or authentication.
+
+Reuse the existing data structures / types; only improve how they are displayed.
+
+2. Visual Design Direction
+
+Use a modern trading SaaS look inspired by products like Notion, Linear, Stripe Dashboard:
+
+Overall style: Clean, minimal, lots of white space, clear hierarchy.
+
+Default theme: Light theme with a soft gray background and white cards. Also prepare a dark mode variant (even if just via simple theme classes / variables).
+
+Primary accent color: A rich blue or teal (for buttons, highlights).
+
+Secondary accents: Green for profitable trades, red for losing trades.
+
+Typography:
+
+Large, bold page titles
+
+Medium-weight section titles
+
+Comfortable line height for tables & notes
+
+Spacing: Generous padding (16–24px) inside cards, consistent gaps between sections.
+
+3. Layout & Navigation
+
+Redesign app structure into a clear, consistent layout:
+
+Left Sidebar (persistent)
+
+App logo + name: Projournx
+
+Main navigation items with icons:
+
+Dashboard
+
+Journal
+
+Notebook
+
+Reports
+
+Backtesting
+
+Broker Sync / Integrations
+
+Settings / Profile
+
+Use subtle hover states and selected state highlight.
+
+Top Bar
+
+Page title + breadcrumb (e.g., “Dashboard / Overview”)
+
+Right side:
+
+Date range selector
+
+User avatar dropdown (Profile, Billing, Logout)
+
+Theme toggle (Light/Dark) if easy to implement
+
+Main Content Area
+
+Card-based sections
+
+Responsive grid that works on desktop, tablet, and mobile.
+
+4. Page-by-Page UX Improvements
+
+A. Dashboard
+Redesign as a professional analytics overview:
+
+Top row cards:
+
+Total PnL, Win Rate, Avg R:R, Number of Trades (in selected period)
+
+Use big numbers and small subtitles.
+
+Charts section:
+
+Equity curve over time
+
+Bar/line chart for daily/weekly PnL
+
+Streaks / Insights:
+
+“Winning streak”, “Losing streak”, “Best day”, “Worst day”
+
+Add loading states & empty states if no data.
+
+B. Journal / Trade Log
+
+Modern, sticky-header table for trades:
+
+Columns like Date, Symbol, Direction, Qty, Entry, Exit, PnL, R:R, Tags, Screenshot, Notes.
+
+Add filters and search bar on top:
+
+Filter by Symbol, Direction, Tag, Date Range, Strategy, Result (win/loss/breakeven).
+
+Allow column alignment & consistent number formatting.
+
+Use badges for tags (e.g., “London Session”, “Breakout”, “BOS/CHoCH”).
+
+C. Notebook (Playbooks & Notes)
+
+Card/list layout for notes with title, short preview, last updated.
+
+Click to open in a clean editor-like layout.
+
+Support categories or tags for notes.
+
+Show created/updated timestamps subtly.
+
+D. Reports / Analytics
+
+Layout in two-column or full-width sections for:
+
+Performance by symbol
+
+Performance by session (London, NY, etc.)
+
+Performance by strategy/tag
+
+Winrate heatmaps by weekday/hour if data available.
+
+Use modern chart components consistent across the app.
+
+Use legends, tooltips, and clean axis labels.
+
+E. Backtesting
+
+Clean forms for inputting backtest parameters.
+
+Table or cards for backtest results.
+
+Highlight key metrics like total trades, winrate, max drawdown, net PnL.
+
+F. Broker Sync / Integrations
+
+Show connected brokers as cards with status (Connected / Not connected / Error).
+
+Clear “Connect” / “Reconnect” / “Disconnect” buttons.
+
+Short helper text or tooltip explaining each integration.
+
+G. Settings / Profile
+
+Two-column layout: menu on left, content on right.
+
+Sections: Profile, Billing (if exists), Notification prefs, Data export.
+
+5. Component System & Reuse
+
+Create or refactor into a reusable component library inside the project, e.g.:
+
+Button, Card, Badge, Input, Select, Tabs, Modal, Table, Tag, Chip, etc.
+
+Use these components consistently across all pages.
+
+Implement proper hover, active, disabled states.
+
+Ensure consistent border radius, shadows, and font sizes.
+
+6. UX Polish
+
+Add empty states (with short explanation + CTA) when there are no trades, no notes, or no reports.
+
+Add subtle animations (e.g., fade/slide in cards) only if simple to implement, without adding heavy libraries.
+
+Ensure all forms have:
+
+Clear labels
+
+Helpful placeholder text
+
+Inline error messages for validation
+
+7. Responsiveness
+
+Make sure all pages are responsive:
+
+On smaller screens, sidebar can collapse to icons or a drawer menu.
+
+Tables become horizontally scrollable or transform into stacked cards on mobile.
+
+Test the main flows at desktop width and at a typical mobile width in this Replit.
+
+8. Implementation Steps
+
+Scan the entire codebase and identify all existing pages and major components.
+
+Introduce a consistent design system (typography scale, spacing scale, colors, component patterns).
+
+Refactor page-by-page, starting from: Dashboard → Journal → Reports → Notebook → Backtesting → Settings.
+
+After each refactor, ensure:
+
+No TypeScript/JS errors
+
+No broken imports
+
+No runtime errors on navigation or data fetch.
+
+Now, based on these instructions, update the existing codebase in this Replit to implement the new Projournx UI, keeping all existing functionality intact and only improving the frontend design and UX.
