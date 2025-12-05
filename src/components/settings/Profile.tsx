@@ -1,10 +1,14 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faCamera, faPen, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faCamera, faPen, faCheck, faBars } from "@fortawesome/free-solid-svg-icons";
 import calendarPopUp from "@/store/calendarPopUp";
 
-const Profile = () => {
+interface Props {
+  onMenuClick: () => void;
+}
+
+const Profile = ({ onMenuClick }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -57,7 +61,12 @@ const Profile = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profile</h2>
+        <div className="flex items-center gap-3">
+          <button onClick={onMenuClick} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white">
+            <FontAwesomeIcon icon={faBars} />
+          </button>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profile</h2>
+        </div>
         <button
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${

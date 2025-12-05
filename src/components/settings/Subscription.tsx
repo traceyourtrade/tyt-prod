@@ -1,9 +1,13 @@
 "use client";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCrown, faCheck, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faCrown, faCheck, faStar, faBars } from "@fortawesome/free-solid-svg-icons";
 
-const Subscription = () => {
+interface Props {
+  onMenuClick: () => void;
+}
+
+const Subscription = ({ onMenuClick }: Props) => {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
   const plans = [
@@ -13,7 +17,12 @@ const Subscription = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Subscription</h2>
+      <div className="flex items-center gap-3">
+        <button onClick={onMenuClick} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white">
+          <FontAwesomeIcon icon={faBars} />
+        </button>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Subscription</h2>
+      </div>
 
       <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
         <div className="flex items-center gap-3 mb-3">
