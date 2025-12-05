@@ -28,7 +28,6 @@ import {
   ChevronDown,
   Menu,
   X,
-  Zap,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -148,10 +147,17 @@ export default function RootLayout({
         collapsed && !mobileOpen ? "justify-center" : "justify-between"
       )}>
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group" onClick={() => setMobileOpen(false)}>
-          {/* Collapsed: Lightning Bolt Icon */}
+          {/* Collapsed: Custom Lightning Bolt Image */}
           {(collapsed && !mobileOpen) && (
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-yellow-500/25 group-hover:shadow-yellow-500/40 group-hover:scale-105 transition-all duration-300">
-              <Zap className="w-5 h-5 text-white fill-white" />
+            <div className="w-10 h-10 rounded-xl bg-[#0a0a0a] flex items-center justify-center group-hover:scale-105 transition-all duration-300 overflow-hidden">
+              <Image 
+                src="/images/lightning-icon.png" 
+                width={32} 
+                height={32} 
+                alt="ProJournX" 
+                className="w-8 h-8 object-contain"
+                unoptimized
+              />
             </div>
           )}
           {/* Expanded: Full Logo */}
