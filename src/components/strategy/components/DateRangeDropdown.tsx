@@ -38,9 +38,9 @@ function MonthYearControls({ y, m, onChange }: MonthYearControlsProps) {
   );
   
   return (
-    <div className="flex justify-between gap-2 items-center mb-1.5">
+    <div className="flex justify-between gap-2 items-center mb-2">
       <select
-        className="bg-[#171717] text-[#e8e8e8] border border-[#2b2b2b] rounded-lg px-2 py-1.5 text-sm"
+        className="bg-muted text-foreground border border-border rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
         value={m}
         onChange={(e) => onChange({ y, m: parseInt(e.target.value, 10) })}
         title="Month"
@@ -54,7 +54,7 @@ function MonthYearControls({ y, m, onChange }: MonthYearControlsProps) {
       </select>
 
       <select
-        className="bg-[#171717] text-[#e8e8e8] border border-[#2b2b2b] rounded-lg px-2 py-1.5 text-sm w-[110px]"
+        className="bg-muted text-foreground border border-border rounded-lg px-2 py-1.5 text-sm w-[110px] focus:outline-none focus:ring-2 focus:ring-primary/20"
         value={y}
         onChange={(e) => {
           const ny = clamp(parseInt(e.target.value, 10), MIN_YEAR, MAX_YEAR);
@@ -117,26 +117,26 @@ function CalendarGrid({
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1 mb-1.5 text-[#8a8a8a] text-xs">
+      <div className="grid grid-cols-7 gap-1 mb-2 text-muted-foreground text-xs">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((w) => (
-          <div key={w} className="text-center">{w}</div>
+          <div key={w} className="text-center font-medium">{w}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {cells.map((d, idx) => {
           const disabled = !d || isFuture(d);
-          let className = "h-8 flex items-center justify-center text-sm rounded-lg cursor-pointer select-none transition-all duration-150 text-[#d2d2d2] hover:bg-white/6";
+          let className = "h-8 flex items-center justify-center text-sm rounded-lg cursor-pointer select-none transition-all duration-150 text-foreground hover:bg-muted";
           
           if (d && isSameDay(d, fromDate)) {
-            className += " bg-[#b281ff] text-[#0e0e0e] font-semibold rounded-xl";
+            className += " bg-primary text-primary-foreground font-semibold";
           } else if (d && isSameDay(d, toDate)) {
-            className += " bg-[#b281ff] text-[#0e0e0e] font-semibold rounded-xl";
+            className += " bg-primary text-primary-foreground font-semibold";
           } else if (d && inHoverRange(d)) {
-            className += " bg-white/8";
+            className += " bg-primary/10";
           } else if (d && inFinalRange(d)) {
-            className += " bg-white/8";
+            className += " bg-primary/10";
           } else if (disabled) {
-            className += " text-[#5a5a5a] pointer-events-none bg-transparent";
+            className += " text-muted-foreground/50 pointer-events-none bg-transparent";
           }
 
           return (
@@ -219,16 +219,19 @@ export default function DateRangeDropdown({ setFDate, setTDate }: DateRangeDropd
   return (
     <div className="relative" ref={ref}>
       <button 
-        className="bg-[#1f1f1f] text-white border border-[#2a2a2a] px-3.5 py-2 rounded-lg cursor-pointer transition-all duration-200 hover:bg-[#232323] active:scale-98"
+        className="flex items-center gap-2 bg-card text-foreground border border-border px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted text-sm font-medium"
         onClick={() => setOpen((o) => !o)}
       >
-        {label} ▾
+        {label}
+        <svg className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 bg-[#121212] border border-[#2b2b2b] rounded-xl p-3.5 w-[560px] shadow-2xl z-30 animate-fadeIn">
+        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl p-4 w-[560px] shadow-lg z-30">
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#0e0e0e] border border-[#262626] rounded-lg p-2.5">
+            <div className="bg-muted/50 border border-border rounded-lg p-3">
               <MonthYearControls
                 y={left.y}
                 m={left.m}
@@ -249,7 +252,7 @@ export default function DateRangeDropdown({ setFDate, setTDate }: DateRangeDropd
               />
             </div>
 
-            <div className="bg-[#0e0e0e] border border-[#262626] rounded-lg p-2.5">
+            <div className="bg-muted/50 border border-border rounded-lg p-3">
               <MonthYearControls
                 y={right.y}
                 m={right.m}
@@ -271,9 +274,9 @@ export default function DateRangeDropdown({ setFDate, setTDate }: DateRangeDropd
             </div>
           </div>
 
-          <div className="flex justify-end gap-2.5 mt-3">
+          <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-border">
             <button
-              className="bg-transparent text-[#bdbdbd] border border-[#2c2c2c] px-3 py-2 rounded-lg cursor-pointer"
+              className="bg-transparent text-muted-foreground border border-border px-4 py-2 rounded-lg cursor-pointer hover:bg-muted transition-colors text-sm font-medium"
               onClick={() => {
                 setFromDate(null);
                 setToDate(null);
@@ -283,7 +286,7 @@ export default function DateRangeDropdown({ setFDate, setTDate }: DateRangeDropd
               Clear
             </button>
             <button 
-              className="bg-gradient-to-r from-[#d57eeb] to-[#fccb90] text-[#141414] border-none px-3.5 py-2 rounded-lg cursor-pointer font-semibold"
+              className="bg-primary text-primary-foreground border-none px-4 py-2 rounded-lg cursor-pointer font-medium text-sm hover:bg-primary/90 transition-colors"
               onClick={() => setOpen(false)}
             >
               Done

@@ -8,7 +8,7 @@ import Reports from "./reports/StrategyReportsMain";
 import Compare from "./compare/StrategyCompareMain";
 import useAccountDetails from "@/store/accountdetails";
 import { useRouter, usePathname } from 'next/navigation'
-import Cookies from "js-cookie";
+
 interface StrategyType {
   strategy?: string;
   [key: string]: any;
@@ -54,32 +54,34 @@ const tabs: { id: TabType; label: string; path: string }[] = [
 const StrategyMain = () => {
   const [fDate, setFDate] = useState<string>("");
   const [toDate, setTDate] = useState<string>("");
-  const { strategies, selectedAccounts,setAccounts } = useAccountDetails();
-  useEffect(()=>{
-    console.log('Strategies ',strategies);
-setAccounts();
-  },[setAccounts])
+  const { strategies, selectedAccounts, setAccounts } = useAccountDetails();
   
-  const router = useRouter()
-  const pathname = usePathname()
+  useEffect(() => {
+    setAccounts();
+  }, [setAccounts]);
+  
+  const router = useRouter();
+  const pathname = usePathname();
   const [selectedTab, setSelectedTab] = useState<TabType>(pathname.split('/')[2] as TabType || 'strategies');
-useEffect(()=>{
-  if(pathname.split('/')[2]==undefined){
-    
-  router.replace('/strategies/strategies')
-  }
-},[])
+  
+  useEffect(() => {
+    if (pathname.split('/')[2] === undefined) {
+      router.replace('/strategies/strategies');
+    }
+  }, [pathname, router]);
 
+  const handleTabChange = (tabIndex: number) => {
+    const newTab = tabs[tabIndex];
+    setSelectedTab(newTab.id);
+    router.push(newTab.path);
+  };
 
-const handleTabChange = (tabIndex: number) => {
-  const newTab = tabs[tabIndex]
-  setSelectedTab(newTab.id)
-  router.push(newTab.path)
-}
-
-    // Convert strategies array to list of strategy names
-    const allStrategies= strategies.map((s: StrategyType) => s.strategy);
-    const [selected, setSelected] = useState<string[]>(allStrategies);
+  // Convert strategies array to list of strategy names, filtering out undefined
+  const allStrategies: string[] = strategies
+    .map((s: StrategyType) => s.strategy)
+    .filter((name): name is string => name !== undefined && name !== null);
+  
+  const [selected, setSelected] = useState<string[]>(allStrategies);
 
     // ✅ Memoize strategiesDataObj so it recalculates only when dependencies change
     const strategiesDataObj = useMemo(() => {
