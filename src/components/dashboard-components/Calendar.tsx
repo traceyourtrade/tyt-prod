@@ -109,7 +109,7 @@ const Calendar = () => {
     const cells = [];
 
     for (let i = 0; i < firstDayIndex; i++) {
-      cells.push(<div key={`empty-${i}`} className="h-[68px] rounded-lg" />);
+      cells.push(<div key={`empty-${i}`} className="h-[80px] rounded-xl" />);
     }
 
     for (let day = 1; day <= days; day++) {
@@ -127,7 +127,7 @@ const Calendar = () => {
         <div
           key={day}
           className={cn(
-            "h-[68px] rounded-lg flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
+            "h-[80px] rounded-xl flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
             getProfitBgClass()
           )}
           onClick={() => {
@@ -196,9 +196,9 @@ const Calendar = () => {
   const monthName = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long" });
 
   return (
-    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 pb-3">
+    <div className="flex-1 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5">
       {/* Header */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-5">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -320,7 +320,7 @@ const Calendar = () => {
             <div
               key={index}
               className={cn(
-                "h-[68px] rounded-lg flex flex-col items-center justify-center text-center transition-all",
+                "h-[80px] rounded-xl flex flex-col items-center justify-center text-center transition-all",
                 profit !== 0 
                   ? "bg-card/80 border border-border/50" 
                   : "bg-muted/20"
