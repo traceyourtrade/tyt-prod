@@ -326,7 +326,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {currentItems.map((trade, index) => {
         const isExpanded = expandedId === trade.id;
         const quality = getQualityLabel(trade.Quality);
@@ -342,57 +342,62 @@ const JRContent = ({ dailyData }: JRContentProps) => {
             key={trade.id || index}
             id={`trade-card-${index}`}
             layout
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="bg-card border border-border rounded-xl overflow-hidden hover:border-border/80 transition-colors"
+            transition={{ delay: index * 0.03, duration: 0.2 }}
+            className={`group relative bg-card rounded-xl overflow-hidden transition-all duration-200 ${
+              isExpanded 
+                ? 'ring-1 ring-primary/20 shadow-lg shadow-primary/5' 
+                : 'border border-border hover:border-primary/20 hover:shadow-md hover:shadow-black/5'
+            }`}
           >
+            {/* Profit/Loss Indicator Bar */}
+            <div className={`absolute left-0 top-0 bottom-0 w-1 ${isProfitable ? 'bg-profit' : 'bg-loss'}`} />
+            
             {/* Card Header */}
-            <div className="p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {/* Left: Symbol & Info */}
+            <div className="pl-5 pr-4 py-4">
+              <div className="flex items-center gap-4">
+                {/* Left: Symbol Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      isProfitable ? 'bg-profit/10' : 'bg-loss/10'
-                    }`}>
-                      {isProfitable ? (
-                        <TrendingUp className="w-5 h-5 text-profit" />
-                      ) : (
-                        <TrendingDown className="w-5 h-5 text-loss" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground text-lg">
+                  <div className="flex items-center gap-3">
+                    {/* Symbol Badge */}
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground tracking-tight">
                         {trade.Item}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="px-1.5 py-0.5 bg-muted rounded font-medium uppercase">{trade.Type}</span>
-                        <span>•</span>
-                        <Clock className="w-3 h-3" />
-                        <span>{formattedDate}</span>
-                      </div>
+                      <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded ${
+                        trade.Type?.toLowerCase() === 'buy' 
+                          ? 'bg-profit/10 text-profit' 
+                          : 'bg-loss/10 text-loss'
+                      }`}>
+                        {trade.Type}
+                      </span>
                     </div>
                   </div>
-
-                  {/* Tags Row */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Strategy Dropdown */}
+                  
+                  {/* Meta Row */}
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {formattedDate}
+                    </span>
+                    
+                    {/* Strategy Tag */}
                     <div className="relative">
                       <button
                         onClick={() => {
                           setActiveDropdown(activeDropdown === `strategy-${trade.id}` ? null : `strategy-${trade.id}`);
                           setStrategySearch("");
                         }}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                        className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full transition-all ${
                           trade.strategy && trade.strategy !== "Select"
-                            ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
-                            : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                            ? "bg-primary/10 text-primary hover:bg-primary/15"
+                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         <Target className="w-3 h-3" />
-                        {trade.strategy && trade.strategy !== "Select" ? trade.strategy : "Strategy"}
-                        <ChevronDown className="w-3 h-3" />
+                        <span>{trade.strategy && trade.strategy !== "Select" ? trade.strategy : "Add strategy"}</span>
+                        <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                       <AnimatePresence>
                         {activeDropdown === `strategy-${trade.id}` && (
@@ -401,15 +406,14 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -5, scale: 0.95 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-xl w-64 overflow-hidden"
+                            className="absolute left-0 top-full mt-1.5 z-50 bg-card border border-border rounded-xl shadow-xl shadow-black/20 w-64 overflow-hidden"
                           >
-                            {/* Search/Create Input */}
                             <div className="p-2 border-b border-border">
                               <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                                 <input
                                   type="text"
-                                  placeholder="Search or create strategy..."
+                                  placeholder="Search or create..."
                                   value={strategySearch}
                                   onChange={(e) => setStrategySearch(e.target.value)}
                                   className="w-full pl-8 pr-3 py-2 text-sm bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
@@ -417,16 +421,14 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                 />
                               </div>
                             </div>
-
-                            {/* Existing Strategies List */}
-                            <div className="max-h-48 overflow-y-auto">
+                            <div className="max-h-48 overflow-y-auto py-1">
                               {existingStrategies
                                 .filter((s: string) => s.toLowerCase().includes(strategySearch.toLowerCase()))
                                 .map((strategy: string) => (
                                   <button
                                     key={strategy}
                                     onClick={() => updateTradeStrategy(trade.id, strategy, trade.accountType)}
-                                    className="w-full px-3 py-2.5 text-sm text-left hover:bg-muted flex items-center justify-between group"
+                                    className="w-full px-3 py-2 text-sm text-left hover:bg-muted flex items-center justify-between"
                                   >
                                     <span className="flex items-center gap-2">
                                       <Target className="w-3.5 h-3.5 text-primary" />
@@ -437,7 +439,6 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                     )}
                                   </button>
                                 ))}
-                              
                               {existingStrategies.filter((s: string) => 
                                 s.toLowerCase().includes(strategySearch.toLowerCase())
                               ).length === 0 && strategySearch && (
@@ -446,8 +447,6 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                 </div>
                               )}
                             </div>
-
-                            {/* Create New Strategy */}
                             {strategySearch && !existingStrategies.some(
                               (s: string) => s.toLowerCase() === strategySearch.toLowerCase()
                             ) && (
@@ -455,20 +454,16 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                                 <button
                                   onClick={() => createAndApplyStrategy(trade.id, strategySearch, trade.accountType)}
                                   disabled={creatingStrategy}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
                                 >
                                   <Plus className="w-4 h-4" />
                                   {creatingStrategy ? "Creating..." : `Create "${strategySearch}"`}
                                 </button>
                               </div>
                             )}
-
-                            {/* Quick Create Hint */}
                             {!strategySearch && existingStrategies.length === 0 && (
-                              <div className="p-3 text-center">
-                                <p className="text-xs text-muted-foreground">
-                                  Type to create your first strategy
-                                </p>
+                              <div className="p-3 text-center text-xs text-muted-foreground">
+                                Type to create your first strategy
                               </div>
                             )}
                           </motion.div>
@@ -476,14 +471,14 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                       </AnimatePresence>
                     </div>
 
-                    {/* Quality Dropdown */}
+                    {/* Quality Badge */}
                     <div className="relative">
                       <button
                         onClick={() => setActiveDropdown(activeDropdown === `quality-${trade.id}` ? null : `quality-${trade.id}`)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${quality.style}`}
+                        className={`flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full transition-all ${quality.style.split(' ').filter(c => !c.startsWith('border')).join(' ')}`}
                       >
                         {quality.label}
-                        <ChevronDown className="w-3 h-3" />
+                        <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                       <AnimatePresence>
                         {activeDropdown === `quality-${trade.id}` && (
@@ -491,17 +486,17 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
-                            className="absolute left-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-lg p-1 min-w-[100px]"
+                            className="absolute left-0 top-full mt-1.5 z-50 bg-card border border-border rounded-xl shadow-xl shadow-black/20 p-1 min-w-[120px]"
                           >
                             {[
-                              { value: "high", label: "⭐ High" },
-                              { value: "medium", label: "⚡ Medium" },
-                              { value: "low", label: "📉 Low" },
+                              { value: "high", label: "⭐ High", style: "text-profit" },
+                              { value: "medium", label: "⚡ Medium", style: "text-yellow-500" },
+                              { value: "low", label: "📉 Low", style: "text-loss" },
                             ].map((opt) => (
                               <button
                                 key={opt.value}
                                 onClick={() => postSelect(trade.id, opt.value, trade.accountType)}
-                                className="w-full px-3 py-2 text-sm text-left rounded-md hover:bg-muted"
+                                className={`w-full px-3 py-2 text-sm text-left rounded-lg hover:bg-muted flex items-center gap-2 ${opt.style}`}
                               >
                                 {opt.label}
                               </button>
@@ -514,33 +509,32 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                 </div>
 
                 {/* Right: P&L & Actions */}
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className={`text-2xl font-bold ${isProfitable ? 'text-profit' : 'text-loss'}`}>
+                <div className="flex items-center gap-3">
+                  {/* P&L Display */}
+                  <div className={`px-4 py-2 rounded-xl ${isProfitable ? 'bg-profit/10' : 'bg-loss/10'}`}>
+                    <p className={`text-xl font-bold tabular-nums ${isProfitable ? 'text-profit' : 'text-loss'}`}>
                       {isProfitable ? '+' : ''}{trade.Profit?.toFixed(2) || '0.00'}
                     </p>
-                    <p className="text-xs text-muted-foreground">P&L</p>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  {/* Actions */}
+                  <div className="flex items-center">
                     <button
                       onClick={() => handleShare(index)}
-                      className="p-2 rounded-lg hover:bg-muted transition-colors"
+                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       title="Share"
                     >
-                      <Share2 className="w-4 h-4 text-muted-foreground" />
+                      <Share2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => toggleExpand(trade.id, trade)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isExpanded ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'
+                      className={`p-2 rounded-lg transition-all ${
+                        isExpanded 
+                          ? 'bg-primary text-primary-foreground rotate-180' 
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
                     >
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
+                      <ChevronDown className="w-4 h-4 transition-transform" />
                     </button>
                   </div>
                 </div>
@@ -554,171 +548,192 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="px-4 pb-4 pt-0 border-t border-border">
-                    {/* Trade Details Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4">
+                  <div className="mx-4 mb-4 p-4 bg-muted/20 rounded-xl border border-border/50">
+                    {/* Trade Stats Bar */}
+                    <div className="flex flex-wrap items-center gap-4 pb-4 mb-4 border-b border-border/50">
                       {[
-                        { label: "Size", value: trade.Size },
-                        { label: "Open Time", value: trade.OpenTime },
-                        { label: "Commission", value: trade.Commission },
-                        { label: "Account", value: trade.accountType },
-                      ].map(({ label, value }) => (
-                        <div key={label} className="p-3 rounded-lg bg-muted/30">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
-                          <p className="text-sm font-medium text-foreground truncate">{value || '-'}</p>
+                        { label: "Size", value: trade.Size, icon: "📊" },
+                        { label: "Time", value: trade.OpenTime, icon: "🕐" },
+                        { label: "Commission", value: trade.Commission ? `$${trade.Commission}` : '-', icon: "💰" },
+                        { label: "Account", value: trade.accountType, icon: "👤" },
+                      ].map(({ label, value, icon }) => (
+                        <div key={label} className="flex items-center gap-2">
+                          <span className="text-sm">{icon}</span>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+                            <p className="text-sm font-medium text-foreground">{value || '-'}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
 
-                    {/* Mood Selectors */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 py-4 border-t border-border">
-                      {[
-                        { key: "btm", label: "Before Trade", emoji: "🧘", value: trade.btm },
-                        { key: "dtm", label: "During Trade", emoji: "⚡", value: trade.dtm },
-                        { key: "atm", label: "After Trade", emoji: "🎯", value: trade.atm },
-                      ].map(({ key, label, emoji, value }) => (
-                        <div key={key} className="relative">
-                          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                            <span>{emoji}</span>
-                            {label}
-                          </p>
-                          <button
-                            onClick={() => setActiveDropdown(activeDropdown === `${key}-${trade.id}` ? null : `${key}-${trade.id}`)}
-                            className="w-full flex items-center justify-between px-3 py-2.5 bg-muted/30 border border-border rounded-lg text-sm hover:bg-muted transition-colors"
-                          >
-                            <span className={value && value !== "Select" ? "text-foreground" : "text-muted-foreground"}>
-                              {value && value !== "Select" ? value : "Select..."}
-                            </span>
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                          <AnimatePresence>
-                            {activeDropdown === `${key}-${trade.id}` && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -5 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -5 }}
-                                className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto"
-                              >
-                                {(profileData?.otherData?.[key] || []).filter((o: string) => o !== "Select").map((option: string) => (
-                                  <button
-                                    key={option}
-                                    onClick={() => postDropOptions(trade.id, option, key, trade.accountType)}
-                                    className="w-full px-3 py-2.5 text-sm text-left hover:bg-muted flex items-center justify-between"
-                                  >
-                                    {option}
-                                    {value === option && <Check className="w-4 h-4 text-primary" />}
-                                  </button>
-                                ))}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                    {/* Two Column Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left Column: Charts & Mood */}
+                      <div className="space-y-4">
+                        {/* Charts Section */}
+                        <div>
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <span className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center text-[10px]">📷</span>
+                            Trade Screenshots
+                          </h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            {["before", "after"].map((type) => (
+                              <div key={type}>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">
+                                  {type === "before" ? "Entry" : "Exit"}
+                                </p>
+                                {trade[`${type}URL`] ? (
+                                  <div className="group relative aspect-[4/3] rounded-lg overflow-hidden bg-muted border border-border">
+                                    <Image
+                                      src={trade[`${type}URL`]}
+                                      alt={`${type} chart`}
+                                      fill
+                                      className="object-cover transition-transform group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                                  </div>
+                                ) : (
+                                  <label className="group flex flex-col items-center justify-center aspect-[4/3] rounded-lg border-2 border-dashed border-border/60 bg-muted/30 cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-all">
+                                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mb-2 group-hover:bg-primary/10 transition-colors">
+                                      <Upload className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors">
+                                      Add {type} chart
+                                    </span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                          handleFileSelect(e.target.files[0], trade.id, `${type}URL`, trade.accountType);
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
 
-                    {/* Images Section */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-t border-border">
-                      {["before", "after"].map((type) => (
-                        <div key={type}>
-                          <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-                            {type === "before" ? "📸" : "📊"}
-                            <span className="capitalize">{type} Chart</span>
-                          </p>
-                          {trade[`${type}URL`] ? (
-                            <div className="relative aspect-video rounded-lg overflow-hidden bg-muted border border-border">
-                              <Image
-                                src={trade[`${type}URL`]}
-                                alt={`${type} chart`}
-                                fill
-                                className="object-cover"
+                        {/* Mood Tracking */}
+                        <div>
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <span className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center text-[10px]">🧠</span>
+                            Mindset Tracker
+                          </h4>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { key: "btm", label: "Before", emoji: "🧘", value: trade.btm },
+                              { key: "dtm", label: "During", emoji: "⚡", value: trade.dtm },
+                              { key: "atm", label: "After", emoji: "🎯", value: trade.atm },
+                            ].map(({ key, label, emoji, value }) => (
+                              <div key={key} className="relative">
+                                <button
+                                  onClick={() => setActiveDropdown(activeDropdown === `${key}-${trade.id}` ? null : `${key}-${trade.id}`)}
+                                  className="w-full p-2 bg-card border border-border rounded-lg hover:border-primary/30 transition-colors text-center"
+                                >
+                                  <span className="text-lg">{emoji}</span>
+                                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">{label}</p>
+                                  <p className={`text-xs font-medium mt-1 truncate ${value && value !== "Select" ? "text-foreground" : "text-muted-foreground"}`}>
+                                    {value && value !== "Select" ? value : "Select"}
+                                  </p>
+                                </button>
+                                <AnimatePresence>
+                                  {activeDropdown === `${key}-${trade.id}` && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: -5 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: -5 }}
+                                      className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-xl shadow-black/20 max-h-48 overflow-y-auto"
+                                    >
+                                      {(profileData?.otherData?.[key] || []).filter((o: string) => o !== "Select").map((option: string) => (
+                                        <button
+                                          key={option}
+                                          onClick={() => postDropOptions(trade.id, option, key, trade.accountType)}
+                                          className="w-full px-3 py-2 text-xs text-left hover:bg-muted flex items-center justify-between"
+                                        >
+                                          {option}
+                                          {value === option && <Check className="w-3 h-3 text-primary" />}
+                                        </button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Journal */}
+                      <div>
+                        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                          <span className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center text-[10px]">📝</span>
+                          Trade Journal
+                        </h4>
+                        <div className="space-y-3">
+                          {[
+                            { key: "rfe", label: "Reason for Entry", placeholder: "What setup did you see?", emoji: "🎯" },
+                            { key: "widw", label: "What Went Well", placeholder: "What did you do right?", emoji: "✨" },
+                            { key: "wni", label: "To Improve", placeholder: "What could be better?", emoji: "🔧" },
+                            { key: "lfnt", label: "Key Lesson", placeholder: "Main takeaway from this trade", emoji: "📚" },
+                          ].map(({ key, label, placeholder, emoji }) => (
+                            <div key={key} className="group">
+                              <label className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 group-focus-within:text-primary transition-colors">
+                                <span>{emoji}</span>
+                                <span>{label}</span>
+                              </label>
+                              <textarea
+                                value={jrData[key as keyof typeof jrData]}
+                                onChange={(e) => setJrData({ ...jrData, [key]: e.target.value })}
+                                placeholder={placeholder}
+                                rows={2}
+                                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all"
                               />
                             </div>
-                          ) : (
-                            <label className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-border bg-muted/20 cursor-pointer hover:bg-muted/40 hover:border-muted-foreground/30 transition-colors">
-                              <Upload className="w-6 h-6 text-muted-foreground mb-2" />
-                              <span className="text-xs text-muted-foreground">
-                                Upload {type} chart
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  if (e.target.files?.[0]) {
-                                    handleFileSelect(e.target.files[0], trade.id, `${type}URL`, trade.accountType);
-                                  }
-                                }}
-                              />
-                            </label>
-                          )}
+                          ))}
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Journal Notes */}
-                    <div className="py-4 border-t border-border space-y-3">
-                      <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                        Journal Notes
-                      </h4>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                          { key: "rfe", label: "Reason for Entry", placeholder: "Why did you enter?", emoji: "🎯" },
-                          { key: "widw", label: "What I Did Well", placeholder: "What went right?", emoji: "✨" },
-                          { key: "wni", label: "Needs Improvement", placeholder: "What could be better?", emoji: "🔧" },
-                          { key: "lfnt", label: "Lessons Learned", placeholder: "Key takeaways", emoji: "📝" },
-                        ].map(({ key, label, placeholder, emoji }) => (
-                          <div key={key}>
-                            <label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                              <span>{emoji}</span>
-                              {label}
-                            </label>
-                            <input
-                              type="text"
-                              value={jrData[key as keyof typeof jrData]}
-                              onChange={(e) => setJrData({ ...jrData, [key]: e.target.value })}
-                              placeholder={placeholder}
-                              className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                            />
-                          </div>
-                        ))}
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-4 border-t border-border">
-                      {trade.noteName ? (
-                        <button
-                          onClick={() => {
-                            setCurrentUrl("Notebook");
-                            setFolder("Daily Journal");
-                            setFile(trade.noteName!);
-                          }}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-muted text-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
-                        >
-                          <FileText className="w-4 h-4" />
-                          View Notes
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => addNotes(trade.id, trade.Item, trade.time, trade.date, trade.accountType)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-muted text-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
-                        >
-                          <FileText className="w-4 h-4" />
-                          Add Notes
-                        </button>
-                      )}
+                    {/* Action Bar */}
+                    <div className="flex items-center justify-between gap-3 pt-4 mt-4 border-t border-border/50">
+                      <div className="flex items-center gap-2">
+                        {trade.noteName ? (
+                          <button
+                            onClick={() => {
+                              setCurrentUrl("Notebook");
+                              setFolder("Daily Journal");
+                              setFile(trade.noteName!);
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                          >
+                            <FileText className="w-4 h-4" />
+                            View Full Notes
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => addNotes(trade.id, trade.Item, trade.time, trade.date, trade.accountType)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Detailed Notes
+                          </button>
+                        )}
+                      </div>
                       <button
                         onClick={() => submitJrData(trade.id, trade.accountType)}
                         disabled={savingId === trade.id}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 shadow-sm"
                       >
                         <Save className="w-4 h-4" />
-                        {savingId === trade.id ? "Saving..." : "Save Journal"}
+                        {savingId === trade.id ? "Saving..." : "Save Changes"}
                       </button>
                     </div>
                   </div>
