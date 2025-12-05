@@ -38,7 +38,7 @@ The application features a complete UI redesign inspired by Notion, Linear, and 
 3. **Dashboard Page** - Stat cards, charts, calendar, and trades widget with new styling
 4. **Daily Journal Page** - Filter toolbar, calendar sidebar, quick stats with modern design
 5. **Settings Page** - Sidebar navigation with user/general settings sections
-6. **Reports Page** - Updated with background styling
+6. **Reports Page** - Fully redesigned with modern tab navigation (Performance, Overview, Reports, Compare, Calendar), theme-aware chart cards with icons and legends, Summary/Days/Trades stat grid with modern pill-style tabs, and dynamic CSS variable-based chart colors
 7. **Notebook Page** - Fully redesigned with modern three-column layout (Folders, Notes, Content), responsive mobile navigation, rich text editor with formatting toolbar, clean empty states, and context menus for rename/delete operations
 8. **Strategies Page** - Tab navigation, strategy dropdown, and date range picker with modern styling
 
