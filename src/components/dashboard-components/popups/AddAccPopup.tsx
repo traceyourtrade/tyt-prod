@@ -1,13 +1,31 @@
 "use client";
-import { useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleLeft, faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
-// Store
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ArrowLeft, 
+  ChevronDown, 
+  Building2, 
+  Wallet, 
+  FileText, 
+  Settings2, 
+  Zap,
+  Upload,
+  PenLine,
+  Server,
+  Key,
+  User,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Plus,
+  HelpCircle
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
 import calendarPopUp from "@/store/calendarPopUp";
 import notifications from "@/store/notifications";
 import useAccountDetails from "@/store/accountdetails";
-import { useDataStore } from "@/store/store";
 
 interface AccountDetails {
   accountName: string;
@@ -15,14 +33,35 @@ interface AccountDetails {
   description: string;
 }
 
+interface DropdownOption {
+  id: string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const accountTypeOptions: DropdownOption[] = [
+  { id: "Broker Sync", label: "Broker Sync", description: "Auto-sync trades via API", icon: <Zap className="w-4 h-4" /> },
+  { id: "File Upload", label: "File Upload", description: "Import from MT4/MT5 files", icon: <Upload className="w-4 h-4" /> },
+  { id: "Manual", label: "Manual Entry", description: "Add trades manually", icon: <PenLine className="w-4 h-4" /> },
+];
+
+const brokerOptions = [
+  { id: "MetaTrader 5", label: "MetaTrader 5", icon: "MT5" },
+  { id: "MetaTrader 4", label: "MetaTrader 4", icon: "MT4" },
+  { id: "Zerodha", label: "Zerodha", icon: "ZD" },
+  { id: "Binance", label: "Binance", icon: "BN" },
+  { id: "Upstox", label: "Upstox", icon: "UP" },
+  { id: "Angel One", label: "Angel One", icon: "AO" },
+];
+
 const AddAccPopup = () => {
   const { showAddAcc, setAddAcc } = calendarPopUp();
   const { setAccounts } = useAccountDetails();
   const { setAlertBoxG, accStatusPolling } = notifications();
-  const { bkurl } = useDataStore();
 
-  const [accountType, setAccountType] = useState<string>("Select your Account Type");
-  const [broker, setBroker] = useState<string>("Select your Broker");
+  const [accountType, setAccountType] = useState<string>("");
+  const [broker, setBroker] = useState<string>("");
   const [investorId, setInvestorId] = useState<string>("");
   const [investorPw, setInvestorPw] = useState<string>("");
   const [server, setServer] = useState<string>("");
@@ -33,315 +72,555 @@ const AddAccPopup = () => {
   });
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [forAccType, setForAcc] = useState<boolean>(false);
-  const [forBroker, setForBroker] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAccountTypeDropdown, setShowAccountTypeDropdown] = useState(false);
+  const [showBrokerDropdown, setShowBrokerDropdown] = useState(false);
+
+  const accountTypeRef = useRef<HTMLDivElement>(null);
+  const brokerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountTypeRef.current && !accountTypeRef.current.contains(event.target as Node)) {
+        setShowAccountTypeDropdown(false);
+      }
+      if (brokerRef.current && !brokerRef.current.contains(event.target as Node)) {
+        setShowBrokerDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setAccDetails({ ...accountDetails, [name]: value });
   };
 
-
   const submitFun = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!accountType) {
+      setError("Please select an account type");
+      return;
+    }
+    if (!broker) {
+      setError("Please select a broker");
+      return;
+    }
+    if (!accountDetails.accountName.trim()) {
+      setError("Please enter an account name");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     if (accountType === "Broker Sync") {
       const { accountName, description } = accountDetails;
 
-      if (accountType === "Select your Account Type") {
-        setError("Please select account type");
-        setSuccess("");
-      } else if (broker === "Select your Broker") {
-        setError("Please select a broker");
-        setSuccess("");
-      } else {
-        try {
-          const res = await fetch(`/api/dashboard/post`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              accountName, 
-              accountType, 
-              broker, 
-              investorId, 
-              password: investorPw, 
-              serverName: server, 
-              description, 
-              apiName:'createAutoSyncAccount'
-            })
-          });
+      try {
+        const res = await fetch(`/api/dashboard/post`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            accountName, 
+            accountType, 
+            broker, 
+            investorId, 
+            password: investorPw, 
+            serverName: server, 
+            description, 
+            apiName:'createAutoSyncAccount'
+          })
+        });
 
-          const data = await res.json();
+        const data = await res.json();
 
-          if (res.status === 200) {
-            setError("");
-
-            setTimeout(() => {
-              setAddAcc();
-              setAlertBoxG("Your account details are being fetched, this may take few seconds", "async-alert");
-              accStatusPolling(accountName );
-              setAccounts();
-            }, 1500);
-
-          } else {
-            if (data.error === "User not authenticated") {
-              setError("Authentication Failed");
-            } else if (data.error === "Enter all the details") {
-              setError("Fill all the entries");
-            } else if (data.error === "Account already exists") {
-              setError("Account with the same name is already created, try using different name");
-            }
-          }
-
-        } catch (error) {
-          console.error(error);
+        if (res.status === 200) {
+          setSuccess("Account created successfully!");
+          setTimeout(() => {
+            setAddAcc();
+            setAlertBoxG("Your account details are being fetched, this may take few seconds", "async-alert");
+            accStatusPolling(accountName);
+            setAccounts();
+          }, 1500);
+        } else {
+          handleApiError(data.error);
         }
+      } catch (error) {
+        setError("Something went wrong. Please try again.");
       }
     } else {
       const { accountName, accountBalance, description } = accountDetails;
 
-      if (accountType === "Select your Account Type") {
-        setError("Please select account type");
-        setSuccess("");
-      } else if (broker === "Select your Broker") {
-        setError("Please select a broker");
-        setSuccess("");
-      } else {
-        try {
-          const res = await fetch(`/api/dashboard/post`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              accountName, 
-              accountBalance, 
-              accountType, 
-              broker, 
-              description, 
-              apiName:'createAccount'
-            })
-          });
+      try {
+        const res = await fetch(`/api/dashboard/post`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            accountName, 
+            accountBalance, 
+            accountType, 
+            broker, 
+            description, 
+            apiName:'createAccount'
+          })
+        });
 
-          const data = await res.json();
+        const data = await res.json();
 
-          if (res.status === 200) {
-            setError("");
-
-            setTimeout(() => {
-              setAddAcc();
-              setAccounts();
-            }, 1500);
-
-          } else {
-            if (data.error === "User not authenticated") {
-              setError("Authentication Failed");
-            } else if (data.error === "Enter all the details") {
-              setError("Fill all the entries");
-            } else if (data.error === "Account already exists") {
-              setError("Account with the same name is already created, try using different name");
-            }
-          }
-
-        } catch (error) {
-          console.error(error);
+        if (res.status === 200) {
+          setSuccess("Account created successfully!");
+          setTimeout(() => {
+            setAddAcc();
+            setAccounts();
+          }, 1500);
+        } else {
+          handleApiError(data.error);
         }
+      } catch (error) {
+        setError("Something went wrong. Please try again.");
       }
+    }
+    
+    setIsSubmitting(false);
+  };
+
+  const handleApiError = (errorMsg: string) => {
+    if (errorMsg === "User not authenticated") {
+      setError("Authentication failed. Please log in again.");
+    } else if (errorMsg === "Enter all the details") {
+      setError("Please fill in all required fields.");
+    } else if (errorMsg === "Account already exists") {
+      setError("An account with this name already exists.");
+    } else {
+      setError(errorMsg || "Something went wrong.");
     }
   };
 
-  const brokers = ["MetaTrader 5", "MetaTrader 4", "Zerodha", "Binance", "Upstox", "Angel One"];
+  const selectedAccountType = accountTypeOptions.find(opt => opt.id === accountType);
+  const selectedBroker = brokerOptions.find(opt => opt.id === broker);
+  const filteredBrokers = accountType === "Broker Sync" 
+    ? brokerOptions.filter(b => b.id === "MetaTrader 5") 
+    : brokerOptions;
+
+  if (!showAddAcc) return null;
 
   return (
-    <div className={`fixed inset-0 flex justify-start pt-12 min-h-screen z-50
-  bg-black/40 backdrop-blur-md ${showAddAcc ? "block" : "hidden"}`}>
-      <div className="w-11/12 max-w-[500px] h-fit bg-[#22212161] backdrop-blur-[30px] border border-gray-600 rounded-[25px] shadow-2xl scale-90 mx-auto">
-        <div className="relative p-6">
-          {/* Back Button */}
-          <div className="absolute top-5 left-5">
-            <button 
-              onClick={() => setAddAcc()} 
-              className="text-xs text-gray-400 font-semibold cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors"
-            >
-              <FontAwesomeIcon icon={faCircleLeft} />
-              Back
-            </button>
-          </div>
-
-          {/* Logo */}
-          <div className="text-center mt-2">
-            <div className="w-[70px] h-[70px] mx-auto mt-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">TYT</span>
+    <AnimatePresence>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={() => setAddAcc()}
+      >
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="p-5 border-b border-border">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setAddAcc()}
+                className="w-9 h-9 rounded-xl bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-foreground">Add New Account</h2>
+                    <p className="text-xs text-muted-foreground">Connect your trading account</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Header */}
-          <h2 className="text-center text-2xl font-semibold text-white">Add New Account</h2>
-          <p className="text-center text-xs text-gray-400 font-medium mt-1">
-            Your trades, your data, your edge - fully automated and optimised
-          </p>
 
           {/* Form */}
-          <div className="w-full flex flex-col items-center mt-6">
-            <input
-              placeholder="Account Name"
-              required
-              autoComplete="off"
-              type="text"
-              name="accountName"
-              value={accountDetails.accountName}
-              onChange={handleOnChange}
-              className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mb-4 text-black"
-            />
+          <div className="p-5 space-y-4">
+            {/* Account Name */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Wallet className="w-4 h-4" />
+                Account Name
+              </label>
+              <input
+                type="text"
+                name="accountName"
+                value={accountDetails.accountName}
+                onChange={handleOnChange}
+                placeholder="My Trading Account"
+                className={cn(
+                  "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                  "text-foreground placeholder:text-muted-foreground text-sm",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50",
+                  "transition-all duration-200"
+                )}
+              />
+            </div>
 
             {/* Account Type Dropdown */}
-            <div className="w-[calc(80%+30px)] min-h-[44px] rounded-[25px] bg-purple-600 mt-2 overflow-hidden">
-              <div 
-                className="w-full h-[44px] flex items-center justify-between text-white cursor-pointer px-4"
-                onClick={() => { setForAcc(!forAccType); setForBroker(false); }}
-              >
-                <span className="font-semibold text-sm">{accountType}</span>
-                <FontAwesomeIcon 
-                  icon={faChevronDown} 
-                  className={`text-white transition-transform duration-300 ${forAccType ? "rotate-180" : ""}`}
-                />
-              </div>
-              <div className={`bg-gray-100 transition-all duration-300 ease-in-out overflow-hidden ${
-                forAccType ? "max-h-[120px] py-2" : "max-h-0"
-              }`}>
-                {["Broker Sync", "File Upload", "Manual"].map((type) => (
-                  <div
-                    key={type}
-                    className="w-full px-4 py-2 cursor-pointer text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors"
-                    onClick={() => { setAccountType(type); setForAcc(false); }}
-                  >
-                    {type}
-                  </div>
-                ))}
+            <div className="space-y-2" ref={accountTypeRef}>
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Settings2 className="w-4 h-4" />
+                Account Type
+              </label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAccountTypeDropdown(!showAccountTypeDropdown);
+                    setShowBrokerDropdown(false);
+                  }}
+                  className={cn(
+                    "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                    "flex items-center justify-between gap-2 text-left",
+                    "hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20",
+                    "transition-all duration-200",
+                    showAccountTypeDropdown && "border-primary/50 ring-2 ring-primary/20"
+                  )}
+                >
+                  {selectedAccountType ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        {selectedAccountType.icon}
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-foreground">{selectedAccountType.label}</span>
+                        <p className="text-xs text-muted-foreground">{selectedAccountType.description}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Select account type</span>
+                  )}
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                    showAccountTypeDropdown && "rotate-180"
+                  )} />
+                </button>
+
+                <AnimatePresence>
+                  {showAccountTypeDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden"
+                    >
+                      {accountTypeOptions.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => {
+                            setAccountType(option.id);
+                            setShowAccountTypeDropdown(false);
+                            if (option.id !== "Broker Sync" && broker === "MetaTrader 5") {
+                              setBroker("");
+                            }
+                          }}
+                          className={cn(
+                            "w-full px-4 py-3 flex items-center gap-3 text-left transition-colors",
+                            "hover:bg-muted/50",
+                            accountType === option.id && "bg-primary/10"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-8 h-8 rounded-lg flex items-center justify-center",
+                            accountType === option.id ? "bg-primary text-white" : "bg-muted/50 text-muted-foreground"
+                          )}>
+                            {option.icon}
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-foreground">{option.label}</span>
+                            <p className="text-xs text-muted-foreground">{option.description}</p>
+                          </div>
+                          {accountType === option.id && (
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
-            {/* Account Balance for File Upload and Manual */}
-            {(accountType === "File Upload" || accountType === "Manual") && (
-              <input
-                placeholder="Account Balance"
-                required
-                autoComplete="off"
-                type="number"
-                name="accountBalance"
-                value={accountDetails.accountBalance}
-                onChange={handleOnChange}
-                className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
-              />
-            )}
+            {/* Account Balance (for File Upload and Manual) */}
+            <AnimatePresence>
+              {(accountType === "File Upload" || accountType === "Manual") && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-2"
+                >
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Wallet className="w-4 h-4" />
+                    Starting Balance
+                  </label>
+                  <input
+                    type="number"
+                    name="accountBalance"
+                    value={accountDetails.accountBalance}
+                    onChange={handleOnChange}
+                    placeholder="50000"
+                    className={cn(
+                      "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                      "text-foreground placeholder:text-muted-foreground text-sm",
+                      "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50",
+                      "transition-all duration-200"
+                    )}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Broker Dropdown */}
-            <div className="w-[calc(80%+30px)] min-h-[44px] rounded-[25px] bg-gray-100 mt-4 overflow-hidden">
-              <div 
-                className="w-full h-[44px] flex items-center justify-between text-gray-600 cursor-pointer px-4 font-semibold"
-                onClick={() => { setForBroker(!forBroker); setForAcc(false); }}
-              >
-                <span className="text-sm">{broker}</span>
-                <FontAwesomeIcon 
-                  icon={faChevronDown} 
-                  className={`text-gray-600 transition-transform duration-300 ${forBroker ? "rotate-180" : ""}`}
-                />
-              </div>
-              <div className={`bg-gray-100 transition-all duration-300 ease-in-out overflow-hidden ${
-                forBroker 
-                  ? accountType === "Broker Sync" 
-                    ? "max-h-[60px] py-2" 
-                    : "max-h-[200px] py-2"
-                  : "max-h-0"
-              }`}>
-                {(accountType === "Broker Sync" ? ["MetaTrader 5"] : brokers).map((brokerItem) => (
-                  <div
-                    key={brokerItem}
-                    className="w-full px-4 py-2 cursor-pointer text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors"
-                    onClick={() => { setBroker(brokerItem); setForBroker(false); }}
-                  >
-                    {brokerItem}
-                  </div>
-                ))}
+            <div className="space-y-2" ref={brokerRef}>
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                Broker
+              </label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBrokerDropdown(!showBrokerDropdown);
+                    setShowAccountTypeDropdown(false);
+                  }}
+                  className={cn(
+                    "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                    "flex items-center justify-between gap-2 text-left",
+                    "hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20",
+                    "transition-all duration-200",
+                    showBrokerDropdown && "border-primary/50 ring-2 ring-primary/20"
+                  )}
+                >
+                  {selectedBroker ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                        {selectedBroker.icon}
+                      </div>
+                      <span className="text-sm font-medium text-foreground">{selectedBroker.label}</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Select broker</span>
+                  )}
+                  <ChevronDown className={cn(
+                    "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                    showBrokerDropdown && "rotate-180"
+                  )} />
+                </button>
+
+                <AnimatePresence>
+                  {showBrokerDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto"
+                    >
+                      {filteredBrokers.map((brokerOpt) => (
+                        <button
+                          key={brokerOpt.id}
+                          type="button"
+                          onClick={() => {
+                            setBroker(brokerOpt.id);
+                            setShowBrokerDropdown(false);
+                          }}
+                          className={cn(
+                            "w-full px-4 py-3 flex items-center gap-3 text-left transition-colors",
+                            "hover:bg-muted/50",
+                            broker === brokerOpt.id && "bg-primary/10"
+                          )}
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                            {brokerOpt.icon}
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{brokerOpt.label}</span>
+                          {broker === brokerOpt.id && (
+                            <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
             {/* MT5 Credentials */}
-            {accountType === "Broker Sync" && broker === "MetaTrader 5" && (
-              <>
-                <input
-                  placeholder="Investor ID"
-                  required
-                  autoComplete="off"
-                  type="text"
-                  name="investorId"
-                  value={investorId}
-                  onChange={(e) => setInvestorId(e.target.value)}
-                  className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
-                />
-                <input
-                  placeholder="Investor Password"
-                  required
-                  autoComplete="off"
-                  type="password"
-                  name="investorPw"
-                  value={investorPw}
-                  onChange={(e) => setInvestorPw(e.target.value)}
-                  className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
-                />
-                <input
-                  placeholder="Server Name"
-                  required
-                  autoComplete="off"
-                  type="text"
-                  name="server"
-                  value={server}
-                  onChange={(e) => setServer(e.target.value)}
-                  className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
-                />
-              </>
-            )}
+            <AnimatePresence>
+              {accountType === "Broker Sync" && broker === "MetaTrader 5" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4 pt-2"
+                >
+                  <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                    <p className="text-xs text-primary font-medium flex items-center gap-2">
+                      <Key className="w-3 h-3" />
+                      Enter your MT5 investor credentials (read-only access)
+                    </p>
+                  </div>
 
-            <textarea
-              autoComplete="off"
-              name="description"
-              value={accountDetails.description}
-              onChange={handleOnChange}
-              placeholder="Description (Optional)"
-              className="w-4/5 text-black px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 h-20 resize-none"
-            />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Investor ID
+                    </label>
+                    <input
+                      type="text"
+                      value={investorId}
+                      onChange={(e) => setInvestorId(e.target.value)}
+                      placeholder="12345678"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                        "text-foreground placeholder:text-muted-foreground text-sm",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      Investor Password
+                    </label>
+                    <input
+                      type="password"
+                      value={investorPw}
+                      onChange={(e) => setInvestorPw(e.target.value)}
+                      placeholder="••••••••"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                        "text-foreground placeholder:text-muted-foreground text-sm",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Server className="w-4 h-4" />
+                      Server Name
+                    </label>
+                    <input
+                      type="text"
+                      value={server}
+                      onChange={(e) => setServer(e.target.value)}
+                      placeholder="ICMarkets-Demo"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                        "text-foreground placeholder:text-muted-foreground text-sm",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
+                      )}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Description
+                <span className="text-xs text-muted-foreground/60">(Optional)</span>
+              </label>
+              <textarea
+                name="description"
+                value={accountDetails.description}
+                onChange={handleOnChange}
+                placeholder="Notes about this account..."
+                rows={3}
+                className={cn(
+                  "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                  "text-foreground placeholder:text-muted-foreground text-sm resize-none",
+                  "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50",
+                  "transition-all duration-200"
+                )}
+              />
+            </div>
+
+            {/* Status Messages */}
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-3 p-3 bg-loss/10 border border-loss/20 rounded-xl"
+                >
+                  <AlertCircle className="w-4 h-4 text-loss flex-shrink-0" />
+                  <p className="text-sm text-loss">{error}</p>
+                </motion.div>
+              )}
+              
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-3 p-3 bg-profit/10 border border-profit/20 rounded-xl"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-profit flex-shrink-0" />
+                  <p className="text-sm text-profit">{success}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Purple Bar Divider */}
-          <div className="w-full flex justify-center my-6">
-            <div className="w-1/2 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-70 rounded"></div>
+          {/* Footer */}
+          <div className="p-5 border-t border-border space-y-3">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={submitFun}
+              disabled={isSubmitting}
+              className={cn(
+                "w-full py-3.5 rounded-xl font-semibold text-white transition-all duration-200",
+                "flex items-center justify-center gap-2",
+                "bg-primary hover:bg-primary-dark shadow-lg shadow-primary/20",
+                isSubmitting && "opacity-70 cursor-not-allowed"
+              )}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Create Account
+                </>
+              )}
+            </motion.button>
+
+            <button 
+              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2"
+            >
+              <HelpCircle className="w-4 h-4" />
+              Need Help?
+            </button>
           </div>
-
-          {/* Error and Success Messages */}
-          {error && (
-            <p className="text-red-400 text-xs text-center mb-3 animate-pulse">{error}</p>
-          )}
-          {success && (
-            <p className="text-green-400 text-xs text-center mb-3 animate-pulse">{success}</p>
-          )}
-
-          {/* Submit Button */}
-          <button 
-            className="w-36 mx-auto block py-3 rounded-[25px] text-sm text-white font-semibold border-none outline-none bg-purple-600 hover:bg-purple-700 cursor-pointer transition-all duration-200 transform hover:scale-105"
-            onClick={submitFun}
-          >
-            Add Account
-          </button>
-
-          {/* Help Link */}
-          <button className="w-full text-center text-purple-400 text-xs font-semibold mt-4 mb-2 cursor-pointer hover:text-purple-300 transition-colors">
-            Need Help ?
-          </button>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
