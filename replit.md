@@ -53,6 +53,7 @@ The application features a complete UI redesign inspired by Notion, Linear, and 
 7. **Notebook Page** - Fully redesigned with modern three-column layout (Folders, Notes, Content), responsive mobile navigation, rich text editor with formatting toolbar, clean empty states, and context menus for rename/delete operations
 8. **Strategies Page** - Fully redesigned with modern tab navigation (Strategies, Overview, Reports, Compare), theme-aware chart cards using CSS variable-based colors, modern stat grids with icons, strategy comparison charts, and clean empty states. All components use semantic theme tokens exclusively with no hardcoded colors.
 9. **Login Page** - Modern split-screen layout with decorative left panel featuring gradient backgrounds, abstract patterns, and feature highlight cards. Right side has glassmorphism form card with icon-enhanced inputs, loading states, styled error messages, and side-by-side social login buttons (Google, Apple). Fully responsive - collapses to single column on mobile.
+10. **Lot Size Calculator Page** - Dedicated forex position sizing tool with account balance, risk percentage, stop loss pips, and currency pair inputs. Features formula-based pip value calculations for USD quote pairs, USD base pairs, and cross pairs. Displays standard/mini/micro lot sizes, risk amount, pip value, and actual risk. Includes input validation, quick risk preset buttons (0.5%, 1%, 2%, 3%), optional exchange rate input for cross pairs, and copy-to-clipboard functionality.
 
 ### UI Component Library
 Located in `src/components/ui/`:
