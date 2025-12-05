@@ -78,15 +78,15 @@ export default function LoginPage() {
   return (
     <div className={`flex min-h-screen w-full bg-background ${inter.className}`}>
       {/* Left Side - Decorative */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent dark:from-primary/10 dark:via-primary/5 dark:to-transparent" />
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-100 dark:bg-[#0a0a0a]">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-blue-100/50 to-indigo-100/30 dark:from-primary/15 dark:via-[#0f0f0f] dark:to-transparent" />
         
         {/* Abstract Pattern */}
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-40 right-20 w-96 h-96 bg-profit/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-40 right-20 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-violet-500/15 rounded-full blur-3xl" />
         </div>
 
         {/* Grid Pattern */}
