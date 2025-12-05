@@ -437,11 +437,18 @@ export async function editDropdownsHandler(req, userId: string, token: string) {
         console.log("EditDropdownsHandler called with:", req);
         const { id, type, value, accountType } =  req;
 
-        if (!id || !value || !type || !accountType) {
+        const urlTypes = ['beforeURL', 'afterURL'];
+        const isUrlType = urlTypes.includes(type);
+
+        if (!id || !type || !accountType) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        const allowedTypes = ['strategy', 'rfe', 'btm', 'dtm', 'atm'];
+        if (!isUrlType && value === undefined) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        const allowedTypes = ['strategy', 'rfe', 'btm', 'dtm', 'atm', 'beforeURL', 'afterURL'];
         if (!allowedTypes.includes(type)) {
             return NextResponse.json({ error: "Invalid type specified" }, { status: 400 });
         }
