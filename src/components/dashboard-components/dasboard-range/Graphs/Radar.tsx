@@ -163,8 +163,8 @@ export default function PerformanceRadar() {
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
             <defs>
               <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                <stop offset="100%" stopColor="#6366F1" stopOpacity={0.4} />
+                <stop offset="0%" stopColor="#2563EB" stopOpacity={0.85} />
+                <stop offset="100%" stopColor="#1D4ED8" stopOpacity={0.5} />
               </linearGradient>
             </defs>
             <PolarGrid 
@@ -189,13 +189,13 @@ export default function PerformanceRadar() {
             <Radar
               name="Performance"
               dataKey="value"
-              stroke="#8B5CF6"
+              stroke="#2563EB"
               strokeWidth={2}
               fill="url(#radarFill)"
               dot={{ 
                 r: 4, 
-                fill: '#8B5CF6',
-                stroke: isDark ? '#1a1a2e' : '#ffffff',
+                fill: '#2563EB',
+                stroke: isDark ? '#0a0a0a' : '#ffffff',
                 strokeWidth: 2
               }}
             />
