@@ -15,6 +15,7 @@ import {
 import StatItem from './StatItem'
 import useAccountDetails from '@/store/accountdetails'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
+import { formatCompactNumber } from '@/utils/formatNumber'
 
 export default function SummarySection({ trades = [] }: { trades?: any[] }) {
   const { selectedAccounts } = useAccountDetails()
@@ -56,7 +57,8 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
   const formatValue = (value: any, prefix = '', suffix = '') => {
     if (value === null || value === undefined || isNaN(value)) return `${prefix}0${suffix}`
     if (typeof value === 'number') {
-      return `${prefix}${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${suffix}`
+      const formatted = formatCompactNumber(value, 2)
+      return `${prefix}${formatted}${suffix}`
     }
     return `${prefix}${value}${suffix}`
   }

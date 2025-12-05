@@ -10,6 +10,7 @@ import { calculateCumulativePnL } from '@/utils/reports/calculateCumulativePnL'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
 import useAccountDetails from '@/store/accountdetails'
 import LineChartCard from '../charts/LineChartCard'
+import { formatCompactNumber } from '@/utils/formatNumber'
 
 interface Trade {
   Item: string
@@ -167,7 +168,7 @@ const CompareMain = () => {
 
     return [
       { label: 'Total P&L', value: `$${metrics.netPnL.toFixed(2)}`, highlight: true, isProfit: metrics.netPnL >= 0 },
-      { label: 'Average daily volume', value: metrics.avgDailyVolume.toFixed(2) },
+      { label: 'Average daily volume', value: formatCompactNumber(metrics.avgDailyVolume, 2) },
       { label: 'Average winning trade', value: `$${metrics.avgTradeWinLoss.toFixed(2)}` },
       { label: 'Average losing trade', value: `-$${Math.abs(metrics.avgTradeWinLoss).toFixed(2)}` },
       { label: 'Total number of trades', value: trades.length.toString() },
