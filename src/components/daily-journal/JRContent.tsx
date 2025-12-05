@@ -17,9 +17,11 @@ import {
   ChevronRight,
   Check,
   Clock,
-  DollarSign,
   BarChart2,
-  MessageSquare
+  MessageSquare,
+  Plus,
+  Target,
+  Search
 } from "lucide-react";
 
 import useAccountDetails from "@/store/accountdetails";
@@ -68,14 +70,77 @@ const JRContent = ({ dailyData }: JRContentProps) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [jrData, setJrData] = useState({ rfe: "", widw: "", wni: "", lfnt: "" });
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [strategySearch, setStrategySearch] = useState("");
+  const [creatingStrategy, setCreatingStrategy] = useState(false);
 
   const itemsPerPage = 5;
   const totalPages = Math.ceil((dailyData?.length || 0) / itemsPerPage);
   const currentItems = dailyData?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) || [];
 
+  const existingStrategies: string[] = (profileData?.otherData?.strategy || []).filter((s: string) => s && s !== "Select");
+
   useEffect(() => {
     setAccounts();
   }, [setAccounts]);
+
+  const updateTradeStrategy = async (tradeId: string, strategy: string, accountType: string) => {
+    try {
+      const res = await fetch(`/api/daily-journal/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          id: tradeId, 
+          type: "strategy", 
+          value: strategy, 
+          tokenn, 
+          accountType, 
+          apiName: "editDropdowns" 
+        }),
+      });
+      if (res.ok) {
+        setActiveDropdown(null);
+        setAccounts();
+        setAlertBoxG(`Strategy set to "${strategy}"`, "success");
+      }
+    } catch (error) {
+      console.error(error);
+      setAlertBoxG("Failed to update strategy", "error");
+    }
+  };
+
+  const createAndApplyStrategy = async (tradeId: string, strategyName: string, accountType: string) => {
+    if (!strategyName.trim()) return;
+    
+    setCreatingStrategy(true);
+    try {
+      const res = await fetch(`/api/strategy/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          strategy: strategyName.trim(),
+          tokenn,
+          apiName: "addStrategy" 
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        await updateTradeStrategy(tradeId, strategyName.trim(), accountType);
+        setStrategySearch("");
+        setAlertBoxG(`Strategy "${strategyName}" created! 🎯`, "success");
+      } else if (res.status === 409) {
+        await updateTradeStrategy(tradeId, strategyName.trim(), accountType);
+      } else {
+        setAlertBoxG(data.error || "Failed to create strategy", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      setAlertBoxG("Failed to create strategy", "error");
+    } finally {
+      setCreatingStrategy(false);
+    }
+  };
 
   const toggleExpand = (id: string, trade: Trade) => {
     if (expandedId === id) {
@@ -312,11 +377,106 @@ const JRContent = ({ dailyData }: JRContentProps) => {
 
                   {/* Tags Row */}
                   <div className="flex flex-wrap items-center gap-2">
-                    {trade.strategy && trade.strategy !== "Select" && (
-                      <span className="px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-md border border-primary/20">
-                        {trade.strategy}
-                      </span>
-                    )}
+                    {/* Strategy Dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => {
+                          setActiveDropdown(activeDropdown === `strategy-${trade.id}` ? null : `strategy-${trade.id}`);
+                          setStrategySearch("");
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                          trade.strategy && trade.strategy !== "Select"
+                            ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                            : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                        }`}
+                      >
+                        <Target className="w-3 h-3" />
+                        {trade.strategy && trade.strategy !== "Select" ? trade.strategy : "Strategy"}
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      <AnimatePresence>
+                        {activeDropdown === `strategy-${trade.id}` && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -5, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -5, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute left-0 top-full mt-1 z-50 bg-card border border-border rounded-xl shadow-xl w-64 overflow-hidden"
+                          >
+                            {/* Search/Create Input */}
+                            <div className="p-2 border-b border-border">
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                <input
+                                  type="text"
+                                  placeholder="Search or create strategy..."
+                                  value={strategySearch}
+                                  onChange={(e) => setStrategySearch(e.target.value)}
+                                  className="w-full pl-8 pr-3 py-2 text-sm bg-muted/50 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
+                                  autoFocus
+                                />
+                              </div>
+                            </div>
+
+                            {/* Existing Strategies List */}
+                            <div className="max-h-48 overflow-y-auto">
+                              {existingStrategies
+                                .filter((s: string) => s.toLowerCase().includes(strategySearch.toLowerCase()))
+                                .map((strategy: string) => (
+                                  <button
+                                    key={strategy}
+                                    onClick={() => updateTradeStrategy(trade.id, strategy, trade.accountType)}
+                                    className="w-full px-3 py-2.5 text-sm text-left hover:bg-muted flex items-center justify-between group"
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <Target className="w-3.5 h-3.5 text-primary" />
+                                      {strategy}
+                                    </span>
+                                    {trade.strategy === strategy && (
+                                      <Check className="w-4 h-4 text-primary" />
+                                    )}
+                                  </button>
+                                ))}
+                              
+                              {existingStrategies.filter((s: string) => 
+                                s.toLowerCase().includes(strategySearch.toLowerCase())
+                              ).length === 0 && strategySearch && (
+                                <div className="px-3 py-2 text-xs text-muted-foreground">
+                                  No strategies found
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Create New Strategy */}
+                            {strategySearch && !existingStrategies.some(
+                              (s: string) => s.toLowerCase() === strategySearch.toLowerCase()
+                            ) && (
+                              <div className="p-2 border-t border-border">
+                                <button
+                                  onClick={() => createAndApplyStrategy(trade.id, strategySearch, trade.accountType)}
+                                  disabled={creatingStrategy}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                  {creatingStrategy ? "Creating..." : `Create "${strategySearch}"`}
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Quick Create Hint */}
+                            {!strategySearch && existingStrategies.length === 0 && (
+                              <div className="p-3 text-center">
+                                <p className="text-xs text-muted-foreground">
+                                  Type to create your first strategy
+                                </p>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Quality Dropdown */}
                     <div className="relative">
                       <button
                         onClick={() => setActiveDropdown(activeDropdown === `quality-${trade.id}` ? null : `quality-${trade.id}`)}
