@@ -217,20 +217,20 @@ export default function DateRangeDropdown({ setFDate, setTDate }: DateRangeDropd
     : "Select Range";
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative w-full sm:w-auto" ref={ref}>
       <button 
-        className="flex items-center gap-2 bg-card text-foreground border border-border px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted text-sm font-medium"
+        className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto bg-card text-foreground border border-border px-4 py-2.5 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted text-sm font-medium touch-manipulation"
         onClick={() => setOpen((o) => !o)}
       >
-        {label}
-        <svg className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <span className="truncate">{label}</span>
+        <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl p-4 w-[560px] shadow-lg z-30">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-1/2 sm:top-full -translate-y-1/2 sm:translate-y-0 sm:mt-2 bg-card border border-border rounded-xl p-4 w-auto sm:w-[560px] max-w-[calc(100vw-2rem)] shadow-lg z-50 max-h-[80vh] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-muted/50 border border-border rounded-lg p-3">
               <MonthYearControls
                 y={left.y}
@@ -276,7 +276,7 @@ export default function DateRangeDropdown({ setFDate, setTDate }: DateRangeDropd
 
           <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-border">
             <button
-              className="bg-transparent text-muted-foreground border border-border px-4 py-2 rounded-lg cursor-pointer hover:bg-muted transition-colors text-sm font-medium"
+              className="bg-transparent text-muted-foreground border border-border px-4 py-2.5 rounded-lg cursor-pointer hover:bg-muted transition-colors text-sm font-medium touch-manipulation"
               onClick={() => {
                 setFromDate(null);
                 setToDate(null);
@@ -286,7 +286,7 @@ export default function DateRangeDropdown({ setFDate, setTDate }: DateRangeDropd
               Clear
             </button>
             <button 
-              className="bg-primary text-primary-foreground border-none px-4 py-2 rounded-lg cursor-pointer font-medium text-sm hover:bg-primary/90 transition-colors"
+              className="bg-primary text-primary-foreground border-none px-4 py-2.5 rounded-lg cursor-pointer font-medium text-sm hover:bg-primary/90 transition-colors touch-manipulation"
               onClick={() => setOpen(false)}
             >
               Done

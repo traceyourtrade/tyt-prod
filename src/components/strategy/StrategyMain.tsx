@@ -117,7 +117,7 @@ const StrategyMain = () => {
     }, [selectedAccounts, fDate, toDate]);
 
     return (
-        <div className="w-full min-h-[80vh] bg-background text-foreground flex flex-col p-6">
+        <div className="w-full min-h-[80vh] bg-background text-foreground flex flex-col p-4 sm:p-6">
             <TopSection
                 selectedTab={selectedTab}
                 handleTabChange={handleTabChange}
@@ -152,24 +152,28 @@ const TopSection = ({
 
 
   return (
-    <div className="flex justify-between items-center py-4 flex-wrap gap-4 border-b border-border mb-4">
-      <div className="flex gap-2">
-        {tabs.map((tab,index) => (
-          <button
-            key={tab.id}
-            className={`px-4 py-2 rounded-lg border cursor-pointer transition-all duration-200 text-sm font-medium ${
-              selectedTab === tab.id 
-                ? "bg-primary text-primary-foreground border-primary shadow-sm" 
-                : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
-            }`}
-            onClick={() => handleTabChange(index)}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center py-4 gap-4 border-b border-border mb-4">
+      {/* Tabs - horizontally scrollable on mobile */}
+      <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
+        <div className="flex gap-2 min-w-max">
+          {tabs.map((tab,index) => (
+            <button
+              key={tab.id}
+              className={`px-4 py-2.5 rounded-lg border cursor-pointer transition-all duration-200 text-sm font-medium whitespace-nowrap touch-manipulation ${
+                selectedTab === tab.id 
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                  : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+              }`}
+              onClick={() => handleTabChange(index)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex gap-2">
+      {/* Filters - full width on mobile, row on desktop */}
+      <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
         <StrategyDropdown allStrategies={allStrategies} selected={selected} setSelected={setSelected} />
         <DateRangeDropdown setFDate={setFDate} setTDate={setTDate} />
       </div>
