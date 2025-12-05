@@ -149,13 +149,13 @@ export default function RootLayout({
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group" onClick={() => setMobileOpen(false)}>
           {/* Collapsed: Custom Lightning Bolt Image */}
           {(collapsed && !mobileOpen) && (
-            <div className="w-12 h-12 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+            <div className="w-9 h-9 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
               <Image 
                 src="/images/lightning-icon.png" 
-                width={44} 
-                height={44} 
+                width={32} 
+                height={32} 
                 alt="ProJournX" 
-                className="w-11 h-11 object-contain"
+                className="w-8 h-8 object-contain"
                 unoptimized
               />
             </div>
@@ -164,10 +164,10 @@ export default function RootLayout({
           {(!collapsed || mobileOpen) && (
             <Image 
               src="/images/logo-dark.png?v=2" 
-              width={140} 
-              height={35} 
+              width={180} 
+              height={45} 
               alt="ProJournX" 
-              className="h-8 w-auto"
+              className="h-10 w-auto"
               unoptimized
             />
           )}
