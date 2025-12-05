@@ -42,6 +42,7 @@ import EditTradePopUp from "@/components/trades-popup/edit-trades/EditTradePopUp
 import CalendarPopup from "@/components/dashboard-components/popups/CalendarPopUp"
 import AlertBox from "@/components/dashboard-components/popups/AlertBox"
 import DjImgPopup from "@/components/dashboard-components/popups/DjImgPopup"
+import AccountsDropdown from "@/components/dashboard-components/AccountsDropdown"
 
 import useAccountDetails from "@/store/accountdetails"
 import calendarPopUp from "@/store/calendarPopUp"
@@ -431,17 +432,10 @@ export default function RootLayout({
 
           {/* Right side */}
           <div className="flex items-center gap-1 lg:gap-2">
-            {/* Accounts Button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="hidden sm:flex gap-2"
-              onClick={() => setAddAcc()}
-            >
-              <DollarSign className="h-4 w-4" />
-              <span>Accounts</span>
-              <ChevronDown className="h-3 w-3" />
-            </Button>
+            {/* Accounts Dropdown */}
+            <div className="hidden sm:block">
+              <AccountsDropdown />
+            </div>
 
             {/* Date Range */}
             <Button variant="outline" size="sm" className="hidden md:flex gap-2">
