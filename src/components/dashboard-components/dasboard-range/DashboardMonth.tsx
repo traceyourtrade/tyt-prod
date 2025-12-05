@@ -6,6 +6,10 @@ import Calendar from "../Calendar";
 import TradesWidget from "../TradesWidget";
 import PnLDailyChart from "./Graphs/PnLDailyChart";
 import Radar from "./Graphs/Radar";
+import DailyPnLBarChart from "./Graphs/DailyPnLBarChart";
+import DayOfWeekChart from "./Graphs/DayOfWeekChart";
+import SymbolPnLChart from "./Graphs/SymbolPnLChart";
+import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
 import useAccountDetails from '@/store/accountdetails';
@@ -85,6 +89,14 @@ const DashboardMonth: React.FC = () => {
           <TradesWidget data={thisMonthData} />
           <Radar />
         </div>
+      </div>
+
+      {/* Insights Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DailyPnLBarChart data={thisMonthData} />
+        <DayOfWeekChart data={thisMonthData} />
+        <SymbolPnLChart data={thisMonthData} />
+        <HourlyPnLChart data={thisMonthData} />
       </div>
     </div>
   );

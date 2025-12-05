@@ -18,6 +18,7 @@ const generateDemoTradeData = () => {
   const today = new Date();
   const symbols = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'SPY', 'QQQ'];
   const strategies = ['Momentum', 'Breakout', 'Reversal', 'Scalping', 'Swing'];
+  const tradingHours = ['09', '10', '11', '12', '13', '14', '15'];
   
   for (let i = 0; i < 45; i++) {
     const date = new Date(today);
@@ -29,9 +30,14 @@ const generateDemoTradeData = () => {
       ? Math.floor(Math.random() * 2000) + 100 
       : -(Math.floor(Math.random() * 800) + 50);
     
+    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+    const hour = tradingHours[Math.floor(Math.random() * tradingHours.length)];
+    const minute = Math.floor(Math.random() * 60).toString().padStart(2, '0');
+    
     trades.push({
       date: dateStr,
-      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      symbol: symbol,
+      Item: symbol,
       Profit: profit,
       strategy: strategies[Math.floor(Math.random() * strategies.length)],
       entryPrice: (Math.random() * 500 + 50).toFixed(2),
@@ -39,6 +45,7 @@ const generateDemoTradeData = () => {
       quantity: Math.floor(Math.random() * 100) + 10,
       side: Math.random() > 0.5 ? 'Long' : 'Short',
       duration: `${Math.floor(Math.random() * 120) + 5}m`,
+      EntryTime: `${hour}:${minute}:00`,
     });
   }
   return trades;
