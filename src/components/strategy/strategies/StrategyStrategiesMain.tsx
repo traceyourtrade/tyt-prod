@@ -1,9 +1,10 @@
 "use client"
 import { useState } from "react";
 import Cookies from "js-cookie";
-import { MoreVertical, Send, X } from "lucide-react";
+import { MoreVertical, Send, X, Plus, Search, Target, TrendingUp, BarChart3, Percent } from "lucide-react";
 import StrategyPopup from "@/components/strategy/components/StrategyPopUp";
 import { useDataStore } from "@/store/store";
+
 interface Trade {
   Profit: number;
   [key: string]: any;
@@ -95,7 +96,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
       if (res.status === 200) {
         setEditing(null);
         setOpenMenu(null);
-        // api call function
       } else {
         console.log(data);
         if (data.error === "Invalid credentials") {
@@ -105,7 +105,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         }
       }
     } catch (error) {
-      // console.log(error)
     }
   };
 
@@ -132,7 +131,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
       if (res.status === 200) {
         setNewStrategy({ name: "", tags: "", author: "" });
         setShowPopup(false);
-        // api call function
       } else {
         console.log(data);
         if (data.error === "Invalid credentials") {
@@ -142,7 +140,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         }
       }
     } catch (error) {
-      // console.log(error)
     }
   };
 
@@ -167,7 +164,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
 
       if (res.status === 200) {
         setOpenMenu(null);
-        // api call function
       } else {
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck the Email & Password")
@@ -176,7 +172,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         }
       }
     } catch (error) {
-      // console.log(error)
     }
   };
 
@@ -205,7 +200,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
       if (res.status === 200) {
         setNewStrategy({ name: "", tags: "", author: "" });
         setShowPopup(false);
-        // api call function
       } else {
         console.log(data);
         if (data.error === "Invalid credentials") {
@@ -215,21 +209,15 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         }
       }
     } catch (error) {
-      // console.log(error)
     }
   };
 
-  // 💥 Combine strategies, metadata, and trade data into one object (mockData-like)
   const combinedData: { [key: string]: CombinedData } = {};
 
   allStrategies.forEach((name) => {
-    // find metadata (tags, description, etc.)
     const meta = strategies.find((s) => s.strategy === name) || {};
-
-    // find trades for this strategy
     const trades = strategiesDataObj[name] || [];
 
-    // calculate metrics from trades
     const totalTrades = trades.length;
     const wins = trades.filter((t) => t.Profit > 0).length;
     const losses = trades.filter((t) => t.Profit <= 0).length;
@@ -242,7 +230,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
 
     const winLossRatio = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : "∞";
 
-    // ✅ build combined record
     combinedData[name] = {
       id: meta._id,
       image: meta.imgLink || null,
@@ -262,35 +249,52 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
   });
 
   return (
-    <div className="w-full min-h-[80vh] bg-[#0f0f0f] text-white rounded-xl py-6 flex flex-col gap-6">
-      <div className="w-[90%] mx-auto flex justify-between items-center flex-wrap">
-        <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#d57eeb] to-[#fccb90] bg-clip-text text-transparent">
-          🎯 Strategies
-        </h2>
+    <div className="w-full min-h-[70vh] text-foreground flex flex-col gap-6">
+      {/* Header Section */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Target className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">Your Strategies</h2>
+            <p className="text-sm text-muted-foreground">{allStrategies.length} strategies total</p>
+          </div>
+        </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button 
-            className="w-[150px] h-8 text-white text-sm bg-[#7e22ce] border-none outline-none rounded-full cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all shadow-sm"
             onClick={() => setShowPopup(true)}
           >
-            Add Strategy +
+            <Plus className="h-4 w-4" />
+            Add Strategy
           </button>
 
-          <input
-            type="text"
-            placeholder="🔍 Search strategies..."
-            className="bg-[#1a1a1a] border border-[#2b2b2b] text-[#ddd] rounded-lg px-3.5 py-2 text-sm outline-none w-[220px] transition-all duration-200 focus:border-[#d57eeb] focus:shadow-[0_0_6px_rgba(213,126,235,0.4)]"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search strategies..."
+              className="pl-10 pr-4 py-2.5 bg-muted border border-border text-foreground rounded-lg text-sm outline-none w-[220px] transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Strategy cards */}
+      {/* Strategy Cards Grid */}
       {filteredStrategies.length === 0 ? (
-        <p className="text-center text-[#aaa] text-base mt-10">No strategies found.</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <Target className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground text-base">No strategies found.</p>
+          <p className="text-muted-foreground text-sm mt-1">Create your first strategy to get started.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 w-[90%] mx-auto gap-4 justify-center cursor-pointer">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStrategies.map((name, idx) => {
             const s = combinedData[name];
             if (!s) return null;
@@ -298,109 +302,130 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
             return (
               <div 
                 key={idx} 
-                className="bg-[#1a1a1a] border border-[#262626] rounded-xl overflow-hidden transition-all duration-250 flex flex-col w-full max-w-[340px] hover:-translate-y-1 hover:shadow-[0_8px_25px_rgba(213,126,235,0.25)]"
+                className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 flex flex-col hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 cursor-pointer group"
                 onClick={() => setSelectedStrategy({ name, ...s })}
               >
-                <div className="w-full h-[150px] overflow-hidden border-b border-[#222] flex items-center justify-center">
+                {/* Card Image/Header */}
+                <div className="w-full h-[140px] overflow-hidden border-b border-border flex items-center justify-center relative">
                   {s.image ? (
-                    <img src={s.image} alt={name} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                    <img src={s.image} alt={name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#4c1d95] via-[#7e22ce] to-[#9333ea] flex items-center justify-center text-2xl font-semibold text-white uppercase tracking-wide">
-                      <span>{getShortForm(name)}</span>
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-primary/60">{getShortForm(name)}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="p-4 flex flex-col gap-2.5">
+                {/* Card Content */}
+                <div className="p-4 flex flex-col gap-3">
+                  {/* Name and Menu */}
                   <div className="flex justify-between items-center relative">
                     {editing === name ? (
-                      <div className="flex items-center gap-1.5 w-full">
+                      <div className="flex items-center gap-2 w-full">
                         <input
                           type="text"
                           value={tempName}
                           onChange={(e) => setTempName(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
-                          className="flex-1 px-2 py-1 rounded border border-[#444] bg-[#1a1a1a] text-white text-sm"
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                         />
-                        <Send
-                          size={18}
-                          className="cursor-pointer transition-opacity duration-200 text-primary hover:opacity-80"
+                        <button
+                          className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                           onClick={(e) => { e.stopPropagation(); handleRename(e, name, s.id); }}
-                        />
-                        <X
-                          size={18}
-                          className="cursor-pointer transition-opacity duration-200 text-[#f44336] hover:opacity-80"
-                          onClick={() => {
+                        >
+                          <Send className="h-4 w-4" />
+                        </button>
+                        <button
+                          className="p-1.5 rounded-lg bg-loss/10 text-loss hover:bg-loss/20 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditing(null);
                             setOpenMenu(null);
                           }}
-                        />
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
                     ) : (
                       <>
-                        <h3 className="text-base font-semibold text-white">{name}</h3>
-                        <MoreVertical
-                          className="cursor-pointer opacity-70 transition-opacity duration-200 hover:opacity-100"
-                          size={18}
+                        <h3 className="text-base font-semibold text-foreground">{name}</h3>
+                        <button
+                          className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             setOpenMenu(openMenu === name ? null : name);
                           }}
-                        />
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
                       </>
                     )}
 
+                    {/* Dropdown Menu */}
                     {openMenu === name && editing !== name && (
-                      <div className="absolute right-0 top-7 bg-[#222] rounded-lg py-1.5 shadow-lg z-10">
-                        <p
-                          className="m-0 px-4 py-2 cursor-pointer text-[#eee] text-sm transition-colors duration-200 hover:bg-white/10"
+                      <div className="absolute right-0 top-8 bg-card border border-border rounded-xl py-1 shadow-xl z-20 min-w-[140px]">
+                        <button
+                          className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditing(name);
                             setTempName(name);
                           }}
                         >
-                          ✏️ Rename
-                        </p>
-                        <p 
-                          className="m-0 px-4 py-2 cursor-pointer text-[#eee] text-sm transition-colors duration-200 hover:bg-white/10"
+                          Rename
+                        </button>
+                        <button 
+                          className="w-full px-4 py-2 text-left text-sm text-loss hover:bg-loss/10 transition-colors flex items-center gap-2"
                           onClick={(e) => { e.stopPropagation(); handleDelete(e, name, s.id); }}
                         >
-                          🗑️ Delete
-                        </p>
-                        <p 
-                          className="m-0 px-4 py-2 cursor-pointer text-[#eee] text-sm transition-colors duration-200 hover:bg-white/10"
+                          Delete
+                        </button>
+                        <button 
+                          className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
                           onClick={(e) => { e.stopPropagation(); handleMakeDefault(e, s.id); }}
                         >
-                          ⭐ Make Default
-                        </p>
+                          Make Default
+                        </button>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5">
-                    {s.tags.map((tag, i) => (
-                      <span 
-                        key={i} 
-                        className="bg-[#222] text-[#ccc] rounded px-2 py-1 text-xs transition-all duration-200 hover:bg-[#d57eeb] hover:text-[#111]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  {/* Tags */}
+                  {s.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {s.tags.map((tag, i) => (
+                        <span 
+                          key={i} 
+                          className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-xs font-medium transition-colors hover:bg-primary/10 hover:text-primary"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
-                  <div className="flex justify-between border-t border-[#262626] pt-2">
-                    <div>
-                      <p className="text-[#aaa] text-xs">Win rate</p>
-                      <p className="text-white text-sm font-semibold">{s.winRate}</p>
+                  {/* Stats Row */}
+                  <div className="flex justify-between items-center pt-3 border-t border-border">
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
+                        <Percent className="h-3 w-3" />
+                        <span className="text-xs">Win rate</span>
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{s.winRate}</span>
                     </div>
-                    <div>
-                      <p className="text-[#aaa] text-xs">Trades</p>
-                      <p className="text-white text-sm font-semibold">{s.trades}</p>
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
+                        <BarChart3 className="h-3 w-3" />
+                        <span className="text-xs">Trades</span>
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{s.trades}</span>
                     </div>
-                    <div>
-                      <p className="text-[#aaa] text-xs">Win/Loss</p>
-                      <p className="text-white text-sm font-semibold">{s.winLoss}</p>
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
+                        <TrendingUp className="h-3 w-3" />
+                        <span className="text-xs">Win/Loss</span>
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{s.winLoss}</span>
                     </div>
                   </div>
                 </div>
@@ -410,62 +435,83 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         </div>
       )}
 
-      {/* Popup Overlay */}
+      {/* Add Strategy Popup */}
       {showPopup && (
         <div 
-          className="fixed inset-0 bg-[rgba(10,10,10,0.7)] backdrop-blur-md flex justify-center items-center z-[99]"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm flex justify-center items-center z-50"
           onClick={() => setShowPopup(false)}
         >
           <div
-            className="bg-[rgba(30,30,30,0.9)] p-6 rounded-xl w-[350px] text-white shadow-2xl animate-fadeIn"
+            className="bg-card border border-border p-6 rounded-xl w-[400px] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-xl mb-4 text-center">➕ Add New Strategy</h3>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Plus className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Add New Strategy</h3>
+                <p className="text-sm text-muted-foreground">Create a new trading strategy</p>
+              </div>
+            </div>
 
-            <input
-              type="text"
-              placeholder="Strategy Name"
-              value={newStrategy.name}
-              onChange={(e) =>
-                setNewStrategy({ ...newStrategy, name: e.target.value })
-              }
-              className="w-[90%] my-2 px-3 py-2.5 rounded-lg border border-[#555] bg-[#1b1b1b] text-white text-sm"
-            />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Strategy Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Momentum Trading"
+                  value={newStrategy.name}
+                  onChange={(e) =>
+                    setNewStrategy({ ...newStrategy, name: e.target.value })
+                  }
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
+                />
+              </div>
 
-            <input
-              type="text"
-              placeholder="Tags (comma separated)"
-              value={newStrategy.tags}
-              onChange={(e) =>
-                setNewStrategy({ ...newStrategy, tags: e.target.value })
-              }
-              className="w-[90%] my-2 px-3 py-2.5 rounded-lg border border-[#555] bg-[#1b1b1b] text-white text-sm"
-            />
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Tags</label>
+                <input
+                  type="text"
+                  placeholder="e.g., scalping, momentum (comma separated)"
+                  value={newStrategy.tags}
+                  onChange={(e) =>
+                    setNewStrategy({ ...newStrategy, tags: e.target.value })
+                  }
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
+                />
+              </div>
 
-            <input
-              type="text"
-              placeholder="Description"
-              value={newStrategy.author}
-              onChange={(e) =>
-                setNewStrategy({ ...newStrategy, author: e.target.value })
-              }
-              className="w-[90%] my-2 px-3 py-2.5 rounded-lg border border-[#555] bg-[#1b1b1b] text-white text-sm"
-            />
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Description</label>
+                <input
+                  type="text"
+                  placeholder="Brief description of your strategy"
+                  value={newStrategy.author}
+                  onChange={(e) =>
+                    setNewStrategy({ ...newStrategy, author: e.target.value })
+                  }
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
+                />
+              </div>
 
-            <p className="text-red-400">{error}</p>
+              {error && (
+                <p className="text-loss text-sm">{error}</p>
+              )}
+            </div>
 
-            <div className="flex justify-end gap-2.5 mt-4">
+            <div className="flex justify-end gap-3 mt-6">
               <button 
-                className="px-3.5 py-2 border-none rounded-lg cursor-pointer font-semibold bg-[#333] text-[#ccc] transition-colors duration-200 hover:bg-[#444]"
+                className="px-4 py-2.5 border border-border rounded-lg text-foreground text-sm font-medium hover:bg-muted transition-colors"
                 onClick={() => setShowPopup(false)}
               >
                 Cancel
               </button>
               <button 
-                className="px-3.5 py-2 border-none rounded-lg cursor-pointer font-semibold bg-primary text-primary-foreground transition-colors duration-200 hover:bg-primary/90"
+                className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                 onClick={handleAddStrategy}
               >
-                Save
+                Create Strategy
               </button>
             </div>
           </div>

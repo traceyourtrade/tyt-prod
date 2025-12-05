@@ -1,4 +1,5 @@
 "use client"
+import { useState, useEffect } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -8,12 +9,10 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { Scale, TrendingUp, TrendingDown, Target, Clock, Award, BarChart3, Percent } from "lucide-react";
 
-// ------------------------------------------------------
-// 🔧 Helper Functions
-// ------------------------------------------------------
 const formatINR = (n: number) =>
-  `₹${Math.abs(Number(n || 0)).toLocaleString("en-IN")}`;
+  `$${Math.abs(Number(n || 0)).toLocaleString("en-US")}`;
 
 interface Trade {
   OpenTime?: string;
@@ -43,7 +42,6 @@ const calculateAvgDuration = (trades: Trade[]) => {
   return `${days.toFixed(2)} days`;
 };
 
-// Build a simple weekly P&L trend
 const buildWeeklyTrend = (trades: Trade[]) => {
   if (!trades.length) return [];
   const weekMap: { [key: string]: number } = {};
@@ -61,6 +59,7 @@ const buildWeeklyTrend = (trades: Trade[]) => {
 interface ComputedStat {
   name: string;
   pnl: string;
+  pnlRaw: number;
   trades: number;
   win: number;
   loss: number;
@@ -78,14 +77,32 @@ interface CompareProps {
   strategiesDataObj?: { [key: string]: Trade[] };
 }
 
-// ------------------------------------------------------
-// 📊 Component
-// ------------------------------------------------------
 const Compare = ({ selected = [], strategiesDataObj = {} }: CompareProps) => {
-  
-  const COLORS = ["#8fffac", "#ff6b6b"];
+  const [chartColors, setChartColors] = useState({
+    primary: '',
+    profit: '',
+    loss: '',
+    text: '',
+    grid: '',
+    cardBg: ''
+  });
 
-  // 🧠 Derived Stats per Strategy
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const style = getComputedStyle(document.documentElement);
+      setChartColors({
+        primary: style.getPropertyValue('--color-primary').trim() || '',
+        profit: style.getPropertyValue('--color-profit').trim() || '',
+        loss: style.getPropertyValue('--color-loss').trim() || '',
+        text: style.getPropertyValue('--color-muted-foreground').trim() || '',
+        grid: style.getPropertyValue('--color-border').trim() || '',
+        cardBg: style.getPropertyValue('--color-card').trim() || ''
+      });
+    }
+  }, []);
+
+  const COLORS = [chartColors.profit, chartColors.loss].filter(Boolean);
+
   const computedStats: ComputedStat[] = selected.map((name) => {
     const trades = strategiesDataObj[name] || [];
     if (!trades.length) return null;
@@ -96,7 +113,6 @@ const Compare = ({ selected = [], strategiesDataObj = {} }: CompareProps) => {
     const lossTrades = trades.filter((t) => (t.Profit || 0) <= 0);
     const winRate = totalTrades ? ((winTrades.length / totalTrades) * 100).toFixed(1) : "0";
 
-    // Profit factor & RR
     const avgWin =
       winTrades.length > 0
         ? winTrades.reduce((s, t) => s + (t.Profit || 0), 0) / winTrades.length
@@ -110,7 +126,6 @@ const Compare = ({ selected = [], strategiesDataObj = {} }: CompareProps) => {
     const profitFactor = avgLoss ? (avgWin / avgLoss).toFixed(2) : "—";
     const rr = avgLoss ? `${(avgWin / avgLoss).toFixed(1)} : 1` : "—";
 
-    // Drawdown (max negative daily P&L)
     const dailyPnlMap: { [key: string]: number } = {};
     trades.forEach((t) => {
       const date = t.date || "Unknown";
@@ -121,18 +136,14 @@ const Compare = ({ selected = [], strategiesDataObj = {} }: CompareProps) => {
       ? `${((Math.min(...pnlValues) / totalPnl) * 100).toFixed(1)}%`
       : "—";
 
-    // Sharpe (mock for now: scaled win rate)
     const sharpe = (parseFloat(winRate) / 80).toFixed(2);
-
-    // Duration
     const avgDuration = calculateAvgDuration(trades);
-
-    // Trend
     const pnlTrend = buildWeeklyTrend(trades);
 
     return {
       name,
       pnl: `${totalPnl < 0 ? "-" : "+"}${formatINR(totalPnl)}`,
+      pnlRaw: totalPnl,
       trades: totalTrades,
       win: winTrades.length,
       loss: lossTrades.length,
@@ -146,131 +157,138 @@ const Compare = ({ selected = [], strategiesDataObj = {} }: CompareProps) => {
     };
   }).filter(Boolean) as ComputedStat[];
 
-  // ------------------------------------------------------
-  // 🧱 Render
-  // ------------------------------------------------------
+  const tooltipStyle = {
+    background: chartColors.cardBg || 'var(--color-card)',
+    border: `1px solid ${chartColors.grid || 'var(--color-border)'}`,
+    borderRadius: '8px',
+    color: 'var(--color-foreground)',
+    fontSize: '12px',
+  };
+
+  const statRows = [
+    { label: "Total P&L", key: "pnl", isPnL: true },
+    { label: "Total Trades", key: "trades" },
+    { label: "Winning Trades", key: "win" },
+    { label: "Losing Trades", key: "loss" },
+    { label: "Win Rate", key: "winRate" },
+    { label: "Max Drawdown", key: "maxDD", isDD: true },
+    { label: "Risk-Reward Ratio", key: "rr" },
+    { label: "Profit Factor", key: "profitFactor" },
+    { label: "Avg Duration", key: "avgDuration" },
+    { label: "Sharpe Ratio", key: "sharpe" },
+  ];
+
   return (
-    <div className="w-full bg-[#0f0f0f] text-white rounded-xl p-6 flex flex-col gap-5 overflow-visible">
-      <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#d57eeb] to-[#fccb90] bg-clip-text text-transparent">
-        ⚖️ Strategy Comparison
-      </h2>
-
-      <div className="flex gap-5 overflow-x-auto overflow-y-visible p-4 scrollbar-thin scrollbar-thumb-[#444] scrollbar-track-transparent">
-        {computedStats.map((s, idx) => {
-          const pieData = [
-            { name: "Wins", value: s.win },
-            { name: "Losses", value: s.loss },
-          ];
-
-          return (
-            <div 
-              key={idx} 
-              className="flex-none w-[360px] bg-[#1a1a1a] border border-[#262626] rounded-xl p-5 leading-relaxed transition-all duration-250 relative z-10 hover:scale-103 hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(213,126,235,0.25)]"
-            >
-              <h3 className="text-xl font-semibold mb-3.5 text-center border-b border-[#2b2b2b] pb-2">
-                {s.name}
-              </h3>
-
-              {/* --- Stats Section --- */}
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Total P&L</span>
-                <span className={`${s.pnl.startsWith('-') ? 'text-[#ff6b6b]' : 'text-[#8fffac]'}`}>
-                  {s.pnl}
-                </span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Total Trades</span>
-                <span>{s.trades}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Winning Trades</span>
-                <span>{s.win}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Losing Trades</span>
-                <span>{s.loss}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Win Rate</span>
-                <span>{s.winRate}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Max Drawdown</span>
-                <span className="text-[#ff6b6b]">{s.maxDD}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Risk-Reward Ratio</span>
-                <span>{s.rr}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Profit Factor</span>
-                <span>{s.profitFactor}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Avg Duration</span>
-                <span>{s.avgDuration}</span>
-              </div>
-              <div className="flex justify-between my-2 text-sm text-[#ccc]">
-                <span>Sharpe Ratio</span>
-                <span>{s.sharpe}</span>
-              </div>
-
-              {/* --- Charts Section --- */}
-              <div className="flex justify-between gap-3 mt-3.5">
-                <div className="flex-1 bg-[#111] border border-[#2b2b2b] rounded-lg p-2.5 flex flex-col justify-center items-center">
-                  <p className="text-xs text-[#aaa] mb-1 tracking-wide">PnL Trend</p>
-                  <ResponsiveContainer width="100%" height={80}>
-                    <LineChart data={s.pnlTrend}>
-                      <Tooltip
-                        contentStyle={{
-                          background: "#1a1a1a",
-                          border: "1px solid #333",
-                          color: "#fff",
-                          fontSize: "0.75rem",
-                        }}
-                        cursor={{ stroke: "#444" }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="pnl"
-                        stroke="#d57eeb"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="flex-1 bg-[#111] border border-[#2b2b2b] rounded-lg p-2.5 flex flex-col justify-center items-center">
-                  <p className="text-xs text-[#aaa] mb-1 tracking-wide">Win / Loss Ratio</p>
-                  <ResponsiveContainer width="100%" height={90}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        innerRadius={25}
-                        outerRadius={40}
-                        dataKey="value"
-                      >
-                        {pieData.map((entry, i) => (
-                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          background: "#1a1a1a",
-                          border: "1px solid #333",
-                          color: "#fff",
-                          fontSize: "0.75rem",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+    <div className="w-full min-h-[70vh] text-foreground flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Scale className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Strategy Comparison</h2>
+          <p className="text-sm text-muted-foreground">Compare performance across strategies</p>
+        </div>
       </div>
+
+      {computedStats.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <Scale className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">Select strategies to compare their performance.</p>
+        </div>
+      ) : (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {computedStats.map((s, idx) => {
+            const pieData = [
+              { name: "Wins", value: s.win },
+              { name: "Losses", value: s.loss },
+            ];
+
+            return (
+              <div 
+                key={idx} 
+                className="flex-none w-[360px] bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
+              >
+                {/* Card Header */}
+                <div className="flex items-center gap-3 p-4 border-b border-border bg-muted/30">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-foreground">{s.name}</h3>
+                    <span className={`text-sm font-medium ${s.pnlRaw >= 0 ? 'text-profit' : 'text-loss'}`}>
+                      {s.pnl}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Stats Section */}
+                <div className="p-4 space-y-2">
+                  {statRows.map((row, i) => {
+                    const value = s[row.key as keyof ComputedStat];
+                    let valueClass = "text-foreground";
+                    
+                    if (row.isPnL) {
+                      valueClass = s.pnlRaw >= 0 ? "text-profit" : "text-loss";
+                    } else if (row.isDD) {
+                      valueClass = "text-loss";
+                    }
+                    
+                    return (
+                      <div key={i} className="flex justify-between items-center py-1.5 border-b border-border/50 last:border-0">
+                        <span className="text-sm text-muted-foreground">{row.label}</span>
+                        <span className={`text-sm font-medium ${valueClass}`}>
+                          {String(value)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Charts Section */}
+                <div className="grid grid-cols-2 gap-3 p-4 border-t border-border">
+                  <div className="bg-muted/30 border border-border rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-2 text-center font-medium">PnL Trend</p>
+                    <ResponsiveContainer width="100%" height={70}>
+                      <LineChart data={s.pnlTrend}>
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Line
+                          type="monotone"
+                          dataKey="pnl"
+                          stroke={chartColors.primary}
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="bg-muted/30 border border-border rounded-lg p-3">
+                    <p className="text-xs text-muted-foreground mb-2 text-center font-medium">Win / Loss</p>
+                    <ResponsiveContainer width="100%" height={70}>
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          innerRadius={18}
+                          outerRadius={30}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, i) => (
+                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={tooltipStyle} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 "use client"
+import { useState, useEffect } from "react";
 import {
   BarChart,
   Bar,
@@ -14,6 +15,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { TrendingUp, Percent, BarChart3, Clock, DollarSign, Target, PieChartIcon, Activity } from "lucide-react";
 
 interface Trade {
   date: string;
@@ -29,11 +31,35 @@ interface OverviewSectionProps {
 }
 
 const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSectionProps) => {
-  // -------------------------------
-  // 🧮 Derived data
-  // -------------------------------
+  const [chartColors, setChartColors] = useState({
+    primary: '',
+    profit: '',
+    loss: '',
+    primaryLight: '',
+    primaryDark: '',
+    warning: '',
+    text: '',
+    grid: '',
+    cardBg: ''
+  });
 
-  // Calculate total profit, total trades, and per-strategy profit
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const style = getComputedStyle(document.documentElement);
+      setChartColors({
+        primary: style.getPropertyValue('--color-primary').trim() || '',
+        profit: style.getPropertyValue('--color-profit').trim() || '',
+        loss: style.getPropertyValue('--color-loss').trim() || '',
+        primaryLight: style.getPropertyValue('--color-primary-light').trim() || '',
+        primaryDark: style.getPropertyValue('--color-primary-dark').trim() || '',
+        warning: style.getPropertyValue('--color-warning').trim() || '',
+        text: style.getPropertyValue('--color-muted-foreground').trim() || '',
+        grid: style.getPropertyValue('--color-border').trim() || '',
+        cardBg: style.getPropertyValue('--color-card').trim() || ''
+      });
+    }
+  }, []);
+
   const profitByStrategy = selected.map((name) => {
     const trades = strategiesDataObj[name] || [];
     const totalPnl = trades.reduce((sum, t) => sum + (t.Profit || 0), 0);
@@ -44,11 +70,9 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
   const totalProfit = allTrades.reduce((sum, t) => sum + (t.Profit || 0), 0);
   const totalTrades = allTrades.length;
 
-  // Win rate = % of profitable trades
   const winTrades = allTrades.filter((t) => t.Profit && t.Profit > 0).length;
   const winRate = totalTrades ? ((winTrades / totalTrades) * 100).toFixed(1) : "0";
 
-  // Avg duration (in mins/hours/days auto-scaled)
   const avgDurationFormatted = (() => {
     const valid = allTrades.filter((t): t is Trade & { OpenTime: string; CloseTime: string } => 
       Boolean(t.OpenTime) && Boolean(t.CloseTime)
@@ -71,8 +95,6 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
     return `${days.toFixed(2)} days`;
   })();
 
-  // Chart 1 — Profit by Strategy (already derived above)
-  // Chart 2 — Performance Over Time (group by date)
   const profitByDateMap: { [key: string]: number } = {};
   allTrades.forEach((t) => {
     const date = t.date || "Unknown";
@@ -83,148 +105,181 @@ const OverviewSection = ({ selected = [], strategiesDataObj = {} }: OverviewSect
     ([date, profit]) => ({ date, profit })
   );
 
-  // Chart 3 — Strategy Distribution (based on trade count)
   const strategyDistribution = selected.map((name) => ({
     name,
     value: strategiesDataObj[name]?.length || 0,
   }));
 
-  const COLORS = ["#2563EB", "#22C55E", "#FACC15", "#60A5FA", "#EF4444", "#1D4ED8"];
+  const COLORS = [chartColors.primary, chartColors.profit, chartColors.warning, chartColors.primaryLight, chartColors.loss, chartColors.primaryDark].filter(Boolean);
 
-  // -------------------------------
-  // 🧠 Stats cards
-  // -------------------------------
   const stats = [
     {
       label: "Total P&L",
-      value: `₹${totalProfit.toLocaleString("en-IN")}`,
+      value: `$${totalProfit.toLocaleString("en-US")}`,
       sub: "Net Profit",
-      trend: "",
+      icon: DollarSign,
+      color: totalProfit >= 0 ? "profit" : "loss",
     },
     {
       label: "Win Rate",
       value: `${winRate}%`,
       sub: "Profitable Trades",
-      trend: "",
+      icon: Percent,
+      color: "primary",
     },
     {
       label: "Total Trades",
       value: `${totalTrades}`,
       sub: "Across All Strategies",
-      trend: "",
+      icon: BarChart3,
+      color: "primary",
     },
     {
       label: "Avg Duration",
       value: avgDurationFormatted,
       sub: "Per Trade",
-      trend: "",
+      icon: Clock,
+      color: "primary",
     },
   ];
 
-  // -------------------------------
-  // 🧱 JSX Render
-  // -------------------------------
+  const tooltipStyle = {
+    background: chartColors.cardBg || 'var(--color-card)',
+    border: `1px solid ${chartColors.grid || 'var(--color-border)'}`,
+    borderRadius: '8px',
+    color: 'var(--color-foreground)',
+  };
+
   return (
-    <div className="w-full min-h-[70vh] bg-card text-card-foreground flex flex-col p-6 rounded-xl box-border animate-fadeIn border border-border">
-      <div className="overview-header">
-        <h2 className="text-2xl font-semibold mb-1.5 bg-gradient-to-r from-[#2563EB] to-[#60A5FA] bg-clip-text text-transparent">
-          Strategy Overview
-        </h2>
+    <div className="w-full min-h-[70vh] text-foreground flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Activity className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Strategy Overview</h2>
+          <p className="text-sm text-muted-foreground">{selected.length} strategies selected</p>
+        </div>
       </div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-        {stats.map((s, i) => (
-          <div 
-            key={i} 
-            className="bg-secondary/50 border border-border rounded-xl p-5 transition-all duration-200 hover:transform hover:-translate-y-1 hover:shadow-[0_0_16px_rgba(37,99,235,0.2)]"
-          >
-            <div className="text-muted-foreground text-sm">{s.label}</div>
-            <div className="text-foreground text-2xl font-semibold my-1.5">{s.value}</div>
-            <div className="text-muted-foreground text-xs">
-              {s.sub} <span className="text-profit">{s.trend}</span>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s, i) => {
+          const Icon = s.icon;
+          const colorClass = s.color === "profit" ? "text-profit" : s.color === "loss" ? "text-loss" : "text-primary";
+          const bgClass = s.color === "profit" ? "bg-profit/10" : s.color === "loss" ? "bg-loss/10" : "bg-primary/10";
+          
+          return (
+            <div 
+              key={i} 
+              className="bg-card border border-border rounded-xl p-5 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-muted-foreground text-sm font-medium">{s.label}</span>
+                <div className={`w-8 h-8 rounded-lg ${bgClass} flex items-center justify-center`}>
+                  <Icon className={`h-4 w-4 ${colorClass}`} />
+                </div>
+              </div>
+              <div className={`text-2xl font-bold ${colorClass}`}>{s.value}</div>
+              <div className="text-muted-foreground text-xs mt-1">{s.sub}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Profit by Strategy */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Profit by Strategy</h3>
+              <span className="text-xs text-muted-foreground">Net P&L per strategy</span>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Charts section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-8">
-        {/* Profit by Strategy */}
-        <div className="bg-secondary/30 border border-border rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(37,99,235,0.1)]">
-          <div className="font-medium text-muted-foreground mb-2.5">Profit by Strategy</div>
-          <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={profitByStrategy}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="name" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  background: "#0B1220",
-                  border: "1px solid #1e293b",
-                  color: "#fff",
-                }}
-              />
-              <Bar dataKey="pnl" fill="#2563EB" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={profitByStrategy}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                <XAxis dataKey="name" stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="pnl" fill={chartColors.primary} radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Performance Over Time */}
-        <div className="bg-secondary/30 border border-border rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(37,99,235,0.1)]">
-          <div className="font-medium text-muted-foreground mb-2.5">Performance Over Time</div>
-          <ResponsiveContainer width="100%" height={230}>
-            <LineChart data={performanceOverTime}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-              <XAxis dataKey="date" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  background: "#0B1220",
-                  border: "1px solid #1e293b",
-                  color: "#fff",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="profit"
-                stroke="#60A5FA"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Performance Over Time</h3>
+              <span className="text-xs text-muted-foreground">Daily P&L trend</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={performanceOverTime}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                <XAxis dataKey="date" stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Line
+                  type="monotone"
+                  dataKey="profit"
+                  stroke={chartColors.primaryLight}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: chartColors.primaryLight }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Strategy Distribution */}
-        <div className="bg-secondary/30 border border-border rounded-xl p-4 flex flex-col justify-between min-h-[260px] transition-all duration-200 hover:shadow-[0_0_18px_rgba(37,99,235,0.1)]">
-          <div className="font-medium text-muted-foreground mb-2.5">Strategy Distribution</div>
-          <ResponsiveContainer width="100%" height={230}>
-            <PieChart>
-              <Pie
-                data={strategyDistribution}
-                innerRadius={45}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {strategyDistribution.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  background: "#0B1220",
-                  border: "1px solid #1e293b",
-                  color: "#fff",
-                }}
-              />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+        <div className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <PieChartIcon className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Strategy Distribution</h3>
+              <span className="text-xs text-muted-foreground">Trade count by strategy</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={strategyDistribution}
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {strategyDistribution.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={tooltipStyle} />
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px' }}
+                  formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

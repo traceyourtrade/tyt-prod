@@ -1,4 +1,5 @@
 "use client"
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -11,12 +12,10 @@ import {
   Bar,
   Legend,
 } from "recharts";
+import { FileText, TrendingUp, TrendingDown, Activity, Award, Calendar, Clock, Target, BarChart3 } from "lucide-react";
 
-// ------------------------------------------------------
-// 🔧 Utility Functions
-// ------------------------------------------------------
 const formatINR = (n: number) =>
-  `$${Math.abs(Number(n || 0)).toLocaleString("en-IN")}`;
+  `$${Math.abs(Number(n || 0)).toLocaleString("en-US")}`;
 
 interface Trade {
   OpenTime?: string;
@@ -71,11 +70,30 @@ interface ReportsProps {
   strategiesDataObj?: { [key: string]: Trade[] };
 }
 
-// ------------------------------------------------------
-// 📊 Core Component
-// ------------------------------------------------------
 const Reports = ({ selected = [], strategiesDataObj = {} }: ReportsProps) => {
-  // Combine all trades
+  const [chartColors, setChartColors] = useState({
+    primary: '',
+    profit: '',
+    loss: '',
+    text: '',
+    grid: '',
+    cardBg: ''
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const style = getComputedStyle(document.documentElement);
+      setChartColors({
+        primary: style.getPropertyValue('--color-primary').trim() || '',
+        profit: style.getPropertyValue('--color-profit').trim() || '',
+        loss: style.getPropertyValue('--color-loss').trim() || '',
+        text: style.getPropertyValue('--color-muted-foreground').trim() || '',
+        grid: style.getPropertyValue('--color-border').trim() || '',
+        cardBg: style.getPropertyValue('--color-card').trim() || ''
+      });
+    }
+  }, []);
+
   const allTrades = selected
     .map((s) => strategiesDataObj[s])
     .filter(Boolean)
@@ -83,18 +101,26 @@ const Reports = ({ selected = [], strategiesDataObj = {} }: ReportsProps) => {
 
   if (!allTrades.length) {
     return (
-      <div className="w-full min-h-[80vh] bg-[#0f0f0f] text-white rounded-xl p-6 box-border animate-fadeIn flex flex-col gap-7">
-        <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#d57eeb] to-[#fccb90] bg-clip-text text-transparent">
-          📑 Performance Report
-        </h2>
-        <p>No trades found for selected strategies.</p>
+      <div className="w-full min-h-[70vh] text-foreground flex flex-col gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <FileText className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">Performance Report</h2>
+            <p className="text-sm text-muted-foreground">Detailed trading analytics</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <BarChart3 className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">No trades found for selected strategies.</p>
+        </div>
       </div>
     );
   }
 
-  // ------------------------------------------------------
-  // 🗓️ Group by Day
-  // ------------------------------------------------------
   const dayStats: { [key: string]: DayStat } = {};
   allTrades.forEach((t) => {
     const day = getDayName(t.date || t.OpenTime!);
@@ -117,9 +143,6 @@ const Reports = ({ selected = [], strategiesDataObj = {} }: ReportsProps) => {
     })
     .filter(Boolean) as (DayStat & { winRate: string })[];
 
-  // ------------------------------------------------------
-  // 🧮 Core Metrics
-  // ------------------------------------------------------
   const totalTrades = allTrades.length;
   const totalProfit = allTrades.reduce((s, t) => s + (t.Profit || 0), 0);
   const winTrades = allTrades.filter((t) => (t.Profit || 0) > 0);
@@ -139,9 +162,6 @@ const Reports = ({ selected = [], strategiesDataObj = {} }: ReportsProps) => {
   const tradeExpectancy = totalTrades ? totalProfit / totalTrades : 0;
   const avgDurationFormatted = calculateAvgDuration(allTrades);
 
-  // ------------------------------------------------------
-  // 🗂️ Day-based Aggregates
-  // ------------------------------------------------------
   const loggedDays = Object.keys(dayStats).length;
   const avgTradePnl = totalTrades ? totalProfit / totalTrades : 0;
   const avgDailyNetPnl = loggedDays ? totalProfit / loggedDays : 0;
@@ -152,7 +172,7 @@ const Reports = ({ selected = [], strategiesDataObj = {} }: ReportsProps) => {
       : 0;
 
   const avgDailyDrawdown =
-    dailyStats.length > 0
+    dailyStats.length > 0 && dailyStats.filter((d) => d.pnl < 0).length > 0
       ? (
         dailyStats
           .filter((d) => d.pnl < 0)
@@ -169,9 +189,6 @@ const Reports = ({ selected = [], strategiesDataObj = {} }: ReportsProps) => {
       )
       : 0;
 
-  // ------------------------------------------------------
-  // 🏆 Best/Worst Days
-  // ------------------------------------------------------
   const bestDay = dailyStats.reduce((a, b) => (a.pnl > b.pnl ? a : b));
   const worstDay = dailyStats.reduce((a, b) => (a.pnl < b.pnl ? a : b));
   const activeDay = dailyStats.reduce((a, b) =>
@@ -181,204 +198,152 @@ const Reports = ({ selected = [], strategiesDataObj = {} }: ReportsProps) => {
     parseFloat(a.winRate) > parseFloat(b.winRate) ? a : b
   );
 
-  // ------------------------------------------------------
-  // 🧠 Metrics Grid (16 items like before)
-  // ------------------------------------------------------
   const metrics: Metric[] = [
-    {
-      label: "Net P&L",
-      value: `${totalProfit < 0 ? "-" : ""}${formatINR(totalProfit)}`,
-      negative: totalProfit < 0,
-    },
-    {
-      label: "Win %",
-      value: `${winRate.toFixed(2)}%`,
-      negative: false,
-    },
-    {
-      label: "Avg daily win %",
-      value: `${avgDailyWinRate.toFixed(2)}%`,
-      negative: false,
-    },
-    {
-      label: "Profit factor",
-      value: profitFactor,
-      negative: false,
-    },
-    {
-      label: "Trade expectancy",
-      value: `${tradeExpectancy < 0 ? "-" : ""}${formatINR(tradeExpectancy)}`,
-      negative: tradeExpectancy < 0,
-    },
-    {
-      label: "Avg daily win/loss",
-      value:
-        avgLoss && loggedDays
-          ? (avgDailyNetPnl / avgLoss).toFixed(2)
-          : "—",
-      negative: false,
-    },
-    {
-      label: "Avg trade win/loss",
-      value: avgLoss ? (avgWin / avgLoss).toFixed(2) : "—",
-      negative: false,
-    },
-    {
-      label: "Avg hold time",
-      value: avgDurationFormatted,
-      negative: false,
-    },
-    {
-      label: "Avg net trade P&L",
-      value: `${avgTradePnl < 0 ? "-" : ""}${formatINR(avgTradePnl)}`,
-      negative: avgTradePnl < 0,
-    },
-    {
-      label: "Avg daily net P&L",
-      value: `${avgDailyNetPnl < 0 ? "-" : ""}${formatINR(avgDailyNetPnl)}`,
-      negative: avgDailyNetPnl < 0,
-    },
-    {
-      label: "Avg planned r-multiple",
-      value: "—",
-      negative: false,
-    },
-    {
-      label: "Avg realized r-multiple",
-      value: "—",
-      negative: false,
-    },
-    {
-      label: "Avg daily volume",
-      value: (totalTrades / loggedDays).toFixed(1),
-      negative: false,
-    },
-    {
-      label: "Logged days",
-      value: loggedDays.toString(),
-      negative: false,
-    },
-    {
-      label: "Max daily net drawdown",
-      value: `${formatINR(maxDailyDrawdown)}`,
-      negative: maxDailyDrawdown < 0,
-    },
-    {
-      label: "Avg daily net drawdown",
-      value: `${formatINR(avgDailyDrawdown)}`,
-      negative: avgDailyDrawdown < 0,
-    },
+    { label: "Net P&L", value: `${totalProfit < 0 ? "-" : ""}${formatINR(totalProfit)}`, negative: totalProfit < 0 },
+    { label: "Win %", value: `${winRate.toFixed(2)}%`, negative: false },
+    { label: "Avg daily win %", value: `${avgDailyWinRate.toFixed(2)}%`, negative: false },
+    { label: "Profit factor", value: profitFactor, negative: false },
+    { label: "Trade expectancy", value: `${tradeExpectancy < 0 ? "-" : ""}${formatINR(tradeExpectancy)}`, negative: tradeExpectancy < 0 },
+    { label: "Avg daily win/loss", value: avgLoss && loggedDays ? (avgDailyNetPnl / avgLoss).toFixed(2) : "—", negative: false },
+    { label: "Avg trade win/loss", value: avgLoss ? (avgWin / avgLoss).toFixed(2) : "—", negative: false },
+    { label: "Avg hold time", value: avgDurationFormatted, negative: false },
+    { label: "Avg net trade P&L", value: `${avgTradePnl < 0 ? "-" : ""}${formatINR(avgTradePnl)}`, negative: avgTradePnl < 0 },
+    { label: "Avg daily net P&L", value: `${avgDailyNetPnl < 0 ? "-" : ""}${formatINR(avgDailyNetPnl)}`, negative: avgDailyNetPnl < 0 },
+    { label: "Avg planned r-multiple", value: "—", negative: false },
+    { label: "Avg realized r-multiple", value: "—", negative: false },
+    { label: "Avg daily volume", value: (totalTrades / loggedDays).toFixed(1), negative: false },
+    { label: "Logged days", value: loggedDays.toString(), negative: false },
+    { label: "Max daily net drawdown", value: `${formatINR(maxDailyDrawdown)}`, negative: maxDailyDrawdown < 0 },
+    { label: "Avg daily net drawdown", value: `${formatINR(avgDailyDrawdown)}`, negative: avgDailyDrawdown < 0 },
   ];
 
-  // ------------------------------------------------------
-  // 🧱 Render
-  // ------------------------------------------------------
+  const tooltipStyle = {
+    background: chartColors.cardBg || 'var(--color-card)',
+    border: `1px solid ${chartColors.grid || 'var(--color-border)'}`,
+    borderRadius: '8px',
+    color: 'var(--color-foreground)',
+  };
+
+  const dayHighlights = [
+    { label: "Best performing day", day: bestDay.day, value: `$${bestDay.pnl.toLocaleString("en-US")}`, sub: `${bestDay.trades} trades`, type: "profit", icon: TrendingUp },
+    { label: "Least performing day", day: worstDay.day, value: `$${worstDay.pnl.toLocaleString("en-US")}`, sub: `${worstDay.trades} trades`, type: "loss", icon: TrendingDown },
+    { label: "Most active day", day: activeDay.day, value: `${activeDay.trades}`, sub: "trades", type: "primary", icon: Activity },
+    { label: "Best win rate", day: bestWinRateDay.day, value: `${bestWinRateDay.winRate}%`, sub: `${bestWinRateDay.trades} trades`, type: "primary", icon: Award },
+  ];
+
   return (
-    <div className="w-full min-h-[80vh] bg-[#0f0f0f] text-white rounded-xl p-6 box-border animate-fadeIn flex flex-col gap-7">
-      <h2 className="text-2xl font-semibold bg-gradient-to-r from-[#d57eeb] to-[#fccb90] bg-clip-text text-transparent">
-        📑 Performance Report
-      </h2>
+    <div className="w-full min-h-[70vh] text-foreground flex flex-col gap-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <FileText className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Performance Report</h2>
+          <p className="text-sm text-muted-foreground">Detailed trading analytics</p>
+        </div>
+      </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {metrics.map((m, i) => (
           <div 
             key={i} 
-            className="bg-[#1a1a1a] border border-[#2b2b2b] rounded-lg p-3.5 flex flex-col gap-1.5 transition-all duration-250 hover:bg-[#202020] hover:-translate-y-1"
+            className="bg-card border border-border rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
           >
-            <p className="text-[#aaa] text-xs">{m.label}</p>
-            <h3 className={`text-lg font-semibold ${m.negative ? 'text-[#ff6b6b]' : 'text-white'}`}>
+            <p className="text-muted-foreground text-xs font-medium">{m.label}</p>
+            <h3 className={`text-lg font-bold mt-1 ${m.negative ? 'text-loss' : 'text-foreground'}`}>
               {m.value}
             </h3>
           </div>
         ))}
       </div>
 
-      {/* --- Best Days Section --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4.5 flex flex-col gap-2 transition-transform duration-200 hover:-translate-y-1">
-          <h4 className="text-sm text-[#aaa] font-medium">Best performing day</h4>
-          <h2 className="text-xl font-semibold text-[#22c55e]">{bestDay.day}</h2>
-          <p className="text-[#22c55e] text-sm">
-            <strong>{bestDay.trades} trades</strong> &nbsp;&nbsp; $
-            {bestDay.pnl.toLocaleString("en-IN")}
-          </p>
-        </div>
-
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4.5 flex flex-col gap-2 transition-transform duration-200 hover:-translate-y-1">
-          <h4 className="text-sm text-[#aaa] font-medium">Least performing day</h4>
-          <h2 className="text-xl font-semibold text-[#ff6b6b]">{worstDay.day}</h2>
-          <p className="text-[#ff6b6b] text-sm">
-            <strong>{worstDay.trades} trades</strong> &nbsp;&nbsp; $
-            {worstDay.pnl.toLocaleString("en-IN")}
-          </p>
-        </div>
-
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4.5 flex flex-col gap-2 transition-transform duration-200 hover:-translate-y-1">
-          <h4 className="text-sm text-[#aaa] font-medium">Most active day</h4>
-          <h2 className="text-xl font-semibold text-white">{activeDay.day}</h2>
-          <p className="text-white text-sm">
-            <strong>{activeDay.trades}</strong> trades
-          </p>
-        </div>
-
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4.5 flex flex-col gap-2 transition-transform duration-200 hover:-translate-y-1">
-          <h4 className="text-sm text-[#aaa] font-medium">Best win rate</h4>
-          <h2 className="text-xl font-semibold text-[#d57eeb]">{bestWinRateDay.day}</h2>
-          <p className="text-[#d57eeb] text-sm">
-            <strong>{bestWinRateDay.winRate}%</strong> /{" "}
-            {bestWinRateDay.trades} trades
-          </p>
-        </div>
+      {/* Day Highlights */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {dayHighlights.map((highlight, i) => {
+          const Icon = highlight.icon;
+          const colorClass = highlight.type === "profit" ? "text-profit" : highlight.type === "loss" ? "text-loss" : "text-primary";
+          const bgClass = highlight.type === "profit" ? "bg-profit/10" : highlight.type === "loss" ? "bg-loss/10" : "bg-primary/10";
+          
+          return (
+            <div 
+              key={i}
+              className="bg-card border border-border rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-muted-foreground text-xs font-medium">{highlight.label}</span>
+                <div className={`w-7 h-7 rounded-lg ${bgClass} flex items-center justify-center`}>
+                  <Icon className={`h-3.5 w-3.5 ${colorClass}`} />
+                </div>
+              </div>
+              <h2 className={`text-xl font-bold ${colorClass}`}>{highlight.day}</h2>
+              <p className={`text-sm ${colorClass} mt-1`}>
+                <span className="font-semibold">{highlight.value}</span> {highlight.sub}
+              </p>
+            </div>
+          );
+        })}
       </div>
 
-      {/* --- Charts Row --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Line Chart */}
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4.5 flex flex-col gap-2.5">
-          <h4 className="font-medium text-sm text-[#ccc]">📈 Trade Count by Day</h4>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={dailyStats}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2b2b2b" />
-              <XAxis dataKey="day" stroke="#aaa" />
-              <YAxis stroke="#aaa" />
-              <Tooltip
-                contentStyle={{
-                  background: "#1a1a1a",
-                  border: "1px solid #333",
-                  color: "#fff",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="trades"
-                stroke="#4e7dff"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Trade Count by Day</h3>
+              <span className="text-xs text-muted-foreground">Weekly distribution</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={dailyStats}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                <XAxis dataKey="day" stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Line
+                  type="monotone"
+                  dataKey="trades"
+                  stroke={chartColors.primary}
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: chartColors.primary }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Bar Chart */}
-        <div className="bg-[#161616] border border-[#262626] rounded-xl p-4.5 flex flex-col gap-2.5">
-          <h4 className="font-medium text-sm text-[#ccc]">🏆 Win % by Day</h4>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={dailyStats}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2b2b2b" />
-              <XAxis dataKey="day" stroke="#aaa" />
-              <YAxis stroke="#aaa" />
-              <Tooltip
-                contentStyle={{
-                  background: "#1a1a1a",
-                  border: "1px solid #333",
-                  color: "#fff",
-                }}
-              />
-              <Bar dataKey="winRate" fill="#22c55e" radius={[5, 5, 0, 0]} />
-              <Legend />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-primary/5">
+          <div className="flex items-center gap-3 p-4 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-profit/10 flex items-center justify-center">
+              <BarChart3 className="h-4 w-4 text-profit" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Win % by Day</h3>
+              <span className="text-xs text-muted-foreground">Success rate per day</span>
+            </div>
+          </div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={dailyStats}>
+                <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                <XAxis dataKey="day" stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke={chartColors.text} fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="winRate" fill={chartColors.profit} radius={[6, 6, 0, 0]} name="Win %" />
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px' }}
+                  formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
