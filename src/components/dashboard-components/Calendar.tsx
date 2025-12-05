@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 import useAccountDetails from "@/store/accountdetails";
 import calendarPopUp from "@/store/calendarPopUp";
@@ -109,26 +108,31 @@ const Calendar = () => {
     const cells = [];
 
     for (let i = 0; i < firstDayIndex; i++) {
-      cells.push(<div key={`empty-${i}`} className="h-[80px] rounded-xl" />);
+      cells.push(
+        <div key={`empty-${i}`} className="aspect-square rounded-xl bg-[#1a1a1a]" />
+      );
     }
 
     for (let day = 1; day <= days; day++) {
       const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
       const dayData = calendarData.find((d) => d.date === dateStr);
 
-      const getProfitBgClass = () => {
-        if (!dayData) return "bg-muted/20 hover:bg-muted/40";
-        if (dayData.profit > 0) return "bg-profit/10 border border-profit/20 hover:border-profit/40 hover:bg-profit/15";
-        if (dayData.profit < 0) return "bg-loss/10 border border-loss/20 hover:border-loss/40 hover:bg-loss/15";
-        return "bg-card/80 border border-border/50 hover:border-border hover:bg-card";
-      };
+      const hasTrades = dayData && dayData.tradeLength > 0;
+      const isProfit = dayData && dayData.profit > 0;
+      const isLoss = dayData && dayData.profit < 0;
 
       cells.push(
         <div
           key={day}
           className={cn(
-            "h-[80px] rounded-xl flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
-            getProfitBgClass()
+            "aspect-square rounded-xl flex flex-col justify-center items-center cursor-pointer transition-all duration-200 relative overflow-hidden",
+            hasTrades
+              ? isProfit
+                ? "bg-emerald-500/20 border-2 border-emerald-500/40"
+                : isLoss
+                  ? "bg-red-500/20 border-2 border-red-500/40"
+                  : "bg-[#1e1e1e] border border-[#333]"
+              : "bg-[#1a1a1a] hover:bg-[#222]"
           )}
           onClick={() => {
             setShowTr();
@@ -137,22 +141,21 @@ const Calendar = () => {
           }}
         >
           <span className={cn(
-            "text-xs font-medium",
-            dayData ? "text-foreground/70" : "text-muted-foreground/60"
+            "text-[10px] sm:text-xs font-medium",
+            hasTrades ? "text-white/80" : "text-gray-500"
           )}>
             {day}
           </span>
-          {dayData && (
+          {hasTrades && (
             <>
               <span className={cn(
-                "text-sm font-bold mt-0.5",
-                dayData.profit > 0 ? "text-profit" : 
-                dayData.profit < 0 ? "text-loss" : "text-muted-foreground"
+                "text-[10px] sm:text-sm font-bold",
+                isProfit ? "text-emerald-400" : isLoss ? "text-red-400" : "text-gray-400"
               )}>
                 ${formatCurrency(Math.abs(dayData.profit))}
               </span>
-              <span className="text-[9px] text-muted-foreground/70">
-                {dayData.tradeLength} {dayData.tradeLength === 1 ? 'trade' : 'trades'}
+              <span className="text-[8px] sm:text-[9px] text-gray-400 hidden sm:block">
+                {dayData.tradeLength} trades
               </span>
             </>
           )}
@@ -196,41 +199,39 @@ const Calendar = () => {
   const monthName = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long" });
 
   return (
-    <div className="flex-1 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5">
+    <div className="bg-[#141414] border border-[#262626] rounded-2xl p-4 sm:p-5 overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+      <div className="flex justify-between items-center mb-4">
+        <button 
           onClick={handlePrevMonth}
-          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#1e1e1e] transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
-        </Button>
+        </button>
 
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownVisible(!isDropdownVisible)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#1e1e1e] transition-colors"
           >
-            <span className="text-lg font-semibold text-foreground">
+            <span className="text-base sm:text-lg font-semibold text-white">
               {monthName}
             </span>
-            <span className="text-lg text-muted-foreground">
+            <span className="text-base sm:text-lg text-gray-400">
               {selectedYear}
             </span>
             <ChevronDown className={cn(
-              "h-4 w-4 text-muted-foreground transition-transform",
+              "h-4 w-4 text-gray-400 transition-transform",
               isDropdownVisible && "rotate-180"
             )} />
           </button>
 
           {isDropdownVisible && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 p-4 w-64">
-              <div className="flex items-center justify-center mb-3">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-xl z-50 p-3 w-56">
+              <div className="flex items-center justify-center mb-2">
                 <button
                   onClick={() => setShowYearView(!showYearView)}
-                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1 text-sm font-medium text-gray-400 hover:text-white transition-colors"
                 >
                   {showYearView ? monthName : selectedYear}
                   <ChevronDown className="h-3 w-3" />
@@ -238,15 +239,15 @@ const Calendar = () => {
               </div>
 
               {!showYearView ? (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5">
                   {Array.from({ length: 12 }, (_, i) => (
                     <button
                       key={i}
                       className={cn(
-                        "px-2 py-2 text-xs rounded-lg transition-colors font-medium",
+                        "px-2 py-1.5 text-xs rounded-lg transition-colors font-medium",
                         i === selectedMonth
-                          ? "bg-foreground text-background"
-                          : "hover:bg-muted text-foreground"
+                          ? "bg-white text-black"
+                          : "hover:bg-[#252525] text-gray-300"
                       )}
                       onClick={() => {
                         setSelectedMonth(i);
@@ -260,7 +261,7 @@ const Calendar = () => {
                 </div>
               ) : (
                 <div
-                  className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto scrollbar-thin"
+                  className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto"
                   ref={yearContainerRef}
                 >
                   {Array.from({ length: new Date().getFullYear() - 2000 + 1 }, (_, i) => 2000 + i).map(
@@ -268,10 +269,10 @@ const Calendar = () => {
                       <button
                         key={year}
                         className={cn(
-                          "px-2 py-2 text-xs rounded-lg transition-colors font-medium",
+                          "px-2 py-1.5 text-xs rounded-lg transition-colors font-medium",
                           year === selectedYear
-                            ? "bg-foreground text-background year-active"
-                            : "hover:bg-muted text-foreground"
+                            ? "bg-white text-black year-active"
+                            : "hover:bg-[#252525] text-gray-300"
                         )}
                         onClick={() => {
                           setSelectedYear(year);
@@ -289,47 +290,48 @@ const Calendar = () => {
           )}
         </div>
 
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <button 
           onClick={handleNextMonth}
-          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-[#1e1e1e] transition-colors"
         >
           <ChevronRight className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <div className="grid grid-cols-7 gap-1.5 mb-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider py-2">
+      <div className="flex gap-2 sm:gap-3">
+        {/* Main Calendar */}
+        <div className="flex-1 min-w-0">
+          {/* Day Headers */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1 sm:mb-2">
+            {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day) => (
+              <div key={day} className="text-center text-[8px] sm:text-[10px] font-semibold text-gray-500 uppercase tracking-wider py-1">
                 {day}
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1.5">
+          {/* Calendar Days */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
             {renderCalendar()}
           </div>
         </div>
 
-        {/* Weekly Summary */}
-        <div className="w-[72px] flex flex-col gap-1.5 pt-8">
+        {/* Weekly Summary - Hidden on very small screens */}
+        <div className="hidden sm:flex w-16 flex-col gap-1 sm:gap-1.5 pt-6">
           {weeklyProfits.map((profit, index) => (
             <div
               key={index}
               className={cn(
-                "h-[80px] rounded-xl flex flex-col items-center justify-center text-center transition-all",
+                "aspect-square rounded-xl flex flex-col items-center justify-center text-center transition-all",
                 profit !== 0 
-                  ? "bg-card/80 border border-border/50" 
-                  : "bg-muted/20"
+                  ? "bg-[#1e1e1e] border border-[#333]" 
+                  : "bg-[#1a1a1a]"
               )}
             >
-              <span className="text-[9px] text-muted-foreground/70 font-medium">Week {index + 1}</span>
+              <span className="text-[8px] text-gray-500 font-medium">Week</span>
               <span className={cn(
-                "text-xs font-bold mt-0.5",
-                profit > 0 ? "text-profit" : profit < 0 ? "text-loss" : "text-muted-foreground/50"
+                "text-[10px] font-bold",
+                profit > 0 ? "text-emerald-400" : profit < 0 ? "text-red-400" : "text-gray-500"
               )}>
                 {profit !== 0 ? `$${formatCurrency(Math.abs(profit))}` : '$0'}
               </span>
