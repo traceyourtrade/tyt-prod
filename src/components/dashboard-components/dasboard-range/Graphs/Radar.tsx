@@ -14,11 +14,31 @@ function valueFormatter(v: number | null) {
 }
 
 export default function MultiSeriesRadar() {
-    const [isDark, setIsDark] = useState(false);
+    const [isDark, setIsDark] = useState(true);
+    const [chartColors, setChartColors] = useState<string[]>([]);
 
     useEffect(() => {
         const checkDarkMode = () => {
-            setIsDark(document.documentElement.classList.contains('dark'));
+            const dark = document.documentElement.classList.contains('dark');
+            setIsDark(dark);
+            
+            const root = document.documentElement;
+            const computedStyle = getComputedStyle(root);
+            const foreground = computedStyle.getPropertyValue('--foreground').trim();
+            
+            if (dark) {
+                setChartColors([
+                    'rgba(255,255,255,0.6)', 
+                    'rgba(255,255,255,0.35)', 
+                    'rgba(255,255,255,0.15)'
+                ]);
+            } else {
+                setChartColors([
+                    'rgba(0,0,0,0.7)', 
+                    'rgba(0,0,0,0.4)', 
+                    'rgba(0,0,0,0.2)'
+                ]);
+            }
         };
         
         checkDarkMode();
@@ -35,16 +55,13 @@ export default function MultiSeriesRadar() {
     const theme = createTheme({
         palette: {
             mode: isDark ? "dark" : "light",
-            primary: {
-                main: '#2563EB',
-            },
             background: {
-                default: isDark ? '#151515' : '#ffffff',
-                paper: isDark ? '#151515' : '#ffffff',
+                default: 'transparent',
+                paper: 'transparent',
             },
             text: {
-                primary: isDark ? '#e5e5e5' : '#171717',
-                secondary: isDark ? '#737373' : '#737373',
+                primary: isDark ? 'rgba(255,255,255,0.7)' : '#171717',
+                secondary: isDark ? 'rgba(255,255,255,0.4)' : '#737373',
             },
         },
         typography: {
@@ -52,29 +69,51 @@ export default function MultiSeriesRadar() {
         },
     });
 
-    const chartColors = isDark 
-        ? ['#2563EB', '#22C55E', '#60A5FA'] 
-        : ['#2563EB', '#22C55E', '#93C5FD'];
+    if (chartColors.length === 0) {
+        return (
+            <div className="w-full flex items-center justify-center h-[340px] bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl">
+                <span className="text-muted-foreground text-sm">Loading...</span>
+            </div>
+        );
+    }
 
     return (
         <ThemeProvider theme={theme}>
             <div className={cn(
-                "w-full max-w-[600px] flex flex-col items-center justify-start rounded-xl border transition-colors",
-                "bg-card border-border"
+                "w-full flex flex-col items-center justify-start rounded-2xl border transition-colors",
+                "bg-card/50 backdrop-blur-sm border-border/50"
             )}>
-                <div className="w-full flex items-center justify-between px-5 py-4 border-b border-border">
-                    <h2 className="text-base font-semibold text-foreground">
-                        Performance Radar
-                    </h2>
-                    <button className="p-1 rounded-md hover:bg-muted transition-colors">
+                <div className="w-full flex items-center justify-between px-5 py-4 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-sm font-semibold text-foreground">
+                            Performance Radar
+                        </h2>
+                    </div>
+                    <button className="p-2 rounded-lg hover:bg-muted/50 transition-colors">
                         <Info className="w-4 h-4 text-muted-foreground" />
                     </button>
                 </div>
                 
-                <div className="w-full p-4 flex items-center justify-center">
+                <div className="w-full p-4 flex flex-col items-center justify-center">
+                    {/* Legend */}
+                    <div className="flex items-center gap-6 mb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[0] }} />
+                            <span className="text-[10px] text-muted-foreground font-medium">This Month</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[1] }} />
+                            <span className="text-[10px] text-muted-foreground font-medium">Last Month</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColors[2] }} />
+                            <span className="text-[10px] text-muted-foreground font-medium">Overall</span>
+                        </div>
+                    </div>
+                    
                     <RadarChart
-                        width={400}
-                        height={280}
+                        width={360}
+                        height={260}
                         series={[
                             { 
                                 label: 'This Month', 

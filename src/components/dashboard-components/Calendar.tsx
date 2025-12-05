@@ -109,26 +109,21 @@ const Calendar = () => {
     const cells = [];
 
     for (let i = 0; i < firstDayIndex; i++) {
-      cells.push(<div key={`empty-${i}`} className="h-[72px] rounded-lg" />);
+      cells.push(<div key={`empty-${i}`} className="h-[68px] rounded-xl" />);
     }
 
     for (let day = 1; day <= days; day++) {
       const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
       const dayData = calendarData.find((d) => d.date === dateStr);
 
-      const getStyles = () => {
-        if (!dayData) return "bg-muted/30 hover:bg-muted/50";
-        if (dayData.profit > 0) return "bg-profit/15 hover:bg-profit/25 border border-profit/20";
-        if (dayData.profit < 0) return "bg-loss/15 hover:bg-loss/25 border border-loss/20";
-        return "bg-muted/50 hover:bg-muted/70";
-      };
-
       cells.push(
         <div
           key={day}
           className={cn(
-            "h-[72px] rounded-lg flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
-            getStyles()
+            "h-[68px] rounded-xl flex flex-col justify-center items-center relative cursor-pointer transition-all duration-200",
+            dayData 
+              ? "bg-card/80 border border-border/50 hover:border-border hover:bg-card" 
+              : "bg-muted/20 hover:bg-muted/40"
           )}
           onClick={() => {
             setShowTr();
@@ -138,7 +133,7 @@ const Calendar = () => {
         >
           <span className={cn(
             "text-xs font-medium",
-            dayData ? "text-foreground/60" : "text-muted-foreground"
+            dayData ? "text-foreground/70" : "text-muted-foreground/60"
           )}>
             {day}
           </span>
@@ -149,9 +144,9 @@ const Calendar = () => {
                 dayData.profit > 0 ? "text-profit" : 
                 dayData.profit < 0 ? "text-loss" : "text-muted-foreground"
               )}>
-                ${formatCurrency(dayData.profit)}
+                ${formatCurrency(Math.abs(dayData.profit))}
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[9px] text-muted-foreground/70">
                 {dayData.tradeLength} {dayData.tradeLength === 1 ? 'trade' : 'trades'}
               </span>
             </>
@@ -196,20 +191,28 @@ const Calendar = () => {
   const monthName = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long" });
 
   return (
-    <div className="flex-1 bg-card border border-border rounded-xl p-5">
+    <div className="flex-1 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <Button variant="ghost" size="icon" onClick={handlePrevMonth}>
-          <ChevronLeft className="h-5 w-5" />
+      <div className="flex justify-between items-center mb-5">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handlePrevMonth}
+          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4" />
         </Button>
 
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownVisible(!isDropdownVisible)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-muted/50 transition-colors"
           >
             <span className="text-lg font-semibold text-foreground">
-              {monthName} {selectedYear}
+              {monthName}
+            </span>
+            <span className="text-lg text-muted-foreground">
+              {selectedYear}
             </span>
             <ChevronDown className={cn(
               "h-4 w-4 text-muted-foreground transition-transform",
@@ -218,11 +221,11 @@ const Calendar = () => {
           </button>
 
           {isDropdownVisible && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-card border border-border rounded-xl shadow-lg z-50 p-4 w-64 animate-fade-in">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 p-4 w-64">
               <div className="flex items-center justify-center mb-3">
                 <button
                   onClick={() => setShowYearView(!showYearView)}
-                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showYearView ? monthName : selectedYear}
                   <ChevronDown className="h-3 w-3" />
@@ -235,9 +238,9 @@ const Calendar = () => {
                     <button
                       key={i}
                       className={cn(
-                        "px-2 py-2 text-xs rounded-lg transition-colors",
+                        "px-2 py-2 text-xs rounded-lg transition-colors font-medium",
                         i === selectedMonth
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-foreground text-background"
                           : "hover:bg-muted text-foreground"
                       )}
                       onClick={() => {
@@ -260,9 +263,9 @@ const Calendar = () => {
                       <button
                         key={year}
                         className={cn(
-                          "px-2 py-2 text-xs rounded-lg transition-colors",
+                          "px-2 py-2 text-xs rounded-lg transition-colors font-medium",
                           year === selectedYear
-                            ? "bg-primary text-primary-foreground year-active"
+                            ? "bg-foreground text-background year-active"
                             : "hover:bg-muted text-foreground"
                         )}
                         onClick={() => {
@@ -281,46 +284,49 @@ const Calendar = () => {
           )}
         </div>
 
-        <Button variant="ghost" size="icon" onClick={handleNextMonth}>
-          <ChevronRight className="h-5 w-5" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleNextMonth}
+          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+        >
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Calendar Grid */}
       <div className="flex gap-3">
         <div className="flex-1">
-          <div className="grid grid-cols-7 gap-1 mb-1">
+          <div className="grid grid-cols-7 gap-1.5 mb-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+              <div key={day} className="text-center text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider py-2">
                 {day}
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1.5">
             {renderCalendar()}
           </div>
         </div>
 
         {/* Weekly Summary */}
-        <div className="w-20 flex flex-col gap-1 pt-8">
+        <div className="w-[72px] flex flex-col gap-1.5 pt-8">
           {weeklyProfits.map((profit, index) => (
             <div
               key={index}
               className={cn(
-                "h-[72px] rounded-lg flex flex-col items-center justify-center text-center transition-all",
-                profit > 0 
-                  ? "bg-profit/15 border border-profit/20" 
-                  : profit < 0 
-                    ? "bg-loss/15 border border-loss/20" 
-                    : "bg-muted/30"
+                "h-[68px] rounded-xl flex flex-col items-center justify-center text-center transition-all",
+                profit !== 0 
+                  ? "bg-card/80 border border-border/50" 
+                  : "bg-muted/20"
               )}
             >
-              <span className="text-[10px] text-muted-foreground">Week {index + 1}</span>
+              <span className="text-[9px] text-muted-foreground/70 font-medium">Week {index + 1}</span>
               <span className={cn(
-                "text-xs font-bold",
-                profit > 0 ? "text-profit" : profit < 0 ? "text-loss" : "text-muted-foreground"
+                "text-xs font-bold mt-0.5",
+                profit > 0 ? "text-profit" : profit < 0 ? "text-loss" : "text-muted-foreground/50"
               )}>
-                ${formatCurrency(profit)}
+                {profit !== 0 ? `$${formatCurrency(Math.abs(profit))}` : '$0'}
               </span>
             </div>
           ))}

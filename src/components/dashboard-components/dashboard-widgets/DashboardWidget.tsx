@@ -3,7 +3,7 @@
 import React from 'react';
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, DoughnutController } from "chart.js";
-import { TrendingUp, TrendingDown, DollarSign, Target, Percent, Scale, Activity, Wallet } from "lucide-react";
+import { DollarSign, Target, Activity, Wallet, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TinyChart from "./TinyChart";
 
@@ -29,9 +29,8 @@ interface StatCardProps {
   value: string | number;
   subtitle?: string;
   icon?: React.ReactNode;
-  trend?: 'up' | 'down' | 'neutral';
-  trendValue?: string;
-  valueColor?: 'profit' | 'loss' | 'default';
+  status?: string;
+  valueType?: 'profit' | 'loss' | 'neutral';
   children?: React.ReactNode;
 }
 
@@ -40,13 +39,12 @@ const StatCard: React.FC<StatCardProps> = ({
   value, 
   subtitle, 
   icon, 
-  trend, 
-  trendValue,
-  valueColor = 'default',
+  status,
+  valueType = 'neutral',
   children 
 }) => {
   const getValueColor = () => {
-    switch (valueColor) {
+    switch (valueType) {
       case 'profit': return 'text-profit';
       case 'loss': return 'text-loss';
       default: return 'text-foreground';
@@ -54,11 +52,11 @@ const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl p-5 transition-all duration-200 hover:shadow-md hover:border-border/80">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
+    <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-5 transition-all duration-300 hover:bg-card/80 hover:border-border">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
           {icon && (
-            <div className="p-2 rounded-lg bg-muted">
+            <div className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground">
               {icon}
             </div>
           )}
@@ -66,30 +64,30 @@ const StatCard: React.FC<StatCardProps> = ({
             {title}
           </span>
         </div>
-        {trend && trendValue && (
-          <div className={cn(
-            "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
-            trend === 'up' ? "bg-profit/10 text-profit" : 
-            trend === 'down' ? "bg-loss/10 text-loss" : 
-            "bg-muted text-muted-foreground"
-          )}>
-            {trend === 'up' && <TrendingUp className="w-3 h-3" />}
-            {trend === 'down' && <TrendingDown className="w-3 h-3" />}
-            {trendValue}
-          </div>
+        {status && (
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-muted/50 text-muted-foreground">
+            {status}
+          </span>
         )}
       </div>
       
-      <div className="flex items-end justify-between">
-        <div>
-          <p className={cn("text-2xl font-bold tracking-tight", getValueColor())}>
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <p className={cn(
+            "text-2xl font-bold tracking-tight truncate",
+            getValueColor()
+          )}>
             {value}
           </p>
           {subtitle && (
-            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+            <p className="text-xs text-muted-foreground mt-1.5">{subtitle}</p>
           )}
         </div>
-        {children}
+        {children && (
+          <div className="flex-shrink-0">
+            {children}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -105,8 +103,6 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   avgLoses, 
   rrRatio, 
   accBal, 
-  totalProfits, 
-  totalLoses 
 }) => {
   const numericPnl = typeof pnl === 'string' ? parseFloat(pnl) : pnl;
   const winrate = winners || losers ? ((winners / (winners + losers)) * 100).toFixed(1) : '0';
@@ -131,9 +127,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
     datasets: [
       {
         data: [winners, losers],
-        backgroundColor: ["#22C55E", "#EF4444"],
-        hoverBackgroundColor: ["#4ADE80", "#F87171"],
-        borderWidth: 0,
+        backgroundColor: ["rgba(255, 255, 255, 0.15)", "rgba(255, 255, 255, 0.05)"],
+        hoverBackgroundColor: ["rgba(255, 255, 255, 0.25)", "rgba(255, 255, 255, 0.1)"],
+        borderColor: ["rgba(255, 255, 255, 0.3)", "rgba(255, 255, 255, 0.15)"],
+        borderWidth: 1,
         spacing: 2,
       },
     ],
@@ -142,7 +139,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   const optionsWinLoss = {
     responsive: true,
     maintainAspectRatio: true,
-    cutout: "75%",
+    cutout: "70%",
     rotation: -90,
     circumference: 180,
     plugins: {
@@ -154,20 +151,22 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
     },
   };
 
+  const profitFactorNum = parseFloat(profitF as string);
+  const profitFactorStatus = profitFactorNum >= 1.5 ? "Good" : profitFactorNum >= 1 ? "Even" : "Needs work";
+
   const avgProfitPercentage = avgProfits && avgLoses ? (avgProfits / (Math.abs(avgProfits) + Math.abs(avgLoses))) * 100 : 50;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       {/* Net P&L */}
       <StatCard
         title="Net P&L"
         value={numericPnl >= 0 ? pnlFormatted : `-${pnlFormatted}`}
-        icon={<DollarSign className="w-4 h-4 text-muted-foreground" />}
-        trend={numericPnl >= 0 ? 'up' : 'down'}
-        trendValue={numericPnl >= 0 ? '+' + ((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1) + '%' : ((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1) + '%'}
-        valueColor={numericPnl >= 0 ? 'profit' : 'loss'}
+        icon={<DollarSign className="w-4 h-4" />}
+        valueType={numericPnl > 0 ? 'profit' : numericPnl < 0 ? 'loss' : 'neutral'}
+        subtitle={numericPnl !== 0 ? `${numericPnl >= 0 ? '+' : ''}${((numericPnl / (parseFloat(accBal as string) || 1)) * 100).toFixed(1)}% return` : 'No change'}
       >
-        <div className="w-24 h-12">
+        <div className="w-20 h-10">
           <TinyChart data={data} />
         </div>
       </StatCard>
@@ -177,13 +176,13 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         title="Win Rate"
         value={`${winrate}%`}
         subtitle={`${totalTrades} trades`}
-        icon={<Target className="w-4 h-4 text-muted-foreground" />}
+        icon={<Target className="w-4 h-4" />}
       >
-        <div className="relative w-16 h-10">
+        <div className="relative w-14 h-8">
           <Doughnut data={dataWinLoss} options={optionsWinLoss} />
-          <div className="absolute -bottom-2 left-0 right-0 flex justify-between px-1">
-            <span className="text-[10px] font-medium text-profit">{winners}W</span>
-            <span className="text-[10px] font-medium text-loss">{losers}L</span>
+          <div className="absolute -bottom-1 left-0 right-0 flex justify-between px-0.5">
+            <span className="text-[9px] font-medium text-muted-foreground">{winners}W</span>
+            <span className="text-[9px] font-medium text-muted-foreground">{losers}L</span>
           </div>
         </div>
       </StatCard>
@@ -192,20 +191,19 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
       <StatCard
         title="Profit Factor"
         value={typeof profitF === 'number' ? profitF.toFixed(2) : profitF}
-        subtitle={parseFloat(profitF as string) >= 1.5 ? "Good" : parseFloat(profitF as string) >= 1 ? "Breakeven" : "Needs work"}
-        icon={<Activity className="w-4 h-4 text-muted-foreground" />}
-        trend={parseFloat(profitF as string) >= 1.5 ? 'up' : parseFloat(profitF as string) < 1 ? 'down' : 'neutral'}
-        trendValue={parseFloat(profitF as string) >= 1.5 ? "Profitable" : parseFloat(profitF as string) < 1 ? "Losing" : "Even"}
+        subtitle={profitFactorStatus}
+        icon={<Activity className="w-4 h-4" />}
+        status={profitFactorNum >= 1.5 ? "Profitable" : profitFactorNum < 1 ? "Losing" : "Breakeven"}
       />
 
       {/* Account Balance */}
       <StatCard
         title="Account Balance"
         value={balanceFormatted}
-        icon={<Wallet className="w-4 h-4 text-muted-foreground" />}
-        valueColor={numericPnl >= 0 ? 'profit' : 'default'}
+        icon={<Wallet className="w-4 h-4" />}
+        subtitle="Current balance"
       >
-        <div className="w-24 h-12">
+        <div className="w-20 h-10">
           <TinyChart data={data} />
         </div>
       </StatCard>
@@ -214,24 +212,24 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
       <StatCard
         title="Risk : Reward"
         value={typeof rrRatio === 'number' ? `1:${rrRatio.toFixed(1)}` : `1:${rrRatio}`}
-        icon={<Scale className="w-4 h-4 text-muted-foreground" />}
+        icon={<Scale className="w-4 h-4" />}
       >
-        <div className="w-full mt-2">
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden flex">
+        <div className="w-full">
+          <div className="w-full h-1.5 bg-muted/30 rounded-full overflow-hidden flex">
             <div 
-              className="h-full bg-profit rounded-l-full transition-all"
+              className="h-full bg-foreground/40 rounded-l-full transition-all"
               style={{ width: `${avgProfitPercentage}%` }}
             />
             <div 
-              className="h-full bg-loss rounded-r-full transition-all"
+              className="h-full bg-foreground/15 rounded-r-full transition-all"
               style={{ width: `${100 - avgProfitPercentage}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-[10px] text-profit font-medium">
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[9px] text-profit font-medium">
               +${avgProfits?.toFixed(0) || 0}
             </span>
-            <span className="text-[10px] text-loss font-medium">
+            <span className="text-[9px] text-loss font-medium">
               -${Math.abs(avgLoses || 0).toFixed(0)}
             </span>
           </div>
