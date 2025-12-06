@@ -93,8 +93,6 @@ const SYMBOL_COMPANY_MAP: Record<string, string> = {
   'SLV': 'ishares',
   'USO': 'uscf',
   'VIX': 'cboe',
-  'BTC': 'bitcoin',
-  'ETH': 'ethereum',
   'MARA': 'marathondigital',
   'RIOT': 'riotblockchain',
   'HOOD': 'robinhood',
@@ -116,10 +114,90 @@ const SYMBOL_COMPANY_MAP: Record<string, string> = {
   'TSM': 'tsmc',
 };
 
+const CRYPTO_SYMBOLS: Record<string, string> = {
+  'BTC': 'bitcoin',
+  'ETH': 'ethereum',
+  'SOL': 'solana',
+  'XRP': 'ripple',
+  'ADA': 'cardano',
+  'DOGE': 'dogecoin',
+  'DOT': 'polkadot',
+  'MATIC': 'polygon',
+  'AVAX': 'avalanche',
+  'LINK': 'chainlink',
+  'UNI': 'uniswap',
+  'ATOM': 'cosmos',
+  'LTC': 'litecoin',
+  'BCH': 'bitcoin-cash',
+  'ALGO': 'algorand',
+  'XLM': 'stellar',
+  'VET': 'vechain',
+  'FIL': 'filecoin',
+  'TRX': 'tron',
+  'ETC': 'ethereum-classic',
+  'NEAR': 'near-protocol',
+  'APT': 'aptos',
+  'ARB': 'arbitrum',
+  'OP': 'optimism',
+  'SUI': 'sui',
+  'SHIB': 'shiba-inu',
+  'PEPE': 'pepe',
+  'APE': 'apecoin',
+  'SAND': 'sandbox',
+  'MANA': 'decentraland',
+  'AXS': 'axie-infinity',
+  'CRO': 'cronos',
+  'AAVE': 'aave',
+  'MKR': 'maker',
+  'SNX': 'synthetix',
+  'COMP': 'compound',
+  'SUSHI': 'sushiswap',
+  'YFI': 'yearn-finance',
+  'BTCUSD': 'bitcoin',
+  'ETHUSD': 'ethereum',
+  'BTCUSDT': 'bitcoin',
+  'ETHUSDT': 'ethereum',
+};
+
+const FOREX_PAIRS = [
+  'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD',
+  'EURGBP', 'EURJPY', 'GBPJPY', 'AUDJPY', 'EURAUD', 'EURCHF', 'EURNZD',
+  'GBPAUD', 'GBPCAD', 'GBPCHF', 'GBPNZD', 'AUDCAD', 'AUDCHF', 'AUDNZD',
+  'CADJPY', 'CHFJPY', 'NZDJPY', 'CADCHF', 'NZDCAD', 'NZDCHF',
+  'XAUUSD', 'XAGUSD', 'XAUEUR', 'XAGEUR',
+  'US30', 'US100', 'US500', 'GER40', 'UK100', 'FRA40', 'JPN225',
+];
+
+function isForexPair(symbol: string): boolean {
+  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return FOREX_PAIRS.includes(cleanSymbol) || 
+         /^[A-Z]{6}$/.test(cleanSymbol) ||
+         cleanSymbol.includes('USD') && cleanSymbol.length === 6;
+}
+
+function getCryptoLogoUrl(symbol: string): string | null {
+  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z]/g, '');
+  const cryptoId = CRYPTO_SYMBOLS[cleanSymbol];
+  
+  if (cryptoId) {
+    return `https://assets.coingecko.com/coins/images/1/small/${cryptoId}.png`;
+  }
+  return null;
+}
+
 export function getStockLogoUrl(symbol: string): string | null {
   if (!symbol) return null;
   
-  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z]/g, '');
+  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  if (isForexPair(cleanSymbol)) {
+    return null;
+  }
+  
+  const cryptoUrl = getCryptoLogoUrl(cleanSymbol);
+  if (cryptoUrl) {
+    return cryptoUrl;
+  }
   
   const companyName = SYMBOL_COMPANY_MAP[cleanSymbol];
   
@@ -127,16 +205,22 @@ export function getStockLogoUrl(symbol: string): string | null {
     return `https://logo.clearbit.com/${companyName}.com`;
   }
   
-  const commonDomains = [
-    `${cleanSymbol.toLowerCase()}.com`,
-    `${cleanSymbol.toLowerCase()}inc.com`,
-    `${cleanSymbol.toLowerCase()}corp.com`,
-  ];
-  
-  return `https://logo.clearbit.com/${commonDomains[0]}`;
+  return `https://logo.clearbit.com/${cleanSymbol.toLowerCase()}.com`;
 }
 
 export function getSymbolFallback(symbol: string): string {
   if (!symbol) return '?';
   return symbol.slice(0, 4).toUpperCase();
+}
+
+export function getSymbolType(symbol: string): 'stock' | 'crypto' | 'forex' | 'unknown' {
+  if (!symbol) return 'unknown';
+  
+  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  if (isForexPair(cleanSymbol)) return 'forex';
+  if (CRYPTO_SYMBOLS[cleanSymbol]) return 'crypto';
+  if (SYMBOL_COMPANY_MAP[cleanSymbol]) return 'stock';
+  
+  return 'unknown';
 }
