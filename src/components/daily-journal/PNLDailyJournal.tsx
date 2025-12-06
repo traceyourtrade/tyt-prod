@@ -1,5 +1,7 @@
+"use client";
+
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { formatCompactNumber } from "@/utils/formatNumber";
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 interface Trade {
   time: string;
@@ -12,6 +14,7 @@ interface GradientAreaChartProps {
 }
 
 const GradientAreaChart = ({ data }: GradientAreaChartProps) => {
+  const { currency, exchangeRate } = useCurrencyStore();
   const dataa = [
     { time: '', value: 0, Item: '' }
   ];
@@ -80,7 +83,7 @@ const GradientAreaChart = ({ data }: GradientAreaChartProps) => {
             <YAxis
               stroke="rgba(255, 255, 255, 0.51)"
               tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-              tickFormatter={(value) => value < 0 ? `-$${formatCompactNumber(Math.abs(value), 0)}` : `$${formatCompactNumber(value, 0)}`}
+              tickFormatter={(value) => formatCompactCurrency(value, currency, exchangeRate)}
               interval={0}
               minTickGap={2}
               tickCount={7}
@@ -117,7 +120,7 @@ const GradientAreaChart = ({ data }: GradientAreaChartProps) => {
             <YAxis
               stroke="rgba(255, 255, 255, 0.51)"
               tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-              tickFormatter={(value) => value < 0 ? `-$${formatCompactNumber(Math.abs(value), 0)}` : `$${formatCompactNumber(value, 0)}`}
+              tickFormatter={(value) => formatCompactCurrency(value, currency, exchangeRate)}
               interval={0}
               minTickGap={2}
               tickCount={10}
@@ -154,7 +157,7 @@ const GradientAreaChart = ({ data }: GradientAreaChartProps) => {
             <YAxis
               stroke="rgba(255, 255, 255, 0.51)"
               tick={{ fill: "rgba(255, 255, 255, 0.51)" }}
-              tickFormatter={(value) => value < 0 ? `-$${formatCompactNumber(Math.abs(value), 0)}` : `$${formatCompactNumber(value, 0)}`}
+              tickFormatter={(value) => formatCompactCurrency(value, currency, exchangeRate)}
               interval={0}
               minTickGap={2}
               tickCount={10}

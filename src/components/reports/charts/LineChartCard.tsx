@@ -11,7 +11,7 @@ import {
   useYScale
 } from "@mui/x-charts";
 import { markElementClasses } from "@mui/x-charts";
-import { formatCompactNumber } from "@/utils/formatNumber";
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 interface ChartData {
   date?: string;
@@ -77,6 +77,7 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
   isArea = true,
   styles
 }) => {
+  const { currency, exchangeRate } = useCurrencyStore();
   const [colors, setColors] = useState({
     primary: "#2563EB",
     profit: "#22C55E",
@@ -126,7 +127,7 @@ const LineChartCard: React.FC<LineChartCardProps> = ({
           grid={{ horizontal: true }}
           yAxis={[
             {
-              tickFormat: (value: number) => `$${formatCompactNumber(value, 0)}`,
+              tickFormat: (value: number) => formatCompactCurrency(value, currency, exchangeRate),
               width: 65,
             },
           ]}

@@ -3,9 +3,11 @@
 import { useMemo } from 'react'
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
+import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore"
 
 export default function DayTimeReportMain() {
   const { selectedAccounts } = useModeFilteredAccounts()
+  const { currency, exchangeRate } = useCurrencyStore()
   const trades = selectedAccounts.flatMap((acc: any) => acc.tradeData || [])
 
   // Group trades by day of week
@@ -57,12 +59,12 @@ export default function DayTimeReportMain() {
     )
 
     return {
-      bestDay: { day: bestDay.day, trades: bestDay.trades.length, pnl: `$${bestDay.metrics.netPnL.toFixed(2)}` },
-      leastDay: { day: leastDay.day, trades: leastDay.trades.length, pnl: `-$${Math.abs(leastDay.metrics.netPnL).toFixed(2)}` },
+      bestDay: { day: bestDay.day, trades: bestDay.trades.length, pnl: formatCurrencyValue(bestDay.metrics.netPnL, currency, exchangeRate) },
+      leastDay: { day: leastDay.day, trades: leastDay.trades.length, pnl: formatCurrencyValue(leastDay.metrics.netPnL, currency, exchangeRate) },
       mostActiveDay: { day: mostActiveDay.day, trades: mostActiveDay.trades.length },
       bestWinRateDay: { day: bestWinRateDay.day, winRate: bestWinRateDay.metrics.winPercentage.toFixed(2), tradeCount: bestWinRateDay.trades.length }
     }
-  }, [dayMetrics])
+  }, [dayMetrics, currency, exchangeRate])
 
   // Calculate summary table data
   const summaryTableData = useMemo(
@@ -70,13 +72,14 @@ export default function DayTimeReportMain() {
       dayMetrics.map(({ day, trades, metrics }: any) => ({
         day,
         winPercent: metrics.winPercentage.toFixed(2),
-        netPnl: `$${metrics.netPnL.toFixed(2)}`,
+        netPnl: formatCurrencyValue(metrics.netPnL, currency, exchangeRate),
+        netPnlRaw: metrics.netPnL,
         tradeCount: trades.length,
         avgDailyVolume: metrics.avgDailyVolume.toFixed(2),
-        avgWin: `$${metrics.avgTradeWinLoss > 0 ? metrics.avgTradeWinLoss.toFixed(2) : 0}`,
-        avgLoss: `-$${metrics.avgTradeWinLoss < 0 ? Math.abs(metrics.avgTradeWinLoss).toFixed(2) : 0}`
+        avgWin: formatCurrencyValue(metrics.avgTradeWinLoss > 0 ? metrics.avgTradeWinLoss : 0, currency, exchangeRate),
+        avgLoss: formatCurrencyValue(metrics.avgTradeWinLoss < 0 ? metrics.avgTradeWinLoss : 0, currency, exchangeRate)
       })),
-    [dayMetrics]
+    [dayMetrics, currency, exchangeRate]
   )
 
   return (
@@ -86,7 +89,7 @@ export default function DayTimeReportMain() {
         <div className="bg-[#121212] rounded-lg p-4 border border-[#333]">
           <div className="text-xs text-gray-400 mb-2">Best Day</div>
           <div className="text-xl font-bold text-white">{performanceData.bestDay.day}</div>
-          <div className="text-sm text-[#59c0a4] mt-1">{performanceData.bestDay.pnl}</div>
+          <div className="text-sm text-[#4EBF94] mt-1">{performanceData.bestDay.pnl}</div>
           <div className="text-xs text-gray-500">{performanceData.bestDay.trades} trades</div>
         </div>
 
@@ -106,7 +109,7 @@ export default function DayTimeReportMain() {
         <div className="bg-[#121212] rounded-lg p-4 border border-[#333]">
           <div className="text-xs text-gray-400 mb-2">Best Win Rate</div>
           <div className="text-xl font-bold text-white">{performanceData.bestWinRateDay.day}</div>
-          <div className="text-sm text-[#59c0a4] mt-1">{performanceData.bestWinRateDay.winRate}%</div>
+          <div className="text-sm text-[#4EBF94] mt-1">{performanceData.bestWinRateDay.winRate}%</div>
           <div className="text-xs text-gray-500">{performanceData.bestWinRateDay.tradeCount} trades</div>
         </div>
       </div>
@@ -134,12 +137,12 @@ export default function DayTimeReportMain() {
                 <tr key={idx} className="border-b border-[#333] hover:bg-[#1a1a1a] transition">
                   <td className="px-4 py-3 text-white font-medium">{row.day}</td>
                   <td className="px-4 py-3 text-right text-white">{row.winPercent}%</td>
-                  <td className={`px-4 py-3 text-right font-semibold ${parseFloat(row.netPnl) >= 0 ? 'text-[#59c0a4]' : 'text-[#ec787d]'}`}>
+                  <td className={`px-4 py-3 text-right font-semibold ${row.netPnlRaw >= 0 ? 'text-[#4EBF94]' : 'text-[#ec787d]'}`}>
                     {row.netPnl}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-300">{row.tradeCount}</td>
                   <td className="px-4 py-3 text-right text-gray-300">{row.avgDailyVolume}</td>
-                  <td className="px-4 py-3 text-right text-[#59c0a4]">{row.avgWin}</td>
+                  <td className="px-4 py-3 text-right text-[#4EBF94]">{row.avgWin}</td>
                   <td className="px-4 py-3 text-right text-[#ec787d]">{row.avgLoss}</td>
                 </tr>
               ))}

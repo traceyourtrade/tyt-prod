@@ -15,10 +15,11 @@ import {
 import StatItem from './StatItem'
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
-import { formatCompactNumber } from '@/utils/formatNumber'
+import useCurrencyStore, { formatCompactCurrency, currencySymbols } from '@/store/currencyStore'
 
 export default function SummarySection({ trades = [] }: { trades?: any[] }) {
   const { selectedAccounts } = useModeFilteredAccounts()
+  const { currency, exchangeRate } = useCurrencyStore()
   const [calculations, setCalculations] = useState<any>({
     netPnL: 0,
     winPercentage: 0,
@@ -54,19 +55,23 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     if (trades?.length) processData()
   }, [trades])
 
-  const formatValue = (value: any, prefix = '', suffix = '') => {
-    if (value === null || value === undefined || isNaN(value)) return `${prefix}0${suffix}`
-    if (typeof value === 'number') {
-      const formatted = formatCompactNumber(value, 2)
-      return `${prefix}${formatted}${suffix}`
+  const formatValue = (value: any, isCurrency = false, suffix = '') => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return isCurrency ? formatCompactCurrency(0, currency, exchangeRate) : `0${suffix}`
     }
-    return `${prefix}${value}${suffix}`
+    if (typeof value === 'number') {
+      if (isCurrency) {
+        return formatCompactCurrency(value, currency, exchangeRate)
+      }
+      return `${value.toFixed(2)}${suffix}`
+    }
+    return `${value}${suffix}`
   }
 
   const stats = [
     { 
       label: 'Net P&L', 
-      value: formatValue(calculations.netPnL, '$'),
+      value: formatValue(calculations.netPnL, true),
       icon: <DollarSign className="h-4 w-4" />,
       isDays: false, 
       isTrades: false, 
@@ -76,7 +81,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Win %', 
-      value: formatValue(calculations.winPercentage, '', '%'),
+      value: formatValue(calculations.winPercentage, false, '%'),
       icon: <Percent className="h-4 w-4" />,
       isDays: false, 
       isTrades: true, 
@@ -86,7 +91,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Avg daily win %', 
-      value: formatValue(calculations.avgDailyWinPercentage, '', '%'),
+      value: formatValue(calculations.avgDailyWinPercentage, false, '%'),
       icon: <TrendingUp className="h-4 w-4" />,
       isDays: true, 
       isTrades: false, 
@@ -106,7 +111,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Trade expectancy', 
-      value: formatValue(calculations.tradeExpectancy, '$'),
+      value: formatValue(calculations.tradeExpectancy, true),
       icon: <Target className="h-4 w-4" />,
       isDays: false, 
       isTrades: false, 
@@ -116,7 +121,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Avg daily win/loss', 
-      value: formatValue(calculations.avgDailyWinLoss, '$'),
+      value: formatValue(calculations.avgDailyWinLoss, true),
       icon: <BarChart3 className="h-4 w-4" />,
       isDays: true, 
       isTrades: false, 
@@ -126,7 +131,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Avg trade win/loss', 
-      value: formatValue(calculations.avgTradeWinLoss, '$'),
+      value: formatValue(calculations.avgTradeWinLoss, true),
       icon: <BarChart3 className="h-4 w-4" />,
       isDays: false, 
       isTrades: true, 
@@ -146,7 +151,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Avg net trade P&L', 
-      value: formatValue(calculations.avgNetTradePnL, '$'),
+      value: formatValue(calculations.avgNetTradePnL, true),
       icon: <DollarSign className="h-4 w-4" />,
       isDays: false, 
       isTrades: true, 
@@ -156,7 +161,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Avg daily net P&L', 
-      value: formatValue(calculations.avgDailyNetPnL, '$'),
+      value: formatValue(calculations.avgDailyNetPnL, true),
       icon: <DollarSign className="h-4 w-4" />,
       isDays: true, 
       isTrades: false, 
@@ -206,7 +211,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Max daily net drawdown', 
-      value: formatValue(calculations.maxDailyNetDrawdown, '$'),
+      value: formatValue(calculations.maxDailyNetDrawdown, true),
       icon: <ArrowDownRight className="h-4 w-4" />,
       isDays: false, 
       isTrades: false, 
@@ -216,7 +221,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Avg daily net drawdown', 
-      value: formatValue(calculations.avgDailyNetDrawdown, '$'),
+      value: formatValue(calculations.avgDailyNetDrawdown, true),
       icon: <ArrowDownRight className="h-4 w-4" />,
       isDays: false, 
       isTrades: false, 
@@ -229,7 +234,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
   const daysExtra = [
     { 
       label: 'Largest profitable day', 
-      value: formatValue(calculations.maxDailyProfit, '$'),
+      value: formatValue(calculations.maxDailyProfit, true),
       icon: <TrendingUp className="h-4 w-4" />,
       isDays: true, 
       isTrades: false, 
@@ -238,7 +243,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Largest losing day', 
-      value: formatValue(calculations.maxDailyLoss, '$'),
+      value: formatValue(calculations.maxDailyLoss, true),
       icon: <ArrowDownRight className="h-4 w-4" />,
       isDays: true, 
       isTrades: false, 
@@ -277,7 +282,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Largest profitable trade', 
-      value: formatValue(calculations.maxTradeProfit, '$'),
+      value: formatValue(calculations.maxTradeProfit, true),
       icon: <TrendingUp className="h-4 w-4" />,
       isDays: false, 
       isTrades: true, 
@@ -286,7 +291,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
     },
     { 
       label: 'Largest Losing trade', 
-      value: formatValue(calculations.maxTradeLoss, '$'),
+      value: formatValue(calculations.maxTradeLoss, true),
       icon: <ArrowDownRight className="h-4 w-4" />,
       isDays: false, 
       isTrades: true, 

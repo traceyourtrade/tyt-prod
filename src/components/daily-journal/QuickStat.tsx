@@ -1,7 +1,7 @@
 "use client";
 
 import { TrendingUp, TrendingDown, Zap, BarChart3 } from "lucide-react";
-import { formatCompactNumber } from "@/utils/formatNumber";
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 interface Trade {
   Profit: number;
@@ -13,6 +13,7 @@ interface QuickStatsProps {
 }
 
 const QuickStats = ({ dailyData, streak = 0 }: QuickStatsProps) => {
+  const { currency, exchangeRate } = useCurrencyStore();
   const totalPnL = (dailyData || []).reduce((sum, trade) => sum + (trade.Profit || 0), 0);
   const winners = (dailyData || []).filter(trade => trade.Profit > 0).length;
   const losers = (dailyData || []).filter(trade => trade.Profit < 0).length;
@@ -82,7 +83,7 @@ const QuickStats = ({ dailyData, streak = 0 }: QuickStatsProps) => {
             <TrendingUp className="w-3.5 h-3.5 text-profit" />
             <span className="text-[10px] text-muted-foreground uppercase">Avg Win</span>
           </div>
-          <p className="text-lg font-bold text-profit">${formatCompactNumber(avgWin, 0)}</p>
+          <p className="text-lg font-bold text-profit">{formatCompactCurrency(avgWin, currency, exchangeRate)}</p>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-3">
@@ -90,7 +91,7 @@ const QuickStats = ({ dailyData, streak = 0 }: QuickStatsProps) => {
             <TrendingDown className="w-3.5 h-3.5 text-loss" />
             <span className="text-[10px] text-muted-foreground uppercase">Avg Loss</span>
           </div>
-          <p className="text-lg font-bold text-loss">${formatCompactNumber(avgLoss, 0)}</p>
+          <p className="text-lg font-bold text-loss">{formatCompactCurrency(avgLoss, currency, exchangeRate)}</p>
         </div>
       </div>
 

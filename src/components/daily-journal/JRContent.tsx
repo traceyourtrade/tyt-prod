@@ -30,7 +30,7 @@ import useAccountDetails from "@/store/accountdetails";
 import { useDataStore } from "@/store/store";
 import notebookStore from "@/store/notebookStore";
 import notifications from "@/store/notifications";
-import { formatPnL } from "@/utils/formatNumber";
+import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
 
 interface Trade {
   id: string;
@@ -60,6 +60,7 @@ interface JRContentProps {
 }
 
 const JRContent = ({ dailyData }: JRContentProps) => {
+  const { currency, exchangeRate } = useCurrencyStore();
   const userId = Cookies.get("userId") || "";
   const tokenn = Cookies.get("Trace Your Trades") || "";
 
@@ -572,7 +573,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                       ? 'bg-profit/10 text-profit' 
                       : 'bg-loss/10 text-loss'
                   }`}>
-                    {formatPnL(trade.Profit || 0)}
+                    {formatCurrencyValue(trade.Profit || 0, currency, exchangeRate)}
                   </div>
 
                   {/* Actions */}
