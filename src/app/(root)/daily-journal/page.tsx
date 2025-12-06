@@ -444,26 +444,9 @@ const DailyJournal = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - Matches app design */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 md:py-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="p-2 rounded-lg hover:bg-muted transition-colors md:hidden">
-              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </Link>
-          </div>
-
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="hidden md:flex p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors"
-          >
-            {isSidebarOpen ? <PanelRightClose className="w-5 h-5 text-muted-foreground" /> : <PanelRight className="w-5 h-5 text-muted-foreground" />}
-          </button>
-        </div>
-      </div>
 
       {/* Main Layout - Three Columns */}
-      <div className="flex h-[calc(100vh-73px)]">
+      <div className="flex h-screen">
         {/* Left Panel - Trade List */}
         <div className={`${mobileView === "list" ? "flex" : "hidden md:flex"} w-full md:w-80 lg:w-96 flex-col flex-shrink-0 border-r border-border bg-card/50`}>
           {/* Search & Filter */}
