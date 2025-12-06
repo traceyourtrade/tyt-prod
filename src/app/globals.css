@@ -64,65 +64,65 @@
 }
 
 /* =====================================================
-   LIGHT THEME - Ultra Soft, Paper-like Palette
-   Cream/beige tones for maximum eye comfort
+   LIGHT THEME - Warm Gray, Low-Contrast Palette
+   Much darker base for reduced eye strain
    ===================================================== */
 :root {
   --radius: 0.75rem;
   
-  --background: #f0eeeb;
+  --background: #d8d5d0;
   --foreground: #3d3a37;
   
-  --card: #f7f5f3;
+  --card: #e5e2dd;
   --card-foreground: #3d3a37;
   
-  --popover: #f7f5f3;
+  --popover: #e5e2dd;
   --popover-foreground: #3d3a37;
   
   --primary: #2563EB;
   --primary-dark: #1D4ED8;
   --primary-light: #60A5FA;
-  --primary-soft: #eef4fc;
+  --primary-soft: #d6e4f7;
   --primary-foreground: #ffffff;
   
-  --secondary: #e8e5e1;
-  --secondary-foreground: #57534e;
+  --secondary: #ccc9c4;
+  --secondary-foreground: #4a4744;
   
-  --muted: #e8e5e1;
-  --muted-foreground: #8a8580;
+  --muted: #ccc9c4;
+  --muted-foreground: #6b6862;
   
-  --accent: #e8e5e1;
+  --accent: #ccc9c4;
   --accent-foreground: #3d3a37;
   
   --destructive: #dc2626;
   --warning: #d97706;
   
-  --border: #ddd9d5;
-  --input: #ddd9d5;
+  --border: #c4c0ba;
+  --input: #c4c0ba;
   --ring: #2563EB;
   
   --profit: #4EBF94;
   --loss: #dc2626;
-  --breakeven: #8a8580;
+  --breakeven: #6b6862;
   
   --chart-1: #2563EB;
   --chart-2: #4EBF94;
   --chart-3: #ca8a04;
   --chart-4: #dc2626;
   --chart-5: #60A5FA;
-  --chart-text: #6b6560;
+  --chart-text: #57534e;
   
-  --sidebar: #f7f5f3;
-  --sidebar-foreground: #57534e;
+  --sidebar: #e5e2dd;
+  --sidebar-foreground: #4a4744;
   --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8e5e1;
+  --sidebar-accent: #ccc9c4;
   --sidebar-accent-foreground: #3d3a37;
-  --sidebar-border: #ddd9d5;
+  --sidebar-border: #c4c0ba;
   --sidebar-ring: #2563EB;
   
-  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-  --shadow-card-hover: 0 2px 4px -1px rgb(0 0 0 / 0.05);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-card-hover: 0 2px 4px -1px rgb(0 0 0 / 0.06);
 }
 
 /* =====================================================
