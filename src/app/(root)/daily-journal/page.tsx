@@ -29,6 +29,8 @@ import {
   BarChart3,
   PanelRightClose,
   PanelRight,
+  PanelLeftClose,
+  PanelLeft,
   Clock,
   CheckCircle2,
   Activity,
@@ -181,6 +183,7 @@ const DailyJournal = () => {
   const [filter, setFilter] = useState<"all" | "winners" | "losers">("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState("");
@@ -448,9 +451,17 @@ const DailyJournal = () => {
       {/* Main Layout - Three Columns */}
       <div className="flex h-screen">
         {/* Left Panel - Trade List */}
-        <div className={`${mobileView === "list" ? "flex" : "hidden md:flex"} w-full md:w-80 lg:w-96 flex-col flex-shrink-0 border-r border-border bg-card/50`}>
-          {/* Search & Filter */}
-          <div className="p-4 border-b border-border space-y-3">
+        <AnimatePresence mode="wait">
+          {isLeftPanelOpen && (
+            <motion.div
+              initial={{ opacity: 0, marginLeft: -384 }}
+              animate={{ opacity: 1, marginLeft: 0 }}
+              exit={{ opacity: 0, marginLeft: -384 }}
+              transition={{ duration: 0.2 }}
+              className={`${mobileView === "list" ? "flex" : "hidden md:flex"} w-full md:w-80 lg:w-96 flex-col flex-shrink-0 border-r border-border bg-card/50`}
+            >
+              {/* Search & Filter */}
+              <div className="p-4 border-b border-border space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -578,10 +589,31 @@ const DailyJournal = () => {
               ))
             )}
           </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Center Panel - Journal Content */}
-        <div className={`flex-1 min-w-0 overflow-y-auto ${mobileView === "content" ? "block" : "hidden md:block"}`}>
+        <div className={`flex-1 min-w-0 flex flex-col ${mobileView === "content" ? "block" : "hidden md:block"}`}>
+          {/* Panel Toggle Toolbar */}
+          <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border bg-card/50">
+            <button
+              onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              {isLeftPanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+              <span>{isLeftPanelOpen ? "Hide" : "Show"} Trades</span>
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <span>{isSidebarOpen ? "Hide" : "Show"} Analytics</span>
+              {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto">
           {selectedTrade ? (
             <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
               {/* Trade Header Card */}
@@ -844,6 +876,7 @@ const DailyJournal = () => {
               <p className="text-muted-foreground text-center max-w-xs">Choose a trade from the list to start journaling your thoughts and analysis</p>
             </div>
           )}
+          </div>
         </div>
 
         {/* Right Sidebar - Analytics */}
