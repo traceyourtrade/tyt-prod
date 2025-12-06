@@ -1,37 +1,34 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Eye, EyeOff, Settings, RotateCcw, X } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, Settings, RotateCcw, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import { WIDGET_REGISTRY, getWidgetById } from '@/lib/dashboardWidgets';
 import { Button } from '@/components/ui/button';
 
-interface DraggableWidgetGridProps {
+interface DraggableWidgetProps {
   children: React.ReactNode;
   widgetId: string;
   className?: string;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
 }
 
-export const DraggableWidget: React.FC<DraggableWidgetGridProps> = ({ 
+export const DraggableWidget: React.FC<DraggableWidgetProps> = ({ 
   children, 
   widgetId,
-  className 
+  className,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = true,
+  canMoveDown = true,
 }) => {
   const { isEditMode, toggleWidgetVisibility, layout } = useDashboardLayoutStore();
   const widget = getWidgetById(widgetId);
   const layoutItem = layout.find(l => l.widgetId === widgetId);
-  
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('widgetId', widgetId);
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-  };
 
   if (!layoutItem?.visible && !isEditMode) {
     return null;
@@ -42,16 +39,30 @@ export const DraggableWidget: React.FC<DraggableWidgetGridProps> = ({
       className={cn(
         "relative group transition-all duration-200",
         isEditMode && "ring-2 ring-dashed ring-border/50 rounded-xl",
-        isDragging && "opacity-50",
         !layoutItem?.visible && "opacity-40",
         className
       )}
-      draggable={isEditMode}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
     >
       {isEditMode && (
-        <div className="absolute -top-2 -right-2 z-10 flex items-center gap-1 bg-card border border-border rounded-lg shadow-lg p-1">
+        <div className="absolute -top-2 -right-2 z-10 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg p-0.5">
+          {onMoveUp && canMoveUp && (
+            <button
+              onClick={onMoveUp}
+              className="p-1.5 hover:bg-muted rounded"
+              title="Move up"
+            >
+              <ArrowUp className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          )}
+          {onMoveDown && canMoveDown && (
+            <button
+              onClick={onMoveDown}
+              className="p-1.5 hover:bg-muted rounded"
+              title="Move down"
+            >
+              <ArrowDown className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          )}
           <button
             onClick={() => toggleWidgetVisibility(widgetId)}
             className="p-1.5 hover:bg-muted rounded"
@@ -81,60 +92,32 @@ export const DraggableWidget: React.FC<DraggableWidgetGridProps> = ({
   );
 };
 
-interface WidgetDropZoneProps {
-  onDrop: (widgetId: string, targetIndex: number) => void;
-  index: number;
-  children: React.ReactNode;
-}
-
-export const WidgetDropZone: React.FC<WidgetDropZoneProps> = ({ 
-  onDrop, 
-  index,
-  children 
-}) => {
-  const { isEditMode } = useDashboardLayoutStore();
-  const [isOver, setIsOver] = useState(false);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const widgetId = e.dataTransfer.getData('widgetId');
-    onDrop(widgetId, index);
-    setIsOver(false);
-  };
-
-  return (
-    <div
-      onDragOver={isEditMode ? handleDragOver : undefined}
-      onDragLeave={isEditMode ? handleDragLeave : undefined}
-      onDrop={isEditMode ? handleDrop : undefined}
-      className={cn(
-        "transition-all duration-200",
-        isOver && isEditMode && "ring-2 ring-primary/50 rounded-xl bg-primary/5"
-      )}
-    >
-      {children}
-    </div>
-  );
-};
-
 interface EditModeToolbarProps {
   className?: string;
 }
 
 export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) => {
-  const { isEditMode, toggleEditMode, resetLayout, layout, toggleWidgetVisibility } = useDashboardLayoutStore();
+  const { isEditMode, toggleEditMode, resetLayout, layout, toggleWidgetVisibility, swapWidgets } = useDashboardLayoutStore();
   const [showWidgetPicker, setShowWidgetPicker] = useState(false);
 
   const hiddenWidgets = layout.filter(l => !l.visible);
+  const sortedLayout = [...layout].sort((a, b) => a.order - b.order);
+
+  const handleMoveUp = (widgetId: string) => {
+    const currentIndex = sortedLayout.findIndex(l => l.widgetId === widgetId);
+    if (currentIndex > 0) {
+      const prevWidgetId = sortedLayout[currentIndex - 1].widgetId;
+      swapWidgets(widgetId, prevWidgetId);
+    }
+  };
+
+  const handleMoveDown = (widgetId: string) => {
+    const currentIndex = sortedLayout.findIndex(l => l.widgetId === widgetId);
+    if (currentIndex < sortedLayout.length - 1) {
+      const nextWidgetId = sortedLayout[currentIndex + 1].widgetId;
+      swapWidgets(widgetId, nextWidgetId);
+    }
+  };
 
   return (
     <>
@@ -197,38 +180,65 @@ export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) =
             </div>
             
             <div className="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
-              {WIDGET_REGISTRY.map(widget => {
-                const layoutItem = layout.find(l => l.widgetId === widget.id);
-                const isVisible = layoutItem?.visible ?? true;
+              <p className="text-xs text-muted-foreground mb-3">
+                Toggle visibility and use arrows to reorder widgets
+              </p>
+              {sortedLayout.map((layoutItem, index) => {
+                const widget = WIDGET_REGISTRY.find(w => w.id === layoutItem.widgetId);
+                if (!widget) return null;
                 
                 return (
                   <div 
                     key={widget.id}
                     className={cn(
                       "flex items-center justify-between p-3 rounded-lg border transition-colors",
-                      isVisible 
+                      layoutItem.visible 
                         ? "bg-card border-border" 
                         : "bg-muted/30 border-border/50"
                     )}
                   >
-                    <div>
-                      <p className={cn("font-medium text-sm", !isVisible && "text-muted-foreground")}>
-                        {widget.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {widget.description}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          onClick={() => handleMoveUp(widget.id)}
+                          disabled={index === 0}
+                          className={cn(
+                            "p-1 rounded hover:bg-muted transition-colors",
+                            index === 0 && "opacity-30 cursor-not-allowed"
+                          )}
+                        >
+                          <ArrowUp className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={() => handleMoveDown(widget.id)}
+                          disabled={index === sortedLayout.length - 1}
+                          className={cn(
+                            "p-1 rounded hover:bg-muted transition-colors",
+                            index === sortedLayout.length - 1 && "opacity-30 cursor-not-allowed"
+                          )}
+                        >
+                          <ArrowDown className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </div>
+                      <div>
+                        <p className={cn("font-medium text-sm", !layoutItem.visible && "text-muted-foreground")}>
+                          {widget.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {widget.description}
+                        </p>
+                      </div>
                     </div>
                     <button
                       onClick={() => toggleWidgetVisibility(widget.id)}
                       className={cn(
                         "p-2 rounded-lg transition-colors",
-                        isVisible 
+                        layoutItem.visible 
                           ? "bg-primary/10 text-primary hover:bg-primary/20" 
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       )}
                     >
-                      {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      {layoutItem.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                     </button>
                   </div>
                 );

@@ -32,7 +32,7 @@ interface Account {
 const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
-  const { layout, reorderWidgets } = useDashboardLayoutStore();
+  const { layout, swapWidgets, isEditMode } = useDashboardLayoutStore();
 
   function isCurrentMonth(dateString: string): boolean {
     const date = new Date(dateString);
@@ -81,17 +81,57 @@ const DashboardMonth: React.FC = () => {
     return item?.visible ?? true;
   };
 
-  const getWidgetOrder = (widgetId: string) => {
-    const item = layout.find(l => l.widgetId === widgetId);
-    return item?.order ?? 999;
+  const sortedLayout = [...layout].sort((a, b) => a.order - b.order);
+  const visibleWidgets = sortedLayout.filter(l => l.visible || isEditMode);
+
+  const widgetComponents: Record<string, { component: React.ReactNode; gridClass?: string }> = {
+    'stats-overview': { 
+      component: <DashWidgets {...dashWidgetProps} />,
+      gridClass: 'col-span-full'
+    },
+    'calendar': { 
+      component: <Calendar />,
+      gridClass: 'md:col-span-2'
+    },
+    'cumulative-pnl': { 
+      component: <PnLDailyChart data={data} />
+    },
+    'trades-table': { 
+      component: <TradesWidget data={thisMonthData} />
+    },
+    'daily-pnl-bar': { 
+      component: <DailyPnLBarChart data={thisMonthData} />
+    },
+    'day-of-week': { 
+      component: <DayOfWeekChart data={thisMonthData} />
+    },
+    'symbol-pnl': { 
+      component: <SymbolPnLChart data={thisMonthData} />
+    },
+    'hourly-pnl': { 
+      component: <HourlyPnLChart data={thisMonthData} />
+    },
+    'radar': { 
+      component: <Radar />,
+      gridClass: 'md:col-span-2'
+    },
   };
 
-  const chartsWidgets = [
-    { id: 'daily-pnl-bar', component: <DailyPnLBarChart data={thisMonthData} /> },
-    { id: 'day-of-week', component: <DayOfWeekChart data={thisMonthData} /> },
-    { id: 'symbol-pnl', component: <SymbolPnLChart data={thisMonthData} /> },
-    { id: 'hourly-pnl', component: <HourlyPnLChart data={thisMonthData} /> },
-  ].filter(w => isWidgetVisible(w.id)).sort((a, b) => getWidgetOrder(a.id) - getWidgetOrder(b.id));
+  const handleMoveUp = (widgetId: string) => {
+    const currentIndex = visibleWidgets.findIndex(l => l.widgetId === widgetId);
+    if (currentIndex > 0) {
+      const prevWidget = visibleWidgets[currentIndex - 1];
+      swapWidgets(widgetId, prevWidget.widgetId);
+    }
+  };
+
+  const handleMoveDown = (widgetId: string) => {
+    const currentIndex = visibleWidgets.findIndex(l => l.widgetId === widgetId);
+    if (currentIndex < visibleWidgets.length - 1) {
+      const nextWidget = visibleWidgets[currentIndex + 1];
+      swapWidgets(widgetId, nextWidget.widgetId);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -99,45 +139,28 @@ const DashboardMonth: React.FC = () => {
         <EditModeToolbar />
       </div>
 
-      {isWidgetVisible('stats-overview') && (
-        <DraggableWidget widgetId="stats-overview">
-          <DashWidgets {...dashWidgetProps} />
-        </DraggableWidget>
-      )}
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {isWidgetVisible('calendar') && (
-          <DraggableWidget widgetId="calendar" className="xl:col-span-2">
-            <Calendar />
-          </DraggableWidget>
-        )}
-
-        <div className="xl:col-span-1 flex flex-col gap-4">
-          {isWidgetVisible('cumulative-pnl') && (
-            <DraggableWidget widgetId="cumulative-pnl">
-              <PnLDailyChart data={data} />
-            </DraggableWidget>
-          )}
-          {isWidgetVisible('trades-table') && (
-            <DraggableWidget widgetId="trades-table">
-              <TradesWidget data={thisMonthData} />
-            </DraggableWidget>
-          )}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {chartsWidgets.map(widget => (
-          <DraggableWidget key={widget.id} widgetId={widget.id}>
-            {widget.component}
-          </DraggableWidget>
-        ))}
-        
-        {isWidgetVisible('radar') && (
-          <DraggableWidget widgetId="radar" className="md:col-span-2 xl:col-span-2">
-            <Radar />
-          </DraggableWidget>
-        )}
+        {visibleWidgets.map((layoutItem, index) => {
+          const widgetConfig = widgetComponents[layoutItem.widgetId];
+          if (!widgetConfig) return null;
+          
+          const canMoveUp = index > 0;
+          const canMoveDown = index < visibleWidgets.length - 1;
+
+          return (
+            <DraggableWidget 
+              key={layoutItem.widgetId} 
+              widgetId={layoutItem.widgetId}
+              className={widgetConfig.gridClass}
+              onMoveUp={() => handleMoveUp(layoutItem.widgetId)}
+              onMoveDown={() => handleMoveDown(layoutItem.widgetId)}
+              canMoveUp={canMoveUp}
+              canMoveDown={canMoveDown}
+            >
+              {widgetConfig.component}
+            </DraggableWidget>
+          );
+        })}
       </div>
     </div>
   );

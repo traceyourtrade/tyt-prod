@@ -12,6 +12,7 @@ interface DashboardLayoutState {
   toggleWidgetVisibility: (widgetId: string) => void;
   resetLayout: () => void;
   reorderWidgets: (sourceIndex: number, destIndex: number) => void;
+  swapWidgets: (widgetId1: string, widgetId2: string) => void;
 }
 
 const useDashboardLayoutStore = create<DashboardLayoutState>()(
@@ -60,6 +61,26 @@ const useDashboardLayoutStore = create<DashboardLayoutState>()(
           const newIndex = visibleWidgets.findIndex(w => w.widgetId === item.widgetId);
           if (newIndex !== -1) {
             return { ...item, order: newIndex };
+          }
+          return item;
+        });
+        
+        set({ layout: updatedLayout });
+      },
+      
+      swapWidgets: (widgetId1: string, widgetId2: string) => {
+        const { layout } = get();
+        const widget1 = layout.find(l => l.widgetId === widgetId1);
+        const widget2 = layout.find(l => l.widgetId === widgetId2);
+        
+        if (!widget1 || !widget2) return;
+        
+        const updatedLayout = layout.map(item => {
+          if (item.widgetId === widgetId1) {
+            return { ...item, order: widget2.order };
+          }
+          if (item.widgetId === widgetId2) {
+            return { ...item, order: widget1.order };
           }
           return item;
         });
