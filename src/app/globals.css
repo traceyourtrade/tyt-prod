@@ -101,12 +101,12 @@
   --input: #d1d5db;
   --ring: #2563EB;
   
-  --profit: #16a34a;
+  --profit: #33FFBB;
   --loss: #dc2626;
   --breakeven: #6b7280;
   
   --chart-1: #2563EB;
-  --chart-2: #16a34a;
+  --chart-2: #33FFBB;
   --chart-3: #ca8a04;
   --chart-4: #dc2626;
   --chart-5: #60A5FA;
@@ -161,12 +161,12 @@
   --input: #1f1f1f;
   --ring: #2563EB;
   
-  --profit: #22C55E;
+  --profit: #33FFBB;
   --loss: #EF4444;
   --breakeven: #737373;
   
   --chart-1: #2563EB;
-  --chart-2: #22C55E;
+  --chart-2: #33FFBB;
   --chart-3: #FACC15;
   --chart-4: #EF4444;
   --chart-5: #60A5FA;
@@ -365,6 +365,70 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* =====================================================
+   GLASSMORPHISM EFFECTS
+   ===================================================== */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+:root .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+:root .glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+:root .glass-hover:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+/* Sleek scrollbar for dark mode */
+.scrollbar-sleek::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-sleek::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-sleek::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+  border-radius: 4px;
+}
+
+.scrollbar-sleek::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%);
+}
+
+:root .scrollbar-sleek::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.08) 100%);
+}
+
+:root .scrollbar-sleek::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.15) 100%);
 }
 
 /* =====================================================
