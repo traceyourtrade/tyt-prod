@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 interface Trade {
   id?: string;
@@ -158,6 +159,7 @@ const getTemplateColor = (color: string) => {
 
 const DailyJournal = () => {
   const { selectedAccounts, setAccounts } = useAccountDetails();
+  const { currency, exchangeRate } = useCurrencyStore();
   const tokenn = Cookies.get("Trace Your Trades") || "";
 
   const [trades, setTrades] = useState<Trade[]>(demoTrades);
@@ -175,6 +177,7 @@ const DailyJournal = () => {
   const [tagInput, setTagInput] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [mobileView, setMobileView] = useState<"list" | "content">("list");
 
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -288,6 +291,7 @@ const DailyJournal = () => {
 
   const handleSelectTrade = (trade: Trade) => {
     setSelectedTrade(trade);
+    setMobileView("content");
   };
 
   const handlePromptChange = (promptId: string, value: string) => {
@@ -431,10 +435,34 @@ const DailyJournal = () => {
 
   return (
     <div className="h-screen bg-background flex overflow-hidden">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <BookOpen className="w-4 h-4 text-primary" />
+          </div>
+          <h1 className="text-base font-semibold text-foreground">Journal</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMobileView("list")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${mobileView === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            Trades
+          </button>
+          <button
+            onClick={() => setMobileView("content")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${mobileView === "content" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+          >
+            Journal
+          </button>
+        </div>
+      </div>
+
       {/* Left Panel - Trade List */}
-      <div className="w-[300px] border border-border flex flex-col bg-card shrink-0 rounded-2xl m-3 mr-0">
+      <div className={`w-full md:w-[300px] border border-border flex-col bg-card shrink-0 md:rounded-2xl md:m-3 md:mr-0 pt-14 md:pt-0 ${mobileView === "list" ? "flex" : "hidden md:flex"}`}>
         <div className="p-5 border-b border-border space-y-4">
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary" />
             </div>
@@ -535,7 +563,7 @@ const DailyJournal = () => {
                         </div>
                       </div>
                       <div className={`text-sm font-bold tracking-tight ${trade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                        {trade.Profit >= 0 ? "+" : ""}${formatCompactNumber(trade.Profit, 0)}
+                        {formatCompactCurrency(trade.Profit, currency, exchangeRate)}
                       </div>
                     </motion.button>
                   );
@@ -547,7 +575,7 @@ const DailyJournal = () => {
       </div>
 
       {/* Center Panel - Journal Workspace */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-background">
+      <div className={`flex-1 flex-col overflow-hidden bg-background pt-14 md:pt-0 ${mobileView === "content" ? "flex" : "hidden md:flex"}`}>
         <AnimatePresence mode="wait">
           {!selectedTrade ? (
             <motion.div
@@ -603,7 +631,7 @@ const DailyJournal = () => {
                     </div>
                   </div>
                   <div className={`text-2xl font-bold tracking-tight ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                    {selectedTrade.Profit >= 0 ? "+" : ""}${formatCompactNumber(selectedTrade.Profit, 0)}
+                    {formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
                   </div>
                 </div>
               </div>
@@ -781,7 +809,7 @@ const DailyJournal = () => {
         </AnimatePresence>
       </div>
 
-      {/* Right Panel - Stats Sidebar */}
+      {/* Right Panel - Stats Sidebar - Hidden on mobile */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
@@ -789,7 +817,7 @@ const DailyJournal = () => {
             animate={{ width: 340, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border border-border bg-card shrink-0 overflow-hidden rounded-2xl m-3 ml-0"
+            className="hidden lg:block border border-border bg-card shrink-0 overflow-hidden rounded-2xl m-3 ml-0"
           >
             <div className="w-[340px] h-full overflow-y-auto scrollbar-sleek p-6 space-y-5">
               {/* Toggle */}
@@ -804,7 +832,7 @@ const DailyJournal = () => {
               <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                 <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Total P&L</div>
                 <div className={`text-3xl font-bold tracking-tight ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
-                  {stats.totalPnL >= 0 ? "+" : ""}${formatCompactNumber(stats.totalPnL, 0)}
+                  {formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
                 </div>
                 <div className="flex items-center gap-5 mt-4 text-sm">
                   <div className="flex items-center gap-2">
@@ -897,14 +925,14 @@ const DailyJournal = () => {
                       <TrendingUp className="w-3.5 h-3.5 text-profit" />
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Avg Win</span>
                     </div>
-                    <div className="text-xl font-bold text-profit">${formatCompactNumber(stats.avgWin, 0)}</div>
+                    <div className="text-xl font-bold text-profit">{formatCompactCurrency(stats.avgWin, currency, exchangeRate)}</div>
                   </div>
                   <div className="bg-card border border-loss/30 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <TrendingDown className="w-3.5 h-3.5 text-loss" />
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Avg Loss</span>
                     </div>
-                    <div className="text-xl font-bold text-loss">${formatCompactNumber(stats.avgLoss, 0)}</div>
+                    <div className="text-xl font-bold text-loss">{formatCompactCurrency(stats.avgLoss, currency, exchangeRate)}</div>
                   </div>
                 </div>
               </div>

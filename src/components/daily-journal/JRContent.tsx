@@ -624,7 +624,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                       {[
                         { label: "Size", value: trade.Size || '-' },
                         { label: "Time", value: trade.OpenTime?.split('T')[1]?.slice(0, 5) || trade.OpenTime || '-' },
-                        { label: "Commission", value: trade.Commission ? `$${trade.Commission}` : '-' },
+                        { label: "Commission", value: trade.Commission ? formatCurrencyValue(trade.Commission, currency, exchangeRate) : '-' },
                         { label: "Account", value: trade.accountType || '-' },
                       ].map((stat, i) => (
                         <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-lg">
