@@ -54,12 +54,165 @@ const typeColors = {
   day: "text-purple-500 bg-purple-500/10 border-purple-500/20"
 }
 
+const demoPatterns: DetectedPattern[] = [
+  {
+    type: 'strategy',
+    name: 'Breakout Strategy',
+    value: 'Breakout',
+    description: 'Your breakout strategy shows consistent profitability with strong risk-reward. Best when combined with volume confirmation.',
+    stats: {
+      totalTrades: 47,
+      winCount: 31,
+      lossCount: 16,
+      winRate: 66,
+      totalProfit: 8450,
+      avgWin: 385,
+      avgLoss: 142,
+      profitFactor: 3.71
+    }
+  },
+  {
+    type: 'symbol',
+    name: 'EUR/USD',
+    value: 'EUR/USD',
+    description: 'Strong performance on EUR/USD with high win rate and excellent profit factor. Focus on London-NY overlap sessions.',
+    stats: {
+      totalTrades: 38,
+      winCount: 26,
+      lossCount: 12,
+      winRate: 68,
+      totalProfit: 6230,
+      avgWin: 325,
+      avgLoss: 118,
+      profitFactor: 4.12
+    }
+  },
+  {
+    type: 'time',
+    name: '9:00 AM Session',
+    value: '09',
+    description: 'Morning session at 9 AM shows highest win rate. Market volatility at open provides best setups for quick entries.',
+    stats: {
+      totalTrades: 29,
+      winCount: 19,
+      lossCount: 10,
+      winRate: 66,
+      totalProfit: 4180,
+      avgWin: 295,
+      avgLoss: 127,
+      profitFactor: 2.85
+    }
+  },
+  {
+    type: 'day',
+    name: 'Tuesday Trading',
+    value: 'Tuesday',
+    description: 'Tuesday performs best with consistent institutional flow. Avoid trading on Mondays and Fridays based on your data.',
+    stats: {
+      totalTrades: 24,
+      winCount: 17,
+      lossCount: 7,
+      winRate: 71,
+      totalProfit: 3890,
+      avgWin: 310,
+      avgLoss: 145,
+      profitFactor: 3.42
+    }
+  },
+  {
+    type: 'strategy',
+    name: 'Pullback Scalp',
+    value: 'Pullback Scalp',
+    description: 'Quick pullback entries on trending moves show solid results. Works best during high-volume periods.',
+    stats: {
+      totalTrades: 52,
+      winCount: 32,
+      lossCount: 20,
+      winRate: 62,
+      totalProfit: 5670,
+      avgWin: 245,
+      avgLoss: 98,
+      profitFactor: 2.88
+    }
+  },
+  {
+    type: 'symbol',
+    name: 'GBP/USD',
+    value: 'GBP/USD',
+    description: 'Cable trades show strong momentum captures. Especially profitable during London session.',
+    stats: {
+      totalTrades: 31,
+      winCount: 18,
+      lossCount: 13,
+      winRate: 58,
+      totalProfit: 3420,
+      avgWin: 285,
+      avgLoss: 112,
+      profitFactor: 2.35
+    }
+  }
+]
+
+const demoPlaybooks: PlaybookEntry[] = [
+  {
+    _id: 'demo-1',
+    name: 'Breakout Strategy',
+    description: 'Your breakout strategy shows consistent profitability with strong risk-reward.',
+    strategy: 'Breakout',
+    rules: [],
+    optimalTimeStart: '09:00',
+    optimalTimeEnd: '11:00',
+    optimalDays: ['Tuesday', 'Wednesday'],
+    preferredSymbols: ['EUR/USD', 'GBP/USD'],
+    stats: {
+      totalTrades: 47,
+      winCount: 31,
+      lossCount: 16,
+      winRate: 66,
+      totalProfit: 8450,
+      avgWin: 385,
+      avgLoss: 142,
+      profitFactor: 3.71,
+      lastUpdated: new Date().toISOString()
+    },
+    isAutoDetected: true,
+    isActive: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    _id: 'demo-2',
+    name: 'EUR/USD Morning Setup',
+    description: 'Focus on EUR/USD during London-NY overlap for best results.',
+    strategy: 'Pullback Scalp',
+    rules: [],
+    optimalTimeStart: '08:00',
+    optimalTimeEnd: '10:00',
+    optimalDays: ['Tuesday'],
+    preferredSymbols: ['EUR/USD'],
+    stats: {
+      totalTrades: 38,
+      winCount: 26,
+      lossCount: 12,
+      winRate: 68,
+      totalProfit: 6230,
+      avgWin: 325,
+      avgLoss: 118,
+      profitFactor: 4.12,
+      lastUpdated: new Date().toISOString()
+    },
+    isAutoDetected: true,
+    isActive: true,
+    createdAt: new Date().toISOString()
+  }
+]
+
 export default function PlaybookMain() {
   const [activeTab, setActiveTab] = useState<'patterns' | 'playbook'>('patterns')
   const [detectedPatterns, setDetectedPatterns] = useState<DetectedPattern[]>([])
   const [playbooks, setPlaybooks] = useState<PlaybookEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [totalTrades, setTotalTrades] = useState(0)
+  const [isDemo, setIsDemo] = useState(false)
   const { currency, exchangeRate } = useCurrencyStore()
 
   const formatCurrency = (value: number) => {
@@ -78,18 +231,37 @@ export default function PlaybookMain() {
         fetch('/api/playbook/get?apiName=getPlaybooks', { credentials: 'include' })
       ])
 
+      let hasData = false
+
       if (patternsRes.ok) {
         const patternsData = await patternsRes.json()
-        setDetectedPatterns(patternsData.data || [])
-        setTotalTrades(patternsData.totalTrades || 0)
+        if (patternsData.data && patternsData.data.length > 0) {
+          setDetectedPatterns(patternsData.data)
+          setTotalTrades(patternsData.totalTrades || 0)
+          hasData = true
+        }
       }
 
       if (playbooksRes.ok) {
         const playbooksData = await playbooksRes.json()
-        setPlaybooks(playbooksData.data || [])
+        if (playbooksData.data && playbooksData.data.length > 0) {
+          setPlaybooks(playbooksData.data)
+          hasData = true
+        }
+      }
+
+      if (!hasData) {
+        setDetectedPatterns(demoPatterns)
+        setPlaybooks(demoPlaybooks)
+        setTotalTrades(221)
+        setIsDemo(true)
       }
     } catch (error) {
       console.error('Error fetching playbook data:', error)
+      setDetectedPatterns(demoPatterns)
+      setPlaybooks(demoPlaybooks)
+      setTotalTrades(221)
+      setIsDemo(true)
     } finally {
       setLoading(false)
     }
@@ -218,7 +390,14 @@ export default function PlaybookMain() {
                 <Zap className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground mb-1">AI Pattern Detection</h2>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-lg font-semibold text-foreground">AI Pattern Detection</h2>
+                  {isDemo && (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-xs font-medium border border-amber-500/20">
+                      Demo Data
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Analyzed {totalTrades.toLocaleString()} trades to find your most profitable setups. 
                   Add winning patterns to your playbook to track and replicate success.
