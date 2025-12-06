@@ -27,17 +27,19 @@ function ChartCard({
   return (
     <div className={cn(
       "relative overflow-hidden rounded-xl border backdrop-blur-sm",
-      "bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10",
+      "bg-card",
+      "bg-gradient-to-br from-secondary/50 to-secondary/30 dark:from-white/5 dark:to-white/[0.02]",
+      "border-border/60 dark:border-white/10",
       "p-4"
     )}>
       <div className="flex items-center gap-3 mb-4">
         <div className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center",
-          "bg-amber-500/10 border border-amber-500/20"
+          "bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20"
         )}>
-          <Icon className="w-4 h-4 text-amber-400" />
+          <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         </div>
-        <h3 className="text-sm font-semibold text-white">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       </div>
       {children}
     </div>
@@ -47,24 +49,26 @@ function ChartCard({
 function TradeRow({ trade, index }: { trade: Trade; index: number }) {
   return (
     <div className={cn(
-      "flex items-center justify-between py-3 border-b border-white/5 last:border-0",
-      "hover:bg-white/5 -mx-2 px-2 rounded-lg transition-colors"
+      "flex items-center justify-between py-3 border-b border-border/40 dark:border-white/5 last:border-0",
+      "hover:bg-muted/50 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg transition-colors"
     )}>
       <div className="flex items-center gap-3">
         <div className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold",
-          trade.Profit >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+          trade.Profit >= 0 
+            ? "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+            : "bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400"
         )}>
           {index + 1}
         </div>
         <div>
-          <p className="text-sm font-medium text-white">{trade.Item}</p>
-          <p className="text-xs text-white/40">{trade.date} • {trade.Type}</p>
+          <p className="text-sm font-medium text-foreground">{trade.Item}</p>
+          <p className="text-xs text-muted-foreground">{trade.date} • {trade.Type}</p>
         </div>
       </div>
       <p className={cn(
         "text-sm font-bold tabular-nums",
-        trade.Profit >= 0 ? "text-emerald-400" : "text-red-400"
+        trade.Profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
       )}>
         {trade.Profit >= 0 ? "+" : ""}{trade.Profit.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
       </p>
@@ -111,34 +115,14 @@ export default function PropFirmAnalytics() {
       .slice(0, 5)
   }, [selectedAccounts, settings])
 
-  const dailyPnL = useMemo(() => {
-    const trades = selectedAccounts.flatMap(acc => acc.tradeData || []) as Trade[]
-    const challengeStart = settings.challengeStartDate ? new Date(settings.challengeStartDate) : new Date(0)
-    
-    const dailyData: Record<string, number> = {}
-    
-    trades.filter(t => new Date(t.date) >= challengeStart).forEach(trade => {
-      dailyData[trade.date] = (dailyData[trade.date] || 0) + (trade.Profit || 0)
-    })
-
-    return Object.entries(dailyData)
-      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
-      .slice(-14)
-      .map(([date, value]) => ({
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        value,
-        fill: value >= 0 ? '#22C55E' : '#EF4444'
-      }))
-  }, [selectedAccounts, settings])
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null
     return (
-      <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-3 shadow-xl">
-        <p className="text-xs text-white/50 mb-1">{label}</p>
+      <div className="bg-popover border border-border rounded-lg p-3 shadow-xl">
+        <p className="text-xs text-muted-foreground mb-1">{label}</p>
         <p className={cn(
           "text-sm font-bold",
-          payload[0].value >= settings.startingBalance ? "text-emerald-400" : "text-red-400"
+          payload[0].value >= settings.startingBalance ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
         )}>
           ${payload[0].value?.toLocaleString()}
         </p>
@@ -162,13 +146,13 @@ export default function PropFirmAnalytics() {
                   </defs>
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                    axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                    axisLine={{ stroke: 'var(--border)' }}
                     tickLine={false}
                   />
                   <YAxis 
-                    tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-                    axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+                    axisLine={{ stroke: 'var(--border)' }}
                     tickLine={false}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                   />
@@ -190,7 +174,7 @@ export default function PropFirmAnalytics() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-white/30 text-sm">
+              <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
                 No trading data available
               </div>
             )}
@@ -205,7 +189,7 @@ export default function PropFirmAnalytics() {
               <TradeRow key={`${trade.date}-${index}`} trade={trade} index={index} />
             ))
           ) : (
-            <div className="h-48 flex items-center justify-center text-white/30 text-sm">
+            <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
               No trades yet
             </div>
           )}

@@ -157,42 +157,42 @@ export default function PropFirmDashboard() {
       {calculations.dailyDrawdownValue && (
         <div className={cn(
           "relative overflow-hidden rounded-xl border backdrop-blur-sm p-4",
-          "bg-gradient-to-br",
+          "bg-card bg-gradient-to-br",
           calculations.dailyDrawdownUsedPercent >= 85 
-            ? "from-red-500/10 to-red-600/5 border-red-500/20" 
+            ? "from-red-500/5 to-red-600/[0.02] dark:from-red-500/10 dark:to-red-600/5 border-red-500/20" 
             : calculations.dailyDrawdownUsedPercent >= 60 
-              ? "from-amber-500/10 to-amber-600/5 border-amber-500/20"
-              : "from-white/5 to-white/[0.02] border-white/10"
+              ? "from-amber-500/5 to-amber-600/[0.02] dark:from-amber-500/10 dark:to-amber-600/5 border-amber-500/20"
+              : "from-secondary/50 to-secondary/30 dark:from-white/5 dark:to-white/[0.02] border-border/60 dark:border-white/10"
         )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center",
                 calculations.dailyDrawdownUsedPercent >= 85 
-                  ? "bg-red-500/10 border border-red-500/20"
+                  ? "bg-red-500/10 dark:bg-red-500/20 border border-red-500/20"
                   : calculations.dailyDrawdownUsedPercent >= 60
-                    ? "bg-amber-500/10 border border-amber-500/20"
-                    : "bg-white/5 border border-white/10"
+                    ? "bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20"
+                    : "bg-secondary/70 dark:bg-white/5 border border-border/60 dark:border-white/10"
               )}>
                 <Clock className={cn(
                   "w-5 h-5",
                   calculations.dailyDrawdownUsedPercent >= 85 
-                    ? "text-red-400"
+                    ? "text-red-600 dark:text-red-400"
                     : calculations.dailyDrawdownUsedPercent >= 60
-                      ? "text-amber-400"
-                      : "text-white/60"
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-muted-foreground"
                 )} />
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">Daily Drawdown</p>
-                <p className="text-xs text-white/40">
+                <p className="text-sm font-semibold text-foreground">Daily Drawdown</p>
+                <p className="text-xs text-muted-foreground">
                   Today&apos;s loss: ${calculations.dailyLoss.toLocaleString()} of ${calculations.dailyDrawdownValue.toLocaleString()} limit
                 </p>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="w-48 h-2 rounded-full bg-white/10 overflow-hidden">
+              <div className="w-48 h-2 rounded-full bg-border/40 dark:bg-white/10 overflow-hidden">
                 <div 
                   className={cn(
                     "h-full rounded-full transition-all duration-500",
@@ -208,10 +208,10 @@ export default function PropFirmDashboard() {
               <span className={cn(
                 "text-lg font-bold tabular-nums",
                 calculations.dailyDrawdownUsedPercent >= 85 
-                  ? "text-red-400"
+                  ? "text-red-600 dark:text-red-400"
                   : calculations.dailyDrawdownUsedPercent >= 60
-                    ? "text-amber-400"
-                    : "text-emerald-400"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-emerald-600 dark:text-emerald-400"
               )}>
                 {calculations.dailyDrawdownUsedPercent.toFixed(1)}%
               </span>
@@ -222,8 +222,8 @@ export default function PropFirmDashboard() {
             <div className={cn(
               "flex items-center gap-2 mt-3 pt-3 border-t text-xs",
               calculations.dailyDrawdownUsedPercent >= 85 
-                ? "border-red-500/20 text-red-400"
-                : "border-amber-500/20 text-amber-400"
+                ? "border-red-500/20 text-red-600 dark:text-red-400"
+                : "border-amber-500/20 text-amber-600 dark:text-amber-400"
             )}>
               <AlertTriangle className="w-3.5 h-3.5" />
               {calculations.dailyDrawdownUsedPercent >= 85 

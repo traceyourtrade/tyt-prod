@@ -33,47 +33,47 @@ function StatCard({
   const getVariantStyles = () => {
     switch (variant) {
       case "profit":
-        return "from-emerald-500/10 to-emerald-600/5 border-emerald-500/20"
+        return "from-emerald-500/5 to-emerald-600/[0.02] dark:from-emerald-500/10 dark:to-emerald-600/5 border-emerald-500/20"
       case "loss":
-        return "from-red-500/10 to-red-600/5 border-red-500/20"
+        return "from-red-500/5 to-red-600/[0.02] dark:from-red-500/10 dark:to-red-600/5 border-red-500/20"
       case "warning":
-        return "from-amber-500/10 to-amber-600/5 border-amber-500/20"
+        return "from-amber-500/5 to-amber-600/[0.02] dark:from-amber-500/10 dark:to-amber-600/5 border-amber-500/20"
       default:
-        return "from-white/5 to-white/[0.02] border-white/10"
+        return "from-secondary/50 to-secondary/30 dark:from-white/5 dark:to-white/[0.02] border-border/60 dark:border-white/10"
     }
   }
 
   const getIconColor = () => {
     switch (variant) {
       case "profit":
-        return "text-emerald-400"
+        return "text-emerald-600 dark:text-emerald-400"
       case "loss":
-        return "text-red-400"
+        return "text-red-600 dark:text-red-400"
       case "warning":
-        return "text-amber-400"
+        return "text-amber-600 dark:text-amber-400"
       default:
-        return "text-amber-400"
+        return "text-amber-600 dark:text-amber-400"
     }
   }
 
   return (
     <div className={cn(
       "relative overflow-hidden rounded-xl border backdrop-blur-sm",
-      "bg-gradient-to-br",
+      "bg-gradient-to-br bg-card",
       getVariantStyles(),
       "p-4 transition-all hover:scale-[1.02] hover:border-amber-500/30"
     )}>
       <div className="flex items-start justify-between">
         <div className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center",
-          "bg-white/5 border border-white/10"
+          "bg-secondary/70 dark:bg-white/5 border border-border/60 dark:border-white/10"
         )}>
           <Icon className={cn("w-4 h-4", getIconColor())} />
         </div>
         {trend && (
           <div className={cn(
             "flex items-center gap-1 text-xs font-medium",
-            trend === "up" ? "text-emerald-400" : trend === "down" ? "text-red-400" : "text-white/40"
+            trend === "up" ? "text-emerald-600 dark:text-emerald-400" : trend === "down" ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
           )}>
             {trend === "up" && <TrendingUp className="w-3 h-3" />}
             {trend === "down" && <TrendingDown className="w-3 h-3" />}
@@ -82,10 +82,10 @@ function StatCard({
       </div>
       
       <div className="mt-3">
-        <p className="text-xs text-white/50 mb-1">{label}</p>
-        <p className="text-lg font-bold text-white tabular-nums">{value}</p>
+        <p className="text-xs text-muted-foreground mb-1">{label}</p>
+        <p className="text-lg font-bold text-foreground tabular-nums">{value}</p>
         {subValue && (
-          <p className="text-xs text-white/40 mt-0.5">{subValue}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{subValue}</p>
         )}
       </div>
     </div>
