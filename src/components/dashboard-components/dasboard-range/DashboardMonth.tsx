@@ -11,6 +11,8 @@ import DayOfWeekChart from "./Graphs/DayOfWeekChart";
 import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
+import { DraggableWidget, EditModeToolbar } from '@/components/dashboard/DraggableWidgetGrid';
+import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
@@ -30,6 +32,7 @@ interface Account {
 const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
+  const { layout, reorderWidgets } = useDashboardLayoutStore();
 
   function isCurrentMonth(dateString: string): boolean {
     const date = new Date(dateString);
@@ -58,47 +61,83 @@ const DashboardMonth: React.FC = () => {
 
   const metrics = calculateRiskRewardRatio(thisMonthData);
 
+  const dashWidgetProps = {
+    data,
+    pnl: thisMonthData.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2),
+    winrate: ((thisMonthData.filter(trade => trade.Profit > 0).length / thisMonthData.length * 100 || 0).toFixed(2)),
+    winners: thisMonthData.filter(t => t.Profit > 0).length,
+    losers: thisMonthData.filter(t => t.Profit < 0).length,
+    profitF: calculateProfitFactor(thisMonthData),
+    totalProfits: thisMonthData.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0),
+    totalLoses: thisMonthData.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0),
+    avgProfits: parseFloat(metrics.avgWin),
+    avgLoses: parseFloat(metrics.avgLoss),
+    rrRatio: metrics.rrRatio,
+    accBal: calculateBalance(selectedAccounts).toFixed(2),
+  };
+
+  const isWidgetVisible = (widgetId: string) => {
+    const item = layout.find(l => l.widgetId === widgetId);
+    return item?.visible ?? true;
+  };
+
+  const getWidgetOrder = (widgetId: string) => {
+    const item = layout.find(l => l.widgetId === widgetId);
+    return item?.order ?? 999;
+  };
+
+  const chartsWidgets = [
+    { id: 'daily-pnl-bar', component: <DailyPnLBarChart data={thisMonthData} /> },
+    { id: 'day-of-week', component: <DayOfWeekChart data={thisMonthData} /> },
+    { id: 'symbol-pnl', component: <SymbolPnLChart data={thisMonthData} /> },
+    { id: 'hourly-pnl', component: <HourlyPnLChart data={thisMonthData} /> },
+  ].filter(w => isWidgetVisible(w.id)).sort((a, b) => getWidgetOrder(a.id) - getWidgetOrder(b.id));
+
   return (
     <div className="space-y-6">
-      {/* Dashboard Widgets */}
-      <DashWidgets
-        data={data}
-        pnl={thisMonthData.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2)}
-        winrate={((thisMonthData.filter(trade => trade.Profit > 0).length / thisMonthData.length * 100 || 0).toFixed(2))}
-        winners={thisMonthData.filter(t => t.Profit > 0).length}
-        losers={thisMonthData.filter(t => t.Profit < 0).length}
-        profitF={calculateProfitFactor(thisMonthData)}
-        totalProfits={thisMonthData.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0)}
-        totalLoses={thisMonthData.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0)}
-        avgProfits={parseFloat(metrics.avgWin)}
-        avgLoses={parseFloat(metrics.avgLoss)}
-        rrRatio={metrics.rrRatio}
-        accBal={calculateBalance(selectedAccounts).toFixed(2)}
-      />
+      <div className="flex items-center justify-end">
+        <EditModeToolbar />
+      </div>
 
-      {/* Main Content Grid - Row 1: Calendar + Stacked Charts */}
+      {isWidgetVisible('stats-overview') && (
+        <DraggableWidget widgetId="stats-overview">
+          <DashWidgets {...dashWidgetProps} />
+        </DraggableWidget>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {/* Calendar - Takes 2 columns */}
-        <div className="xl:col-span-2">
-          <Calendar />
-        </div>
+        {isWidgetVisible('calendar') && (
+          <DraggableWidget widgetId="calendar" className="xl:col-span-2">
+            <Calendar />
+          </DraggableWidget>
+        )}
 
-        {/* Right Column - Stacked Charts */}
         <div className="xl:col-span-1 flex flex-col gap-4">
-          <PnLDailyChart data={data} />
-          <TradesWidget data={thisMonthData} />
+          {isWidgetVisible('cumulative-pnl') && (
+            <DraggableWidget widgetId="cumulative-pnl">
+              <PnLDailyChart data={data} />
+            </DraggableWidget>
+          )}
+          {isWidgetVisible('trades-table') && (
+            <DraggableWidget widgetId="trades-table">
+              <TradesWidget data={thisMonthData} />
+            </DraggableWidget>
+          )}
         </div>
       </div>
 
-      {/* Insights Row - 3 Column Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <DailyPnLBarChart data={thisMonthData} />
-        <DayOfWeekChart data={thisMonthData} />
-        <SymbolPnLChart data={thisMonthData} />
-        <HourlyPnLChart data={thisMonthData} />
-        <div className="md:col-span-2 xl:col-span-2">
-          <Radar />
-        </div>
+        {chartsWidgets.map(widget => (
+          <DraggableWidget key={widget.id} widgetId={widget.id}>
+            {widget.component}
+          </DraggableWidget>
+        ))}
+        
+        {isWidgetVisible('radar') && (
+          <DraggableWidget widgetId="radar" className="md:col-span-2 xl:col-span-2">
+            <Radar />
+          </DraggableWidget>
+        )}
       </div>
     </div>
   );
