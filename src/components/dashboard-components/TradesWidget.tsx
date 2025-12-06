@@ -8,8 +8,9 @@ import useCurrencyStore, { formatCurrencyValue, currencySymbols } from "@/store/
 interface TradeData {
   date: string;
   Profit: number;
-  Item: string;
+  Item?: string;
   Type?: string;
+  [key: string]: unknown;
 }
 
 interface TradesWidgetProps {
@@ -115,7 +116,7 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-foreground">
-                        {trade.Item}
+                        {trade.Item || "-"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">

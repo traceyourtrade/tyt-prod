@@ -1,20 +1,17 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Calendar, TrendingUp, BarChart3, Trophy, Target } from 'lucide-react';
+
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import PnLDailyChart from "./Graphs/PnLDailyChart";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import TradesWidget from '../TradesWidget';
 
-
-// Stores
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import calendarPopUp from '@/store/calendarPopUp';
-
-// Functions
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
-import TradesWidget from '../TradesWidget';
-import { Key } from 'lucide-react';
-import { faCaretLeft, faCaretRight,faCaretDown } from '@fortawesome/free-solid-svg-icons';
 
 interface TradeData {
   date: string;
@@ -25,14 +22,6 @@ interface TradeData {
 
 interface Account {
   tradeData?: TradeData[];
-  [key: string]: unknown;
-}
-
-interface DayData {
-  date: string;
-  trades: TradeData[];
-  profit: number;
-  tradeLength: number;
   [key: string]: unknown;
 }
 
@@ -51,46 +40,48 @@ interface GroupedTrade {
   [key: string]: unknown;
 }
 
-
 const DashboardWeek: React.FC = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { selectedAccounts } = useModeFilteredAccounts();
+  const { currency, exchangeRate } = useCurrencyStore();
 
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: { [key: string]: GroupedTrade }, trade: Trade) => {
       if (!acc[trade.date]) acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
-
       acc[trade.date].trades.push(trade);
       acc[trade.date].profit += trade.Profit;
       acc[trade.date].tradeLength += 1;
-
       return acc;
     }, {});
 
   const calendarData = Object.values(groupedTrades);
 
-  // State management
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
-  const [showMonthOptions, setShowMonthOptions] = useState<boolean>(false);
-  const [showYearOptions, setShowYearOptions] = useState<boolean>(false);
+
+  const datePickerRef = useRef<HTMLDivElement>(null);
 
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
 
-  const selectedYearRef = useRef<HTMLDivElement>(null);
-  const selectedMonthRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  // Helper function to get day data
   const getDayData = (date: Date | null): GroupedTrade | null => {
     if (!date) return null;
     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     return calendarData.find(item => item.date === formattedDate) || null;
   };
 
-  // Function to get all weeks in a month
   const getWeeksInMonth = (date: Date): (Date | null)[][] => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -99,21 +90,20 @@ const DashboardWeek: React.FC = () => {
 
     const weeks: (Date | null)[][] = [];
     let currentWeek: (Date | null)[] = [];
-    let currentDate = new Date(firstDay);
+    let currentDateIter = new Date(firstDay);
 
-    // Adjust to start week on Sunday
     const startDay = firstDay.getDay();
     for (let i = 0; i < startDay; i++) {
       currentWeek.push(null);
     }
 
-    while (currentDate <= lastDay) {
-      currentWeek.push(new Date(currentDate));
+    while (currentDateIter <= lastDay) {
+      currentWeek.push(new Date(currentDateIter));
       if (currentWeek.length === 7) {
         weeks.push(currentWeek);
         currentWeek = [];
       }
-      currentDate = new Date(currentDate.setDate(currentDate.getDate() + 1));
+      currentDateIter = new Date(currentDateIter.setDate(currentDateIter.getDate() + 1));
     }
 
     if (currentWeek.length > 0) {
@@ -126,46 +116,38 @@ const DashboardWeek: React.FC = () => {
     return weeks;
   };
 
-  // Calculate weeks in current month
   const weeks = useMemo(() => getWeeksInMonth(currentDate), [currentDate]);
 
-  // Set initial week to current week
   const [currentWeekIndex, setCurrentWeekIndex] = useState<number>(() => {
     const today = new Date();
     const weekIndex = weeks.findIndex(week =>
-      week.some(day => day && day.getDate() === today.getDate())
+      week.some(day => day && day.getDate() === today.getDate() && day.getMonth() === today.getMonth())
     );
     return weekIndex !== -1 ? weekIndex : 0;
   });
 
-  // Current week data
   const currentWeek = weeks[currentWeekIndex] || [];
   const currentMonth = monthNames[currentDate.getMonth()];
   const currentYear = currentDate.getFullYear();
 
-  // Data for the current week only
   const thisWeekData = useMemo(() => {
     return currentWeek
       .map(date => getDayData(date))
       .filter(Boolean) as GroupedTrade[];
-  }, [currentWeek]);
+  }, [currentWeek, calendarData]);
 
-  // Flatten all trades from all days into a single array
   const allTrades = useMemo(() => {
     return thisWeekData.flatMap(day => day.trades);
   }, [thisWeekData]);
 
-  // Calculate total profit for the week
   const weeklyProfit = useMemo(() => {
     return thisWeekData.reduce((total, day) => total + day.profit, 0);
   }, [thisWeekData]);
 
-  // Navigation handlers
   const handlePrevWeek = () => {
     if (currentWeekIndex > 0) {
       setCurrentWeekIndex(currentWeekIndex - 1);
     } else {
-      // Move to previous month
       const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
       setCurrentDate(prevMonth);
       const prevWeeks = getWeeksInMonth(prevMonth);
@@ -177,7 +159,6 @@ const DashboardWeek: React.FC = () => {
     if (currentWeekIndex < weeks.length - 1) {
       setCurrentWeekIndex(currentWeekIndex + 1);
     } else {
-      // Move to next month
       const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
       setCurrentDate(nextMonth);
       setCurrentWeekIndex(0);
@@ -186,8 +167,8 @@ const DashboardWeek: React.FC = () => {
 
   const handleDateClick = (date: Date | null) => {
     if (!date) return;
-    setShowTr(); 
-    document.body.classList.add("no-scroll"); 
+    setShowTr();
+    document.body.classList.add("no-scroll");
     setDataDate(selectedYear, selectedMonth, date.getDate());
   };
 
@@ -197,23 +178,20 @@ const DashboardWeek: React.FC = () => {
     setSelectedMonth(currentDate.getMonth());
   };
 
-  const handleDateSelect = () => {
-    const newDate = new Date(selectedYear, selectedMonth, 1);
+  const handleMonthSelect = (monthIdx: number) => {
+    const newDate = new Date(selectedYear, monthIdx, 1);
     setCurrentDate(newDate);
     setCurrentWeekIndex(0);
     setShowDatePicker(false);
   };
 
-  // PNL data (cumulative)
   const calculateCumulativePNL = () => {
     const cumulativePNL = [{ time: "", value: 0 }];
     let runningTotal = 0;
 
     const dailySums: { [key: string]: number } = {};
-
     thisWeekData.forEach(day => {
-      const date = day.date;
-      dailySums[date] = (dailySums[date] || 0) + day.profit;
+      dailySums[day.date] = (dailySums[day.date] || 0) + day.profit;
     });
 
     Object.entries(dailySums)
@@ -230,207 +208,250 @@ const DashboardWeek: React.FC = () => {
   };
 
   const PNLcumulative = calculateCumulativePNL();
-
-  // Scroll to selected year/month
-  useEffect(() => {
-    if (showYearOptions && selectedYearRef.current) {
-      selectedYearRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  }, [showYearOptions]);
-
-  useEffect(() => {
-    if (showMonthOptions && selectedMonthRef.current) {
-      selectedMonthRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  }, [showMonthOptions]);
-
   const metrics = calculateRiskRewardRatio(allTrades);
+  const winCount = allTrades.filter(t => t.Profit > 0).length;
+  const lossCount = allTrades.filter(t => t.Profit < 0).length;
+
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="w-full h-auto flex flex-col rounded-[25px]">
-      {/* Dashboard Widgets */}
+    <div className="w-full min-h-screen bg-background">
       <DashWidgets
         data={PNLcumulative}
         pnl={parseFloat(allTrades.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2))}
         winrate={parseFloat(((allTrades.filter(trade => trade.Profit > 0).length / allTrades.length * 100) || 0).toFixed(2))}
-        winners={allTrades.filter(t => t.Profit > 0).length}
-        losers={allTrades.filter(t => t.Profit < 0).length}
+        winners={winCount}
+        losers={lossCount}
         profitF={calculateProfitFactor(allTrades)}
         avgProfits={parseFloat(metrics.avgWin)}
         avgLoses={parseFloat(metrics.avgLoss)}
         rrRatio={metrics.rrRatio}
         accBal={parseFloat(calculateBalance(selectedAccounts).toFixed(2))}
-        totalProfits={0} // Add appropriate value
-        totalLoses={0} // Add appropriate value
+        totalProfits={0}
+        totalLoses={0}
       />
 
-      {/* Part next to widgets */}
-      <div className="w-full max-w-[1710px] h-auto flex items-start justify-center mx-auto">
-        
-        {/* Calendar Component */}
-        <div className="w-3/5 max-w-[930px] h-auto flex flex-col bg-gray-500/15 backdrop-blur-md rounded-xl mt-5 ml-2.5 p-2.5 pb-2.5 border-b border-white/20 shadow-lg">
-          <div className="flex justify-between items-center mb-4 cursor-pointer">
-            <button 
-              className="bg-[#7c51e1] border-none rounded-[8px] text-xl cursor-pointer text-white-600 p-1"
-              onClick={handlePrevWeek}
-            >
-              <FontAwesomeIcon icon={faCaretLeft} className="w-5 h-5" />
-            </button>
-            <h1 
-              className="m-0 text-2xl text-white cursor-pointer" 
-              onClick={toggleDatePicker}
-            >
-              {currentMonth} {currentYear} 
-              <FontAwesomeIcon icon={faCaretDown} className="w-3 h-3 inline-block -mt-1 ml-1" />
-            </h1>
-            <span className="w-20 absolute text-sm left-15 font-poppins bg-gray-600 px-1.5 py-0.5 rounded-3xl text-white text-center">
-              WEEK {currentWeekIndex + 1}
-            </span>
-            <button 
-              className="bg-[#7c51e1] border-none rounded-[8px] text-xl cursor-pointer text-white-600 p-1" 
-              onClick={handleNextWeek}
-            >
-              <FontAwesomeIcon icon={faCaretRight} className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Date Picker Dropdown */}
-          {showDatePicker && (
-            <div className="absolute top-40 bg-gray-800 rounded-lg p-4 z-50 shadow-lg border border-gray-600">
-              <div className="flex gap-4 mb-4">
-                {/* Month Dropdown */}
-                <div className="relative">
-                  <div 
-                    className="bg-gray-700 px-3 py-2 rounded-lg cursor-pointer flex items-center gap-2 text-white min-w-32"
-                    onClick={() => setShowMonthOptions(!showMonthOptions)}
-                  >
-                    {monthNames[selectedMonth]}
-                    <FontAwesomeIcon icon={faCaretDown} className="w-3 h-3" />
-                  </div>
-                  {showMonthOptions && (
-                    <div className="absolute top-full left-0 mt-1 bg-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50 w-40">
-                      {monthNames.map((month, idx) => (
-                        <div
-                          key={idx}
-                          ref={selectedMonth === idx ? selectedMonthRef : null}
-                          className={`px-3 py-2 cursor-pointer text-white hover:bg-gray-600 ${
-                            selectedMonth === idx ? 'bg-purple-600' : ''
-                          }`}
-                          onClick={() => {
-                            setSelectedMonth(idx);
-                            setShowMonthOptions(false);
-                          }}
-                        >
-                          {month}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Year Dropdown */}
-                <div className="relative">
-                  <div 
-                    className="bg-gray-700 px-3 py-2 rounded-lg cursor-pointer flex items-center gap-2 text-white min-w-20"
-                    onClick={() => setShowYearOptions(!showYearOptions)}
-                  >
-                    {selectedYear}
-                    <FontAwesomeIcon icon={faCaretDown} className="w-3 h-3" />
-                  </div>
-                  {showYearOptions && (
-                    <div className="absolute top-full left-0 mt-1 bg-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50 w-24">
-                      {Array.from({ length: 131 }, (_, i) => 1970 + i).map((year) => (
-                        <div
-                          key={year}
-                          ref={selectedYear === year ? selectedYearRef : null}
-                          className={`px-3 py-2 cursor-pointer text-white hover:bg-gray-600 ${
-                            selectedYear === year ? 'bg-purple-600' : ''
-                          }`}
-                          onClick={() => {
-                            setSelectedYear(year);
-                            setShowYearOptions(false);
-                          }}
-                        >
-                          {year}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+      <div className="px-4 pb-6 space-y-5">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-primary" />
               </div>
-              <button 
-                className="bg-purple-600 text-white border-none px-3 py-2 rounded cursor-pointer hover:bg-purple-700 w-full"
-                onClick={handleDateSelect}
-              >
-                Select
-              </button>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground tracking-tight">Weekly Overview</h2>
+                <p className="text-sm text-muted-foreground">{currentMonth} {currentYear}</p>
+              </div>
             </div>
-          )}
 
-          {/* Calendar Grid */}
-          <div className="w-full max-w-[900px] mx-auto rounded-xl font-sans flex flex-row justify-center">
-            <div className="w-[95%] h-auto grid grid-cols-7 gap-1.5">
-              {/* Day Headers */}
-              <div className="text-center font-bold text-white py-2">Sun</div>
-              <div className="text-center font-bold text-white py-2">Mon</div>
-              <div className="text-center font-bold text-white py-2">Tue</div>
-              <div className="text-center font-bold text-white py-2">Wed</div>
-              <div className="text-center font-bold text-white py-2">Thu</div>
-              <div className="text-center font-bold text-white py-2">Fri</div>
-              <div className="text-center font-bold text-white py-2">Sat</div>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1.5 rounded-lg bg-muted text-xs font-semibold text-foreground">
+                Week {currentWeekIndex + 1}
+              </span>
 
-              {/* Calendar Cells */}
-              {currentWeek.map((date, index) => {
-                const dayData = date ? getDayData(date) : null;
-                const dayClass = date ? 
-                  (dayData ? 
-                    (dayData.profit >= 0 ? 'bg-green-500/30 text-green-300' : 'bg-red-400/30 text-red-400') : 
-                    'bg-gray-500/20 text-white'
-                  ) : 
-                  'bg-transparent border-none h-20';
+              <div className="flex items-center gap-1">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handlePrevWeek}
+                  className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                </motion.button>
 
-                return (
-                  <div
-                    key={index}
-                    className={`text-center border-none relative cursor-pointer flex flex-col justify-center items-center h-20 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-gray-500/55 hover:filter hover:saturate-160 ${dayClass}`}
-                    onClick={() => handleDateClick(date)}
+                <div className="relative" ref={datePickerRef}>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={toggleDatePicker}
+                    className="px-4 py-2 rounded-xl bg-primary/10 text-primary font-medium text-sm hover:bg-primary/15 transition-colors flex items-center gap-2"
                   >
-                    {date ? (
-                      <>
-                        <div className="text-base font-bold">{date.getDate()}</div>
-                        {dayData && (
-                          <>
-                            <div className="text-sm mt-1">
-                              ${new Intl.NumberFormat('en', {
-                                notation: "compact",
-                                compactDisplay: "short",
-                                maximumFractionDigits: 1
-                              }).format(dayData.profit)}
-                            </div>
-                            <div className="text-xs mt-1 opacity-80">
-                              {dayData.tradeLength} trade{dayData.tradeLength !== 1 ? 's' : ''}
-                            </div>
-                          </>
-                        )}
-                      </>
-                    ) : null}
-                  </div>
-                );
-              })}
+                    <span>{currentMonth.slice(0, 3)} {currentYear}</span>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${showDatePicker ? "rotate-90" : ""}`} />
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showDatePicker && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-4 shadow-xl min-w-[280px]"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <button
+                            onClick={() => setSelectedYear(y => y - 1)}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                          <span className="text-sm font-semibold text-foreground">{selectedYear}</span>
+                          <button
+                            onClick={() => setSelectedYear(y => y + 1)}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                          {monthNames.map((month, idx) => (
+                            <motion.button
+                              key={month}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleMonthSelect(idx)}
+                              className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                                idx === currentDate.getMonth() && selectedYear === currentDate.getFullYear()
+                                  ? "bg-primary text-primary-foreground"
+                                  : "text-foreground hover:bg-muted"
+                              }`}
+                            >
+                              {month.slice(0, 3)}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleNextWeek}
+                  className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5 text-foreground" />
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Trades Widget and Chart */}
-        <div className="w-2/5 h-auto flex flex-col items-center justify-end font-inter lg:max-2xl:w-[calc(100%-950px)]">
-          <PnLDailyChart data={PNLcumulative} />
-          <TradesWidget data={allTrades} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 space-y-5">
+            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+              <div className="grid grid-cols-7">
+                {dayNames.map((day, i) => (
+                  <div key={i} className="py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7">
+                {currentWeek.map((date, index) => {
+                  const dayData = date ? getDayData(date) : null;
+                  const isToday = date && date.toDateString() === new Date().toDateString();
+
+                  return (
+                    <motion.button
+                      key={index}
+                      whileHover={{ scale: date ? 1.02 : 1 }}
+                      whileTap={{ scale: date ? 0.98 : 1 }}
+                      onClick={() => handleDateClick(date)}
+                      disabled={!date}
+                      className={`relative min-h-[100px] p-3 border-r border-b border-border last:border-r-0 transition-all flex flex-col items-center justify-center gap-1 ${
+                        !date
+                          ? "bg-muted/20 cursor-default"
+                          : dayData
+                            ? dayData.profit >= 0
+                              ? "bg-profit/10 hover:bg-profit/15"
+                              : "bg-loss/10 hover:bg-loss/15"
+                            : "hover:bg-muted/30"
+                      } ${isToday ? "ring-2 ring-primary ring-inset" : ""}`}
+                    >
+                      {date && (
+                        <>
+                          <span className={`text-lg font-bold ${
+                            dayData
+                              ? dayData.profit >= 0
+                                ? "text-profit"
+                                : "text-loss"
+                              : "text-foreground"
+                          }`}>
+                            {date.getDate()}
+                          </span>
+                          {dayData && (
+                            <>
+                              <span className={`text-sm font-semibold ${
+                                dayData.profit >= 0 ? "text-profit" : "text-loss"
+                              }`}>
+                                {formatCompactCurrency(dayData.profit, currency, exchangeRate)}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {dayData.tradeLength} trade{dayData.tradeLength !== 1 ? "s" : ""}
+                              </span>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Total Trades</span>
+                </div>
+                <p className="text-xl font-bold text-foreground">{allTrades.length}</p>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${weeklyProfit >= 0 ? "bg-profit/10" : "bg-loss/10"}`}>
+                    <TrendingUp className={`w-3.5 h-3.5 ${weeklyProfit >= 0 ? "text-profit" : "text-loss"}`} />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Weekly P&L</span>
+                </div>
+                <p className={`text-xl font-bold ${weeklyProfit >= 0 ? "text-profit" : "text-loss"}`}>
+                  {formatCompactCurrency(weeklyProfit, currency, exchangeRate)}
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-profit/10 flex items-center justify-center">
+                    <Trophy className="w-3.5 h-3.5 text-profit" />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Winners</span>
+                </div>
+                <p className="text-xl font-bold text-profit">{winCount}</p>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-loss/10 flex items-center justify-center">
+                    <Target className="w-3.5 h-3.5 text-loss" />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Losers</span>
+                </div>
+                <p className="text-xl font-bold text-loss">{lossCount}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                Cumulative P&L
+              </h3>
+              <div className="h-[180px]">
+                <PnLDailyChart data={PNLcumulative} />
+              </div>
+            </div>
+
+            <TradesWidget data={allTrades} />
+          </div>
         </div>
       </div>
     </div>

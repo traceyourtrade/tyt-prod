@@ -1,28 +1,35 @@
 'use client';
 
-import { useMemo, useState } from "react";
-import DashWidgets from "../dashboard-widgets/DashboardWidget";
-import Calendar from "../Calendar";
-import PnLDailyChart from "./Graphs/PnLDailyChart";
-// Stores
-import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDays, faArrowRightArrowLeft, faPenClip, faRightLeft } from '@fortawesome/free-solid-svg-icons';
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, ChevronLeft, ChevronRight, ArrowRightLeft, X, TrendingUp, BarChart3, Trophy, Target } from "lucide-react";
 
-// Functions 
-import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
+import DashWidgets from "../dashboard-widgets/DashboardWidget";
+import PnLDailyChart from "./Graphs/PnLDailyChart";
 import TradesWidget from "../TradesWidget";
 
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
+import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
 interface TradeData {
   date: string;
   Profit: number;
   time?: string;
   Item?: string;
+  Type?: string;
+  [key: string]: unknown;
 }
 
 interface Account {
   tradeData?: TradeData[];
+}
+
+interface Trade {
+  date: string;
+  Profit: number;
+  time?: string;
+  Item?: string;
 }
 
 interface ProcessedData {
@@ -30,326 +37,364 @@ interface ProcessedData {
   value: number;
 }
 
-interface Metrics {
-  pnl: string;
-  winrate: number;
-  totalWins: number;
-  totalLosses: number;
-  profitF: number | string;
-  rr: number;
-}
-
 const DashboardCustom: React.FC = () => {
-  // Calendar state
-  const [blurBg, setBlurBg] = useState<boolean>(false);
-  const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
-  const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
-  const [activeStartDate, setActiveStartDate] = useState<Date | null>(null);
-  const [activeEndDate, setActiveEndDate] = useState<Date | null>(null);
-  const [hoverDate, setHoverDate] = useState<Date | null>(null);
-  const [currentYearLeft, setCurrentYearLeft] = useState<number>(new Date().getFullYear());
-  const [currentYearRight, setCurrentYearRight] = useState<number>(new Date().getFullYear());
-  const [currentMonthLeft, setCurrentMonthLeft] = useState<number>(new Date().getMonth() - 1);
-  const [currentMonthRight, setCurrentMonthRight] = useState<number>((new Date().getMonth()) % 12);
-  const [fromDate, setFromDate] = useState<string>("From Date");
-  const [toDate, setToDate] = useState<string>("To Date");
-  const today = new Date();
-
-  // Get accounts data
   const { selectedAccounts } = useModeFilteredAccounts();
+  const { currency, exchangeRate } = useCurrencyStore();
 
-  // Extract and sort all trades (oldest to newest)
-  const extractTradeData = (accounts: Account[]): Trade[] => {
-    const allTrades = accounts.flatMap(account => account.tradeData || []);
-    return allTrades.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [tempStart, setTempStart] = useState<Date | null>(null);
+  const [tempEnd, setTempEnd] = useState<Date | null>(null);
+  const [hoverDate, setHoverDate] = useState<Date | null>(null);
+  const [leftYear, setLeftYear] = useState<number>(new Date().getFullYear());
+  const [leftMonth, setLeftMonth] = useState<number>(new Date().getMonth() - 1 < 0 ? 11 : new Date().getMonth() - 1);
+  const [rightYear, setRightYear] = useState<number>(new Date().getFullYear());
+  const [rightMonth, setRightMonth] = useState<number>(new Date().getMonth());
 
-  // Process data for the chart
-  const processTradeData = (trades: Trade[]): ProcessedData[] => {
-    let cumulativeProfit = 0;
-    const profitByDate: { [key: string]: number } = {};
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
 
-    trades.forEach(trade => {
-      profitByDate[trade.date] = (profitByDate[trade.date] || 0) + (trade.Profit || 0);
-    });
-
-    return [
-      { time: "", value: 0 },
-      ...Object.entries(profitByDate).map(([date, profit]) => {
-        cumulativeProfit += profit;
-        return { time: date, value: parseFloat(cumulativeProfit.toFixed(2)) };
-      })
-    ];
-  };
-
-  // Calculate metrics for DashWidgets
-  const calculateMetrics = (trades: Trade[]) => {
-    if (!trades?.length) return { pnl: 0, winrate: 0, totalWins: 0, totalLosses: 0, profitF: "-" };
-
-    let grossWin = 0;
-    let grossLoss = 0;
-
-    trades.forEach(trade => {
-      const profit = trade.Profit;
-      if (profit > 0) {
-        grossWin += profit;
-      } else {
-        grossLoss += Math.abs(profit);
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+        setShowCalendar(false);
       }
-    });
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    const pnl = trades.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2);
+  const allTrades = useMemo(() => {
+    const trades = (selectedAccounts as Account[]).flatMap(account => account.tradeData || []);
+    return trades.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [selectedAccounts]);
 
-    const winrate = parseInt((trades.filter(trade => trade.Profit > 0).length / trades.length * 100 || 0).toFixed(2));
-    const totalWins = trades.filter(t => t.Profit > 0).length;
-    const totalLosses = trades.filter(t => t.Profit < 0).length;
-
-    const profitF = (grossLoss === 0 && grossWin === 0) ? "-" : grossLoss === 0 ? Infinity : grossWin / grossLoss;
-
-    // RR ratio
-    let profitSum = 0;
-    let lossSum = 0;
-    let profitCount = 0;
-    let lossCount = 0;
-
-    trades.forEach(trade => {
-      const profit = trade.Profit;
-      if (profit > 0) {
-        profitSum += profit;
-        profitCount++;
-      } else if (profit < 0) {
-        lossSum += Math.abs(profit);
-        lossCount++;
-      }
-    });
-
-    const avgProfit = profitCount > 0 ? profitSum / profitCount : 0;
-    const avgLoss = lossCount > 0 ? lossSum / lossCount : 0;
-
-    const rr = avgLoss === 0 ? 0 : avgProfit / avgLoss;
-
-    return { pnl: parseFloat(pnl), winrate, totalWins, totalLosses, profitF, rr };
-  };
-
-  // Get all trades (sorted)
-  const allTrades = useMemo(() => extractTradeData(selectedAccounts), [selectedAccounts]);
-
-  // Filter trades by date range when selected
-  const filterTradesByDate = (start: Date | null, end: Date | null): Trade[] => {
-    if (!start || !end) return allTrades;
-
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-
-    // Set time to beginning of start date and end of end date
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
-
+  const displayTrades = useMemo(() => {
+    if (!startDate || !endDate) return allTrades;
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
     return allTrades.filter(trade => {
       const tradeDate = new Date(trade.date);
-      return tradeDate >= startDate && tradeDate <= endDate;
+      return tradeDate >= start && tradeDate <= end;
     });
-  };
+  }, [startDate, endDate, allTrades]);
 
-  // Determine which trades to display
-  const displayTrades = useMemo(() => 
-    activeStartDate && activeEndDate
-      ? filterTradesByDate(activeStartDate, activeEndDate)
-      : allTrades,
-    [activeStartDate, activeEndDate, allTrades]
-  );
-
-  // Prepare data for display
-  const displayData = useMemo(() => {
-    const processedData = processTradeData(displayTrades);
-    const metrics = calculateMetrics(displayTrades);
-    return {
-      segData: displayTrades,
-      processedData,
-      metrics
-    };
+  const processedData = useMemo(() => {
+    let cumulativeProfit = 0;
+    const profitByDate: { [key: string]: number } = {};
+    displayTrades.forEach(trade => {
+      profitByDate[trade.date] = (profitByDate[trade.date] || 0) + (trade.Profit || 0);
+    });
+    const result: ProcessedData[] = [{ time: "", value: 0 }];
+    Object.entries(profitByDate)
+      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+      .forEach(([date, profit]) => {
+        cumulativeProfit += profit;
+        result.push({ time: date, value: parseFloat(cumulativeProfit.toFixed(2)) });
+      });
+    return result;
   }, [displayTrades]);
 
-  // Handle date selection
-  const handleDateClick = (day: number | null, month: number, year: number) => {
-    if (day === null) return;
-    const date = new Date(year, month, day);
-    if (date > today) return;
+  const totalPnL = displayTrades.reduce((sum, t) => sum + (t.Profit || 0), 0);
+  const winCount = displayTrades.filter(t => t.Profit > 0).length;
+  const lossCount = displayTrades.filter(t => t.Profit < 0).length;
+  const winrate = displayTrades.length > 0 ? (winCount / displayTrades.length) * 100 : 0;
+  const metrics = calculateRiskRewardRatio(displayTrades);
 
-    if (tempStartDate && !tempEndDate && date.getTime() === tempStartDate.getTime()) {
-      setTempStartDate(null);
-      setHoverDate(null);
-      setFromDate("From Date");
-    } else if (tempStartDate && tempEndDate && (date.getTime() === tempStartDate.getTime() || date.getTime() === tempEndDate.getTime())) {
-      setTempStartDate(null);
-      setTempEndDate(null);
-      setHoverDate(null);
-      setFromDate("From Date");
-      setToDate("To Date");
-    } else if (!tempStartDate || (tempStartDate && tempEndDate)) {
-      setTempStartDate(date);
-      setFromDate(new Date(date.toDateString()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/(\w{2,3}) (\d{1,2}) (\d{4})/, '$2 $1, $3'));
-      setTempEndDate(null);
-      setHoverDate(null);
-      setToDate("To Date");
-    } else if (!tempEndDate && date >= tempStartDate) {
-      setTempEndDate(date);
-      setToDate(new Date(date.toDateString()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/(\w{2,3}) (\d{1,2}) (\d{4})/, '$2 $1, $3'));
-    }
-  };
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
 
-  // Handle select button click
-  const handleSelect = () => {
-    if (tempStartDate && tempEndDate) {
-      setActiveStartDate(tempStartDate);
-      setActiveEndDate(tempEndDate);
-      setBlurBg(false);
-    }
-  };
-
-  // Handle calendar range hover
-  const isInRange = (day: number | null, month: number, year: number): boolean => {
-    if (!tempStartDate || day === null) return false;
-    const date = new Date(year, month, day);
-    return tempEndDate
-      ? date >= tempStartDate && date <= tempEndDate
-      : !!hoverDate && date > tempStartDate && date <= hoverDate;
-  };
-
-  const handleHover = (day: number | null, month: number, year: number) => {
-    if (day === null) return;
-    if (tempStartDate && !tempEndDate) {
-      const date = new Date(year, month, day);
-      if (date <= today) {
-        setHoverDate(date);
-      }
-    }
-  };
-
-  const generateCalendar = (year: number, month: number): (number | null)[] => {
+  const generateCalendarDays = (year: number, month: number): (number | null)[] => {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    let days: (number | null)[] = Array(firstDay).fill(null);
+    const days: (number | null)[] = Array(firstDay).fill(null);
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
     return days;
   };
 
-  // Check if a date is selected (for purple background)
-  const isSelectedDate = (day: number | null, month: number, year: number): boolean => {
-    if (day === null) return false;
+  const handleDateClick = (day: number, month: number, year: number) => {
+    const clickedDate = new Date(year, month, day);
+    if (clickedDate > today) return;
+
+    if (!tempStart || (tempStart && tempEnd)) {
+      setTempStart(clickedDate);
+      setTempEnd(null);
+      setHoverDate(null);
+    } else if (tempStart && !tempEnd) {
+      if (clickedDate < tempStart) {
+        setTempEnd(tempStart);
+        setTempStart(clickedDate);
+      } else {
+        setTempEnd(clickedDate);
+      }
+    }
+  };
+
+  const isInRange = (day: number, month: number, year: number): boolean => {
+    if (!tempStart) return false;
     const date = new Date(year, month, day);
+    if (tempEnd) {
+      return date > tempStart && date < tempEnd;
+    }
+    if (hoverDate && hoverDate > tempStart) {
+      return date > tempStart && date <= hoverDate;
+    }
+    return false;
+  };
+
+  const isSelectedDate = (day: number, month: number, year: number): boolean => {
+    const date = new Date(year, month, day);
+    return (tempStart && date.getTime() === tempStart.getTime()) ||
+           (tempEnd && date.getTime() === tempEnd.getTime()) || false;
+  };
+
+  const handleApply = () => {
+    if (tempStart && tempEnd) {
+      setStartDate(tempStart);
+      setEndDate(tempEnd);
+      setShowCalendar(false);
+    }
+  };
+
+  const handleClear = () => {
+    setTempStart(null);
+    setTempEnd(null);
+    setStartDate(null);
+    setEndDate(null);
+    setShowCalendar(false);
+  };
+
+  const handlePrevMonth = (side: 'left' | 'right') => {
+    if (side === 'left') {
+      if (leftMonth === 0) {
+        setLeftMonth(11);
+        setLeftYear(y => y - 1);
+      } else {
+        setLeftMonth(m => m - 1);
+      }
+    } else {
+      if (rightMonth === 0) {
+        setRightMonth(11);
+        setRightYear(y => y - 1);
+      } else {
+        setRightMonth(m => m - 1);
+      }
+    }
+  };
+
+  const handleNextMonth = (side: 'left' | 'right') => {
+    if (side === 'left') {
+      if (leftMonth === 11) {
+        setLeftMonth(0);
+        setLeftYear(y => y + 1);
+      } else {
+        setLeftMonth(m => m + 1);
+      }
+    } else {
+      if (rightMonth === 11) {
+        setRightMonth(0);
+        setRightYear(y => y + 1);
+      } else {
+        setRightMonth(m => m + 1);
+      }
+    }
+  };
+
+  const formatDateDisplay = (date: Date | null): string => {
+    if (!date) return "Select date";
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const renderCalendarGrid = (year: number, month: number) => {
+    const days = generateCalendarDays(year, month);
     return (
-      (tempStartDate && date.getTime() === tempStartDate.getTime()) ||
-      (tempEndDate && date.getTime() === tempEndDate.getTime())
+      <div className="grid grid-cols-7 gap-1">
+        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+          <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">
+            {d}
+          </div>
+        ))}
+        {days.map((day, index) => {
+          if (day === null) {
+            return <div key={`empty-${index}`} className="h-9" />;
+          }
+          const date = new Date(year, month, day);
+          const isDisabled = date > today;
+          const isSelected = isSelectedDate(day, month, year);
+          const inRange = isInRange(day, month, year);
+          const isToday = date.toDateString() === new Date().toDateString();
+
+          return (
+            <motion.button
+              key={day}
+              whileHover={{ scale: isDisabled ? 1 : 1.1 }}
+              whileTap={{ scale: isDisabled ? 1 : 0.95 }}
+              onClick={() => !isDisabled && handleDateClick(day, month, year)}
+              onMouseEnter={() => {
+                if (tempStart && !tempEnd && !isDisabled) {
+                  setHoverDate(date);
+                }
+              }}
+              disabled={isDisabled}
+              className={`h-9 w-full rounded-lg text-sm font-medium flex items-center justify-center transition-all ${
+                isDisabled
+                  ? "text-muted-foreground/40 cursor-not-allowed"
+                  : isSelected
+                    ? "bg-primary text-primary-foreground shadow-lg"
+                    : inRange
+                      ? "bg-primary/20 text-primary"
+                      : isToday
+                        ? "ring-1 ring-primary text-foreground"
+                        : "text-foreground hover:bg-muted"
+              }`}
+            >
+              {day}
+            </motion.button>
+          );
+        })}
+      </div>
     );
   };
 
-  const metrics = calculateRiskRewardRatio(displayData.segData);
-
   return (
-    <div className="w-full h-auto flex flex-col rounded-[25px]">
-      {/* Calendar UI */}
-      {blurBg && (
-        <div className="w-full h-auto flex flex-col items-center justify-start mt-5 absolute z-20 top-17">
-          <div className="w-auto h-auto flex flex-col items-center justify-evenly bg-gray-600/50 backdrop-blur-xl text-gray-300 p-2.5 rounded-xl shadow-lg">
-            <div className="flex gap-5 justify-center items-start flex-wrap font-poppins">
-              {[
-                { year: currentYearLeft, setYear: setCurrentYearLeft, month: currentMonthLeft, setMonth: setCurrentMonthLeft, heading: fromDate },
-                { year: currentYearRight, setYear: setCurrentYearRight, month: currentMonthRight, setMonth: setCurrentMonthRight, heading: toDate }
-              ].map(({ year, setYear, month, setMonth, heading }, index) => (
-                <div key={index} className="w-75 min-h-66 p-1.25 rounded-lg">
-                  <h2 className="text-sm font-semibold text-center text-white">{heading}</h2>
-                  <div className="flex justify-between mb-2">
-                    <select 
-                      className="appearance-none bg-purple-500/50 text-white border-none rounded-3xl px-1 py-0.75 text-xs cursor-pointer outline-none w-37 mr-2.5 mt-2.5 bg-[url('https://upload.wikimedia.org/wikipedia/commons/9/96/Chevron-icon-drop-down-menu-WHITE.png')] bg-no-repeat bg-[right_10px_center] bg-[length:10px] relative top-0.5"
-                      value={year} 
-                      onChange={(e) => setYear(parseInt(e.target.value))}
-                    >
-                      {Array.from({ length: 131 }, (_, i) => 1970 + i).map((y) => (
-                        <option key={y} value={y} className="bg-gray-200 text-black text-xs rounded-lg border-none cursor-pointer transition-all duration-500">{y}</option>
-                      ))}
-                    </select>
-                    <select 
-                      value={month} 
-                      onChange={(e) => setMonth(parseInt(e.target.value))}
-                      className="px-1.25 py-0.75 text-xs border border-gray-300 rounded outline-none"
-                    >
-                      {Array.from({ length: 12 }, (_, i) => i).map((m) => (
-                        <option key={m} value={m}>{new Date(0, m).toLocaleString('default', { month: 'long' })}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-7 gap-0.5 text-center">
-                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-                      <div key={d} className="font-bold text-white text-sm py-0.5">{d}</div>
-                    ))}
-                    {generateCalendar(year, month).map((day, index) => {
-                      const date = day ? new Date(year, month, day) : null;
-                      const isDisabled = date && date > today;
-                      const isSelected = isSelectedDate(day, month, year);
-                      const inRange = isInRange(day, month, year);
-                      
-                      return (
-                        <div
-                          key={index}
-                          className={`p-2 cursor-pointer rounded transition-all duration-300 text-sm
-                            ${day === null ? "empty" : ""} 
-                            ${isSelected ? "bg-purple-600/70 text-white hover:bg-purple-600/70" : ""}
-                            ${inRange ? "bg-gray-300 text-gray-800" : ""}
-                            ${isDisabled ? "text-gray-500/70 pointer-events-none bg-transparent border border-gray-500/70" : "hover:bg-gray-400 hover:text-gray-900"}
-                            ${!isSelected && !inRange && !isDisabled ? "text-white" : ""}
-                          `}
-                          onClick={() => {
-  if (date && !isDisabled && day != null && month != null && year != null) {
-    handleDateClick(day, month, year);
-  }
-}}
-                          onMouseEnter={() => {
-  if (date && !isDisabled && day != null && month != null && year != null) {
-    handleHover(day, month, year);
-  }
-}}
-                        >
-                          {day || ""}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+    <div className="w-full min-h-screen bg-background">
+      <div className="px-4 pt-4 pb-2">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground tracking-tight">Custom Date Range</h2>
+                <p className="text-sm text-muted-foreground">
+                  {startDate && endDate
+                    ? `${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}`
+                    : "Select a date range to analyze"}
+                </p>
+              </div>
             </div>
-            <button
-              className="w-25 h-auto mx-auto mt-1 mb-2.5 px-3 py-2 border-none bg-purple-500/50 text-white cursor-pointer rounded transition-all duration-300 hover:bg-purple-600/70 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={handleSelect}
-              disabled={!tempStartDate || !tempEndDate}
-            >
-              Select
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* Range Selector */}
-      <div className="w-80 max-w-75 min-w-50 h-auto flex flex-row items-center justify-between p-3.75 shadow-lg bg-white rounded mx-3 my-5 font-inter transition-all duration-500 cursor-pointer hover:scale-102">
-        <div onClick={() => setBlurBg(true)} className="w-full flex flex-row items-center justify-between">
-          <FontAwesomeIcon icon={faCalendarDays} className="text-purple-600 relative top-0.75" />
-          <span className="text-black">{fromDate}</span>
-          <FontAwesomeIcon icon={faRightLeft} className="text-purple-600 relative top-0.75" />
-          <span className="text-black">{toDate}</span>
-          <FontAwesomeIcon icon={faPenClip} className="text-purple-600 relative top-0.75" />
+            <div className="relative" ref={calendarRef}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowCalendar(!showCalendar)}
+                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-muted/50 hover:bg-muted border border-border transition-colors"
+              >
+                <span className="text-sm font-medium text-foreground">
+                  {formatDateDisplay(startDate)}
+                </span>
+                <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">
+                  {formatDateDisplay(endDate)}
+                </span>
+              </motion.button>
+
+              <AnimatePresence>
+                {showCalendar && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-5 shadow-xl"
+                  >
+                    <div className="flex gap-6">
+                      <div className="min-w-[260px]">
+                        <div className="flex items-center justify-between mb-4">
+                          <button
+                            onClick={() => handlePrevMonth('left')}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                          <span className="text-sm font-semibold text-foreground">
+                            {monthNames[leftMonth]} {leftYear}
+                          </span>
+                          <button
+                            onClick={() => handleNextMonth('left')}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                        {renderCalendarGrid(leftYear, leftMonth)}
+                      </div>
+
+                      <div className="w-px bg-border" />
+
+                      <div className="min-w-[260px]">
+                        <div className="flex items-center justify-between mb-4">
+                          <button
+                            onClick={() => handlePrevMonth('right')}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                          <span className="text-sm font-semibold text-foreground">
+                            {monthNames[rightMonth]} {rightYear}
+                          </span>
+                          <button
+                            onClick={() => handleNextMonth('right')}
+                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                        {renderCalendarGrid(rightYear, rightMonth)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-5 pt-4 border-t border-border">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="px-2 py-1 rounded bg-muted text-foreground font-medium">
+                          {formatDateDisplay(tempStart)}
+                        </span>
+                        <span>to</span>
+                        <span className="px-2 py-1 rounded bg-muted text-foreground font-medium">
+                          {formatDateDisplay(tempEnd)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleClear}
+                          className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Clear
+                        </button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleApply}
+                          disabled={!tempStart || !tempEnd}
+                          className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Apply
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Dashboard Widgets */}
       <DashWidgets
-        data={displayData.processedData}
-        pnl={displayData.metrics.pnl}
-        winrate={displayData.metrics.winrate}
-        winners={displayData.metrics.totalWins}
-        losers={displayData.metrics.totalLosses}
-        profitF={calculateProfitFactor(displayData.segData)}
+        data={processedData}
+        pnl={parseFloat(totalPnL.toFixed(2))}
+        winrate={parseFloat(winrate.toFixed(2))}
+        winners={winCount}
+        losers={lossCount}
+        profitF={calculateProfitFactor(displayTrades)}
         avgProfits={parseFloat(metrics.avgWin)}
         avgLoses={parseFloat(metrics.avgLoss)}
         rrRatio={metrics.rrRatio}
@@ -358,13 +403,67 @@ const DashboardCustom: React.FC = () => {
         totalLoses={0}
       />
 
-      {/* Main Content */}
-      <div className="w-full max-w-[1710px] h-auto flex items-start justify-center mx-auto">
-        <Calendar />
-        
-        <div className="w-2/5 h-auto flex flex-col items-center justify-end font-inter lg:max-2xl:w-[calc(100%-950px)]">
-          <PnLDailyChart data={displayData.processedData} />
-          <TradesWidget data={displayData.segData} />
+      <div className="px-4 pb-6 space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 space-y-5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Total Trades</span>
+                </div>
+                <p className="text-xl font-bold text-foreground">{displayTrades.length}</p>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${totalPnL >= 0 ? "bg-profit/10" : "bg-loss/10"}`}>
+                    <TrendingUp className={`w-3.5 h-3.5 ${totalPnL >= 0 ? "text-profit" : "text-loss"}`} />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Net P&L</span>
+                </div>
+                <p className={`text-xl font-bold ${totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
+                  {formatCompactCurrency(totalPnL, currency, exchangeRate)}
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-profit/10 flex items-center justify-center">
+                    <Trophy className="w-3.5 h-3.5 text-profit" />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Winners</span>
+                </div>
+                <p className="text-xl font-bold text-profit">{winCount}</p>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-loss/10 flex items-center justify-center">
+                    <Target className="w-3.5 h-3.5 text-loss" />
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">Losers</span>
+                </div>
+                <p className="text-xl font-bold text-loss">{lossCount}</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                Cumulative P&L
+              </h3>
+              <div className="h-[250px]">
+                <PnLDailyChart data={processedData} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <TradesWidget data={displayTrades} />
+          </div>
         </div>
       </div>
     </div>
