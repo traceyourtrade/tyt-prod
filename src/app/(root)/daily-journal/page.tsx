@@ -432,8 +432,8 @@ const DailyJournal = () => {
   return (
     <div className="h-screen bg-background flex overflow-hidden">
       {/* Left Panel - Trade List */}
-      <div className="w-[300px] border-r border-border/50 flex flex-col glass-card shrink-0">
-        <div className="p-5 border-b border-border/50 space-y-4">
+      <div className="w-[300px] border-r border-border flex flex-col bg-card shrink-0">
+        <div className="p-5 border-b border-border space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary" />
@@ -547,7 +547,7 @@ const DailyJournal = () => {
       </div>
 
       {/* Center Panel - Journal Workspace */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-background/50">
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
         <AnimatePresence mode="wait">
           {!selectedTrade ? (
             <motion.div
@@ -576,7 +576,7 @@ const DailyJournal = () => {
               className="flex-1 overflow-y-auto scrollbar-sleek p-6 space-y-5"
             >
               {/* Trade Header */}
-              <div className="glass-card rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold shadow-sm ${selectedTrade.Profit >= 0 ? "bg-[#4EBF94]/15 text-profit" : "bg-loss/15 text-loss"}`}>
@@ -609,7 +609,7 @@ const DailyJournal = () => {
               </div>
 
               {/* Screenshots */}
-              <div className="glass-card rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center">
                     <ImageIcon className="w-4 h-4 text-muted-foreground" />
@@ -646,7 +646,7 @@ const DailyJournal = () => {
               </div>
 
               {/* Template Tabs */}
-              <div className="glass-card rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide">
                   {templates.map((template, idx) => {
                     const Icon = getTemplateIcon(template.icon);
@@ -694,7 +694,7 @@ const DailyJournal = () => {
               </div>
 
               {/* Sentiment */}
-              <div className="glass-card rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h3 className="text-sm font-semibold text-foreground mb-5">How do you feel about this trade?</h3>
                 <div className="flex gap-4">
                   {[
@@ -717,7 +717,7 @@ const DailyJournal = () => {
               </div>
 
               {/* Tags */}
-              <div className="glass-card rounded-2xl p-6 shadow-sm">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <h3 className="text-sm font-semibold text-foreground mb-4">Tags</h3>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {journalData.tags?.map((tag) => (
@@ -789,7 +789,7 @@ const DailyJournal = () => {
             animate={{ width: 340, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-l border-border/50 glass-card shrink-0 overflow-hidden"
+            className="border-l border-border bg-card shrink-0 overflow-hidden"
           >
             <div className="w-[340px] h-full overflow-y-auto scrollbar-sleek p-6 space-y-5">
               {/* Toggle */}
@@ -801,14 +801,14 @@ const DailyJournal = () => {
               </div>
 
               {/* Period P&L */}
-              <div className="bg-gradient-to-br from-background/80 to-background/40 border border-border/50 rounded-xl p-5 shadow-sm">
+              <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                 <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Total P&L</div>
                 <div className={`text-3xl font-bold tracking-tight ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
                   {stats.totalPnL >= 0 ? "+" : ""}${formatCompactNumber(stats.totalPnL, 0)}
                 </div>
                 <div className="flex items-center gap-5 mt-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#4EBF94]/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-profit/15 flex items-center justify-center">
                       <Trophy className="w-4 h-4 text-profit" />
                     </div>
                     <span className="text-foreground font-medium">{stats.winners} wins</span>
@@ -823,7 +823,7 @@ const DailyJournal = () => {
               </div>
 
               {/* Mini Calendar */}
-              <div className="bg-gradient-to-br from-background/80 to-background/40 border border-border/50 rounded-xl p-5 shadow-sm">
+              <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-sm font-semibold text-foreground flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -864,42 +864,42 @@ const DailyJournal = () => {
               {/* Quick Stats */}
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-foreground flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
                     <BarChart3 className="w-4 h-4 text-muted-foreground" />
                   </div>
                   Quick Stats
                 </h4>
-                <div className="bg-gradient-to-br from-background/80 to-background/40 border border-border/50 rounded-xl p-5 shadow-sm">
+                <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs text-muted-foreground font-medium">Win Rate</span>
                     <span className="text-xl font-bold text-foreground">{stats.winRate}%</span>
                   </div>
-                  <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${stats.winRate}%` }}
                       transition={{ duration: 0.8, ease: "easeOut" }}
-                      className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
+                      className="h-full bg-primary rounded-full"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-gradient-to-br from-background/80 to-background/40 border border-border/50 rounded-xl p-4 shadow-sm">
+                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">Profit Factor</div>
                     <div className="text-xl font-bold text-foreground">{stats.profitFactor}</div>
                   </div>
-                  <div className="bg-gradient-to-br from-background/80 to-background/40 border border-border/50 rounded-xl p-4 shadow-sm">
+                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">Total Trades</div>
                     <div className="text-xl font-bold text-foreground">{stats.totalTrades}</div>
                   </div>
-                  <div className="bg-gradient-to-br from-[#4EBF94]/5 to-transparent border border-[#4EBF94]/20 rounded-xl p-4 shadow-sm">
+                  <div className="bg-card border border-profit/30 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <TrendingUp className="w-3.5 h-3.5 text-profit" />
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Avg Win</span>
                     </div>
                     <div className="text-xl font-bold text-profit">${formatCompactNumber(stats.avgWin, 0)}</div>
                   </div>
-                  <div className="bg-gradient-to-br from-loss/5 to-transparent border border-loss/20 rounded-xl p-4 shadow-sm">
+                  <div className="bg-card border border-loss/30 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <TrendingDown className="w-3.5 h-3.5 text-loss" />
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Avg Loss</span>
@@ -919,7 +919,7 @@ const DailyJournal = () => {
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={() => setIsSidebarOpen(true)}
-          className="fixed right-4 top-1/2 -translate-y-1/2 p-3 glass border border-border/50 rounded-xl shadow-lg hover:bg-muted/50 transition-all duration-200 z-40"
+          className="fixed right-4 top-1/2 -translate-y-1/2 p-3 bg-card border border-border rounded-xl shadow-lg hover:bg-muted transition-all duration-200 z-40"
         >
           <PanelRight className="w-5 h-5 text-muted-foreground" />
         </motion.button>
