@@ -15,6 +15,7 @@ export interface IUserAccount {
   broker: string;
   description?: string;
   checked?: boolean;
+  isPropFirm?: boolean;
   date?: Date;
   tradeData?: any[];
   accountId?: string;
@@ -65,7 +66,8 @@ export interface IUser extends Document {
     accountType: string, 
     broker: string, 
     description: string, 
-    accountId: string
+    accountId: string,
+    isPropFirm?: boolean
   ): Promise<IUserAccount[]>;
   addAutoSyncAccount(
     accountName: string,
@@ -75,7 +77,8 @@ export interface IUser extends Document {
     investorId: string,
     investorPw: string,
     serverName: string,
-    accountId: string
+    accountId: string,
+    isPropFirm?: boolean
   ): Promise<IUserAccount[]>;
   updateAccountBalance(accountId: string, newBalance: number): Promise<IUserAccount | null>;
 }
@@ -109,6 +112,7 @@ const userSchema = new Schema<IUser>({
       broker: { type: String, required: true },
       description: { type: String },
       checked: { type: Boolean, default: true },
+      isPropFirm: { type: Boolean, default: false },
       date: { type: Date, default: Date.now },
       tradeData: { type: Array, default: [] },
       accountId: { type: String },
@@ -222,7 +226,8 @@ userSchema.methods.addAccount = async function (
   accountType: string,
   broker: string,
   description: string,
-  accountId: string
+  accountId: string,
+  isPropFirm: boolean = false
 ): Promise<IUserAccount[]> {
   try {
     this.accounts = this.accounts.concat({ 
@@ -231,7 +236,8 @@ userSchema.methods.addAccount = async function (
       accountType, 
       broker, 
       description, 
-      accountId 
+      accountId,
+      isPropFirm
     });
     await this.save();
     return this.accounts;
@@ -250,7 +256,8 @@ userSchema.methods.addAutoSyncAccount = async function (
   investorId: string,
   investorPw: string,
   serverName: string,
-  accountId: string
+  accountId: string,
+  isPropFirm: boolean = false
 ): Promise<IUserAccount[]> {
   try {
     this.accounts = this.accounts.concat({
@@ -262,7 +269,8 @@ userSchema.methods.addAutoSyncAccount = async function (
       accountId,
       investorId,
       investorPw,
-      serverName
+      serverName,
+      isPropFirm
     });
     await this.save();
     return this.accounts;

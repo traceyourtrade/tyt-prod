@@ -3,8 +3,8 @@
 ## Overview
 This is a Next.js 16 trading journal application that allows users to track their trades, analyze performance, and maintain a trading notebook. The application uses MongoDB for data storage, AWS S3 for image uploads, and Google OAuth for authentication.
 
-**Current State:** UI Redesign Complete - Premium Neutral Dashboard Aesthetic + Prop Firm Mode
-**Last Updated:** December 5, 2025
+**Current State:** UI Redesign Complete - Premium Neutral Dashboard Aesthetic + Prop Firm Mode + Account Type Filtering
+**Last Updated:** December 6, 2025
 
 ## UI Redesign (Completed)
 The application features a complete UI redesign inspired by Notion, Linear, and Stripe aesthetics.
@@ -173,6 +173,16 @@ Located in `src/components/prop-firm/`:
 - **Status Indicators**: Active (green), At Risk (yellow when >70% drawdown), Breached (red), Completed (green)
 - **Breach Alerts**: Full-width banner when challenge is breached with reset option
 - **Reset Challenge**: Start a new challenge with current settings
+- **Account Type Filtering**: Accounts can be designated as Normal or Prop Firm when created; Accounts dropdown filters based on current mode
+
+### Account Type System (New)
+- **Database Field**: `isPropFirm` boolean field added to IUserAccount interface in user.model.ts
+- **Add Account Popup**: Includes "Account Mode" toggle to select Normal Account or Prop Firm
+- **Accounts Dropdown**: Automatically filters accounts based on current mode:
+  - Live Trading mode shows only Normal accounts (isPropFirm: false)
+  - Prop Firm mode shows only Prop Firm accounts (isPropFirm: true)
+- **Visual Indicators**: Prop Firm mode shows amber Zap icon instead of dollar sign; dropdown header changes based on mode
+- **Demo Data**: Includes both normal and prop firm demo accounts for testing
 
 ## Notes
 - The application uses TypeScript with strict mode enabled

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   DollarSign, 
@@ -11,11 +11,13 @@ import {
   Plus,
   Building2,
   Wallet,
-  Settings
+  Settings,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
 import calendarPopUp from "@/store/calendarPopUp";
+import usePropFirmStore from "@/store/propFirmStore";
 
 const brokerIcons: Record<string, string> = {
   "MetaTrader 5": "MT5",
@@ -32,10 +34,18 @@ const AccountsDropdown = () => {
   
   const { accounts, updateAccView, checkAll } = useAccountDetails();
   const { setAddAcc } = calendarPopUp();
+  const { isEnabled: isPropFirmMode } = usePropFirmStore();
 
-  const selectedCount = accounts.filter(acc => acc.checked).length;
-  const allSelected = accounts.length > 0 && selectedCount === accounts.length;
-  const someSelected = selectedCount > 0 && selectedCount < accounts.length;
+  const filteredAccounts = useMemo(() => {
+    return accounts.filter(acc => {
+      const isAccountPropFirm = acc.isPropFirm === true;
+      return isPropFirmMode ? isAccountPropFirm : !isAccountPropFirm;
+    });
+  }, [accounts, isPropFirmMode]);
+
+  const selectedCount = filteredAccounts.filter(acc => acc.checked).length;
+  const allSelected = filteredAccounts.length > 0 && selectedCount === filteredAccounts.length;
+  const someSelected = selectedCount > 0 && selectedCount < filteredAccounts.length;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,14 +62,29 @@ const AccountsDropdown = () => {
   };
 
   const handleToggleAll = async () => {
-    await checkAll(!allSelected);
+    // For filtered accounts, we should only toggle accounts in the current mode
+    // Since the API toggles all accounts, we handle this locally for better UX
+    for (const account of filteredAccounts) {
+      if (allSelected) {
+        // Deselect all in current mode
+        if (account.checked) {
+          await updateAccView(account.accountName);
+        }
+      } else {
+        // Select all in current mode
+        if (!account.checked) {
+          await updateAccView(account.accountName);
+        }
+      }
+    }
   };
 
   const getDisplayText = () => {
+    if (filteredAccounts.length === 0) return isPropFirmMode ? "No Prop Accounts" : "No Accounts";
     if (selectedCount === 0) return "No accounts";
-    if (allSelected) return "All Accounts";
+    if (allSelected) return isPropFirmMode ? "All Prop Accounts" : "All Accounts";
     if (selectedCount === 1) {
-      const selected = accounts.find(acc => acc.checked);
+      const selected = filteredAccounts.find(acc => acc.checked);
       return selected?.accountName || "1 Account";
     }
     return `${selectedCount} Accounts`;
@@ -75,7 +100,11 @@ const AccountsDropdown = () => {
           isOpen && "border-primary/50 ring-2 ring-primary/20"
         )}
       >
-        <DollarSign className="w-4 h-4 text-primary" />
+        {isPropFirmMode ? (
+          <Zap className="w-4 h-4 text-amber-500" />
+        ) : (
+          <DollarSign className="w-4 h-4 text-primary" />
+        )}
         <span className="hidden sm:inline text-foreground">{getDisplayText()}</span>
         <ChevronDown className={cn(
           "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200",
@@ -96,21 +125,33 @@ const AccountsDropdown = () => {
             <div className="px-4 py-3 border-b border-border bg-muted/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Wallet className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-foreground text-sm">Trading Accounts</span>
+                  {isPropFirmMode ? (
+                    <Zap className="w-4 h-4 text-amber-500" />
+                  ) : (
+                    <Wallet className="w-4 h-4 text-primary" />
+                  )}
+                  <span className="font-semibold text-foreground text-sm">
+                    {isPropFirmMode ? "Prop Firm Accounts" : "Trading Accounts"}
+                  </span>
                 </div>
                 <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
-                  {selectedCount}/{accounts.length}
+                  {selectedCount}/{filteredAccounts.length}
                 </span>
               </div>
             </div>
 
-            {accounts.length === 0 ? (
+            {filteredAccounts.length === 0 ? (
               <div className="p-6 text-center">
                 <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-muted/50 flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-muted-foreground" />
+                  {isPropFirmMode ? (
+                    <Zap className="w-6 h-6 text-muted-foreground" />
+                  ) : (
+                    <Building2 className="w-6 h-6 text-muted-foreground" />
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">No accounts added yet</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {isPropFirmMode ? "No prop firm accounts yet" : "No accounts added yet"}
+                </p>
                 <button
                   onClick={() => {
                     setIsOpen(false);
@@ -149,7 +190,7 @@ const AccountsDropdown = () => {
 
                 {/* Account List */}
                 <div className="max-h-64 overflow-y-auto p-2 space-y-1">
-                  {accounts.map((account) => (
+                  {filteredAccounts.map((account) => (
                     <button
                       key={account._id || account.accountName}
                       onClick={() => handleToggleAccount(account.accountName)}

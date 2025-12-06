@@ -40,7 +40,7 @@ async function getUserFromToken(token: string) {
 // POST Handlers
 export async function createAccountHandler(req: any, userId: string, token: string) {
     try {
-        const { accountName, accountBalance, accountType, broker, description } = req;
+        const { accountName, accountBalance, accountType, broker, description, isPropFirm = false } = req;
 
         const rootUser = await getUserFromToken(token);
         if (!rootUser) {
@@ -60,7 +60,7 @@ export async function createAccountHandler(req: any, userId: string, token: stri
         const isAccountAdded = isUser.accounts.filter((obj: any) => obj.accountName === accountName);
         if (isAccountAdded.length === 0) {
             const accountId = uuidv4();
-            const addAcc = await isUser.addAccount(accountName, accountBalance, accountType, broker, description, accountId);
+            const addAcc = await isUser.addAccount(accountName, accountBalance, accountType, broker, description, accountId, isPropFirm);
             return NextResponse.json({ message: "Account added !" });
         } else {
             return NextResponse.json({ error: "Account already exists" }, { status: 400 });
@@ -72,9 +72,9 @@ export async function createAccountHandler(req: any, userId: string, token: stri
     }
 }
 
-export async function createAutoSyncAccountHandler(req, userId: string, token: string) {
+export async function createAutoSyncAccountHandler(req: any, userId: string, token: string) {
     try {
-        const { accountName, accountType, broker, investorId, password, serverName, description } = req;
+        const { accountName, accountType, broker, investorId, password, serverName, description, isPropFirm = false } = req;
 
         const rootUser = await getUserFromToken(token);
         if (!rootUser) {
@@ -96,7 +96,7 @@ export async function createAutoSyncAccountHandler(req, userId: string, token: s
             const accountId = uuidv4();
             let investorPw = password;
 
-            const addAcc = await isUser.addAutoSyncAccount(accountName, accountType, broker, description, investorId, investorPw, serverName, accountId);
+            const addAcc = await isUser.addAutoSyncAccount(accountName, accountType, broker, description, investorId, investorPw, serverName, accountId, isPropFirm);
             
             const newAsAc = new ASacc({
                 uniqueId: rootUser.uniqueId,

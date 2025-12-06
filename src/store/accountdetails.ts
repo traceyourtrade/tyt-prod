@@ -9,6 +9,7 @@ interface Account {
   accountType?: string;
   broker?: string;
   description?: string;
+  isPropFirm?: boolean;
   tradeData?: any[];
   [key: string]: any;
 }
@@ -60,6 +61,18 @@ const demoAccounts: Account[] = [
     accountType: "Paper Trading",
     broker: "Demo Broker",
     description: "Demo account for UI preview",
+    isPropFirm: false,
+    tradeData: generateDemoTradeData(),
+  },
+  {
+    checked: true,
+    accountName: "FTMO Challenge",
+    accountId: "demo-002",
+    accountBalance: 50000,
+    accountType: "Manual",
+    broker: "FTMO",
+    description: "Prop firm challenge account",
+    isPropFirm: true,
     tradeData: generateDemoTradeData(),
   }
 ];
@@ -239,9 +252,19 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
         set({ loading: false });
       }
     } catch (error) {
-      console.error("updateAccView: Error updating account view:", error);
+      console.error("updateAccView: Error updating account view, toggling locally:", error);
+      // In demo mode or on API error, toggle locally
+      const { accounts } = get();
+      const updatedAccounts = accounts.map(acc => 
+        acc.accountName === accountName 
+          ? { ...acc, checked: !acc.checked }
+          : acc
+      );
+      const selectedAccounts = updatedAccounts.filter((account: Account) => account.checked === true);
       set({ 
-        error: error instanceof Error ? error.message : 'Failed to update account view',
+        accounts: updatedAccounts,
+        selectedAccounts: selectedAccounts,
+        error: null,
         loading: false 
       });
     }

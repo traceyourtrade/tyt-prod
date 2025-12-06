@@ -31,6 +31,7 @@ interface AccountDetails {
   accountName: string;
   accountBalance: string;
   description: string;
+  isPropFirm: boolean;
 }
 
 interface DropdownOption {
@@ -68,7 +69,8 @@ const AddAccPopup = () => {
   const [accountDetails, setAccDetails] = useState<AccountDetails>({
     accountName: "",
     accountBalance: "",
-    description: ""
+    description: "",
+    isPropFirm: false
   });
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
@@ -118,7 +120,7 @@ const AddAccPopup = () => {
     setIsSubmitting(true);
 
     if (accountType === "Broker Sync") {
-      const { accountName, description } = accountDetails;
+      const { accountName, description, isPropFirm } = accountDetails;
 
       try {
         const res = await fetch(`/api/dashboard/post`, {
@@ -131,7 +133,8 @@ const AddAccPopup = () => {
             investorId, 
             password: investorPw, 
             serverName: server, 
-            description, 
+            description,
+            isPropFirm,
             apiName:'createAutoSyncAccount'
           })
         });
@@ -153,7 +156,7 @@ const AddAccPopup = () => {
         setError("Something went wrong. Please try again.");
       }
     } else {
-      const { accountName, accountBalance, description } = accountDetails;
+      const { accountName, accountBalance, description, isPropFirm } = accountDetails;
 
       try {
         const res = await fetch(`/api/dashboard/post`, {
@@ -164,7 +167,8 @@ const AddAccPopup = () => {
             accountBalance, 
             accountType, 
             broker, 
-            description, 
+            description,
+            isPropFirm,
             apiName:'createAccount'
           })
         });
@@ -269,6 +273,46 @@ const AddAccPopup = () => {
                   "transition-all duration-200"
                 )}
               />
+            </div>
+
+            {/* Prop Firm Toggle */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                Account Mode
+              </label>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
+                <button
+                  type="button"
+                  onClick={() => setAccDetails({ ...accountDetails, isPropFirm: false })}
+                  className={cn(
+                    "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                    !accountDetails.isPropFirm 
+                      ? "bg-primary text-white shadow-sm" 
+                      : "bg-transparent text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  Normal Account
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccDetails({ ...accountDetails, isPropFirm: true })}
+                  className={cn(
+                    "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                    accountDetails.isPropFirm 
+                      ? "bg-amber-500 text-white shadow-sm" 
+                      : "bg-transparent text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  Prop Firm
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {accountDetails.isPropFirm 
+                  ? "This account will only show in Prop Firm mode" 
+                  : "This account will show in Live Trading mode"
+                }
+              </p>
             </div>
 
             {/* Account Type Dropdown */}
