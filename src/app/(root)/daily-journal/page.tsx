@@ -46,6 +46,7 @@ import {
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
 import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
+import { SymbolLogo } from "@/components/ui/SymbolLogo";
 
 interface Trade {
   id?: string;
@@ -594,16 +595,13 @@ const DailyJournal = () => {
                                 {/* Top Row: Symbol + Side + Time */}
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex items-center gap-2.5">
-                                    {/* Minimal Symbol Badge */}
-                                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-semibold text-xs transition-all ${
-                                      isSelected
-                                        ? isProfit 
-                                          ? "bg-profit/15 text-profit" 
-                                          : "bg-loss/15 text-loss"
-                                        : "bg-muted text-muted-foreground group-hover:bg-muted/80"
-                                    }`}>
-                                      {(trade.Item || trade.symbol || "?").slice(0, 4)}
-                                    </div>
+                                    {/* Symbol Logo */}
+                                    <SymbolLogo 
+                                      symbol={trade.Item || trade.symbol || "?"} 
+                                      size="md"
+                                      isProfit={isProfit}
+                                      isSelected={isSelected}
+                                    />
                                     <div>
                                       <div className="flex items-center gap-1.5">
                                         <span className="font-semibold text-sm text-foreground">{trade.Item || trade.symbol}</span>
@@ -703,13 +701,12 @@ const DailyJournal = () => {
                 <div className="pb-4 border-b border-border/50">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-semibold text-sm ${
-                        selectedTrade.Profit >= 0 
-                          ? "bg-profit/10 text-profit" 
-                          : "bg-loss/10 text-loss"
-                      }`}>
-                        {(selectedTrade.Item || selectedTrade.symbol || "?").slice(0, 4)}
-                      </div>
+                      <SymbolLogo 
+                        symbol={selectedTrade.Item || selectedTrade.symbol || "?"} 
+                        size="lg"
+                        isProfit={selectedTrade.Profit >= 0}
+                        isSelected={true}
+                      />
                       <div>
                         <div className="flex items-center gap-2">
                           <h2 className="text-lg font-semibold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
