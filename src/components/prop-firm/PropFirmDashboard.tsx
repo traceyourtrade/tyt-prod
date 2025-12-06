@@ -9,6 +9,7 @@ import PropFirmCompactSettings from "./PropFirmCompactSettings"
 import PropFirmAnalytics from "./PropFirmAnalytics"
 import PropFirmBreachBanner from "./PropFirmBreachBanner"
 import PropFirmSuggestions from "./PropFirmSuggestions"
+import Calendar from "@/components/dashboard-components/Calendar"
 import { AlertTriangle, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -248,6 +249,8 @@ export default function PropFirmDashboard() {
           todayPnL={calculations.todayPnL}
           currentEquity={calculations.currentEquity}
         />
+
+        <Calendar />
 
         <PropFirmCompactSettings />
 
