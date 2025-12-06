@@ -76,61 +76,13 @@ const DashboardMonth: React.FC = () => {
     accBal: calculateBalance(selectedAccounts).toFixed(2),
   };
 
-  const sortedLayout = [...layout].sort((a, b) => a.order - b.order);
-  const visibleWidgetIds = sortedLayout
-    .filter(l => l.visible || isEditMode)
-    .map(l => l.widgetId);
-
-  const widgetComponents: Record<string, { component: React.ReactNode; span?: 'full' | 'double' | 'single' }> = {
-    'stats-overview': { 
-      component: <DashWidgets {...dashWidgetProps} />,
-      span: 'full'
-    },
-    'calendar': { 
-      component: <Calendar />,
-      span: 'single'
-    },
-    'cumulative-pnl': { 
-      component: <PnLDailyChart data={data} />,
-      span: 'single'
-    },
-    'trades-table': { 
-      component: <TradesWidget data={thisMonthData} />,
-      span: 'single'
-    },
-    'daily-pnl-bar': { 
-      component: <DailyPnLBarChart data={thisMonthData} />,
-      span: 'single'
-    },
-    'day-of-week': { 
-      component: <DayOfWeekChart data={thisMonthData} />,
-      span: 'single'
-    },
-    'symbol-pnl': { 
-      component: <SymbolPnLChart data={thisMonthData} />,
-      span: 'single'
-    },
-    'hourly-pnl': { 
-      component: <HourlyPnLChart data={thisMonthData} />,
-      span: 'single'
-    },
-    'radar': { 
-      component: <Radar />,
-      span: 'single'
-    },
+  const isWidgetVisible = (widgetId: string) => {
+    const item = layout.find(l => l.widgetId === widgetId);
+    return item?.visible ?? true;
   };
 
-  const getSpanClass = (widgetId: string) => {
-    const span = widgetComponents[widgetId]?.span;
-    switch (span) {
-      case 'full':
-        return 'md:col-span-2';
-      case 'double':
-        return 'md:col-span-2';
-      default:
-        return '';
-    }
-  };
+  const sideWidgetIds = ['cumulative-pnl', 'trades-table'].filter(id => isWidgetVisible(id) || isEditMode);
+  const bottomWidgetIds = ['daily-pnl-bar', 'day-of-week', 'symbol-pnl', 'hourly-pnl', 'radar'].filter(id => isWidgetVisible(id) || isEditMode);
 
   return (
     <div className="space-y-6">
@@ -138,22 +90,44 @@ const DashboardMonth: React.FC = () => {
         <EditModeToolbar />
       </div>
 
-      <WidgetGrid widgetIds={visibleWidgetIds}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {visibleWidgetIds.map((widgetId) => {
-            const widgetConfig = widgetComponents[widgetId];
-            if (!widgetConfig) return null;
-            
-            return (
-              <SortableWidget 
-                key={widgetId} 
-                widgetId={widgetId}
-                className={getSpanClass(widgetId)}
-              >
-                {widgetConfig.component}
-              </SortableWidget>
-            );
-          })}
+      {(isWidgetVisible('stats-overview') || isEditMode) && (
+        <SortableWidget widgetId="stats-overview">
+          <DashWidgets {...dashWidgetProps} />
+        </SortableWidget>
+      )}
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {(isWidgetVisible('calendar') || isEditMode) && (
+          <SortableWidget widgetId="calendar" className="xl:col-span-2">
+            <Calendar />
+          </SortableWidget>
+        )}
+
+        <div className="xl:col-span-1 flex flex-col gap-4">
+          <WidgetGrid widgetIds={sideWidgetIds}>
+            <div className="flex flex-col gap-4">
+              {sideWidgetIds.map((widgetId) => (
+                <SortableWidget key={widgetId} widgetId={widgetId}>
+                  {widgetId === 'cumulative-pnl' && <PnLDailyChart data={data} />}
+                  {widgetId === 'trades-table' && <TradesWidget data={thisMonthData} />}
+                </SortableWidget>
+              ))}
+            </div>
+          </WidgetGrid>
+        </div>
+      </div>
+
+      <WidgetGrid widgetIds={bottomWidgetIds}>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {bottomWidgetIds.map((widgetId) => (
+            <SortableWidget key={widgetId} widgetId={widgetId}>
+              {widgetId === 'daily-pnl-bar' && <DailyPnLBarChart data={thisMonthData} />}
+              {widgetId === 'day-of-week' && <DayOfWeekChart data={thisMonthData} />}
+              {widgetId === 'symbol-pnl' && <SymbolPnLChart data={thisMonthData} />}
+              {widgetId === 'hourly-pnl' && <HourlyPnLChart data={thisMonthData} />}
+              {widgetId === 'radar' && <Radar />}
+            </SortableWidget>
+          ))}
         </div>
       </WidgetGrid>
     </div>
