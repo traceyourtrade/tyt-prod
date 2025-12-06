@@ -592,7 +592,7 @@ const DailyJournal = () => {
       <div className="max-w-[1800px] mx-auto px-4 md:px-6 py-6">
         <div className="flex gap-6">
           {/* Left Panel - Trade List with P&L Bars */}
-          <div className={`${mobileView === "list" || window.innerWidth >= 768 ? "flex" : "hidden"} w-full md:w-[380px] flex-col flex-shrink-0`}>
+          <div className={`${mobileView === "list" ? "flex" : "hidden md:flex"} w-full md:w-[380px] flex-col flex-shrink-0`}>
             {/* Search & Filter */}
             <div className="mb-4 space-y-3">
               <div className="relative">
@@ -744,7 +744,7 @@ const DailyJournal = () => {
           </div>
 
           {/* Center Panel - Journal Content */}
-          <div className={`flex-1 min-w-0 ${mobileView === "content" || window.innerWidth >= 768 ? "block" : "hidden"}`}>
+          <div className={`flex-1 min-w-0 ${mobileView === "content" ? "block" : "hidden md:block"}`}>
             {selectedTrade ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
