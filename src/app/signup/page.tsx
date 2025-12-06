@@ -1,16 +1,23 @@
 "use client";
 
-import React, { useState, ChangeEvent, MouseEvent } from "react";
+import React, { useState, ChangeEvent, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
+import { Inter } from "next/font/google";
+import { motion, AnimatePresence } from "framer-motion";
 
-// zustand store
-import {useDataStore as store} from "@/store/store";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGoogle, faApple } from "@fortawesome/free-brands-svg-icons";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { User, Mail, Phone, Lock, ArrowRight, ChevronDown, Search, Sparkles, Shield, Zap, Target } from "lucide-react";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 type CountryCode = { country: string; code: string };
 
@@ -23,209 +30,76 @@ type SignUpData = {
 };
 
 const SignUp: React.FC = () => {
-
   const countryPhoneCodes: CountryCode[] = [
-    { country: "Afghanistan", code: "+93" },
-    { country: "Albania", code: "+355" },
-    { country: "Algeria", code: "+213" },
-    { country: "Andorra", code: "+376" },
-    { country: "Angola", code: "+244" },
-    { country: "Argentina", code: "+54" },
-    { country: "Armenia", code: "+374" },
-    { country: "Australia", code: "+61" },
-    { country: "Austria", code: "+43" },
-    { country: "Azerbaijan", code: "+994" },
-    { country: "Bahamas", code: "+1-242" },
-    { country: "Bahrain", code: "+973" },
-    { country: "Bangladesh", code: "+880" },
-    { country: "Barbados", code: "+1-246" },
-    { country: "Belarus", code: "+375" },
-    { country: "Belgium", code: "+32" },
-    { country: "Belize", code: "+501" },
-    { country: "Benin", code: "+229" },
-    { country: "Bhutan", code: "+975" },
-    { country: "Bolivia", code: "+591" },
-    { country: "Bosnia and Herzegovina", code: "+387" },
-    { country: "Botswana", code: "+267" },
-    { country: "Brazil", code: "+55" },
-    { country: "Brunei", code: "+673" },
-    { country: "Bulgaria", code: "+359" },
-    { country: "Burkina Faso", code: "+226" },
-    { country: "Burundi", code: "+257" },
-    { country: "Cambodia", code: "+855" },
-    { country: "Cameroon", code: "+237" },
-    { country: "Canada", code: "+1" },
-    { country: "Cape Verde", code: "+238" },
-    { country: "Central African Republic", code: "+236" },
-    { country: "Chad", code: "+235" },
-    { country: "Chile", code: "+56" },
-    { country: "China", code: "+86" },
-    { country: "Colombia", code: "+57" },
-    { country: "Comoros", code: "+269" },
-    { country: "Congo (DRC)", code: "+243" },
-    { country: "Congo (Republic)", code: "+242" },
-    { country: "Costa Rica", code: "+506" },
-    { country: "Croatia", code: "+385" },
-    { country: "Cuba", code: "+53" },
-    { country: "Cyprus", code: "+357" },
-    { country: "Czech Republic", code: "+420" },
-    { country: "Denmark", code: "+45" },
-    { country: "Djibouti", code: "+253" },
-    { country: "Dominica", code: "+1-767" },
-    { country: "Dominican Republic", code: "+1-809, +1-829, +1-849" },
-    { country: "Ecuador", code: "+593" },
-    { country: "Egypt", code: "+20" },
-    { country: "El Salvador", code: "+503" },
-    { country: "Equatorial Guinea", code: "+240" },
-    { country: "Eritrea", code: "+291" },
-    { country: "Estonia", code: "+372" },
-    { country: "Eswatini", code: "+268" },
-    { country: "Ethiopia", code: "+251" },
-    { country: "Fiji", code: "+679" },
-    { country: "Finland", code: "+358" },
-    { country: "France", code: "+33" },
-    { country: "Gabon", code: "+241" },
-    { country: "Gambia", code: "+220" },
-    { country: "Georgia", code: "+995" },
-    { country: "Germany", code: "+49" },
-    { country: "Ghana", code: "+233" },
-    { country: "Greece", code: "+30" },
-    { country: "Grenada", code: "+1-473" },
-    { country: "Guatemala", code: "+502" },
-    { country: "Guinea", code: "+224" },
-    { country: "Guinea-Bissau", code: "+245" },
-    { country: "Guyana", code: "+592" },
-    { country: "Haiti", code: "+509" },
-    { country: "Honduras", code: "+504" },
-    { country: "Hungary", code: "+36" },
-    { country: "Iceland", code: "+354" },
-    { country: "India", code: "+91" },
-    { country: "Indonesia", code: "+62" },
-    { country: "Iran", code: "+98" },
-    { country: "Iraq", code: "+964" },
-    { country: "Ireland", code: "+353" },
-    { country: "Israel", code: "+972" },
-    { country: "Italy", code: "+39" },
-    { country: "Jamaica", code: "+1-876" },
-    { country: "Japan", code: "+81" },
-    { country: "Jordan", code: "+962" },
-    { country: "Kazakhstan", code: "+7" },
-    { country: "Kenya", code: "+254" },
-    { country: "Kiribati", code: "+686" },
-    { country: "Korea (North)", code: "+850" },
-    { country: "Korea (South)", code: "+82" },
-    { country: "Kuwait", code: "+965" },
-    { country: "Kyrgyzstan", code: "+996" },
-    { country: "Laos", code: "+856" },
-    { country: "Latvia", code: "+371" },
-    { country: "Lebanon", code: "+961" },
-    { country: "Lesotho", code: "+266" },
-    { country: "Liberia", code: "+231" },
-    { country: "Libya", code: "+218" },
-    { country: "Liechtenstein", code: "+423" },
-    { country: "Lithuania", code: "+370" },
-    { country: "Luxembourg", code: "+352" },
-    { country: "Madagascar", code: "+261" },
-    { country: "Malawi", code: "+265" },
-    { country: "Malaysia", code: "+60" },
-    { country: "Maldives", code: "+960" },
-    { country: "Mali", code: "+223" },
-    { country: "Malta", code: "+356" },
-    { country: "Marshall Islands", code: "+692" },
-    { country: "Mauritania", code: "+222" },
-    { country: "Mauritius", code: "+230" },
-    { country: "Mexico", code: "+52" },
-    { country: "Micronesia", code: "+691" },
-    { country: "Moldova", code: "+373" },
-    { country: "Monaco", code: "+377" },
-    { country: "Mongolia", code: "+976" },
-    { country: "Montenegro", code: "+382" },
-    { country: "Morocco", code: "+212" },
-    { country: "Mozambique", code: "+258" },
-    { country: "Myanmar", code: "+95" },
-    { country: "Namibia", code: "+264" },
-    { country: "Nauru", code: "+674" },
-    { country: "Nepal", code: "+977" },
-    { country: "Netherlands", code: "+31" },
-    { country: "New Zealand", code: "+64" },
-    { country: "Nicaragua", code: "+505" },
-    { country: "Niger", code: "+227" },
-    { country: "Nigeria", code: "+234" },
-    { country: "North Macedonia", code: "+389" },
-    { country: "Norway", code: "+47" },
-    { country: "Oman", code: "+968" },
-    { country: "Pakistan", code: "+92" },
-    { country: "Palau", code: "+680" },
-    { country: "Panama", code: "+507" },
-    { country: "Papua New Guinea", code: "+675" },
-    { country: "Paraguay", code: "+595" },
-    { country: "Peru", code: "+51" },
-    { country: "Philippines", code: "+63" },
-    { country: "Poland", code: "+48" },
-    { country: "Portugal", code: "+351" },
-    { country: "Qatar", code: "+974" },
-    { country: "Romania", code: "+40" },
-    { country: "Russia", code: "+7" },
-    { country: "Rwanda", code: "+250" },
-    { country: "Saint Kitts and Nevis", code: "+1-869" },
-    { country: "Saint Lucia", code: "+1-758" },
-    { country: "Saint Vincent and the Grenadines", code: "+1-784" },
-    { country: "Samoa", code: "+685" },
-    { country: "San Marino", code: "+378" },
-    { country: "Sao Tome and Principe", code: "+239" },
-    { country: "Saudi Arabia", code: "+966" },
-    { country: "Senegal", code: "+221" },
-    { country: "Serbia", code: "+381" },
-    { country: "Seychelles", code: "+248" },
-    { country: "Sierra Leone", code: "+232" },
-    { country: "Singapore", code: "+65" },
-    { country: "Slovakia", code: "+421" },
-    { country: "Slovenia", code: "+386" },
-    { country: "Solomon Islands", code: "+677" },
-    { country: "Somalia", code: "+252" },
-    { country: "South Africa", code: "+27" },
-    { country: "South Sudan", code: "+211" },
-    { country: "Spain", code: "+34" },
-    { country: "Sri Lanka", code: "+94" },
-    { country: "Sudan", code: "+249" },
-    { country: "Suriname", code: "+597" },
-    { country: "Sweden", code: "+46" },
-    { country: "Switzerland", code: "+41" },
-    { country: "Syria", code: "+963" },
-    { country: "Taiwan", code: "+886" },
-    { country: "Tajikistan", code: "+992" },
-    { country: "Tanzania", code: "+255" },
-    { country: "Thailand", code: "+66" },
-    { country: "Timor-Leste", code: "+670" },
-    { country: "Togo", code: "+228" },
-    { country: "Tonga", code: "+676" },
-    { country: "Trinidad and Tobago", code: "+1-868" },
-    { country: "Tunisia", code: "+216" },
-    { country: "Turkey", code: "+90" },
-    { country: "Turkmenistan", code: "+993" },
-    { country: "Tuvalu", code: "+688" },
-    { country: "Uganda", code: "+256" },
-    { country: "Ukraine", code: "+380" },
-    { country: "United Arab Emirates", code: "+971" },
-    { country: "United Kingdom", code: "+44" },
     { country: "United States", code: "+1" },
-    { country: "Uruguay", code: "+598" },
-    { country: "Uzbekistan", code: "+998" },
-    { country: "Vanuatu", code: "+678" },
-    { country: "Vatican City", code: "+379" },
-    { country: "Venezuela", code: "+58" },
+    { country: "United Kingdom", code: "+44" },
+    { country: "India", code: "+91" },
+    { country: "Canada", code: "+1" },
+    { country: "Australia", code: "+61" },
+    { country: "Germany", code: "+49" },
+    { country: "France", code: "+33" },
+    { country: "Japan", code: "+81" },
+    { country: "China", code: "+86" },
+    { country: "Brazil", code: "+55" },
+    { country: "Mexico", code: "+52" },
+    { country: "Spain", code: "+34" },
+    { country: "Italy", code: "+39" },
+    { country: "Netherlands", code: "+31" },
+    { country: "Singapore", code: "+65" },
+    { country: "United Arab Emirates", code: "+971" },
+    { country: "South Africa", code: "+27" },
+    { country: "Russia", code: "+7" },
+    { country: "South Korea", code: "+82" },
+    { country: "Indonesia", code: "+62" },
+    { country: "Thailand", code: "+66" },
+    { country: "Malaysia", code: "+60" },
+    { country: "Philippines", code: "+63" },
     { country: "Vietnam", code: "+84" },
-    { country: "Yemen", code: "+967" },
-    { country: "Zambia", code: "+260" },
-    { country: "Zimbabwe", code: "+263" },
+    { country: "Pakistan", code: "+92" },
+    { country: "Bangladesh", code: "+880" },
+    { country: "Nigeria", code: "+234" },
+    { country: "Egypt", code: "+20" },
+    { country: "Turkey", code: "+90" },
+    { country: "Poland", code: "+48" },
+    { country: "Sweden", code: "+46" },
+    { country: "Norway", code: "+47" },
+    { country: "Denmark", code: "+45" },
+    { country: "Switzerland", code: "+41" },
+    { country: "Austria", code: "+43" },
+    { country: "Belgium", code: "+32" },
+    { country: "Portugal", code: "+351" },
+    { country: "Greece", code: "+30" },
+    { country: "Czech Republic", code: "+420" },
+    { country: "Romania", code: "+40" },
+    { country: "Hungary", code: "+36" },
+    { country: "Ireland", code: "+353" },
+    { country: "New Zealand", code: "+64" },
+    { country: "Israel", code: "+972" },
+    { country: "Saudi Arabia", code: "+966" },
+    { country: "Argentina", code: "+54" },
+    { country: "Chile", code: "+56" },
+    { country: "Colombia", code: "+57" },
+    { country: "Peru", code: "+51" },
+    { country: "Kenya", code: "+254" },
   ];
 
   const [selectedCode, setSelectedCode] = useState<CountryCode>({
-    code: "+91",
-    country: "India",
+    code: "+1",
+    country: "United States",
   });
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const filteredOptions = countryPhoneCodes
     .filter(
@@ -238,14 +112,7 @@ const SignUp: React.FC = () => {
   const handleSelect = (country: CountryCode) => {
     setSelectedCode(country);
     setIsOpen(false);
-  };
-
-  const toggleDropdown = () => {
-    setIsOpen((s) => !s);
-  };
-
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+    setSearch("");
   };
 
   const [signUpData, setSignUpData] = useState<SignUpData>({
@@ -257,13 +124,15 @@ const SignUp: React.FC = () => {
   });
 
   const router = useRouter();
-  const [error, setError] = useState<string>(" ");
+  const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConPassword, setShowConPassword] = useState(false);
 
   const setLoginVal = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setSignUpData((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
   };
 
   const signUpWithGoogle = useGoogleLogin({
@@ -274,6 +143,7 @@ const SignUp: React.FC = () => {
 
   const postSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const { email, fullName, phone, password, cpassword } = signUpData;
 
@@ -314,225 +184,489 @@ const SignUp: React.FC = () => {
         }
       }
     } catch (err) {
-      // keep silent like original; you may log if needed
-      // console.error(err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const featureCards = [
+    {
+      icon: Target,
+      title: "Track Every Trade",
+      description: "Log and analyze all your trades",
+      color: "from-blue-500/20 to-blue-600/10",
+      iconColor: "text-blue-400",
+    },
+    {
+      icon: Zap,
+      title: "AI-Powered Insights",
+      description: "Discover winning patterns",
+      color: "from-amber-500/20 to-amber-600/10",
+      iconColor: "text-amber-400",
+    },
+    {
+      icon: Shield,
+      title: "Secure & Private",
+      description: "Your data is always protected",
+      color: "from-emerald-500/20 to-emerald-600/10",
+      iconColor: "text-emerald-400",
+    },
+  ];
+
   return (
-    <div className="min-h-screen w-screen bg-[rgba(40,40,40,0.48)] absolute inset-0 flex items-center justify-center">
-      <div className="w-[30%] h-[90vh] rounded-[25px] flex flex-col items-center justify-start
-                      p-6
-                      bg-gradient-to-br from-[rgba(23,25,29,0.622)] to-[rgba(30,33,36,0.474)]
-                      shadow-[0_30px_60px_-30px_rgba(0,0,0,0.3),0_20px_30px_-10px_rgba(38,57,77,1)]
-                      font-sans"
-      >
-        {/* Logo + Title */}
-        <div className="w-full flex items-center justify-center relative -left-4 mt-2">
-          <div className="flex items-center gap-3">
-            <div className="w-20 h-auto">
-              <Image src="/images/Logo.png"
-                width={100}
-                height={100}
-                alt="Logo"
-                data-aos="fade-up"
-                data-aos-duration="1000" />
-            </div>
-            <h1 className="text-[25px] text-white/95 font-medium">Sign Up</h1>
-          </div>
-        </div>
+    <div className={`min-h-screen w-full bg-[#0a0a0a] ${inter.className} overflow-hidden`}>
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-500/15 rounded-full blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.15, 0.3, 0.15],
+          }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute top-[50%] right-[40%] w-[400px] h-[400px] bg-emerald-500/15 rounded-full blur-[100px]"
+        />
+        {/* Grid Pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+          }}
+        />
+      </div>
 
-        <p className="text-xs text-slate-400 mt-5 text-center">
-          Your trades, your data, your edge -fully automated and optimized
-        </p>
-
-        {/* Google Sign-in */}
-        <button
-          type="button"
-          onClick={() => signUpWithGoogle()}
-          className="w-[90%] mt-5 px-3 py-2 rounded-[12px] bg-[#111] border border-[rgba(248,250,252,0.1)] text-slate-400
-          cursor-pointer
-                     flex items-center justify-center gap-3"
+      <div className="relative z-10 flex min-h-screen">
+        {/* Left Side - Decorative (Desktop Only) */}
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="hidden lg:flex lg:w-1/2 relative flex-col justify-center px-12 xl:px-20"
         >
-          <div className="w-5 h-5 relative">
-            <Image src="/images/googlelogo.png"
-                width={100}
-                height={100} alt="Google"  sizes="20px" style={{ objectFit: "contain" }} />
-          </div>
-          <span className="font-medium text-[13px]">Sign in with Google</span>
-        </button>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="mb-10"
+          >
+            <Image
+              width={280}
+              height={70}
+              src="/images/logo-dark.png?v=2"
+              alt="ProJournX Logo"
+              className="h-12 w-auto"
+              unoptimized
+            />
+          </motion.div>
 
-        {/* Purple bar image */}
-        <div className="w-[60%] mt-4">
-          <Image
-           src="/images/purple-bar.png"
-                width={100}
-                height={100} alt="purple" />
-        </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-6"
+          >
+            Start Your
+            <br />
+            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              Trading Journey
+            </span>
+          </motion.h1>
 
-        {/* Form */}
-        <form className="w-full flex flex-col items-center mt-4" onSubmit={postSignUp}>
-          <input
-            required
-            autoComplete="off"
-            name="fullName"
-            value={signUpData.fullName}
-            onChange={setLoginVal}
-            placeholder="Full Name"
-            className="w-[85%] mb-5 px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
-            type="text"
-          />
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="text-lg text-gray-400 max-w-md mb-12"
+          >
+            Join thousands of traders who use ProJournX to track their trades, analyze performance, and become consistently profitable.
+          </motion.p>
 
-          <input
-            required
-            autoComplete="off"
-            name="email"
-            value={signUpData.email}
-            onChange={setLoginVal}
-            placeholder="Email"
-            className="w-[85%] mb-5 px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
-            type="text"
-          />
+          {/* Feature Cards */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
+            {featureCards.map((card, idx) => {
+              const Icon = card.icon;
+              return (
+                <motion.div
+                  key={idx}
+                  variants={fadeInUp}
+                  whileHover={{ scale: 1.02, x: 10 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className={`flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r ${card.color} backdrop-blur-xl border border-white/10 max-w-sm cursor-pointer group`}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">{card.title}</h3>
+                    <p className="text-sm text-gray-400">{card.description}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
 
-          {/* Phone row */}
-          <div className="w-[90%] flex items-center justify-between mb-5">
-            {/* Dropdown container */}
-            <div
-              className="relative"
-              onMouseEnter={() => setIsOpen(true)}
-              onMouseLeave={() => setIsOpen(false)}
+        {/* Right Side - Signup Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 lg:p-12">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="w-full max-w-md"
+          >
+            {/* Mobile Logo */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="lg:hidden flex justify-center mb-8"
             >
-              <div
-                className="w-[70px] flex items-center justify-evenly cursor-pointer text-[13px] font-medium px-2 py-2 rounded-[25px] bg-[#ededed] text-[#777]"
-                onClick={toggleDropdown}
-                aria-haspopup="listbox"
-                aria-expanded={isOpen}
-              >
-                <span>{selectedCode.code}</span>
-                <i className="fa fa-chevron-down" />
-              </div>
+              <Image
+                width={200}
+                height={50}
+                src="/images/logo-dark.png?v=2"
+                alt="ProJournX Logo"
+                className="h-10 w-auto"
+                unoptimized
+              />
+            </motion.div>
 
-              {isOpen && (
-                <div className="absolute z-20 mt-2 left-[-50px] w-[150px] bg-white rounded-[12px] shadow-md p-3">
-                  <input
-                    type="text"
-                    placeholder="Search Country"
-                    value={search}
-                    onChange={handleSearchChange}
-                    className="w-full px-2 py-2 rounded-md text-sm mb-2 border border-transparent focus:border-slate-200"
-                  />
+            {/* Form Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="relative"
+            >
+              {/* Glow Effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-emerald-500/20 rounded-[28px] blur-xl opacity-50" />
 
-                  <div className="max-h-[150px] overflow-y-auto">
-                    <div className="py-1 px-1">
-                      <div className="text-[13px] text-[#9d83dd] py-1">
-                        <span className="font-medium">
-                          {selectedCode.code} {selectedCode.country}
-                        </span>
-                      </div>
+              <div className="relative bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div className="text-center mb-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-4"
+                  >
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-purple-400 font-medium">Get Started Free</span>
+                  </motion.div>
+                  <motion.h2
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="text-2xl sm:text-3xl font-bold text-white mb-2"
+                  >
+                    Create your account
+                  </motion.h2>
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="text-gray-400 text-sm"
+                  >
+                    Start tracking your trades today
+                  </motion.p>
+                </div>
 
-                      {filteredOptions.map((country, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => handleSelect(country)}
-                          className="py-1 px-1 cursor-pointer text-[13px] text-slate-600 hover:bg-slate-100 rounded"
-                        >
-                          <span className="font-medium">{country.code} {country.country}</span>
-                        </div>
-                      ))}
+                {/* Social Login Buttons */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="grid grid-cols-2 gap-3 mb-6"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => signUpWithGoogle()}
+                    type="button"
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all"
+                  >
+                    <FontAwesomeIcon icon={faGoogle} className="w-5 h-5" />
+                    <span className="text-sm font-medium">Google</span>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all"
+                  >
+                    <FontAwesomeIcon icon={faApple} className="w-5 h-5" />
+                    <span className="text-sm font-medium">Apple</span>
+                  </motion.button>
+                </motion.div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-sm text-gray-500">or continue with email</span>
+                  <div className="flex-1 h-px bg-white/10" />
+                </div>
+
+                <motion.form
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  onSubmit={postSignUp}
+                  className="space-y-4"
+                >
+                  {/* Full Name */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-300">Full Name</label>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
+                      <input
+                        type="text"
+                        name="fullName"
+                        placeholder="Enter your full name"
+                        value={signUpData.fullName}
+                        onChange={setLoginVal}
+                        required
+                        autoComplete="name"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 outline-none focus:border-blue-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                      />
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
 
-            <input
-              required
-              autoComplete="off"
-              name="phone"
-              value={signUpData.phone}
-              onChange={setLoginVal}
-              placeholder="Phone Number"
-              className="w-[75%] px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
-              type="number"
-            />
-          </div>
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-300">Email</label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        value={signUpData.email}
+                        onChange={setLoginVal}
+                        required
+                        autoComplete="email"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 outline-none focus:border-blue-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                      />
+                    </div>
+                  </div>
 
-          {/* <input
-            required
-            autoComplete="off"
-            name="password"
-            value={signUpData.password}
-            onChange={setLoginVal}
-            placeholder="Password"
-            className="w-[85%] mb-5 px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
-            type="password"
-          /> */}
+                  {/* Phone */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-300">Phone Number</label>
+                    <div className="flex gap-2">
+                      {/* Country Code Dropdown */}
+                      <div className="relative" ref={dropdownRef}>
+                        <button
+                          type="button"
+                          onClick={() => setIsOpen(!isOpen)}
+                          className="flex items-center gap-1 px-3 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all min-w-[90px]"
+                        >
+                          <span className="text-sm font-medium">{selectedCode.code}</span>
+                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                        </button>
 
-         <div className="w-[85%] relative mb-5">
-  <input
-    type={showPassword ? "text" : "password"}
-    name="password"
-    required
-    placeholder="Password"
-    value={signUpData.password}
-    onChange={setLoginVal}
-    autoComplete="off"
-    className="w-full rounded-xl bg-[#191D24] text-white px-4 py-3 outline-none text-sm "
-  />
+                        <AnimatePresence>
+                          {isOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute z-50 top-full left-0 mt-2 w-64 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+                            >
+                              <div className="p-2">
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search country..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-gray-500 outline-none focus:border-blue-500/50"
+                                  />
+                                </div>
+                              </div>
+                              <div className="max-h-48 overflow-y-auto scrollbar-sleek">
+                                {filteredOptions.map((country, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => handleSelect(country)}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 transition-colors"
+                                  >
+                                    <span className="font-medium text-white">{country.code}</span>
+                                    <span className="text-gray-400">{country.country}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
 
-  <FontAwesomeIcon
-    icon={showPassword ? faEyeSlash : faEye}
-    onClick={() => setShowPassword(!showPassword)}
-    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
-  />
-</div>
+                      {/* Phone Input */}
+                      <div className="relative group flex-1">
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
+                        <input
+                          type="tel"
+                          name="phone"
+                          placeholder="Phone number"
+                          value={signUpData.phone}
+                          onChange={setLoginVal}
+                          required
+                          autoComplete="tel"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 outline-none focus:border-blue-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-         <div className="w-[85%] relative">
-          <input
-            required
-            autoComplete="off"
-            name="cpassword"
-            value={signUpData.cpassword}
-            onChange={setLoginVal}
-            placeholder="Confirm your Password"
-            className="w-full px-3 py-2 rounded-[12px] bg-[#191D24] text-white outline-none border-none"
-            type="password"
-          />
-            <FontAwesomeIcon
-    icon={showConPassword ? faEyeSlash : faEye}
-    onClick={() => setShowConPassword(!showConPassword)}
-    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
-  />
-          </div>
+                  {/* Password */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-300">Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        placeholder="Create a password"
+                        value={signUpData.password}
+                        onChange={setLoginVal}
+                        required
+                        autoComplete="new-password"
+                        className="w-full pl-12 pr-12 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 outline-none focus:border-blue-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                      >
+                        <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
 
-          <p className="text-red-600 relative top-3 font-sans">{error}</p>
+                  {/* Confirm Password */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-300">Confirm Password</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
+                      <input
+                        type={showConPassword ? "text" : "password"}
+                        name="cpassword"
+                        placeholder="Confirm your password"
+                        value={signUpData.cpassword}
+                        onChange={setLoginVal}
+                        required
+                        autoComplete="new-password"
+                        className="w-full pl-12 pr-12 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-500 outline-none focus:border-blue-500/50 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConPassword(!showConPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                      >
+                        <FontAwesomeIcon icon={showConPassword ? faEyeSlash : faEye} className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
 
-          <button
-            type="submit"
-            className="w-[90%] mt-5 px-4 py-2 rounded-[12px] bg-[#DDDDDD] text-[#111] font-medium"
-          >
-            Sign Up
-          </button>
-        </form>
+                  {/* Error Message */}
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
 
-        <p className="mt-5 text-sm text-slate-300">
-          Already have an account?{" "}
-          <Link href="/login" className="text-sky-600 underline">
-            Log In
-          </Link>
-        </p>
+                  {/* Submit Button */}
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="relative w-full overflow-hidden bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/25 mt-2"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        Create Account
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </motion.button>
+                </motion.form>
 
-        <p className="mt-12 text-xs text-slate-400">
-          Charts are powered by{" "}
-          <a
-            className="text-[rgb(52,117,171)] no-underline"
-            href="https://www.tradingview.com/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            TradingView
-          </a>
-        </p>
+                {/* Sign In Link */}
+                <p className="text-center text-sm text-gray-400 mt-6">
+                  Already have an account?{" "}
+                  <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                    Sign in
+                  </Link>
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Footer */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="text-center text-xs text-gray-600 mt-6"
+            >
+              By creating an account, you agree to our{" "}
+              <Link href="/terms" className="underline hover:text-gray-400 transition-colors">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="underline hover:text-gray-400 transition-colors">
+                Privacy Policy
+              </Link>
+            </motion.p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
