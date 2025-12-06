@@ -28,6 +28,31 @@ const nextConfig: NextConfig = {
         hostname: "*.s3.*.amazonaws.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "fundingpips.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "the5ers.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "fundednext.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "ftmo.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "alphacapitalgroup.uk",
+        pathname: "/**",
+      },
     ],
   },
 

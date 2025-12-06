@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { ExternalLink, Copy, Check, Sparkles, Award, Zap } from "lucide-react"
+import Image from "next/image"
+import { ExternalLink, Copy, Check, Sparkles, Award } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PropFirm {
   name: string
-  logo: string
+  logoUrl: string
+  logoFallback: string
   startingPrice: number
   url: string
   highlight?: string
@@ -15,37 +17,42 @@ interface PropFirm {
 const PROP_FIRMS: PropFirm[] = [
   {
     name: "Funding Pips",
-    logo: "🎯",
+    logoUrl: "https://fundingpips.com/wp-content/uploads/2023/03/cropped-Funding-Pips-Fav-icon-192x192.png",
+    logoFallback: "FP",
     startingPrice: 59,
     url: "https://fundingpips.com",
     highlight: "Popular"
   },
   {
     name: "The 5%ers",
-    logo: "🏆",
+    logoUrl: "https://the5ers.com/wp-content/uploads/2021/06/cropped-fav-192x192.png",
+    logoFallback: "5%",
     startingPrice: 95,
     url: "https://the5ers.com",
     highlight: "Low Risk"
   },
   {
     name: "Funded Next",
-    logo: "⚡",
+    logoUrl: "https://fundednext.com/wp-content/uploads/2022/06/cropped-FN-Favicon-192x192.png",
+    logoFallback: "FN",
     startingPrice: 32,
     url: "https://fundednext.com",
     highlight: "Best Value"
   },
   {
     name: "FTMO",
-    logo: "💎",
+    logoUrl: "https://ftmo.com/wp-content/uploads/2020/02/cropped-ftmo-fav-192x192.png",
+    logoFallback: "FT",
     startingPrice: 155,
     url: "https://ftmo.com",
     highlight: "Top Rated"
   },
   {
-    name: "Alpha Capitals",
-    logo: "🚀",
+    name: "Alpha Capital",
+    logoUrl: "https://alphacapitalgroup.uk/wp-content/uploads/2023/05/cropped-LOGO-FAV-ICON-192x192.png",
+    logoFallback: "AC",
     startingPrice: 47,
-    url: "https://alphacapitals.com"
+    url: "https://alphacapitalgroup.uk"
   }
 ]
 
@@ -53,6 +60,8 @@ const COUPON_CODE = "projournx"
 const DISCOUNT = 15
 
 function PropFirmCard({ firm }: { firm: PropFirm }) {
+  const [imgError, setImgError] = useState(false)
+  
   return (
     <div className={cn(
       "relative flex items-center gap-3 p-3 rounded-xl",
@@ -66,8 +75,22 @@ function PropFirmCard({ firm }: { firm: PropFirm }) {
         </div>
       )}
       
-      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10 border border-amber-500/20 flex items-center justify-center text-xl flex-shrink-0">
-        {firm.logo}
+      <div className="w-10 h-10 rounded-lg bg-white dark:bg-white/10 border border-gray-200 dark:border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+        {!imgError ? (
+          <Image
+            src={firm.logoUrl}
+            alt={`${firm.name} logo`}
+            width={32}
+            height={32}
+            className="object-contain"
+            onError={() => setImgError(true)}
+            unoptimized
+          />
+        ) : (
+          <span className="text-xs font-bold text-gray-600 dark:text-white/70">
+            {firm.logoFallback}
+          </span>
+        )}
       </div>
       
       <div className="flex-1 min-w-0">
