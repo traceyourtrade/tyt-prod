@@ -463,38 +463,43 @@ const DailyJournal = () => {
       </div>
 
       {/* Left Panel - Trade List */}
-      <div className={`w-full md:w-[300px] border border-border flex-col bg-card shrink-0 md:rounded-2xl md:m-3 md:mr-0 pt-14 md:pt-0 ${mobileView === "list" ? "flex" : "hidden md:flex"}`}>
-        <div className="p-5 border-b border-border space-y-4">
+      <div className={`w-full md:w-[300px] border border-border/40 flex-col bg-gradient-to-b from-card via-card to-card/95 shrink-0 md:rounded-2xl md:m-3 md:mr-0 pt-14 md:pt-0 backdrop-blur-xl shadow-2xl shadow-black/10 ${mobileView === "list" ? "flex" : "hidden md:flex"}`}>
+        <div className="p-5 border-b border-border/30 space-y-4 bg-gradient-to-b from-muted/5 to-transparent">
           <div className="hidden md:flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary" />
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+              <BookOpen className="w-5 h-5 text-primary relative z-10" />
             </div>
-            <h1 className="text-lg font-semibold text-foreground tracking-tight">Journal</h1>
+            <div>
+              <h1 className="text-lg font-bold text-foreground tracking-tight">Journal</h1>
+              <p className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider">Trade entries</p>
+            </div>
           </div>
 
-          {/* Search */}
+          {/* Search - Premium Glass Style */}
           <div className="relative group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-0 group-focus-within:opacity-100 blur-xl transition-all duration-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 group-focus-within:text-primary transition-colors duration-300" />
             <input
               type="text"
               placeholder="Search trades..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200"
+              className="w-full pl-10 pr-4 py-3 bg-muted/20 backdrop-blur-sm border border-border/40 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 focus:bg-muted/30 transition-all duration-300 shadow-inner shadow-black/5"
             />
           </div>
 
-          {/* Filter */}
+          {/* Filter - Premium Dropdown */}
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="w-full flex items-center justify-between px-4 py-2.5 bg-background/50 border border-border rounded-2xl text-sm text-foreground hover:bg-muted/50 hover:border-border transition-all duration-200"
+              className="w-full flex items-center justify-between px-4 py-3 bg-muted/20 backdrop-blur-sm border border-border/40 rounded-xl text-sm text-foreground hover:bg-muted/30 hover:border-border/60 transition-all duration-300 shadow-inner shadow-black/5"
             >
               <span className="flex items-center gap-2.5">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                {filter === "all" ? "All Trades" : filter === "winners" ? "Winners" : "Losers"}
+                <Filter className="w-4 h-4 text-muted-foreground/60" />
+                <span className="font-medium">{filter === "all" ? "All Trades" : filter === "winners" ? "Winners" : "Losers"}</span>
               </span>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isFilterOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-4 h-4 text-muted-foreground/60 transition-transform duration-300 ${isFilterOpen ? "rotate-180" : ""}`} />
             </button>
             <AnimatePresence>
               {isFilterOpen && (
@@ -502,13 +507,13 @@ const DailyJournal = () => {
                   initial={{ opacity: 0, y: -8, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-50"
+                  transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl shadow-black/30 overflow-hidden z-50"
                 >
                   {[
-                    { value: "all", label: "All Trades", icon: null },
-                    { value: "winners", label: "Winners", icon: TrendingUp },
-                    { value: "losers", label: "Losers", icon: TrendingDown },
+                    { value: "all", label: "All Trades", icon: null, color: "" },
+                    { value: "winners", label: "Winners", icon: TrendingUp, color: "text-profit" },
+                    { value: "losers", label: "Losers", icon: TrendingDown, color: "text-loss" },
                   ].map((opt) => {
                     const Icon = opt.icon;
                     return (
@@ -518,7 +523,7 @@ const DailyJournal = () => {
                           setFilter(opt.value as typeof filter);
                           setIsFilterOpen(false);
                         }}
-                        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-all duration-150 ${filter === opt.value ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted/50"}`}
+                        className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium transition-all duration-200 ${filter === opt.value ? "bg-primary/10 text-primary" : `text-foreground hover:bg-muted/40 ${opt.color}`}`}
                       >
                         {Icon && <Icon className="w-4 h-4" />}
                         {opt.label}
@@ -534,11 +539,16 @@ const DailyJournal = () => {
         {/* Trade List */}
         <div className="flex-1 overflow-y-auto scrollbar-sleek">
           {Object.keys(groupedTrades).length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground text-sm">No trades found</div>
+            <div className="p-8 text-center">
+              <div className="w-12 h-12 rounded-xl bg-muted/30 flex items-center justify-center mx-auto mb-3">
+                <BookOpen className="w-6 h-6 text-muted-foreground/40" />
+              </div>
+              <p className="text-muted-foreground/60 text-sm font-medium">No trades found</p>
+            </div>
           ) : (
             Object.entries(groupedTrades).map(([dateLabel, dateTrades]) => (
               <div key={dateLabel}>
-                <div className="px-5 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 backdrop-blur-sm sticky top-0 z-10">
+                <div className="px-5 py-3 text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.15em] bg-gradient-to-r from-muted/20 via-muted/10 to-transparent backdrop-blur-sm sticky top-0 z-10 border-b border-border/20">
                   {dateLabel}
                 </div>
                 {dateTrades.map((trade, idx) => {
@@ -552,33 +562,43 @@ const DailyJournal = () => {
                     trade.jrData.tags?.length > 0 ||
                     Object.keys(trade.jrData.prompts || {}).some(k => trade.jrData?.prompts?.[k]?.trim())
                   ));
+                  const isProfit = trade.Profit >= 0;
                   return (
                     <motion.button
                       key={tradeKey || `${trade.date}-${idx}`}
                       onClick={() => handleSelectTrade(trade)}
-                      whileHover={{ x: 3, transition: { duration: 0.15 } }}
+                      whileHover={{ x: 4, transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] } }}
                       whileTap={{ scale: 0.98 }}
-                      className={`w-full flex items-center justify-between px-5 py-3.5 border-b border-border/30 transition-all duration-200 ${isSelected ? "bg-primary/8 border-l-[3px] border-l-primary" : "hover:bg-muted/30"}`}
+                      className={`group w-full flex items-center justify-between px-4 py-3.5 mx-1 my-0.5 rounded-xl transition-all duration-300 ${isSelected 
+                        ? `bg-gradient-to-r ${isProfit ? "from-profit/10 via-profit/5 to-transparent border-l-2 border-l-profit" : "from-loss/10 via-loss/5 to-transparent border-l-2 border-l-loss"} shadow-lg shadow-black/5` 
+                        : "hover:bg-muted/20 border-l-2 border-l-transparent"}`}
                     >
-                      <div className="flex items-center gap-3.5">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm ${trade.Profit >= 0 ? "bg-[#4EBF94]/15 text-profit" : "bg-loss/15 text-loss"}`}>
-                          {(trade.Item || trade.symbol || "?").slice(0, 2)}
+                      <div className="flex items-center gap-3">
+                        {/* Symbol Badge with Gradient */}
+                        <div className={`relative w-11 h-11 rounded-xl flex items-center justify-center text-xs font-bold overflow-hidden shadow-lg ${isProfit ? "bg-gradient-to-br from-profit/20 to-profit/5 text-profit shadow-profit/10" : "bg-gradient-to-br from-loss/20 to-loss/5 text-loss shadow-loss/10"}`}>
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+                          <span className="relative z-10 text-[11px] font-extrabold tracking-tight">{(trade.Item || trade.symbol || "?").slice(0, 2)}</span>
                         </div>
                         <div className="text-left">
-                          <div className="text-sm font-semibold text-foreground">{trade.Item || trade.symbol}</div>
-                          <div className="text-xs text-muted-foreground/80 flex items-center gap-1.5 mt-0.5">
+                          <div className="text-sm font-semibold text-foreground group-hover:text-foreground/90 transition-colors">{trade.Item || trade.symbol}</div>
+                          <div className="text-[11px] text-muted-foreground/50 flex items-center gap-1.5 mt-0.5 font-medium">
                             <Clock className="w-3 h-3" />
                             {formatTime(trade.EntryTime || trade.time)}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         {isJournaled && (
-                          <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center" title="Journaled">
-                            <CheckCircle2 className="w-3 h-3 text-primary" />
-                          </div>
+                          <motion.div 
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg shadow-primary/10" 
+                            title="Journaled"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                          </motion.div>
                         )}
-                        <div className={`text-sm font-bold tracking-tight ${trade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                        <div className={`px-2.5 py-1 rounded-lg text-sm font-bold tracking-tight ${isProfit ? "text-profit bg-profit/10" : "text-loss bg-loss/10"}`}>
                           {formatCompactCurrency(trade.Profit, currency, exchangeRate)}
                         </div>
                       </div>
@@ -617,82 +637,144 @@ const DailyJournal = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
               className="flex-1 overflow-y-auto scrollbar-sleek p-6 space-y-5"
             >
-              {/* Trade Header */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                <div className="flex items-start justify-between">
+              {/* Trade Header - Premium Glass Card */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+                className={`relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border rounded-2xl p-6 shadow-xl shadow-black/5 ${selectedTrade.Profit >= 0 ? "border-profit/20" : "border-loss/20"}`}
+              >
+                {/* Ambient Glow */}
+                <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl opacity-20 ${selectedTrade.Profit >= 0 ? "bg-profit" : "bg-loss"}`} />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                
+                <div className="relative flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold shadow-sm ${selectedTrade.Profit >= 0 ? "bg-[#4EBF94]/15 text-profit" : "bg-loss/15 text-loss"}`}>
-                      {(selectedTrade.Item || selectedTrade.symbol || "?").slice(0, 2)}
+                    {/* Symbol Badge - Premium Gradient */}
+                    <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden shadow-2xl ${selectedTrade.Profit >= 0 ? "bg-gradient-to-br from-profit/30 via-profit/20 to-profit/5 shadow-profit/20" : "bg-gradient-to-br from-loss/30 via-loss/20 to-loss/5 shadow-loss/20"}`}>
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+                      <span className={`relative z-10 text-lg font-black tracking-tight ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                        {(selectedTrade.Item || selectedTrade.symbol || "?").slice(0, 2)}
+                      </span>
                     </div>
                     <div>
-                      <div className="flex items-center gap-2.5">
-                        <h2 className="text-xl font-bold text-foreground tracking-tight">{selectedTrade.Item || selectedTrade.symbol}</h2>
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${(selectedTrade.Type || selectedTrade.side) === "Long" ? "bg-[#4EBF94]/15 text-profit" : "bg-loss/15 text-loss"}`}>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold text-foreground tracking-tight">{selectedTrade.Item || selectedTrade.symbol}</h2>
+                        <span className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg ${(selectedTrade.Type || selectedTrade.side) === "Long" 
+                          ? "bg-gradient-to-r from-profit/20 to-profit/10 text-profit shadow-profit/10 border border-profit/20" 
+                          : "bg-gradient-to-r from-loss/20 to-loss/10 text-loss shadow-loss/10 border border-loss/20"}`}>
                           {selectedTrade.Type || selectedTrade.side}
                         </span>
                       </div>
-                      <div className="text-sm text-muted-foreground/80 mt-1.5 flex items-center gap-2">
-                        <span>{new Date(selectedTrade.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
-                        <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-                        <span>{formatTime(selectedTrade.EntryTime || selectedTrade.time)}</span>
+                      <div className="text-sm text-muted-foreground/70 mt-2 flex items-center gap-2.5 font-medium">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(selectedTrade.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          {formatTime(selectedTrade.EntryTime || selectedTrade.time)}
+                        </span>
                         {selectedTrade.strategy && (
                           <>
-                            <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-                            <span className="text-primary/80">{selectedTrade.strategy}</span>
+                            <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                            <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-semibold">{selectedTrade.strategy}</span>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className={`text-2xl font-bold tracking-tight ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                    {formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
+                  {/* P&L Display - Premium */}
+                  <div className={`flex flex-col items-end`}>
+                    <div className={`text-3xl font-black tracking-tight ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                      {formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
+                    </div>
+                    <div className={`flex items-center gap-1.5 mt-1 text-xs font-medium ${selectedTrade.Profit >= 0 ? "text-profit/70" : "text-loss/70"}`}>
+                      {selectedTrade.Profit >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                      {selectedTrade.Profit >= 0 ? "Winning Trade" : "Losing Trade"}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Screenshots */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center">
+              {/* Screenshots - Premium Glass Card */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-2xl p-6 shadow-xl shadow-black/5"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                <h3 className="relative text-sm font-bold text-foreground mb-5 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center shadow-lg shadow-black/5">
                     <ImageIcon className="w-4 h-4 text-muted-foreground" />
                   </div>
-                  Screenshots
+                  <span>Screenshots</span>
+                  <span className="ml-auto text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider">Entry & Exit</span>
                 </h3>
-                <div className="grid grid-cols-2 gap-5">
+                <div className="relative grid grid-cols-2 gap-5">
                   {["before", "after"].map((type) => {
                     const url = type === "before" ? selectedTrade.beforeURL : selectedTrade.afterURL;
                     return (
-                      <div key={type} className="relative">
-                        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2.5">{type} Trade</div>
+                      <div key={type} className="relative group">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${type === "before" ? "text-primary/70" : "text-profit/70"}`}>
+                            {type === "before" ? "Before Trade" : "After Trade"}
+                          </span>
+                          <span className={`w-2 h-2 rounded-full ${type === "before" ? "bg-primary/50" : "bg-profit/50"} animate-pulse`} />
+                        </div>
                         {url ? (
-                          <div
+                          <motion.div
+                            whileHover={{ scale: 1.02, y: -2 }}
                             onClick={() => setLightboxImage(url)}
-                            className="relative aspect-video rounded-xl overflow-hidden border border-border/50 cursor-pointer group shadow-sm"
+                            className="relative aspect-video rounded-xl overflow-hidden border border-border/30 cursor-pointer shadow-xl shadow-black/10 bg-muted/10"
                           >
-                            <img src={url} alt={`${type} screenshot`} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center backdrop-blur-[2px]">
-                              <span className="text-white text-sm font-medium">Click to view</span>
+                            <img src={url} alt={`${type} screenshot`} className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center pb-4 backdrop-blur-[2px]">
+                              <span className="flex items-center gap-2 text-white text-sm font-semibold">
+                                <ImageIcon className="w-4 h-4" />
+                                View Full
+                              </span>
                             </div>
-                          </div>
+                            {/* Shine Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                          </motion.div>
                         ) : (
-                          <label className="flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer bg-muted/20">
-                            <Upload className="w-6 h-6 text-muted-foreground/70 mb-2" />
-                            <span className="text-xs text-muted-foreground/70 font-medium">Upload {type}</span>
+                          <motion.label 
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            className="flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed border-border/30 hover:border-primary/40 bg-gradient-to-br from-muted/10 to-muted/5 cursor-pointer transition-all duration-300 group shadow-inner shadow-black/5"
+                          >
+                            <div className="w-12 h-12 rounded-xl bg-muted/30 group-hover:bg-primary/10 flex items-center justify-center mb-2 transition-all duration-300 shadow-lg shadow-black/5">
+                              <Upload className="w-5 h-5 text-muted-foreground/50 group-hover:text-primary transition-colors duration-300" />
+                            </div>
+                            <span className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground font-semibold transition-colors duration-300">
+                              Upload {type}
+                            </span>
                             <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, type as "before" | "after")} className="hidden" />
-                          </label>
+                          </motion.label>
                         )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Template Tabs */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide">
+              {/* Template Tabs - Premium Pill Navigation */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.15 }}
+                className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-2xl p-6 shadow-xl shadow-black/5"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                
+                {/* Pill Tab Navigation */}
+                <div className="relative flex items-center gap-2 overflow-x-auto pb-5 scrollbar-hide">
+                  <div className="absolute bottom-5 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/50 to-transparent" />
                   {templates.map((template, idx) => {
                     const Icon = getTemplateIcon(template.icon);
                     const isActive = idx === selectedTemplateIdx;
@@ -700,256 +782,404 @@ const DailyJournal = () => {
                       <motion.button
                         key={template.name}
                         onClick={() => setSelectedTemplateIdx(idx)}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${isActive ? `${getTemplateColor(template.color)} shadow-sm` : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
+                        whileHover={{ scale: 1.03, y: -1 }}
+                        whileTap={{ scale: 0.97 }}
+                        className={`relative flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
+                          isActive 
+                            ? `${getTemplateColor(template.color)} shadow-lg ring-1 ring-inset ring-white/10` 
+                            : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/30"
+                        }`}
                       >
                         <Icon className="w-4 h-4" />
                         {template.name}
+                        {isActive && (
+                          <motion.div 
+                            layoutId="activeTab"
+                            className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"
+                          />
+                        )}
                       </motion.button>
                     );
                   })}
                 </div>
 
-                {/* Prompts */}
-                <div className="space-y-5 mt-5">
-                  {templates[selectedTemplateIdx]?.prompts.map((prompt) => (
-                    <div key={prompt.id}>
-                      <label className="block text-sm font-semibold text-foreground mb-2.5">{prompt.label}</label>
-                      {prompt.type === "textarea" ? (
-                        <textarea
-                          placeholder={prompt.placeholder}
-                          value={journalData.prompts?.[prompt.id] || ""}
-                          onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                          rows={3}
-                          className="w-full px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 resize-none transition-all duration-200"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          placeholder={prompt.placeholder}
-                          value={journalData.prompts?.[prompt.id] || ""}
-                          onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                          className="w-full px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200"
-                        />
-                      )}
-                    </div>
-                  ))}
+                {/* Prompts - Premium Floating Label Inputs */}
+                <div className="relative space-y-6">
+                  {templates[selectedTemplateIdx]?.prompts.map((prompt, idx) => {
+                    const hasValue = Boolean(journalData.prompts?.[prompt.id]);
+                    return (
+                      <motion.div 
+                        key={prompt.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: idx * 0.05 }}
+                        className="group relative"
+                      >
+                        {/* Ambient Glow Effect */}
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-0 group-focus-within:opacity-100 blur-2xl transition-all duration-500 pointer-events-none" />
+                        
+                        {prompt.type === "textarea" ? (
+                          <div className="relative">
+                            <textarea
+                              id={`prompt-${prompt.id}`}
+                              placeholder=" "
+                              value={journalData.prompts?.[prompt.id] || ""}
+                              onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
+                              rows={3}
+                              className="peer relative w-full px-4 pt-7 pb-3 bg-muted/10 backdrop-blur-sm border border-border/30 rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 focus:bg-muted/20 resize-none transition-all duration-300 shadow-inner shadow-black/5"
+                            />
+                            {/* Floating Label */}
+                            <label 
+                              htmlFor={`prompt-${prompt.id}`}
+                              className={`absolute left-4 transition-all duration-300 pointer-events-none font-semibold
+                                ${hasValue 
+                                  ? "top-2 text-[10px] text-primary uppercase tracking-wider" 
+                                  : "top-5 text-sm text-muted-foreground/50 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-primary peer-focus:uppercase peer-focus:tracking-wider"
+                                }`}
+                            >
+                              {prompt.label}
+                            </label>
+                            {/* Bottom hint */}
+                            <div className="absolute bottom-2 right-3 text-[10px] text-muted-foreground/30 font-medium opacity-0 group-focus-within:opacity-100 transition-opacity duration-300">
+                              {prompt.placeholder}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <input
+                              id={`prompt-${prompt.id}`}
+                              type="text"
+                              placeholder=" "
+                              value={journalData.prompts?.[prompt.id] || ""}
+                              onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
+                              className="peer relative w-full px-4 pt-6 pb-2 bg-muted/10 backdrop-blur-sm border border-border/30 rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 focus:bg-muted/20 transition-all duration-300 shadow-inner shadow-black/5"
+                            />
+                            {/* Floating Label */}
+                            <label 
+                              htmlFor={`prompt-${prompt.id}`}
+                              className={`absolute left-4 transition-all duration-300 pointer-events-none font-semibold
+                                ${hasValue 
+                                  ? "top-2 text-[10px] text-primary uppercase tracking-wider" 
+                                  : "top-4 text-sm text-muted-foreground/50 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-primary peer-focus:uppercase peer-focus:tracking-wider"
+                                }`}
+                            >
+                              {prompt.label}
+                            </label>
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Sentiment */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-foreground mb-5">How do you feel about this trade?</h3>
-                <div className="flex gap-4">
+              {/* Sentiment - Premium Mood Selector */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-2xl p-6 shadow-xl shadow-black/5"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                <h3 className="relative text-sm font-bold text-foreground mb-5 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500/20 to-pink-500/5 flex items-center justify-center shadow-lg shadow-pink-500/10">
+                    <Heart className="w-4 h-4 text-pink-500/80" />
+                  </div>
+                  How do you feel about this trade?
+                </h3>
+                <div className="relative flex gap-4">
                   {[
-                    { value: "great", emoji: "😊", label: "Great", color: "border-[#4EBF94] bg-[#4EBF94]/10" },
-                    { value: "okay", emoji: "😐", label: "Okay", color: "border-yellow-400 bg-yellow-400/10" },
-                    { value: "poor", emoji: "😞", label: "Poor", color: "border-loss bg-loss/10" },
-                  ].map((opt) => (
-                    <motion.button
-                      key={opt.value}
-                      onClick={() => handleSentimentChange(opt.value as "great" | "okay" | "poor")}
-                      whileHover={{ scale: 1.03, y: -2 }}
-                      whileTap={{ scale: 0.97 }}
-                      className={`flex-1 flex flex-col items-center gap-2.5 py-5 rounded-xl border-2 transition-all duration-200 ${journalData.sentiment === opt.value ? opt.color : "border-border/50 hover:border-muted-foreground/30 bg-muted/20"}`}
-                    >
-                      <span className="text-3xl">{opt.emoji}</span>
-                      <span className="text-xs font-semibold text-foreground">{opt.label}</span>
-                    </motion.button>
-                  ))}
+                    { value: "great", emoji: "😊", label: "Great", color: "border-profit bg-gradient-to-br from-profit/15 to-profit/5 shadow-profit/20", activeGlow: "shadow-profit/30" },
+                    { value: "okay", emoji: "😐", label: "Okay", color: "border-yellow-400 bg-gradient-to-br from-yellow-400/15 to-yellow-400/5 shadow-yellow-400/20", activeGlow: "shadow-yellow-400/30" },
+                    { value: "poor", emoji: "😞", label: "Poor", color: "border-loss bg-gradient-to-br from-loss/15 to-loss/5 shadow-loss/20", activeGlow: "shadow-loss/30" },
+                  ].map((opt) => {
+                    const isActive = journalData.sentiment === opt.value;
+                    return (
+                      <motion.button
+                        key={opt.value}
+                        onClick={() => handleSentimentChange(opt.value as "great" | "okay" | "poor")}
+                        whileHover={{ scale: 1.04, y: -3 }}
+                        whileTap={{ scale: 0.96 }}
+                        className={`relative flex-1 flex flex-col items-center gap-3 py-6 rounded-xl border-2 transition-all duration-300 overflow-hidden ${
+                          isActive 
+                            ? `${opt.color} shadow-xl ${opt.activeGlow}` 
+                            : "border-border/30 hover:border-muted-foreground/20 bg-muted/10 hover:bg-muted/20"
+                        }`}
+                      >
+                        {isActive && <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />}
+                        <span className={`text-4xl transition-transform duration-300 ${isActive ? "scale-110" : ""}`}>{opt.emoji}</span>
+                        <span className={`text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${isActive ? "text-foreground" : "text-muted-foreground/70"}`}>
+                          {opt.label}
+                        </span>
+                        {isActive && (
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute top-2 right-2 w-5 h-5 rounded-full bg-white/20 flex items-center justify-center"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                          </motion.div>
+                        )}
+                      </motion.button>
+                    );
+                  })}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Tags */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-foreground mb-4">Tags</h3>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {journalData.tags?.map((tag) => (
-                    <motion.span
-                      key={tag}
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium"
-                    >
-                      {tag}
-                      <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/70 transition-colors">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </motion.span>
-                  ))}
+              {/* Tags - Premium Tag System */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.25 }}
+                className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-2xl p-6 shadow-xl shadow-black/5"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                <h3 className="relative text-sm font-bold text-foreground mb-4 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg shadow-primary/10">
+                    <Target className="w-4 h-4 text-primary" />
+                  </div>
+                  Tags
+                  <span className="ml-auto text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider">
+                    {journalData.tags?.length || 0} selected
+                  </span>
+                </h3>
+                
+                {/* Selected Tags */}
+                <div className="relative flex flex-wrap gap-2 mb-4 min-h-[40px]">
+                  <AnimatePresence>
+                    {journalData.tags?.map((tag) => (
+                      <motion.span
+                        key={tag}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/15 to-primary/5 text-primary rounded-lg text-sm font-semibold border border-primary/20 shadow-lg shadow-primary/10"
+                      >
+                        {tag}
+                        <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/60 transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </motion.span>
+                    ))}
+                  </AnimatePresence>
+                  {(!journalData.tags || journalData.tags.length === 0) && (
+                    <span className="text-xs text-muted-foreground/40 font-medium">No tags added yet</span>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add a tag..."
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddTag(tagInput)}
-                    className="flex-1 px-4 py-2.5 bg-background/50 border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200"
-                  />
+                
+                {/* Tag Input */}
+                <div className="relative flex gap-2 mb-4">
+                  <div className="relative flex-1 group">
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-focus-within:opacity-100 blur-xl transition-all duration-500 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Add a custom tag..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddTag(tagInput)}
+                      className="relative w-full px-4 py-3 bg-muted/15 backdrop-blur-sm border border-border/30 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-300 shadow-inner shadow-black/5"
+                    />
+                  </div>
                   <motion.button
                     onClick={() => handleAddTag(tagInput)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2.5 bg-muted/50 text-foreground rounded-xl text-sm font-medium hover:bg-muted transition-all duration-200"
+                    className="px-4 py-3 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl font-semibold hover:shadow-lg hover:shadow-primary/20 transition-all duration-300"
                   >
                     <Plus className="w-4 h-4" />
                   </motion.button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {commonTags.filter((t) => !journalData.tags?.includes(t)).slice(0, 6).map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => handleAddTag(tag)}
-                      className="px-3 py-1.5 text-xs text-muted-foreground/80 border border-border/50 rounded-full hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all duration-200"
-                    >
-                      + {tag}
-                    </button>
-                  ))}
+                
+                {/* Suggested Tags */}
+                <div className="relative">
+                  <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-wider mb-3">Suggestions</div>
+                  <div className="flex flex-wrap gap-2">
+                    {commonTags.filter((t) => !journalData.tags?.includes(t)).slice(0, 6).map((tag) => (
+                      <motion.button
+                        key={tag}
+                        onClick={() => handleAddTag(tag)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="px-3.5 py-1.5 text-xs text-muted-foreground/70 font-medium border border-border/30 rounded-lg hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all duration-300"
+                      >
+                        + {tag}
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Save Button */}
+              {/* Save Button - Premium CTA */}
               <motion.button
                 onClick={handleSave}
                 disabled={isSaving}
-                whileHover={{ scale: 1.01, y: -1 }}
-                whileTap={{ scale: 0.99 }}
-                className="w-full flex items-center justify-center gap-2.5 px-6 py-4 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-2xl font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 transition-all duration-200 disabled:opacity-50 disabled:shadow-none"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative w-full flex items-center justify-center gap-3 px-6 py-5 bg-gradient-to-r from-primary via-primary to-primary/90 text-primary-foreground rounded-2xl font-bold text-base shadow-2xl shadow-primary/30 hover:shadow-[0_20px_60px_-10px] hover:shadow-primary/40 transition-all duration-300 disabled:opacity-50 disabled:shadow-none overflow-hidden group"
               >
-                <Save className="w-5 h-5" />
-                {isSaving ? "Saving..." : "Save Journal Entry"}
+                {/* Shine Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+                <Save className="relative w-5 h-5" />
+                <span className="relative">{isSaving ? "Saving..." : "Save Journal Entry"}</span>
+                {isSaving && (
+                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                )}
               </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Right Panel - Stats Sidebar - Hidden on mobile */}
+      {/* Right Panel - Stats Sidebar - Premium Design */}
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 340, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="hidden lg:block border border-border bg-card shrink-0 overflow-hidden rounded-2xl m-3 ml-0"
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+            className="hidden lg:block border border-border/40 bg-gradient-to-b from-card via-card to-card/95 shrink-0 overflow-hidden rounded-2xl m-3 ml-0 backdrop-blur-xl shadow-2xl shadow-black/10"
           >
             <div className="w-[340px] h-full overflow-y-auto scrollbar-sleek p-6 space-y-5">
-              {/* Toggle */}
+              {/* Toggle Header */}
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground tracking-tight">Statistics</h3>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-muted/50 transition-all duration-200">
-                  <PanelRightClose className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-lg shadow-primary/10">
+                    <BarChart3 className="w-4 h-4 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground tracking-tight">Statistics</h3>
+                </div>
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-muted/30 transition-all duration-200">
+                  <PanelRightClose className="w-4 h-4 text-muted-foreground/60" />
                 </button>
               </div>
 
-              {/* Period P&L */}
-              <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-                <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold mb-2">Total P&L</div>
-                <div className={`text-3xl font-bold tracking-tight ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
-                  {formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
-                </div>
-                <div className="flex items-center gap-5 mt-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-profit/15 flex items-center justify-center">
-                      <Trophy className="w-4 h-4 text-profit" />
-                    </div>
-                    <span className="text-foreground font-medium">{stats.winners} wins</span>
+              {/* Period P&L - Premium Card */}
+              <div className={`relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border rounded-xl p-5 shadow-xl shadow-black/5 ${stats.totalPnL >= 0 ? "border-profit/20" : "border-loss/20"}`}>
+                {/* Ambient Glow */}
+                <div className={`absolute -top-10 -right-10 w-24 h-24 rounded-full blur-2xl opacity-30 ${stats.totalPnL >= 0 ? "bg-profit" : "bg-loss"}`} />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                
+                <div className="relative">
+                  <div className="text-[10px] text-muted-foreground/60 uppercase tracking-[0.15em] font-bold mb-2">Total P&L</div>
+                  <div className={`text-4xl font-black tracking-tight ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
+                    {formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-loss/15 flex items-center justify-center">
-                      <Target className="w-4 h-4 text-loss" />
+                  <div className="flex items-center gap-4 mt-5">
+                    <div className="flex items-center gap-2.5 px-3 py-2 bg-profit/10 rounded-lg border border-profit/20">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-profit/30 to-profit/10 flex items-center justify-center shadow-lg shadow-profit/20">
+                        <Trophy className="w-3.5 h-3.5 text-profit" />
+                      </div>
+                      <span className="text-sm font-bold text-profit">{stats.winners} wins</span>
                     </div>
-                    <span className="text-foreground font-medium">{stats.losers} losses</span>
+                    <div className="flex items-center gap-2.5 px-3 py-2 bg-loss/10 rounded-lg border border-loss/20">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-loss/30 to-loss/10 flex items-center justify-center shadow-lg shadow-loss/20">
+                        <Target className="w-3.5 h-3.5 text-loss" />
+                      </div>
+                      <span className="text-sm font-bold text-loss">{stats.losers} losses</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Mini Calendar */}
-              <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
+              {/* Mini Calendar - Premium */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-xl p-5 shadow-xl shadow-black/5">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                <div className="relative flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center shadow-lg shadow-black/5">
+                      <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                     </div>
                     Calendar
                   </h4>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setSelectedMonth((m) => (m === 0 ? (setSelectedYear((y) => y - 1), 11) : m - 1))} className="p-1 rounded hover:bg-muted">
-                      <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                  <div className="flex items-center gap-1 bg-muted/20 rounded-lg p-0.5">
+                    <button onClick={() => setSelectedMonth((m) => (m === 0 ? (setSelectedYear((y) => y - 1), 11) : m - 1))} className="p-1.5 rounded-md hover:bg-muted/40 transition-colors">
+                      <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
                     </button>
-                    <span className="text-xs font-medium text-muted-foreground px-2">
+                    <span className="text-xs font-bold text-foreground px-3 min-w-[50px] text-center">
                       {new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short" })}
                     </span>
-                    <button onClick={() => setSelectedMonth((m) => (m === 11 ? (setSelectedYear((y) => y + 1), 0) : m + 1))} className="p-1 rounded hover:bg-muted">
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    <button onClick={() => setSelectedMonth((m) => (m === 11 ? (setSelectedYear((y) => y + 1), 0) : m + 1))} className="p-1.5 rounded-md hover:bg-muted/40 transition-colors">
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-7 gap-1 mb-2">
+                <div className="relative grid grid-cols-7 gap-1 mb-2">
                   {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                    <div key={i} className="h-6 flex items-center justify-center text-[10px] font-medium text-muted-foreground">{d}</div>
+                    <div key={i} className="h-6 flex items-center justify-center text-[9px] font-bold text-muted-foreground/50 uppercase tracking-wider">{d}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1.5">{renderCalendar()}</div>
-                <div className="flex items-center justify-center gap-5 mt-4 pt-4 border-t border-border/30">
+                <div className="relative grid grid-cols-7 gap-1.5">{renderCalendar()}</div>
+                <div className="relative flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border/20">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-sm bg-profit shadow-sm" />
-                    <span className="text-[11px] text-muted-foreground font-medium">Profit</span>
+                    <span className="w-3 h-3 rounded-sm bg-gradient-to-br from-profit to-profit/70 shadow-lg shadow-profit/30" />
+                    <span className="text-[10px] text-muted-foreground/60 font-semibold">Profit</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-sm bg-loss shadow-sm" />
-                    <span className="text-[11px] text-muted-foreground font-medium">Loss</span>
+                    <span className="w-3 h-3 rounded-sm bg-gradient-to-br from-loss to-loss/70 shadow-lg shadow-loss/30" />
+                    <span className="text-[10px] text-muted-foreground/60 font-semibold">Loss</span>
                   </div>
                 </div>
               </div>
 
-              {/* Quick Stats */}
+              {/* Quick Stats - Premium */}
               <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
-                    <BarChart3 className="w-4 h-4 text-muted-foreground" />
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center shadow-lg shadow-black/5">
+                    <Zap className="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
                   Quick Stats
                 </h4>
-                <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-muted-foreground font-medium">Win Rate</span>
-                    <span className="text-xl font-bold text-foreground">{stats.winRate}%</span>
+                
+                {/* Win Rate - Premium Progress */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-xl p-5 shadow-xl shadow-black/5">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                  <div className="relative flex items-center justify-between mb-4">
+                    <span className="text-xs text-muted-foreground/70 font-semibold uppercase tracking-wider">Win Rate</span>
+                    <span className="text-2xl font-black text-foreground">{stats.winRate}%</span>
                   </div>
-                  <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                  <div className="relative h-3 bg-muted/30 rounded-full overflow-hidden shadow-inner shadow-black/10">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${stats.winRate}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                      className="h-full bg-primary rounded-full"
+                      transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
+                      className="h-full bg-gradient-to-r from-primary via-primary to-primary/80 rounded-full shadow-lg shadow-primary/30"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-full" />
                   </div>
                 </div>
+                
+                {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">Profit Factor</div>
-                    <div className="text-xl font-bold text-foreground">{stats.profitFactor}</div>
+                  <div className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-xl p-4 shadow-xl shadow-black/5">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                    <div className="relative text-[9px] text-muted-foreground/60 uppercase tracking-[0.15em] font-bold mb-2">Profit Factor</div>
+                    <div className="relative text-2xl font-black text-foreground">{stats.profitFactor}</div>
                   </div>
-                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">Total Trades</div>
-                    <div className="text-xl font-bold text-foreground">{stats.totalTrades}</div>
+                  <div className="relative overflow-hidden bg-gradient-to-br from-card via-card to-card/90 border border-border/40 rounded-xl p-4 shadow-xl shadow-black/5">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+                    <div className="relative text-[9px] text-muted-foreground/60 uppercase tracking-[0.15em] font-bold mb-2">Total Trades</div>
+                    <div className="relative text-2xl font-black text-foreground">{stats.totalTrades}</div>
                   </div>
-                  <div className="bg-card border border-profit/30 rounded-xl p-4 shadow-sm">
-                    <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="relative overflow-hidden bg-gradient-to-br from-profit/5 to-profit/[0.02] border border-profit/20 rounded-xl p-4 shadow-xl shadow-profit/5">
+                    <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full blur-xl opacity-40 bg-profit" />
+                    <div className="relative flex items-center gap-1.5 mb-2">
                       <TrendingUp className="w-3.5 h-3.5 text-profit" />
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Avg Win</span>
+                      <span className="text-[9px] text-profit/70 uppercase tracking-[0.12em] font-bold">Avg Win</span>
                     </div>
-                    <div className="text-xl font-bold text-profit">{formatCompactCurrency(stats.avgWin, currency, exchangeRate)}</div>
+                    <div className="relative text-xl font-black text-profit">{formatCompactCurrency(stats.avgWin, currency, exchangeRate)}</div>
                   </div>
-                  <div className="bg-card border border-loss/30 rounded-xl p-4 shadow-sm">
-                    <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="relative overflow-hidden bg-gradient-to-br from-loss/5 to-loss/[0.02] border border-loss/20 rounded-xl p-4 shadow-xl shadow-loss/5">
+                    <div className="absolute -top-4 -right-4 w-12 h-12 rounded-full blur-xl opacity-40 bg-loss" />
+                    <div className="relative flex items-center gap-1.5 mb-2">
                       <TrendingDown className="w-3.5 h-3.5 text-loss" />
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Avg Loss</span>
+                      <span className="text-[9px] text-loss/70 uppercase tracking-[0.12em] font-bold">Avg Loss</span>
                     </div>
-                    <div className="text-xl font-bold text-loss">{formatCompactCurrency(stats.avgLoss, currency, exchangeRate)}</div>
+                    <div className="relative text-xl font-black text-loss">{formatCompactCurrency(stats.avgLoss, currency, exchangeRate)}</div>
                   </div>
                 </div>
               </div>
