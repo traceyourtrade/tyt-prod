@@ -10,7 +10,7 @@ import { Inter } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGoogle, faApple } from "@fortawesome/free-brands-svg-icons";
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { User, Mail, Phone, Lock, ArrowRight, ChevronDown, Search, Sparkles, Shield, Zap, Target } from "lucide-react";
 
@@ -409,34 +409,20 @@ const SignUp: React.FC = () => {
                   </motion.p>
                 </div>
 
-                {/* Social Login Buttons */}
-                <motion.div
+                {/* Social Login Button */}
+                <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="grid grid-cols-2 gap-3 mb-6"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => signUpWithGoogle()}
+                  type="button"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all mb-6"
                 >
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => signUpWithGoogle()}
-                    type="button"
-                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all"
-                  >
-                    <FontAwesomeIcon icon={faGoogle} className="w-5 h-5" />
-                    <span className="text-sm font-medium">Google</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all"
-                  >
-                    <FontAwesomeIcon icon={faApple} className="w-5 h-5" />
-                    <span className="text-sm font-medium">Apple</span>
-                  </motion.button>
-                </motion.div>
+                  <FontAwesomeIcon icon={faGoogle} className="w-5 h-5" />
+                  <span className="text-sm font-medium">Continue with Google</span>
+                </motion.button>
 
                 {/* Divider */}
                 <div className="flex items-center gap-4 mb-6">

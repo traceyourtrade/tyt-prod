@@ -8,7 +8,7 @@ import { Inter } from "next/font/google";
 import { motion } from "framer-motion";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGoogle, faApple } from "@fortawesome/free-brands-svg-icons";
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { Mail, Lock, ArrowRight, TrendingUp, BarChart3, PieChart, Sparkles } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -390,27 +390,16 @@ export default function LoginPage() {
                   <div className="flex-1 h-px bg-white/10" />
                 </div>
 
-                {/* Social Login Buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={logInWithGoogle}
-                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all"
-                  >
-                    <FontAwesomeIcon icon={faGoogle} className="w-5 h-5" />
-                    <span className="text-sm font-medium">Google</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all"
-                  >
-                    <FontAwesomeIcon icon={faApple} className="w-5 h-5" />
-                    <span className="text-sm font-medium">Apple</span>
-                  </motion.button>
-                </div>
+                {/* Social Login Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={logInWithGoogle}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all"
+                >
+                  <FontAwesomeIcon icon={faGoogle} className="w-5 h-5" />
+                  <span className="text-sm font-medium">Continue with Google</span>
+                </motion.button>
 
                 {/* Sign Up Link */}
                 <p className="text-center text-sm text-gray-400 mt-8">
