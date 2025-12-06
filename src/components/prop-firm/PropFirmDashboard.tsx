@@ -2,31 +2,54 @@
 
 import { useMemo, useEffect, useState } from "react"
 import usePropFirmStore from "@/store/propFirmStore"
-import useAccountDetails from "@/store/accountdetails"
-import PropFirmSettings from "./PropFirmSettings"
-import PropFirmSummaryCard from "./PropFirmSummaryCard"
-import PropFirmProgressBars from "./PropFirmProgressBars"
+import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts"
+import PropFirmHeroCard from "./PropFirmHeroCard"
+import PropFirmQuickStats from "./PropFirmQuickStats"
+import PropFirmCompactSettings from "./PropFirmCompactSettings"
+import PropFirmAnalytics from "./PropFirmAnalytics"
 import PropFirmBreachBanner from "./PropFirmBreachBanner"
+import { AlertTriangle, Clock } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+interface Trade {
+  date: string
+  Profit: number
+  [key: string]: unknown
+}
 
 export default function PropFirmDashboard() {
   const { settings, peakEquity, challengeStatus, updatePeakEquity, setChallengeStatus } = usePropFirmStore()
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const [dailyBreached, setDailyBreached] = useState(false)
 
   const calculations = useMemo(() => {
     let totalPnL = 0
     const today = new Date().toISOString().split('T')[0]
     let todayPnL = 0
+    let totalWins = 0
+    let totalLosses = 0
+    let winCount = 0
+    let lossCount = 0
+    let totalTrades = 0
     
     selectedAccounts.forEach(account => {
       if (account.tradeData && Array.isArray(account.tradeData)) {
         const challengeStart = settings.challengeStartDate ? new Date(settings.challengeStartDate) : new Date(0)
         
-        account.tradeData.forEach(trade => {
+        account.tradeData.forEach((trade: Trade) => {
           const tradeDate = new Date(trade.date)
           if (tradeDate >= challengeStart) {
             const profit = trade.Profit || 0
             totalPnL += profit
+            totalTrades++
+            
+            if (profit > 0) {
+              totalWins += profit
+              winCount++
+            } else if (profit < 0) {
+              totalLosses += Math.abs(profit)
+              lossCount++
+            }
             
             if (trade.date === today) {
               todayPnL += profit
@@ -56,6 +79,12 @@ export default function PropFirmDashboard() {
       : 0
     const dailyDrawdownBreached = dailyDrawdownValue ? dailyLoss >= dailyDrawdownValue : false
 
+    const winRate = totalTrades > 0 ? (winCount / totalTrades) * 100 : 0
+    const avgWin = winCount > 0 ? totalWins / winCount : 0
+    const avgLoss = lossCount > 0 ? totalLosses / lossCount : 0
+    const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? Infinity : 0
+    const riskRewardRatio = avgLoss > 0 ? avgWin / avgLoss : avgWin > 0 ? Infinity : 0
+
     return {
       currentEquity,
       totalPnL,
@@ -69,6 +98,13 @@ export default function PropFirmDashboard() {
       dailyLoss,
       dailyDrawdownUsedPercent,
       dailyDrawdownBreached,
+      winRate,
+      avgWin,
+      avgLoss,
+      profitFactor,
+      riskRewardRatio,
+      totalTrades,
+      currentProfit,
     }
   }, [selectedAccounts, settings, peakEquity])
 
@@ -105,28 +141,115 @@ export default function PropFirmDashboard() {
         <PropFirmBreachBanner type={dailyBreached ? "daily_drawdown" : "drawdown"} />
       )}
 
-      <PropFirmSummaryCard
+      <PropFirmHeroCard
         status={challengeStatus}
         startingBalance={settings.startingBalance}
         currentEquity={calculations.currentEquity}
-        profitTargetPercent={settings.profitTargetPercent}
-        maxDrawdownPercent={settings.maxDrawdownPercent}
-        dailyDrawdownPercent={settings.dailyDrawdownPercent}
-        todayPnL={calculations.todayPnL}
+        profitProgress={calculations.profitProgress}
+        drawdownProgress={calculations.drawdownUsedPercent}
+        profitTargetValue={calculations.profitTargetValue}
+        maxDrawdownValue={calculations.maxDrawdownValue}
+        currentProfit={calculations.currentProfit}
+        drawdownUsed={calculations.drawdownFromPeak}
         challengeStartDate={settings.challengeStartDate}
       />
 
-      <PropFirmProgressBars
+      {calculations.dailyDrawdownValue && (
+        <div className={cn(
+          "relative overflow-hidden rounded-xl border backdrop-blur-sm p-4",
+          "bg-gradient-to-br",
+          calculations.dailyDrawdownUsedPercent >= 85 
+            ? "from-red-500/10 to-red-600/5 border-red-500/20" 
+            : calculations.dailyDrawdownUsedPercent >= 60 
+              ? "from-amber-500/10 to-amber-600/5 border-amber-500/20"
+              : "from-white/5 to-white/[0.02] border-white/10"
+        )}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                calculations.dailyDrawdownUsedPercent >= 85 
+                  ? "bg-red-500/10 border border-red-500/20"
+                  : calculations.dailyDrawdownUsedPercent >= 60
+                    ? "bg-amber-500/10 border border-amber-500/20"
+                    : "bg-white/5 border border-white/10"
+              )}>
+                <Clock className={cn(
+                  "w-5 h-5",
+                  calculations.dailyDrawdownUsedPercent >= 85 
+                    ? "text-red-400"
+                    : calculations.dailyDrawdownUsedPercent >= 60
+                      ? "text-amber-400"
+                      : "text-white/60"
+                )} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Daily Drawdown</p>
+                <p className="text-xs text-white/40">
+                  Today&apos;s loss: ${calculations.dailyLoss.toLocaleString()} of ${calculations.dailyDrawdownValue.toLocaleString()} limit
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="w-48 h-2 rounded-full bg-white/10 overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    calculations.dailyDrawdownUsedPercent >= 85 
+                      ? "bg-red-500"
+                      : calculations.dailyDrawdownUsedPercent >= 60
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                  )}
+                  style={{ width: `${Math.min(calculations.dailyDrawdownUsedPercent, 100)}%` }}
+                />
+              </div>
+              <span className={cn(
+                "text-lg font-bold tabular-nums",
+                calculations.dailyDrawdownUsedPercent >= 85 
+                  ? "text-red-400"
+                  : calculations.dailyDrawdownUsedPercent >= 60
+                    ? "text-amber-400"
+                    : "text-emerald-400"
+              )}>
+                {calculations.dailyDrawdownUsedPercent.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          
+          {calculations.dailyDrawdownUsedPercent >= 60 && (
+            <div className={cn(
+              "flex items-center gap-2 mt-3 pt-3 border-t text-xs",
+              calculations.dailyDrawdownUsedPercent >= 85 
+                ? "border-red-500/20 text-red-400"
+                : "border-amber-500/20 text-amber-400"
+            )}>
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {calculations.dailyDrawdownUsedPercent >= 85 
+                ? "Critical: Approaching daily drawdown limit!"
+                : "Warning: Daily drawdown exceeds safe zone"
+              }
+            </div>
+          )}
+        </div>
+      )}
+
+      <PropFirmQuickStats
+        netPnL={calculations.totalPnL}
+        winRate={calculations.winRate}
+        profitFactor={calculations.profitFactor}
+        totalTrades={calculations.totalTrades}
+        avgWin={calculations.avgWin}
+        avgLoss={calculations.avgLoss}
+        riskRewardRatio={calculations.riskRewardRatio}
+        todayPnL={calculations.todayPnL}
         currentEquity={calculations.currentEquity}
-        startingBalance={settings.startingBalance}
-        profitTarget={settings.profitTargetPercent}
-        maxDrawdown={settings.maxDrawdownPercent}
-        peakEquity={peakEquity}
-        dailyDrawdown={settings.dailyDrawdownPercent}
-        dailyLoss={calculations.dailyLoss}
       />
 
-      <PropFirmSettings />
+      <PropFirmCompactSettings />
+
+      <PropFirmAnalytics />
     </div>
   )
 }
