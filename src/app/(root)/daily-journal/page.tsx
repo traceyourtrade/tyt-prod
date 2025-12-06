@@ -523,7 +523,7 @@ const DailyJournal = () => {
                       className={`w-full flex items-center justify-between px-5 py-3.5 border-b border-border/30 transition-all duration-200 ${isSelected ? "bg-primary/8 border-l-[3px] border-l-primary" : "hover:bg-muted/30"}`}
                     >
                       <div className="flex items-center gap-3.5">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm ${trade.Profit >= 0 ? "bg-[#33FFBB]/15 text-profit" : "bg-loss/15 text-loss"}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm ${trade.Profit >= 0 ? "bg-[#4EBF94]/15 text-profit" : "bg-loss/15 text-loss"}`}>
                           {(trade.Item || trade.symbol || "?").slice(0, 2)}
                         </div>
                         <div className="text-left">
@@ -579,13 +579,13 @@ const DailyJournal = () => {
               <div className="glass-card rounded-2xl p-6 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold shadow-sm ${selectedTrade.Profit >= 0 ? "bg-[#33FFBB]/15 text-profit" : "bg-loss/15 text-loss"}`}>
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold shadow-sm ${selectedTrade.Profit >= 0 ? "bg-[#4EBF94]/15 text-profit" : "bg-loss/15 text-loss"}`}>
                       {(selectedTrade.Item || selectedTrade.symbol || "?").slice(0, 2)}
                     </div>
                     <div>
                       <div className="flex items-center gap-2.5">
                         <h2 className="text-xl font-bold text-foreground tracking-tight">{selectedTrade.Item || selectedTrade.symbol}</h2>
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${(selectedTrade.Type || selectedTrade.side) === "Long" ? "bg-[#33FFBB]/15 text-profit" : "bg-loss/15 text-loss"}`}>
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${(selectedTrade.Type || selectedTrade.side) === "Long" ? "bg-[#4EBF94]/15 text-profit" : "bg-loss/15 text-loss"}`}>
                           {selectedTrade.Type || selectedTrade.side}
                         </span>
                       </div>
@@ -698,7 +698,7 @@ const DailyJournal = () => {
                 <h3 className="text-sm font-semibold text-foreground mb-5">How do you feel about this trade?</h3>
                 <div className="flex gap-4">
                   {[
-                    { value: "great", emoji: "😊", label: "Great", color: "border-[#33FFBB] bg-[#33FFBB]/10" },
+                    { value: "great", emoji: "😊", label: "Great", color: "border-[#4EBF94] bg-[#4EBF94]/10" },
                     { value: "okay", emoji: "😐", label: "Okay", color: "border-yellow-400 bg-yellow-400/10" },
                     { value: "poor", emoji: "😞", label: "Poor", color: "border-loss bg-loss/10" },
                   ].map((opt) => (
@@ -808,7 +808,7 @@ const DailyJournal = () => {
                 </div>
                 <div className="flex items-center gap-5 mt-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#33FFBB]/15 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-[#4EBF94]/15 flex items-center justify-center">
                       <Trophy className="w-4 h-4 text-profit" />
                     </div>
                     <span className="text-foreground font-medium">{stats.winners} wins</span>
@@ -892,7 +892,7 @@ const DailyJournal = () => {
                     <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">Total Trades</div>
                     <div className="text-xl font-bold text-foreground">{stats.totalTrades}</div>
                   </div>
-                  <div className="bg-gradient-to-br from-[#33FFBB]/5 to-transparent border border-[#33FFBB]/20 rounded-xl p-4 shadow-sm">
+                  <div className="bg-gradient-to-br from-[#4EBF94]/5 to-transparent border border-[#4EBF94]/20 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <TrendingUp className="w-3.5 h-3.5 text-profit" />
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Avg Win</span>
