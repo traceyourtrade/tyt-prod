@@ -686,6 +686,49 @@ const DailyJournal = () => {
                 </div>
               </div>
 
+              {/* Screenshots - At Top for quick reference */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-primary" />
+                  Trade Screenshots
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {["before", "after"].map((type) => (
+                    <div key={type}>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">
+                        {type === "before" ? "Entry Setup" : "Exit Result"}
+                      </p>
+                      {selectedTrade[`${type}URL`] ? (
+                        <div
+                          className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group border border-border"
+                          onClick={() => setLightboxImage(selectedTrade[`${type}URL`])}
+                        >
+                          <img
+                            src={selectedTrade[`${type}URL`]}
+                            alt={`${type} screenshot`}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-white text-sm font-medium">View</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-border hover:border-primary/40 cursor-pointer transition-colors bg-muted/30 hover:bg-muted/50">
+                          <Upload className="w-6 h-6 text-muted-foreground mb-2" />
+                          <span className="text-xs text-muted-foreground font-medium">Upload</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, type as "before" | "after")}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Sentiment */}
               <div className="bg-card border border-border rounded-xl p-6">
                 <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -816,49 +859,6 @@ const DailyJournal = () => {
                     >
                       + {tag}
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Screenshots */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-primary" />
-                  Trade Screenshots
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {["before", "after"].map((type) => (
-                    <div key={type}>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">
-                        {type === "before" ? "Entry Setup" : "Exit Result"}
-                      </p>
-                      {selectedTrade[`${type}URL`] ? (
-                        <div
-                          className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group border border-border"
-                          onClick={() => setLightboxImage(selectedTrade[`${type}URL`])}
-                        >
-                          <img
-                            src={selectedTrade[`${type}URL`]}
-                            alt={`${type} screenshot`}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <span className="text-white text-sm font-medium">View</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-border hover:border-primary/40 cursor-pointer transition-colors bg-muted/30 hover:bg-muted/50">
-                          <Upload className="w-6 h-6 text-muted-foreground mb-2" />
-                          <span className="text-xs text-muted-foreground font-medium">Upload</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(e, type as "before" | "after")}
-                          />
-                        </label>
-                      )}
-                    </div>
                   ))}
                 </div>
               </div>
