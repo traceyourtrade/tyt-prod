@@ -232,16 +232,16 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
         };
       });
 
-      const existingTradeData = account.tradeData || [];
-      const updatedTradeData = [...existingTradeData, ...newTradeData];
-
-      const response = await fetch("/api/trades/edit-trade", {
-        method: "PUT",
+      const response = await fetch("/api/dashboard/post", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
+          apiName: "postManualUpload",
           accountName: selectedAccount,
-          tradeData: updatedTradeData,
+          accountId: account.accountId || account._id,
+          accountType: account.accountType || "Manual",
+          tradeData: newTradeData,
         }),
       });
 
