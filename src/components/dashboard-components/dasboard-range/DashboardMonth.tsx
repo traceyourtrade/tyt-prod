@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import Calendar from "../Calendar";
 import TradesWidget from "../TradesWidget";
@@ -13,14 +13,9 @@ import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import { EditModeToolbar } from '@/components/dashboard/DraggableWidgetGrid';
-import { Responsive, WidthProvider } from 'react-grid-layout';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface TradeData {
   date: string;
@@ -34,56 +29,10 @@ interface Account {
   [key: string]: unknown;
 }
 
-const DEFAULT_LAYOUTS = {
-  lg: [
-    { i: 'stats-overview', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
-    { i: 'calendar', x: 0, y: 2, w: 8, h: 5, minW: 4, minH: 3 },
-    { i: 'cumulative-pnl', x: 8, y: 2, w: 4, h: 2.5, minW: 3, minH: 2 },
-    { i: 'trades-table', x: 8, y: 4.5, w: 4, h: 2.5, minW: 3, minH: 2 },
-    { i: 'daily-pnl-bar', x: 0, y: 7, w: 4, h: 3, minW: 3, minH: 2 },
-    { i: 'day-of-week', x: 4, y: 7, w: 4, h: 3, minW: 3, minH: 2 },
-    { i: 'symbol-pnl', x: 8, y: 7, w: 4, h: 3, minW: 3, minH: 2 },
-    { i: 'hourly-pnl', x: 0, y: 10, w: 4, h: 3, minW: 3, minH: 2 },
-    { i: 'radar', x: 4, y: 10, w: 8, h: 3, minW: 4, minH: 2 },
-  ],
-  md: [
-    { i: 'stats-overview', x: 0, y: 0, w: 10, h: 2, minW: 5, minH: 2 },
-    { i: 'calendar', x: 0, y: 2, w: 6, h: 5, minW: 4, minH: 3 },
-    { i: 'cumulative-pnl', x: 6, y: 2, w: 4, h: 2.5, minW: 3, minH: 2 },
-    { i: 'trades-table', x: 6, y: 4.5, w: 4, h: 2.5, minW: 3, minH: 2 },
-    { i: 'daily-pnl-bar', x: 0, y: 7, w: 5, h: 3, minW: 3, minH: 2 },
-    { i: 'day-of-week', x: 5, y: 7, w: 5, h: 3, minW: 3, minH: 2 },
-    { i: 'symbol-pnl', x: 0, y: 10, w: 5, h: 3, minW: 3, minH: 2 },
-    { i: 'hourly-pnl', x: 5, y: 10, w: 5, h: 3, minW: 3, minH: 2 },
-    { i: 'radar', x: 0, y: 13, w: 10, h: 3, minW: 4, minH: 2 },
-  ],
-  sm: [
-    { i: 'stats-overview', x: 0, y: 0, w: 6, h: 4, minW: 3, minH: 2 },
-    { i: 'calendar', x: 0, y: 4, w: 6, h: 5, minW: 3, minH: 3 },
-    { i: 'cumulative-pnl', x: 0, y: 9, w: 6, h: 3, minW: 3, minH: 2 },
-    { i: 'trades-table', x: 0, y: 12, w: 6, h: 3, minW: 3, minH: 2 },
-    { i: 'daily-pnl-bar', x: 0, y: 15, w: 6, h: 3, minW: 3, minH: 2 },
-    { i: 'day-of-week', x: 0, y: 18, w: 6, h: 3, minW: 3, minH: 2 },
-    { i: 'symbol-pnl', x: 0, y: 21, w: 6, h: 3, minW: 3, minH: 2 },
-    { i: 'hourly-pnl', x: 0, y: 24, w: 6, h: 3, minW: 3, minH: 2 },
-    { i: 'radar', x: 0, y: 27, w: 6, h: 3, minW: 3, minH: 2 },
-  ],
-};
-
 const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
-  const { layout, isEditMode, gridPositions, updateGridPositions } = useDashboardLayoutStore();
-  const [mounted, setMounted] = useState(false);
-  const [layouts, setLayouts] = useState(DEFAULT_LAYOUTS);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-    if (gridPositions && gridPositions.length > 0) {
-      setLayouts({ ...DEFAULT_LAYOUTS, lg: gridPositions });
-    }
-  }, []);
+  const { layout } = useDashboardLayoutStore();
 
   function isCurrentMonth(dateString: string): boolean {
     const date = new Date(dateString);
@@ -132,85 +81,51 @@ const DashboardMonth: React.FC = () => {
     return item?.visible ?? true;
   };
 
-  const widgetComponents: Record<string, React.ReactNode> = {
-    'stats-overview': <DashWidgets {...dashWidgetProps} />,
-    'calendar': <Calendar />,
-    'cumulative-pnl': <PnLDailyChart data={data} />,
-    'trades-table': <TradesWidget data={thisMonthData} />,
-    'daily-pnl-bar': <DailyPnLBarChart data={thisMonthData} />,
-    'day-of-week': <DayOfWeekChart data={thisMonthData} />,
-    'symbol-pnl': <SymbolPnLChart data={thisMonthData} />,
-    'hourly-pnl': <HourlyPnLChart data={thisMonthData} />,
-    'radar': <Radar />,
-  };
-
-  const handleLayoutChange = (currentLayout: ReactGridLayout.Layout[], allLayouts: ReactGridLayout.Layouts) => {
-    if (isEditMode) {
-      setLayouts(allLayouts as typeof DEFAULT_LAYOUTS);
-      updateGridPositions(currentLayout.map(item => ({
-        i: item.i,
-        x: item.x,
-        y: item.y,
-        w: item.w,
-        h: item.h,
-        minW: item.minW,
-        minH: item.minH,
-      })));
-    }
-  };
-
-  if (!mounted) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-end">
-          <EditModeToolbar />
-        </div>
-        <div className="animate-pulse bg-muted rounded-xl h-96" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4" ref={containerRef}>
+    <div className="space-y-4">
       <div className="flex items-center justify-end">
         <EditModeToolbar />
       </div>
 
-      <div className="w-full">
-        <ResponsiveGridLayout
-          className="layout"
-          layouts={layouts}
-          breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-          cols={{ lg: 12, md: 10, sm: 6 }}
-          rowHeight={80}
-          onLayoutChange={handleLayoutChange}
-          isDraggable={isEditMode}
-          isResizable={isEditMode}
-          margin={[16, 16]}
-          containerPadding={[0, 0]}
-          useCSSTransforms={true}
-          compactType="vertical"
-          preventCollision={false}
-        >
-          {Object.keys(widgetComponents).map((widgetId) => {
-            if (!isWidgetVisible(widgetId) && !isEditMode) return null;
-            
-            return (
-              <div 
-                key={widgetId} 
-                className={`
-                  bg-card rounded-xl overflow-hidden
-                  ${isEditMode ? 'ring-2 ring-dashed ring-primary/30 cursor-move' : ''}
-                  ${!isWidgetVisible(widgetId) ? 'opacity-40' : ''}
-                `}
-              >
-                <div className="h-full w-full overflow-auto">
-                  {widgetComponents[widgetId]}
-                </div>
-              </div>
-            );
-          })}
-        </ResponsiveGridLayout>
+      {isWidgetVisible('stats-overview') && (
+        <DashWidgets {...dashWidgetProps} />
+      )}
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('calendar') && (
+          <div className="xl:col-span-2">
+            <Calendar />
+          </div>
+        )}
+
+        <div className="xl:col-span-1 flex flex-col gap-4">
+          {isWidgetVisible('cumulative-pnl') && (
+            <PnLDailyChart data={data} />
+          )}
+          {isWidgetVisible('trades-table') && (
+            <TradesWidget data={thisMonthData} />
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('daily-pnl-bar') && (
+          <DailyPnLBarChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('day-of-week') && (
+          <DayOfWeekChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('symbol-pnl') && (
+          <SymbolPnLChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('hourly-pnl') && (
+          <HourlyPnLChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('radar') && (
+          <div className="md:col-span-2">
+            <Radar />
+          </div>
+        )}
       </div>
     </div>
   );
