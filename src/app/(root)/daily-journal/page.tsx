@@ -454,62 +454,45 @@ const DailyJournal = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Clean Minimal Header */}
+      {/* Compact Stats Header */}
       <div className="sticky top-0 z-40 backdrop-blur-xl bg-background/95 border-b border-border/50">
-        <div className="px-4 md:px-6 py-4">
+        <div className="px-4 md:px-6 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <BookOpen className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-base font-semibold text-foreground">Daily Journal</h1>
-                <p className="text-xs text-muted-foreground">
-                  {stats.totalTrades} trades · {stats.journaledTrades} journaled
-                </p>
-              </div>
-            </div>
+            {/* Left: Trade count */}
+            <p className="text-xs text-muted-foreground">
+              {stats.totalTrades} trades · {stats.journaledTrades} journaled
+            </p>
 
-            {/* Compact Stats Row */}
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex items-center gap-4 px-4 py-2 rounded-lg bg-card border border-border">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">P&L</span>
-                  <span className={`text-sm font-semibold tabular-nums ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
-                    {stats.totalPnL >= 0 ? "+" : ""}{formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
-                  </span>
-                </div>
-                <div className="w-px h-4 bg-border" />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Win Rate</span>
-                  <span className="text-sm font-semibold text-foreground">{stats.winRate}%</span>
-                </div>
-                <div className="w-px h-4 bg-border" />
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-semibold text-profit">{stats.winners}</span>
-                  <span className="text-xs text-muted-foreground">W</span>
-                  <span className="text-muted-foreground mx-0.5">/</span>
-                  <span className="text-sm font-semibold text-loss">{stats.losers}</span>
-                  <span className="text-xs text-muted-foreground">L</span>
-                </div>
+            {/* Right: Compact Stats */}
+            <div className="hidden md:flex items-center gap-4 px-4 py-2 rounded-lg bg-card border border-border">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">P&L</span>
+                <span className={`text-sm font-semibold tabular-nums ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
+                  {stats.totalPnL >= 0 ? "+" : ""}{formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
+                </span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Win Rate</span>
+                <span className="text-sm font-semibold text-foreground">{stats.winRate}%</span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-semibold text-profit">{stats.winners}</span>
+                <span className="text-xs text-muted-foreground">W</span>
+                <span className="text-muted-foreground mx-0.5">/</span>
+                <span className="text-sm font-semibold text-loss">{stats.losers}</span>
+                <span className="text-xs text-muted-foreground">L</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Layout - Three Columns */}
-      <div className="flex h-[calc(100vh-73px)]">
-        {/* Left Panel - Trade List */}
-        <AnimatePresence mode="wait">
-          {isLeftPanelOpen && (
-            <motion.div
-              initial={{ opacity: 0, marginLeft: -384 }}
-              animate={{ opacity: 1, marginLeft: 0 }}
-              exit={{ opacity: 0, marginLeft: -384 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className={`${mobileView === "list" ? "flex" : "hidden md:flex"} w-full md:w-80 lg:w-96 flex-col flex-shrink-0 border-r border-border bg-card/30`}
-            >
+      {/* Main Layout - Two Columns */}
+      <div className="flex h-[calc(100vh-49px)]">
+        {/* Left Panel - Trade List (Always Visible) */}
+        <div className={`${mobileView === "list" ? "flex" : "hidden md:flex"} w-full md:w-80 lg:w-96 flex-col flex-shrink-0 border-r border-border bg-card/30`}>
               {/* Clean Search & Minimal Filters */}
               <div className="p-3 space-y-3 border-b border-border/50">
                 <div className="relative">
@@ -681,7 +664,7 @@ const DailyJournal = () => {
                               {isSelected && (
                                 <motion.div
                                   layoutId="trade-indicator"
-                                  className={`absolute left-0 top-0 bottom-0 w-0.5 ${isProfit ? "bg-profit" : "bg-loss"}`}
+                                  className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary"
                                 />
                               )}
                             </motion.button>
@@ -692,23 +675,12 @@ const DailyJournal = () => {
                   ))
                 )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </div>
 
         {/* Center Panel - Journal Content */}
         <div className={`flex-1 min-w-0 flex flex-col ${mobileView === "content" ? "block" : "hidden md:block"}`}>
-          {/* Panel Toggle Toolbar */}
-          <div className="hidden md:flex items-center justify-between px-4 py-2 border-b border-border bg-card/30">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-            >
-              {isLeftPanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-              <span>{isLeftPanelOpen ? "Hide" : "Show"} Trades</span>
-            </motion.button>
+          {/* Analytics Toggle - Right aligned */}
+          <div className="hidden md:flex items-center justify-end px-4 py-2 border-b border-border bg-card/30">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -725,9 +697,7 @@ const DailyJournal = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className={`p-4 md:p-6 space-y-4 mx-auto transition-all ${
-                  !isLeftPanelOpen && !isSidebarOpen ? "max-w-4xl" : "max-w-2xl"
-                }`}
+                className="p-4 md:p-6 space-y-4"
               >
                 {/* Clean Trade Header */}
                 <div className="pb-4 border-b border-border/50">
