@@ -184,6 +184,15 @@ Located in `src/components/prop-firm/`:
 - **Visual Indicators**: Prop Firm mode shows amber Zap icon instead of dollar sign; dropdown header changes based on mode
 - **Demo Data**: Includes both normal and prop firm demo accounts for testing
 
+### Mode-Aware Data Filtering (Complete)
+- **Custom Hook**: `src/hooks/useModeFilteredAccounts.ts` provides mode-aware account filtering
+- **Dashboard Components**: All dashboard views (Month, Week, Day, Custom) use filtered accounts
+- **Report Components**: All report pages (Performance, Overview, Calendar, Compare, SubReport, DayTimeReport) use filtered accounts
+- **Strategy Page**: Uses filtered accounts for strategy analysis
+- **Calendar Components**: Both main Calendar and CalendarPopUp use filtered accounts
+- **Radar Chart**: Performance radar uses filtered accounts for metrics calculation
+- **Complete Isolation**: Data is completely isolated between Live Trading and Prop Firm modes throughout the entire application
+
 ## Notes
 - The application uses TypeScript with strict mode enabled
 - Build errors are currently ignored (see next.config.ts)
