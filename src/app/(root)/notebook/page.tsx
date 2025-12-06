@@ -1,6 +1,16 @@
 "use client"
 import { useEffect, useState } from "react";
-import { Search, Filter, Plus, FolderPlus, Menu, X, ChevronLeft } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Search, 
+  Filter, 
+  Menu, 
+  X, 
+  ChevronLeft, 
+  BookOpen,
+  PanelLeftClose,
+  PanelLeft
+} from "lucide-react";
 import notebookStore from "@/store/notebookStore";
 import Files from "@/components/notebook/Files";
 import Folder from "@/components/notebook/Folder";
@@ -14,6 +24,7 @@ const Notebook = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [mobilePanel, setMobilePanel] = useState<"folders" | "files" | "content">("folders");
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [isFolderPanelOpen, setIsFolderPanelOpen] = useState(true);
 
   const changeMode = (mode: string) => {
     setMode(mode)
@@ -45,108 +56,171 @@ const Notebook = () => {
     setMobilePanel("files");
   };
 
+  const totalNotes = notes.reduce((acc, folder) => acc + (folder.files?.length || 0), 0);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 md:px-6 py-3 md:py-4">
-        <div className="flex items-center gap-3 md:gap-4">
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setShowMobileSidebar(true)}
-            className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-          >
-            <Menu className="h-5 w-5 text-muted-foreground" />
-          </button>
-
-          {/* Mobile Back Button */}
-          {mobilePanel !== "folders" && (
+      {/* Premium Header */}
+      <div className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b border-border">
+        <div className="h-0.5 bg-gradient-to-r from-primary via-profit to-primary opacity-60" />
+        
+        <div className="px-4 md:px-6 py-3 md:py-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Mobile Menu Button */}
             <button 
-              onClick={mobilePanel === "content" ? handleBackToFiles : handleBackToFolders}
+              onClick={() => setShowMobileSidebar(true)}
               className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+              <Menu className="h-5 w-5 text-muted-foreground" />
             </button>
-          )}
 
-          {/* Search */}
-          <div className="flex-1 max-w-md relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              name="search"
-              type="text"
-              placeholder="Search notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 md:py-2.5 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-            />
+            {/* Mobile Back Button */}
+            {mobilePanel !== "folders" && (
+              <button 
+                onClick={mobilePanel === "content" ? handleBackToFiles : handleBackToFolders}
+                className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+              >
+                <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+              </button>
+            )}
+
+            {/* Desktop Folder Panel Toggle */}
+            <button
+              onClick={() => setIsFolderPanelOpen(!isFolderPanelOpen)}
+              className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted transition-colors"
+              title={isFolderPanelOpen ? "Hide folders" : "Show folders"}
+            >
+              {isFolderPanelOpen ? (
+                <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {/* Title with Stats */}
+            <div className="hidden md:flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-profit/20 flex items-center justify-center">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-sm font-semibold text-foreground">Notebook</h1>
+                  <p className="text-[10px] text-muted-foreground">
+                    {notes.length} folders · {totalNotes} notes
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="flex-1 max-w-md relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                name="search"
+                type="text"
+                placeholder="Search notes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 md:py-2.5 bg-background/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+              />
+            </div>
+
+            {/* Filter Button */}
+            <button className="hidden md:flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg hover:bg-muted hover:border-primary/30 transition-all group">
+              <Filter className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Filter</span>
+            </button>
           </div>
-
-          {/* Filter Button */}
-          <button className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg hover:bg-muted transition-colors">
-            <Filter className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">Filter</span>
-          </button>
         </div>
       </div>
 
       {/* Mobile Sidebar Overlay */}
-      {showMobileSidebar && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowMobileSidebar(false)}
-          />
-          <div className="absolute left-0 top-0 bottom-0 w-80 bg-card border-r border-border p-4 overflow-y-auto animate-in slide-in-from-left duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Notebooks</h2>
-              <button 
-                onClick={() => setShowMobileSidebar(false)}
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
-              >
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </div>
-            <Folder
-              notes={notes}
-              setNotes={setNotes}
-              selectedFolder={selectedFolder}
-              changeMode={changeMode}
-              setFolder={(folder) => {
-                handleFolderSelect(folder);
-                setShowMobileSidebar(false);
-              }}
-              newFolder={newFolder}
-              setNewFolder={setNewFolder}
-              setNewFile={setNewFile}
-              setFileShow={setFileShow}
-              newFile={newFile}
+      <AnimatePresence>
+        {showMobileSidebar && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowMobileSidebar(false)}
             />
+            <motion.div 
+              initial={{ x: -320 }}
+              animate={{ x: 0 }}
+              exit={{ x: -320 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="absolute left-0 top-0 bottom-0 w-80 bg-card border-r border-border overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-4 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-profit/20 flex items-center justify-center">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                  </div>
+                  <h2 className="text-base font-semibold text-foreground">Notebooks</h2>
+                </div>
+                <button 
+                  onClick={() => setShowMobileSidebar(false)}
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+              
+              <div className="p-4 overflow-y-auto h-[calc(100%-65px)]">
+                <Folder
+                  notes={notes}
+                  setNotes={setNotes}
+                  selectedFolder={selectedFolder}
+                  changeMode={changeMode}
+                  setFolder={(folder) => {
+                    handleFolderSelect(folder);
+                    setShowMobileSidebar(false);
+                  }}
+                  newFolder={newFolder}
+                  setNewFolder={setNewFolder}
+                  setNewFile={setNewFile}
+                  setFileShow={setFileShow}
+                  newFile={newFile}
+                />
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {/* Main Content - Desktop: Three columns, Mobile: Single panel */}
+      {/* Main Content - Desktop Three Column Layout */}
       <div className="flex h-[calc(100vh-65px)]">
-        {/* Left Sidebar - Folders (Hidden on mobile) */}
-        <div className="hidden md:block w-64 lg:w-72 flex-shrink-0 border-r border-border bg-card/50 overflow-hidden">
-          <div className="h-full overflow-y-auto p-4">
-            <Folder
-              notes={notes}
-              setNotes={setNotes}
-              selectedFolder={selectedFolder}
-              changeMode={changeMode}
-              setFolder={setFolder}
-              newFolder={newFolder}
-              setNewFolder={setNewFolder}
-              setNewFile={setNewFile}
-              setFileShow={setFileShow}
-              newFile={newFile}
-            />
-          </div>
-        </div>
+        {/* Left Panel - Folders (Collapsible on Desktop) */}
+        <AnimatePresence>
+          {isFolderPanelOpen && (
+            <motion.div
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 240 }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="hidden md:block flex-shrink-0 border-r border-border bg-card/30 overflow-hidden"
+            >
+              <div className="w-60 h-full overflow-y-auto p-4">
+                <Folder
+                  notes={notes}
+                  setNotes={setNotes}
+                  selectedFolder={selectedFolder}
+                  changeMode={changeMode}
+                  setFolder={setFolder}
+                  newFolder={newFolder}
+                  setNewFolder={setNewFolder}
+                  setNewFile={setNewFile}
+                  setFileShow={setFileShow}
+                  newFile={newFile}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Middle - Files (Hidden on mobile when not active) */}
-        <div className={`${mobilePanel === "files" ? "flex" : "hidden"} md:flex w-full md:w-72 lg:w-80 flex-shrink-0 border-r border-border bg-card/30 overflow-hidden flex-col`}>
+        {/* Middle Panel - Files (Always visible on Desktop) */}
+        <div className="hidden md:flex w-72 lg:w-80 flex-shrink-0 border-r border-border bg-card/20 overflow-hidden flex-col">
           <div className="h-full overflow-y-auto p-4">
             <Files
               newFile={newFile}
@@ -164,8 +238,49 @@ const Notebook = () => {
           </div>
         </div>
 
-        {/* Right - Content (Hidden on mobile when not active) */}
-        <div className={`${mobilePanel === "content" ? "flex" : "hidden"} md:flex flex-1 overflow-hidden flex-col`}>
+        {/* Mobile: Folders Panel */}
+        {mobilePanel === "folders" && (
+          <div className="flex md:hidden w-full flex-col overflow-hidden bg-card/30">
+            <div className="h-full overflow-y-auto p-4">
+              <Folder
+                notes={notes}
+                setNotes={setNotes}
+                selectedFolder={selectedFolder}
+                changeMode={changeMode}
+                setFolder={handleFolderSelect}
+                newFolder={newFolder}
+                setNewFolder={setNewFolder}
+                setNewFile={setNewFile}
+                setFileShow={setFileShow}
+                newFile={newFile}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Mobile: Files Panel */}
+        {mobilePanel === "files" && (
+          <div className="flex md:hidden w-full flex-col overflow-hidden bg-card/30">
+            <div className="h-full overflow-y-auto p-4">
+              <Files
+                newFile={newFile}
+                notes={notes}
+                setNotes={setNotes}
+                selectedFolder={selectedFolder}
+                newFolder={newFolder}
+                setNewFolder={setNewFolder}
+                fileShow={fileShow}
+                setNewFile={setNewFile}
+                setFileShow={setFileShow}
+                changeMode={changeMode}
+                setFile={handleFileSelect}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Right Panel - Content (Focus Canvas) */}
+        <div className={`${mobilePanel === "content" ? "flex" : "hidden"} md:flex flex-1 overflow-hidden flex-col bg-background`}>
           <div className="h-full overflow-y-auto">
             {mode === "VIEW" ? (
               <ViewMode
@@ -185,26 +300,6 @@ const Notebook = () => {
             ) : null}
           </div>
         </div>
-
-        {/* Mobile: Show folders panel */}
-        {mobilePanel === "folders" && (
-          <div className="flex md:hidden w-full flex-col overflow-hidden">
-            <div className="h-full overflow-y-auto p-4">
-              <Folder
-                notes={notes}
-                setNotes={setNotes}
-                selectedFolder={selectedFolder}
-                changeMode={changeMode}
-                setFolder={handleFolderSelect}
-                newFolder={newFolder}
-                setNewFolder={setNewFolder}
-                setNewFile={setNewFile}
-                setFileShow={setFileShow}
-                newFile={newFile}
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

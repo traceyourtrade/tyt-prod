@@ -1,5 +1,6 @@
 "use client"
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   File, 
   FilePlus, 
@@ -11,7 +12,11 @@ import {
   Check,
   X,
   FileText,
-  Calendar
+  Calendar,
+  Clock,
+  Sparkles,
+  Plus,
+  BookOpen
 } from "lucide-react";
 import notifications from "@/store/notifications";
 
@@ -184,203 +189,265 @@ const Files = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric',
-      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
   };
+
+  if (!selectedFolder) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-12 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
+          <FileText className="h-6 w-6 text-muted-foreground" />
+        </div>
+        <p className="text-sm text-muted-foreground">Select a folder to view notes</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full">
       {/* Header with folder name */}
       <div className="mb-4 pb-3 border-b border-border">
-        <h3 className="text-base font-semibold text-foreground truncate">{selectedFolder}</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {filteredFiles.length} {filteredFiles.length === 1 ? 'note' : 'notes'}
-        </p>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+            <FileText className="h-3 w-3 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-foreground truncate">{selectedFolder}</h3>
+            <p className="text-[10px] text-muted-foreground">
+              {filteredFiles.length} {filteredFiles.length === 1 ? 'note' : 'notes'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Add File Button - Only show if not Daily Journal */}
       {selectedFolder !== "Daily Journal" && (
-        fileShow ? (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 p-2.5 bg-muted rounded-lg border border-border">
-              <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-              <input 
-                className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
-                placeholder="Note name..." 
-                value={newFile} 
-                name="newFile" 
-                onChange={(e) => setNewFile(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && uploadFile(e)}
-                maxLength={30}
-                autoFocus
-              />
-              <button 
-                onClick={uploadFile}
-                className="p-1.5 rounded-md bg-primary text-white hover:bg-primary-dark transition-colors"
-              >
-                <Check className="h-3.5 w-3.5" />
-              </button>
-              <button 
-                onClick={() => { setFileShow(false); setNewFile(""); }}
-                className="p-1.5 rounded-md hover:bg-muted-foreground/20 transition-colors"
-              >
-                <X className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button 
-            onClick={() => setFileShow(true)} 
-            className="w-full flex items-center gap-2 px-3 py-2.5 mb-4 bg-card border border-border border-dashed rounded-lg hover:bg-muted hover:border-primary/30 transition-all group"
-          >
-            <FilePlus className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">New Note</span>
-          </button>
-        )
+        <AnimatePresence mode="wait">
+          {fileShow ? (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4"
+            >
+              <div className="flex items-center gap-2 p-2.5 bg-profit/5 rounded-lg border border-profit/20">
+                <div className="w-6 h-6 rounded-md bg-profit/10 flex items-center justify-center">
+                  <FilePlus className="h-3 w-3 text-profit" />
+                </div>
+                <input 
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
+                  placeholder="Note name..." 
+                  value={newFile} 
+                  name="newFile" 
+                  onChange={(e) => setNewFile(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && uploadFile(e)}
+                  maxLength={30}
+                  autoFocus
+                />
+                <button 
+                  onClick={uploadFile}
+                  className="p-1.5 rounded-md bg-profit text-white hover:bg-profit/90 transition-colors"
+                >
+                  <Check className="h-3 w-3" />
+                </button>
+                <button 
+                  onClick={() => { setFileShow(false); setNewFile(""); }}
+                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                >
+                  <X className="h-3 w-3 text-muted-foreground" />
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.button 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              onClick={() => setFileShow(true)} 
+              className="w-full flex items-center gap-2 px-3 py-2 mb-4 bg-muted/30 border border-dashed border-border rounded-lg hover:bg-muted/50 hover:border-profit/30 transition-all group"
+            >
+              <div className="w-6 h-6 rounded-md bg-muted group-hover:bg-profit/10 flex items-center justify-center transition-colors">
+                <Plus className="h-3 w-3 text-muted-foreground group-hover:text-profit transition-colors" />
+              </div>
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">New Note</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
       )}
 
-      {/* Files Header */}
+      {/* Notes Header */}
       <div className="mb-2">
         <button 
-          className="flex items-center gap-2 w-full px-1 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+          className="flex items-center gap-2 w-full px-1 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
           onClick={() => setIsFileOpen(!isFileOpen)}
         >
-          {isFileOpen ? (
-            <ChevronDown className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronRight className="h-3.5 w-3.5" />
-          )}
+          <motion.div
+            animate={{ rotate: isFileOpen ? 0 : -90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="h-3 w-3" />
+          </motion.div>
           Notes
         </button>
       </div>
 
       {/* File List */}
-      <div className={`space-y-2 transition-all duration-300 overflow-hidden ${isFileOpen ? "max-h-[calc(100vh-300px)] overflow-y-auto" : "max-h-0"}`}>
-        {filteredFiles.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-3">
-              <FileText className="h-7 w-7 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground mb-1">No notes yet</p>
-            {selectedFolder !== "Daily Journal" && (
-              <button 
-                onClick={() => setFileShow(true)}
-                className="text-sm text-primary hover:underline"
+      <AnimatePresence>
+        {isFileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-1.5 overflow-hidden"
+          >
+            {filteredFiles.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-10 text-center"
               >
-                Create your first note
-              </button>
-            )}
-            {selectedFolder === "Daily Journal" && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Notes from trades will appear here
-              </p>
-            )}
-          </div>
-        ) : (
-          filteredFiles.map((file, index) => (
-            <div
-              key={file.filename}
-              className="group relative"
-            >
-              <button 
-                onClick={() => setFile(file.filename)}
-                className="w-full p-3 bg-card border border-border rounded-lg hover:border-primary/30 hover:shadow-sm transition-all text-left"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {file.filename}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(file.created)}</span>
-                    </div>
+                <div className="relative mb-3">
+                  <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center">
+                    <BookOpen className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </div>
-              </button>
+                <p className="text-xs font-medium text-muted-foreground mb-1">No notes yet</p>
+                {selectedFolder !== "Daily Journal" ? (
+                  <button 
+                    onClick={() => setFileShow(true)}
+                    className="text-xs text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Create your first note
+                  </button>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground max-w-[160px]">
+                    Journal entries from your trades will appear here
+                  </p>
+                )}
+              </motion.div>
+            ) : (
+              filteredFiles.map((file, index) => (
+                <motion.div
+                  key={file.filename}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="group relative"
+                >
+                  <button 
+                    onClick={() => setFile(file.filename)}
+                    className="w-full p-2.5 bg-card/50 border border-border rounded-lg hover:border-primary/30 hover:bg-card transition-all text-left"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-profit/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate pr-6">
+                          {file.filename}
+                        </p>
+                        <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
+                          <Clock className="h-2.5 w-2.5" />
+                          <span>{formatDate(file.created)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
 
-              {/* Menu Button */}
-              <button
-                onClick={(e) => handleMenuClick(e, index, file.filename)}
-                className={`absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all ${
-                  visibleOptions === index ? "opacity-100 bg-muted" : ""
-                }`}
-              >
-                <MoreVertical className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-          ))
+                  {/* Menu Button */}
+                  <button
+                    onClick={(e) => handleMenuClick(e, index, file.filename)}
+                    className={`absolute top-2 right-2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all ${
+                      visibleOptions === index ? "opacity-100 bg-muted" : ""
+                    }`}
+                  >
+                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </motion.div>
+              ))
+            )}
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
       {/* Context Menu */}
-      {visibleOptions !== null && (
-        <div
-          ref={dropdownRef}
-          className="fixed z-50 w-44 bg-card border border-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200"
-          style={{
-            left: dropdownCoords.x,
-            top: dropdownCoords.y,
-          }}
-        >
-          {selectedFolder !== "Daily Journal" && (
-            showFr ? (
-              <div className="p-2">
-                <div className="flex items-center gap-2">
-                  <input 
-                    maxLength={30} 
-                    placeholder="New name..." 
-                    className="flex-1 px-2 py-1.5 text-sm bg-muted border border-border rounded-md outline-none focus:border-primary text-foreground" 
-                    name="fileRename" 
-                    value={fileRename} 
-                    onChange={(e) => setFileRename(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && renameFile(e)}
-                    autoFocus
-                  />
-                  <button 
-                    onClick={renameFile}
-                    className="p-1.5 rounded-md bg-primary text-white hover:bg-primary-dark transition-colors"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                  </button>
+      <AnimatePresence>
+        {visibleOptions !== null && (
+          <motion.div
+            ref={dropdownRef}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed z-50 w-40 bg-card border border-border rounded-lg shadow-xl overflow-hidden"
+            style={{
+              left: dropdownCoords.x,
+              top: dropdownCoords.y,
+            }}
+          >
+            {selectedFolder !== "Daily Journal" && (
+              showFr ? (
+                <div className="p-2">
+                  <div className="flex items-center gap-1.5">
+                    <input 
+                      maxLength={30} 
+                      placeholder="New name..." 
+                      className="flex-1 px-2 py-1.5 text-xs bg-muted border border-border rounded-md outline-none focus:border-primary text-foreground" 
+                      name="fileRename" 
+                      value={fileRename} 
+                      onChange={(e) => setFileRename(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && renameFile(e)}
+                      autoFocus
+                    />
+                    <button 
+                      onClick={renameFile}
+                      className="p-1.5 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors"
+                    >
+                      <Check className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <button 
+                  onClick={() => { setShowFr(true); setFileRename(delFile) }} 
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted transition-colors"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  Rename
+                </button>
+              )
+            )}
+
+            {delConfirm ? (
+              <button 
+                onClick={deleteFile} 
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white bg-loss hover:bg-loss/90 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Confirm Delete
+              </button>
             ) : (
               <button 
-                onClick={() => { setShowFr(true); setFileRename(delFile) }} 
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                onClick={() => setDelConfirm(true)} 
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted transition-colors"
               >
-                <Pencil className="h-4 w-4 text-muted-foreground" />
-                Rename
+                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                Delete
               </button>
-            )
-          )}
-
-          {delConfirm ? (
-            <button 
-              onClick={deleteFile} 
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white bg-red-500 hover:bg-red-600 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-              Confirm Delete
-            </button>
-          ) : (
-            <button 
-              onClick={() => setDelConfirm(true)} 
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-            >
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-              Delete
-            </button>
-          )}
-        </div>
-      )}
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
