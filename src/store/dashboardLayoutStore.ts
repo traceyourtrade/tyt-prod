@@ -14,14 +14,14 @@ interface GridPosition {
 
 const DEFAULT_GRID_POSITIONS: GridPosition[] = [
   { i: 'stats-overview', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
-  { i: 'calendar', x: 0, y: 2, w: 8, h: 4, minW: 4, minH: 3 },
-  { i: 'cumulative-pnl', x: 8, y: 2, w: 4, h: 2, minW: 3, minH: 2 },
-  { i: 'trades-table', x: 8, y: 4, w: 4, h: 2, minW: 3, minH: 2 },
-  { i: 'daily-pnl-bar', x: 0, y: 6, w: 4, h: 3, minW: 3, minH: 2 },
-  { i: 'day-of-week', x: 4, y: 6, w: 4, h: 3, minW: 3, minH: 2 },
-  { i: 'symbol-pnl', x: 8, y: 6, w: 4, h: 3, minW: 3, minH: 2 },
-  { i: 'hourly-pnl', x: 0, y: 9, w: 4, h: 3, minW: 3, minH: 2 },
-  { i: 'radar', x: 4, y: 9, w: 8, h: 3, minW: 4, minH: 2 },
+  { i: 'calendar', x: 0, y: 2, w: 8, h: 6, minW: 4, minH: 4 },
+  { i: 'cumulative-pnl', x: 8, y: 2, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'trades-table', x: 8, y: 5, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'daily-pnl-bar', x: 0, y: 8, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'day-of-week', x: 4, y: 8, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'symbol-pnl', x: 8, y: 8, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'hourly-pnl', x: 0, y: 11, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'radar', x: 4, y: 11, w: 4, h: 3, minW: 3, minH: 2 },
 ];
 
 interface DashboardLayoutState {
@@ -119,7 +119,7 @@ const useDashboardLayoutStore = create<DashboardLayoutState>()(
       },
     }),
     {
-      name: 'dashboard-layout',
+      name: 'dashboard-layout-v2',
     }
   )
 );
