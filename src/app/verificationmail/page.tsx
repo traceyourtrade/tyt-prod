@@ -38,11 +38,11 @@ const VerifyEmailScreen = () => {
       <div className="w-[90vw] max-w-[450px] min-h-[300px] pb-[30px] shadow-[rgba(50,50,93,0.25)_0px_13px_27px_-5px,rgba(0,0,0,0.3)_0px_8px_16px_-8px] flex flex-col items-center justify-start rounded-[25px] bg-white text-center">
         
         <img
-          src="images/Logo.png"
+          src="/images/logo-light.png"
           alt="Company Logo"
           width={100}
           height={100}
-          className="mt-[25px] w-[100px] h-auto"
+          className="mt-[25px] w-[80px] h-auto"
         />
 
         <h1 className="text-[28px] mt-[20px] mb-[10px] text-[#333]">Email Verification</h1>

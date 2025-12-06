@@ -35,13 +35,13 @@ export default function HelloTextPage() {
         <div className={`flex flex-col items-center justify-center min-h-screen w-full bg-black text-white overflow-hidden ${poppins.className}`}>
             {/* Logo */}
             <Image
-                src="/images/logoDark.png"
+                src="/images/logo-dark.png"
                 width={100}
                 height={100}
                 alt="Logo"
                 data-aos="fade-up"
                 data-aos-duration="1000"
-                className="w-24 md:w-28 h-auto relative -top-24"
+                className="w-24 md:w-28 h-auto relative -top-24 object-contain"
             />
 
             {/* Greeting */}

@@ -286,9 +286,9 @@ const SignUp: React.FC = () => {
             <Image
               width={280}
               height={70}
-              src="/images/logo-dark.png?v=2"
+              src="/images/logo-dark.png"
               alt="ProJournX Logo"
-              className="h-12 w-auto"
+              className="h-14 w-14 object-contain"
               unoptimized
             />
           </motion.div>
@@ -363,9 +363,9 @@ const SignUp: React.FC = () => {
               <Image
                 width={200}
                 height={50}
-                src="/images/logo-dark.png?v=2"
+                src="/images/logo-dark.png"
                 alt="ProJournX Logo"
-                className="h-10 w-auto"
+                className="h-12 w-12 object-contain"
                 unoptimized
               />
             </motion.div>

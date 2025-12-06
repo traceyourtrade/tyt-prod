@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
@@ -18,41 +19,6 @@ import {
   Calculator,
   Sparkles,
 } from "lucide-react"
-
-const ProjournxLogo = ({ className }: { className?: string }) => (
-  <svg 
-    viewBox="0 0 40 40" 
-    fill="none" 
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-  >
-    <defs>
-      <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
-        <stop offset="100%" stopColor="currentColor" stopOpacity="0.7" />
-      </linearGradient>
-    </defs>
-    {/* Main chart line going up */}
-    <path 
-      d="M8 28L16 20L22 24L32 12" 
-      stroke="url(#logoGradient)" 
-      strokeWidth="3" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-      className="drop-shadow-sm"
-    />
-    {/* Arrow head */}
-    <path 
-      d="M26 12H32V18" 
-      stroke="url(#logoGradient)" 
-      strokeWidth="3" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    />
-    {/* Accent dot */}
-    <circle cx="16" cy="20" r="2.5" fill="currentColor" className="opacity-80" />
-  </svg>
-)
 
 interface SidebarProps {
   collapsed: boolean
@@ -111,14 +77,27 @@ export function Sidebar({
       )}>
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group">
           <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 group-hover:scale-105 transition-all duration-300">
-              <ProjournxLogo className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden group-hover:scale-105 transition-all duration-300">
+              <Image 
+                src="/images/logo-dark.png" 
+                alt="ProJournX" 
+                width={40} 
+                height={40}
+                className="w-full h-full object-contain dark:block hidden"
+              />
+              <Image 
+                src="/images/logo-light.png" 
+                alt="ProJournX" 
+                width={40} 
+                height={40}
+                className="w-full h-full object-contain dark:hidden block"
+              />
             </div>
           </div>
           {!collapsed && (
             <div className="flex flex-col">
               <span className="font-bold text-foreground tracking-tight text-[15px]">
-                Projournx
+                ProJournX
               </span>
               <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
                 Trading Journal

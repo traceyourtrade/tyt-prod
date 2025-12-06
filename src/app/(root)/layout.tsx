@@ -176,11 +176,11 @@ export default function RootLayout({
           {/* Expanded: Full Logo */}
           {(!collapsed || mobileOpen) && (
             <Image 
-              src="/images/logo-dark.png?v=2" 
-              width={180} 
-              height={45} 
+              src="/images/logo-dark.png" 
+              width={40} 
+              height={40} 
               alt="ProJournX" 
-              className="h-10 w-auto"
+              className="h-10 w-10 object-contain"
               unoptimized
             />
           )}

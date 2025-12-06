@@ -72,7 +72,7 @@ export default function Sidebar({ expanded }: SidebarProps) {
 
           {/* Logo - Expanded */}
           <div className={`w-[180px] flex items-center justify-center p-4 h-[50px] overflow-hidden mt-3 ${expanded ? "visible" : "hidden"} mx-auto`}>
-            <Image src={"/images/logo-dark.png?v=2"} width={160} height={40} alt="ProJournX" className="h-8 w-auto" unoptimized />
+            <Image src="/images/logo-dark.png" width={40} height={40} alt="ProJournX" className="h-10 w-10 object-contain" unoptimized />
           </div>
           {/* Logo - Collapsed (Lightning Bolt) */}
           <div className={`w-full flex items-center justify-center p-4 h-[50px] overflow-hidden mt-3 ${expanded ? "hidden" : "visible"}`}>

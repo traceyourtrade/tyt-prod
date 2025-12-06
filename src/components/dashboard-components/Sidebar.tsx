@@ -68,11 +68,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Top Section */}
         <div className="w-4/5 mx-auto flex flex-col items-center justify-center">
           <Image 
-            className="w-6 mx-auto my-2" 
-            src="/images/Logo Dark.png"
+            className="w-8 h-8 mx-auto my-2 object-contain" 
+            src="/images/logo-dark.png"
             alt="logo" 
-            width={120} 
-            height={40}
+            width={32} 
+            height={32}
           />
           <div 
             className="flex items-center w-[90%] py-1 rounded-xl text-white font-['Inter'] font-[450] mt-1 transition-all duration-500 ease-in-out cursor-pointer hover:scale-105 hover:bg-[rgba(238, 16, 16, 1)]"
