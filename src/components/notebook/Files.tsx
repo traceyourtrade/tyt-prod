@@ -77,22 +77,36 @@ const Files = ({
     e.preventDefault();
     if (!newFile.trim()) return;
 
+    const defaultFields: Record<string, string> = {};
+    if (selectedTemplate) {
+      selectedTemplate.fields.forEach(field => {
+        defaultFields[field.id] = field.defaultValue || "";
+      });
+    }
+
     try {
       const response = await fetch(`/api/notebook/post`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ newFile, folderName: selectedFolder, apiName: 'createFile' }),
+        body: JSON.stringify({ 
+          newFile, 
+          folderName: selectedFolder, 
+          apiName: 'createFile',
+          templateId: selectedTemplate?.id || null,
+          templateFields: selectedTemplate ? defaultFields : null
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setNewFile("")
+        setNewFile("");
         setFileShow(false);
+        setSelectedTemplate(null);
         setNotes();
-        changeMode("VIEW")
+        changeMode("VIEW");
       } else {
         if (data.error === "File already exists") {
           setAlertBoxG("File already exists", "error");
