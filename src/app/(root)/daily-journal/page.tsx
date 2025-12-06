@@ -602,14 +602,10 @@ const DailyJournal = () => {
                               onClick={() => handleSelectTrade(trade)}
                               className={`w-full text-left transition-all duration-200 relative rounded-xl overflow-hidden group ${
                                 isSelected 
-                                  ? "bg-card ring-1 ring-border shadow-lg shadow-black/5 dark:shadow-black/20"
+                                  ? "bg-card ring-1 ring-primary/40 shadow-lg shadow-primary/10"
                                   : "hover:bg-card/80 hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/15"
                               }`}
                             >
-                              {/* Subtle gradient overlay for selected */}
-                              {isSelected && (
-                                <div className={`absolute inset-0 opacity-[0.03] ${isProfit ? "bg-gradient-to-r from-profit to-transparent" : "bg-gradient-to-r from-loss to-transparent"}`} />
-                              )}
 
                               <div className="relative p-3">
                                 {/* Top Row: Symbol + Side + Time */}
