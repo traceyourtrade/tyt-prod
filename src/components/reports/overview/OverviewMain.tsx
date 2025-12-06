@@ -7,12 +7,12 @@ import StatsCard from './StatsCard'
 import OverviewPnLFilter from './OverviewPnLFilter'
 import { calculateCumulativePnL } from '@/utils/reports/calculateCumulativePnL'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
-import useAccountDetails from '@/store/accountdetails'
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import BarChartCard from '../charts/BarChartCard'
 import LineChartCard from '../charts/LineChartCard'
 
 export default function OverviewMain() {
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const allTrades = selectedAccounts.flatMap((account: any) => account.tradeData || [])
 
   const [pnlType, setPnlType] = useState('net_pnl')

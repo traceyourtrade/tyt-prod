@@ -6,7 +6,7 @@ import ChartContainer from './ChartContainer'
 import SummaryTable from './SummaryTable'
 import CrossAnalysisTable from './CrossAnalysisTable'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
-import useAccountDetails from '@/store/accountdetails'
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import { formatCompactNumber } from '@/utils/formatNumber'
 
 interface Trade {
@@ -53,7 +53,7 @@ interface CrossAnalysisRow {
 }
 
 const SubReport = () => {
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const trades = selectedAccounts.flatMap((account: any) => account.tradeData || [])
 
   const dayMetrics = useMemo((): DayMetrics[] => {

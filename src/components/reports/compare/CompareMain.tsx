@@ -8,7 +8,7 @@ import { styled } from '@mui/material/styles'
 import TradeGroupForm from './TradeGroupForm'
 import { calculateCumulativePnL } from '@/utils/reports/calculateCumulativePnL'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
-import useAccountDetails from '@/store/accountdetails'
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import LineChartCard from '../charts/LineChartCard'
 import { formatCompactNumber } from '@/utils/formatNumber'
 
@@ -53,7 +53,7 @@ interface PieChartData {
 }
 
 const CompareMain = () => {
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const allTrades = selectedAccounts.flatMap((account: any) => account.tradeData || [])
   const [group1Trades, setGroup1Trades] = useState<Trade[]>([])
   const [group2Trades, setGroup2Trades] = useState<Trade[]>([])

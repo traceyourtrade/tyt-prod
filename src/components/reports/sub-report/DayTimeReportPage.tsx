@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 
 import CrossAnalysisTable from './CrossAnalysisTable';
-import useAccountDetails from '@/store/accountdetails';
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics';
 import SummaryTable from './SummaryTable';
 import ChartContainer from './ChartContainer';
@@ -42,8 +42,8 @@ interface PerformanceData {
 }
 
 const DayTimeReportPage: React.FC = () => {
-  const { selectedAccounts } = useAccountDetails();
-  const trades = selectedAccounts.flatMap(acc => acc.tradeData);
+  const { selectedAccounts } = useModeFilteredAccounts();
+  const trades = selectedAccounts.flatMap(acc => acc.tradeData || []);
 
   // Group trades by day of week
   const dayMetrics = useMemo((): DayMetrics[] => {

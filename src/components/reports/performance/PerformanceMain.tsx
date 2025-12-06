@@ -11,7 +11,7 @@ import {
 import LineChartCard from '@/components/reports/charts/LineChartCard'
 import BarChartCard from '@/components/reports/charts/BarChartCard'
 import SummarySection from './SummarySection'
-import useAccountDetails from '@/store/accountdetails'
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import { calculateCumulativePnL } from '@/utils/reports/calculateCumulativePnL'
 
 type Props = {
@@ -20,7 +20,7 @@ type Props = {
 }
 
 export default function PerformanceMain({ metric = 'pnl', type = 'gross' }: Props) {
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const trades = selectedAccounts.flatMap((account: any) => account.tradeData || [])
 
   const netPLData = useMemo(() => calculateCumulativePnL(trades as any), [trades])

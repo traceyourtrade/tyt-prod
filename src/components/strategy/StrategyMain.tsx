@@ -7,6 +7,7 @@ import OverviewSection from "./overview/StrategyOverviewMain";
 import Reports from "./reports/StrategyReportsMain";
 import Compare from "./compare/StrategyCompareMain";
 import useAccountDetails from "@/store/accountdetails";
+import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import { useRouter, usePathname } from 'next/navigation'
 
 interface StrategyType {
@@ -54,7 +55,8 @@ const tabs: { id: TabType; label: string; path: string }[] = [
 const StrategyMain = () => {
   const [fDate, setFDate] = useState<string>("");
   const [toDate, setTDate] = useState<string>("");
-  const { strategies, selectedAccounts, setAccounts } = useAccountDetails();
+  const { strategies, setAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
   
   useEffect(() => {
     setAccounts();

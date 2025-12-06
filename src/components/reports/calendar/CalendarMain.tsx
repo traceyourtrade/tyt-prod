@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Calendar, ChevronLeft, ChevronRight, TrendingUp, PieChart as PieChartIcon, BarChart2 } from 'lucide-react'
-import useAccountDetails from '@/store/accountdetails'
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import { calculateCumulativePnL } from '@/utils/reports/calculateCumulativePnL'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
 import LineChartCard from '@/components/reports/charts/LineChartCard'
@@ -20,7 +20,7 @@ interface Trade {
 }
 
 const CalendarMain = () => {
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const trades = selectedAccounts.flatMap((account: any) => account.tradeData || [])
   const [displayYear, setDisplayYear] = useState<number>(new Date().getFullYear())
   const currentYear = new Date().getFullYear()

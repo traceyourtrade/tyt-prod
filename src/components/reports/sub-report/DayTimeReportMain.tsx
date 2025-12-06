@@ -1,11 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
-import useAccountDetails from '@/store/accountdetails'
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
 
 export default function DayTimeReportMain() {
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const trades = selectedAccounts.flatMap((acc: any) => acc.tradeData || [])
 
   // Group trades by day of week

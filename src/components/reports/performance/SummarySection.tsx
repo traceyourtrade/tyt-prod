@@ -13,12 +13,12 @@ import {
   Activity
 } from 'lucide-react'
 import StatItem from './StatItem'
-import useAccountDetails from '@/store/accountdetails'
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts'
 import { calculatePerformanceMetrics } from '@/utils/reports/calculatePerformanceMetrics'
 import { formatCompactNumber } from '@/utils/formatNumber'
 
 export default function SummarySection({ trades = [] }: { trades?: any[] }) {
-  const { selectedAccounts } = useAccountDetails()
+  const { selectedAccounts } = useModeFilteredAccounts()
   const [calculations, setCalculations] = useState<any>({
     netPnL: 0,
     winPercentage: 0,
