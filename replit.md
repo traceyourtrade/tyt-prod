@@ -148,17 +148,33 @@ The application runs on port 5000 and binds to 0.0.0.0 to work with Replit's pro
 7. **Lot Size Calculator** - Forex position sizing tool with pip value calculations
 8. **Prop Firm Mode** - Track prop firm challenge progress with profit targets and drawdown limits
 
-## Prop Firm Mode (New Feature)
+## Prop Firm Mode (Redesigned December 2025)
 Located in `src/components/prop-firm/`:
 
-### Components
+### Modern "Challenge Command Center" Design
+The Prop Firm mode features a completely redesigned UI that's visually distinct from the normal trading dashboard:
+
+**Design Elements:**
+- Amber/gold accent color scheme (vs blue primary in normal mode)
+- Circular progress gauges instead of linear progress bars
+- Glassmorphism effects with gradient borders
+- Grid pattern overlays on cards
+- Modern typography with tabular-nums for metrics
+
+### Core Components
 - `PropFirmModeToggle.tsx` - Segmented control to switch between Live Trading and Prop Firm modes
-- `PropFirmSettings.tsx` - Configure challenge parameters (starting balance, profit target %, max drawdown %, daily drawdown %)
-- `PropFirmDashboard.tsx` - Main dashboard with calculations and breach detection
-- `PropFirmProgressBars.tsx` - Visual progress bars for profit target and drawdown usage
-- `PropFirmSummaryCard.tsx` - Challenge summary with current equity, targets, and status
-- `PropFirmStatusPill.tsx` - Status indicator (Active, At Risk, Breached, Completed)
-- `PropFirmBreachBanner.tsx` - Alert banner when challenge is breached
+- `PropFirmDashboard.tsx` - Main dashboard orchestrator with calculations and breach detection
+- `PropFirmHeroCard.tsx` - Large hero section with dual circular progress gauges for profit target and drawdown, status indicator, and key metrics grid
+- `PropFirmQuickStats.tsx` - 8-column stat grid with themed cards (Net P&L, Win Rate, Profit Factor, Current Equity, Avg Win, Avg Loss, Risk:Reward, Today's P&L)
+- `PropFirmCompactSettings.tsx` - Collapsible settings panel with challenge configuration inputs
+- `PropFirmAnalytics.tsx` - Simplified analytics with equity curve chart and recent trades list
+- `PropFirmBreachBanner.tsx` - Glassmorphism alert banner when challenge is breached
+
+### Legacy Components (still available)
+- `PropFirmSettings.tsx` - Full settings form (used in settings page)
+- `PropFirmProgressBars.tsx` - Linear progress bars (legacy)
+- `PropFirmSummaryCard.tsx` - Challenge summary card (legacy)
+- `PropFirmStatusPill.tsx` - Status indicator component
 
 ### State Management
 - `src/store/propFirmStore.ts` - Zustand store with persistence for prop firm state
