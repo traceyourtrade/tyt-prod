@@ -30,6 +30,7 @@ import {
   Menu,
   X,
   Calculator,
+  Sparkles,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -54,6 +55,7 @@ const mainNavItems = [
   { name: "Notebook", href: "/notebook", icon: FileText },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Strategies", href: "/strategies", icon: Target },
+  { name: "Playbook", href: "/playbook", icon: Sparkles },
   { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator },
 ]
 
@@ -77,6 +79,7 @@ const pageTitles: Record<string, string> = {
   "/strategies/strategies": "All Strategies",
   "/strategies/reports": "Reports",
   "/strategies/compare": "Compare",
+  "/playbook": "Playbook",
   "/lot-calculator": "Lot Calculator",
   "/settings": "Settings",
   "/support": "Support",
