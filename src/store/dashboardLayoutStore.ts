@@ -2,15 +2,40 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { WidgetLayoutItem, DEFAULT_DASHBOARD_LAYOUT } from '@/lib/dashboardWidgets';
 
+interface GridPosition {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+}
+
+const DEFAULT_GRID_POSITIONS: GridPosition[] = [
+  { i: 'stats-overview', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
+  { i: 'calendar', x: 0, y: 2, w: 8, h: 4, minW: 4, minH: 3 },
+  { i: 'cumulative-pnl', x: 8, y: 2, w: 4, h: 2, minW: 3, minH: 2 },
+  { i: 'trades-table', x: 8, y: 4, w: 4, h: 2, minW: 3, minH: 2 },
+  { i: 'daily-pnl-bar', x: 0, y: 6, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'day-of-week', x: 4, y: 6, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'symbol-pnl', x: 8, y: 6, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'hourly-pnl', x: 0, y: 9, w: 4, h: 3, minW: 3, minH: 2 },
+  { i: 'radar', x: 4, y: 9, w: 8, h: 3, minW: 4, minH: 2 },
+];
+
 interface DashboardLayoutState {
   layout: WidgetLayoutItem[];
+  gridPositions: GridPosition[];
   isEditMode: boolean;
   setEditMode: (enabled: boolean) => void;
   toggleEditMode: () => void;
   updateLayout: (newLayout: WidgetLayoutItem[]) => void;
+  updateGridPositions: (positions: GridPosition[]) => void;
   moveWidget: (widgetId: string, newOrder: number) => void;
   toggleWidgetVisibility: (widgetId: string) => void;
   resetLayout: () => void;
+  resetGridPositions: () => void;
   reorderWidgets: (sourceIndex: number, destIndex: number) => void;
   swapWidgets: (widgetId1: string, widgetId2: string) => void;
 }
@@ -19,6 +44,7 @@ const useDashboardLayoutStore = create<DashboardLayoutState>()(
   persist(
     (set, get) => ({
       layout: DEFAULT_DASHBOARD_LAYOUT,
+      gridPositions: DEFAULT_GRID_POSITIONS,
       isEditMode: false,
       
       setEditMode: (enabled: boolean) => set({ isEditMode: enabled }),
@@ -26,6 +52,10 @@ const useDashboardLayoutStore = create<DashboardLayoutState>()(
       toggleEditMode: () => set(state => ({ isEditMode: !state.isEditMode })),
       
       updateLayout: (newLayout: WidgetLayoutItem[]) => set({ layout: newLayout }),
+      
+      updateGridPositions: (positions: GridPosition[]) => set({ gridPositions: positions }),
+      
+      resetGridPositions: () => set({ gridPositions: DEFAULT_GRID_POSITIONS }),
       
       moveWidget: (widgetId: string, newOrder: number) => {
         const { layout } = get();
@@ -49,7 +79,7 @@ const useDashboardLayoutStore = create<DashboardLayoutState>()(
         set({ layout: updatedLayout });
       },
       
-      resetLayout: () => set({ layout: DEFAULT_DASHBOARD_LAYOUT }),
+      resetLayout: () => set({ layout: DEFAULT_DASHBOARD_LAYOUT, gridPositions: DEFAULT_GRID_POSITIONS }),
       
       reorderWidgets: (sourceIndex: number, destIndex: number) => {
         const { layout } = get();
@@ -95,3 +125,4 @@ const useDashboardLayoutStore = create<DashboardLayoutState>()(
 );
 
 export default useDashboardLayoutStore;
+export type { GridPosition };

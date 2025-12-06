@@ -1,38 +1,21 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Eye, EyeOff, Settings, RotateCcw, X, GripVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, Settings, RotateCcw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import { WIDGET_REGISTRY, getWidgetById } from '@/lib/dashboardWidgets';
 import { Button } from '@/components/ui/button';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  rectSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import GridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
 
-interface SortableWidgetProps {
+interface WidgetWrapperProps {
   children: React.ReactNode;
   widgetId: string;
   className?: string;
 }
 
-export const SortableWidget: React.FC<SortableWidgetProps> = ({ 
+export const WidgetWrapper: React.FC<WidgetWrapperProps> = ({ 
   children, 
   widgetId,
   className,
@@ -41,49 +24,27 @@ export const SortableWidget: React.FC<SortableWidgetProps> = ({
   const widget = getWidgetById(widgetId);
   const layoutItem = layout.find(l => l.widgetId === widgetId);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: widgetId });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   if (!layoutItem?.visible && !isEditMode) {
     return null;
   }
 
   return (
     <div 
-      ref={setNodeRef}
-      style={style}
       className={cn(
-        "relative group transition-all duration-200",
-        isEditMode && "ring-2 ring-dashed ring-border/50 rounded-xl",
+        "h-full w-full relative group",
+        isEditMode && "ring-2 ring-dashed ring-primary/30 rounded-xl cursor-move",
         !layoutItem?.visible && "opacity-40",
-        isDragging && "opacity-50 z-50",
         className
       )}
     >
       {isEditMode && (
         <>
-          <div className="absolute -top-2 -right-2 z-10 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg p-0.5">
+          <div className="absolute -top-2 -right-2 z-20 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg p-0.5">
             <button
-              {...attributes}
-              {...listeners}
-              className="p-1.5 hover:bg-muted rounded cursor-grab active:cursor-grabbing touch-none"
-              title="Drag to reorder"
-            >
-              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-            <button
-              onClick={() => toggleWidgetVisibility(widgetId)}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleWidgetVisibility(widgetId);
+              }}
               className="p-1.5 hover:bg-muted rounded"
               title={layoutItem?.visible ? "Hide widget" : "Show widget"}
             >
@@ -95,7 +56,7 @@ export const SortableWidget: React.FC<SortableWidgetProps> = ({
             </button>
           </div>
           
-          <div className="absolute top-2 left-2 z-10">
+          <div className="absolute top-2 left-2 z-20">
             <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded-full">
               {widget?.name || widgetId}
             </span>
@@ -103,81 +64,92 @@ export const SortableWidget: React.FC<SortableWidgetProps> = ({
         </>
       )}
       
-      <div className={cn(isEditMode && "pt-6")}>
+      <div className={cn("h-full w-full overflow-hidden", isEditMode && "pt-6")}>
         {children}
       </div>
     </div>
   );
 };
 
-export const DraggableWidget = SortableWidget;
+export const SortableWidget = WidgetWrapper;
+export const DraggableWidget = WidgetWrapper;
 
-interface WidgetGridProps {
-  children: React.ReactNode;
-  widgetIds: string[];
+interface GridItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
 }
 
-export const WidgetGrid: React.FC<WidgetGridProps> = ({ children, widgetIds }) => {
-  const { layout, updateLayout } = useDashboardLayoutStore();
-  const [activeId, setActiveId] = useState<string | null>(null);
+interface ResizableGridProps {
+  children: React.ReactNode;
+  gridItems: GridItem[];
+  onLayoutChange: (layout: GridItem[]) => void;
+  cols?: number;
+  rowHeight?: number;
+}
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+export const ResizableGrid: React.FC<ResizableGridProps> = ({ 
+  children, 
+  gridItems, 
+  onLayoutChange,
+  cols = 12,
+  rowHeight = 100
+}) => {
+  const { isEditMode } = useDashboardLayoutStore();
+  const [mounted, setMounted] = useState(false);
+  const [width, setWidth] = useState(1200);
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
+  useEffect(() => {
+    setMounted(true);
+    const updateWidth = () => {
+      const container = document.getElementById('dashboard-grid-container');
+      if (container) {
+        setWidth(container.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveId(null);
-
-    if (over && active.id !== over.id) {
-      const oldIndex = widgetIds.indexOf(active.id as string);
-      const newIndex = widgetIds.indexOf(over.id as string);
-      
-      const newOrder = arrayMove(widgetIds, oldIndex, newIndex);
-      
-      const updatedLayout = layout.map(item => {
-        const newOrderIndex = newOrder.indexOf(item.widgetId);
-        if (newOrderIndex !== -1) {
-          return { ...item, order: newOrderIndex };
-        }
-        return item;
-      });
-      
-      updateLayout(updatedLayout);
-    }
-  };
+  if (!mounted) {
+    return <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{children}</div>;
+  }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={widgetIds} strategy={rectSortingStrategy}>
-        {children}
-      </SortableContext>
-      <DragOverlay>
-        {activeId ? (
-          <div className="bg-card/80 backdrop-blur-sm border border-primary rounded-xl p-4 shadow-2xl">
-            <div className="text-sm font-medium text-primary">
-              {getWidgetById(activeId)?.name || activeId}
-            </div>
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+    <div id="dashboard-grid-container" className="w-full">
+      <GridLayout
+        className="layout"
+        layout={gridItems}
+        cols={cols}
+        rowHeight={rowHeight}
+        width={width}
+        onLayoutChange={(newLayout) => {
+          onLayoutChange(newLayout.map(item => ({
+            i: item.i,
+            x: item.x,
+            y: item.y,
+            w: item.w,
+            h: item.h,
+            minW: item.minW,
+            minH: item.minH
+          })));
+        }}
+        isDraggable={isEditMode}
+        isResizable={isEditMode}
+        margin={[16, 16]}
+        containerPadding={[0, 0]}
+        useCSSTransforms={true}
+        compactType="vertical"
+        preventCollision={false}
+      >
+        {React.Children.map(children, (child) => child)}
+      </GridLayout>
+    </div>
   );
 };
 
@@ -186,7 +158,7 @@ interface EditModeToolbarProps {
 }
 
 export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) => {
-  const { isEditMode, toggleEditMode, resetLayout, layout, toggleWidgetVisibility } = useDashboardLayoutStore();
+  const { isEditMode, toggleEditMode, resetLayout, layout, toggleWidgetVisibility, resetGridPositions } = useDashboardLayoutStore();
   const [showWidgetPicker, setShowWidgetPicker] = useState(false);
 
   const hiddenWidgets = layout.filter(l => !l.visible);
@@ -229,7 +201,10 @@ export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) =
             <Button
               variant="ghost"
               size="sm"
-              onClick={resetLayout}
+              onClick={() => {
+                resetLayout();
+                resetGridPositions?.();
+              }}
               className="gap-2 text-muted-foreground"
             >
               <RotateCcw className="h-4 w-4" />
@@ -237,7 +212,7 @@ export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) =
             </Button>
             
             <span className="text-xs text-muted-foreground ml-2">
-              Drag widgets to reorder
+              Drag to move, drag corners to resize
             </span>
           </>
         )}
@@ -258,7 +233,7 @@ export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) =
             
             <div className="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
               <p className="text-xs text-muted-foreground mb-3">
-                Toggle widget visibility. Drag widgets on dashboard to reorder.
+                Toggle widget visibility. Drag widgets to reposition, drag corners to resize.
               </p>
               {sortedLayout.map((layoutItem) => {
                 const widget = WIDGET_REGISTRY.find(w => w.id === layoutItem.widgetId);
@@ -306,4 +281,6 @@ export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) =
   );
 };
 
-export default SortableWidget;
+export const WidgetGrid = ResizableGrid;
+
+export default WidgetWrapper;
