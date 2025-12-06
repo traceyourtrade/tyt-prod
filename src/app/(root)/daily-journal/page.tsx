@@ -615,76 +615,60 @@ const DailyJournal = () => {
           
           <div className="flex-1 overflow-y-auto">
           {selectedTrade ? (
-            <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
-              {/* Trade Header Card */}
-              <div className={`rounded-xl border p-6 ${
+            <div className={`p-4 md:p-6 space-y-4 mx-auto transition-all ${
+              !isLeftPanelOpen && !isSidebarOpen ? "max-w-4xl" : "max-w-2xl"
+            }`}>
+              {/* Trade Header - Compact & Sleek */}
+              <div className={`rounded-lg border p-4 ${
                 selectedTrade.Profit >= 0 ? "bg-profit/5 border-profit/20" : "bg-loss/5 border-loss/20"
               }`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold ${
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold ${
                       selectedTrade.Profit >= 0 ? "bg-profit/20 text-profit" : "bg-loss/20 text-loss"
                     }`}>
                       {(selectedTrade.Item || selectedTrade.symbol || "?").slice(0, 3)}
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs font-medium">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                           {selectedTrade.side || selectedTrade.Type}
                         </span>
                         {selectedTrade.strategy && (
-                          <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs font-medium">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">
                             {selectedTrade.strategy}
                           </span>
                         )}
                       </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                        <span>${selectedTrade.entryPrice ? parseFloat(String(selectedTrade.entryPrice)).toFixed(2) : "—"} → ${selectedTrade.exitPrice ? parseFloat(String(selectedTrade.exitPrice)).toFixed(2) : "—"}</span>
+                        <span>•</span>
+                        <span>{formatTime(selectedTrade.EntryTime || selectedTrade.time) || "—"}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">P&L</p>
-                    <span className={`text-3xl font-bold ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                      {selectedTrade.Profit >= 0 ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Trade Details */}
-                <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-border/50">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Entry Price</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      ${selectedTrade.entryPrice ? parseFloat(String(selectedTrade.entryPrice)).toFixed(2) : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Exit Price</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      ${selectedTrade.exitPrice ? parseFloat(String(selectedTrade.exitPrice)).toFixed(2) : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Time</p>
-                    <p className="text-lg font-semibold text-foreground">{formatTime(selectedTrade.EntryTime || selectedTrade.time) || "—"}</p>
+                  <div className={`text-xl font-bold ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                    {selectedTrade.Profit >= 0 ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
                   </div>
                 </div>
               </div>
 
-              {/* Screenshots - At Top for quick reference */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-primary" />
-                  Trade Screenshots
+              {/* Screenshots - Compact */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h3 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                  Screenshots
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   {["before", "after"].map((type) => (
                     <div key={type}>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">
-                        {type === "before" ? "Entry Setup" : "Exit Result"}
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">
+                        {type === "before" ? "Entry" : "Exit"}
                       </p>
                       {selectedTrade[`${type}URL`] ? (
                         <div
-                          className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group border border-border"
+                          className="relative aspect-video rounded-md overflow-hidden cursor-pointer group border border-border"
                           onClick={() => setLightboxImage(selectedTrade[`${type}URL`])}
                         >
                           <img
@@ -693,13 +677,13 @@ const DailyJournal = () => {
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <span className="text-white text-sm font-medium">View</span>
+                            <span className="text-white text-xs font-medium">View</span>
                           </div>
                         </div>
                       ) : (
-                        <label className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-border hover:border-primary/40 cursor-pointer transition-colors bg-muted/30 hover:bg-muted/50">
-                          <Upload className="w-6 h-6 text-muted-foreground mb-2" />
-                          <span className="text-xs text-muted-foreground font-medium">Upload</span>
+                        <label className="flex flex-col items-center justify-center aspect-video rounded-md border border-dashed border-border hover:border-primary/40 cursor-pointer transition-colors bg-muted/20 hover:bg-muted/40">
+                          <Upload className="w-5 h-5 text-muted-foreground mb-1" />
+                          <span className="text-[10px] text-muted-foreground font-medium">Upload</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -713,13 +697,13 @@ const DailyJournal = () => {
                 </div>
               </div>
 
-              {/* Sentiment */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-primary" />
+              {/* Sentiment - Compact */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h3 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Activity className="w-3.5 h-3.5 text-primary" />
                   How was this trade?
                 </h3>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="flex gap-2">
                   {[
                     { id: "great", emoji: "🎯", label: "Great", color: "profit" },
                     { id: "okay", emoji: "😐", label: "Okay", color: "yellow" },
@@ -728,7 +712,7 @@ const DailyJournal = () => {
                     <button
                       key={s.id}
                       onClick={() => handleSentimentChange(s.id as "great" | "okay" | "poor")}
-                      className={`p-4 rounded-xl border-2 transition-all ${
+                      className={`flex-1 py-2.5 rounded-lg border transition-all flex items-center justify-center gap-2 ${
                         journalData.sentiment === s.id
                           ? s.color === "profit" ? "border-profit bg-profit/10"
                             : s.color === "yellow" ? "border-yellow-500 bg-yellow-500/10"
@@ -736,41 +720,41 @@ const DailyJournal = () => {
                           : "border-border hover:border-muted-foreground/30 hover:bg-muted/50"
                       }`}
                     >
-                      <div className="text-3xl mb-2">{s.emoji}</div>
-                      <div className={`text-sm font-medium ${
+                      <span className="text-lg">{s.emoji}</span>
+                      <span className={`text-xs font-medium ${
                         journalData.sentiment === s.id 
                           ? s.color === "profit" ? "text-profit" : s.color === "yellow" ? "text-yellow-600 dark:text-yellow-400" : "text-loss"
                           : "text-muted-foreground"
                       }`}>
                         {s.label}
-                      </div>
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Template Selection */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-primary" />
-                  Journal Template
+              {/* Template Selection - Compact */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h3 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-primary" />
+                  Template
                 </h3>
-                <div className="flex gap-2 overflow-x-auto pb-2">
+                <div className="flex gap-1.5 overflow-x-auto pb-1">
                   {templates.map((template, idx) => {
                     const Icon = getTemplateIcon(template.icon);
                     return (
                       <button
                         key={idx}
                         onClick={() => setSelectedTemplateIdx(idx)}
-                        className={`flex-shrink-0 px-4 py-2.5 rounded-lg border transition-all ${
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-md border text-xs transition-all ${
                           selectedTemplateIdx === idx
                             ? getTemplateColor(template.color)
                             : "border-border hover:bg-muted text-muted-foreground"
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <Icon className="w-4 h-4" />
-                          <span className="text-sm font-medium whitespace-nowrap">{template.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          <Icon className="w-3 h-3" />
+                          <span className="font-medium whitespace-nowrap">{template.name}</span>
                         </div>
                       </button>
                     );
@@ -778,15 +762,15 @@ const DailyJournal = () => {
                 </div>
               </div>
 
-              {/* Journal Prompts */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-foreground mb-4">
+              {/* Journal Prompts - Compact */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h3 className="text-xs font-semibold text-foreground mb-3">
                   {templates[selectedTemplateIdx]?.name || "Notes"}
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {templates[selectedTemplateIdx]?.prompts.map((prompt) => (
                     <div key={prompt.id}>
-                      <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                      <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
                         {prompt.label}
                       </label>
                       {prompt.type === "textarea" ? (
@@ -794,8 +778,8 @@ const DailyJournal = () => {
                           value={journalData.prompts?.[prompt.id] || ""}
                           onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
                           placeholder={prompt.placeholder}
-                          rows={3}
-                          className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all"
+                          rows={2}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-all"
                         />
                       ) : (
                         <input
@@ -803,7 +787,7 @@ const DailyJournal = () => {
                           value={journalData.prompts?.[prompt.id] || ""}
                           onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
                           placeholder={prompt.placeholder}
-                          className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                          className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         />
                       )}
                     </div>
@@ -811,35 +795,35 @@ const DailyJournal = () => {
                 </div>
               </div>
 
-              {/* Tags */}
-              <div className="bg-card border border-border rounded-xl p-6">
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-primary" />
+              {/* Tags - Compact */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h3 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5 text-primary" />
                   Tags
                 </h3>
                 
                 {journalData.tags && journalData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-1.5 mb-3">
                     {journalData.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium border border-primary/20"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium border border-primary/20"
                       >
                         {tag}
                         <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/70">
-                          <X className="w-3 h-3" />
+                          <X className="w-2.5 h-2.5" />
                         </button>
                       </span>
                     ))}
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {commonTags.filter(t => !journalData.tags?.includes(t)).slice(0, 8).map((tag) => (
                     <button
                       key={tag}
                       onClick={() => handleAddTag(tag)}
-                      className="px-3 py-1.5 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground rounded-lg text-xs font-medium transition-colors border border-border"
+                      className="px-2 py-1 bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground rounded-md text-[10px] font-medium transition-colors border border-border"
                     >
                       + {tag}
                     </button>
@@ -847,20 +831,20 @@ const DailyJournal = () => {
                 </div>
               </div>
 
-              {/* Save Button */}
+              {/* Save Button - Compact */}
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-full py-3.5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSaving ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                     Saving...
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5" />
+                    <Save className="w-4 h-4" />
                     Save Journal Entry
                   </>
                 )}
