@@ -157,12 +157,12 @@ export default function PropFirmDashboard() {
       {calculations.dailyDrawdownValue && (
         <div className={cn(
           "relative overflow-hidden rounded-xl border backdrop-blur-sm p-4",
-          "bg-card bg-gradient-to-br",
+          "bg-white dark:bg-transparent bg-gradient-to-br",
           calculations.dailyDrawdownUsedPercent >= 85 
             ? "from-red-500/5 to-red-600/[0.02] dark:from-red-500/10 dark:to-red-600/5 border-red-500/20" 
             : calculations.dailyDrawdownUsedPercent >= 60 
               ? "from-amber-500/5 to-amber-600/[0.02] dark:from-amber-500/10 dark:to-amber-600/5 border-amber-500/20"
-              : "from-secondary/50 to-secondary/30 dark:from-white/5 dark:to-white/[0.02] border-border/60 dark:border-white/10"
+              : "from-gray-50 to-gray-100/50 dark:from-white/5 dark:to-white/[0.02] border-gray-200 dark:border-white/10"
         )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -172,7 +172,7 @@ export default function PropFirmDashboard() {
                   ? "bg-red-500/10 dark:bg-red-500/20 border border-red-500/20"
                   : calculations.dailyDrawdownUsedPercent >= 60
                     ? "bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20"
-                    : "bg-secondary/70 dark:bg-white/5 border border-border/60 dark:border-white/10"
+                    : "bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10"
               )}>
                 <Clock className={cn(
                   "w-5 h-5",
@@ -180,19 +180,19 @@ export default function PropFirmDashboard() {
                     ? "text-red-600 dark:text-red-400"
                     : calculations.dailyDrawdownUsedPercent >= 60
                       ? "text-amber-600 dark:text-amber-400"
-                      : "text-muted-foreground"
+                      : "text-gray-400 dark:text-white/60"
                 )} />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">Daily Drawdown</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Daily Drawdown</p>
+                <p className="text-xs text-gray-500 dark:text-white/40">
                   Today&apos;s loss: ${calculations.dailyLoss.toLocaleString()} of ${calculations.dailyDrawdownValue.toLocaleString()} limit
                 </p>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="w-48 h-2 rounded-full bg-border/40 dark:bg-white/10 overflow-hidden">
+              <div className="w-48 h-2 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
                 <div 
                   className={cn(
                     "h-full rounded-full transition-all duration-500",

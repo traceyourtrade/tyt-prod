@@ -63,7 +63,7 @@ function CircularProgress({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-border/40 dark:text-white/5"
+          className="text-gray-200 dark:text-white/5"
         />
         <circle
           cx={size / 2}
@@ -82,10 +82,10 @@ function CircularProgress({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-foreground tabular-nums">
+        <span className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
           {cappedProgress.toFixed(0)}%
         </span>
-        <span className="text-xs text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs text-gray-500 dark:text-white/50 uppercase tracking-wider">
           {type === "profit" ? "Target" : "DD Used"}
         </span>
       </div>
@@ -159,7 +159,8 @@ export default function PropFirmHeroCard({
   return (
     <div className={cn(
       "relative overflow-hidden rounded-2xl border backdrop-blur-xl",
-      "bg-gradient-to-br bg-card/80 dark:bg-transparent",
+      "bg-white/80 dark:bg-transparent",
+      "bg-gradient-to-br",
       statusConfig.bgClass,
       statusConfig.borderClass,
       "shadow-xl",
@@ -180,14 +181,14 @@ export default function PropFirmHeroCard({
                   <Target className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Prop Firm Challenge</h2>
-                  <p className="text-sm text-muted-foreground">Track your progress towards funding</p>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Prop Firm Challenge</h2>
+                  <p className="text-sm text-gray-500 dark:text-white/50">Track your progress towards funding</p>
                 </div>
               </div>
               
               <div className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-full",
-                "bg-secondary/70 dark:bg-white/5 border",
+                "bg-gray-100 dark:bg-white/5 border",
                 statusConfig.borderClass
               )}>
                 <div className={cn("w-2 h-2 rounded-full", statusConfig.dotClass)} />
@@ -199,22 +200,22 @@ export default function PropFirmHeroCard({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-secondary/50 dark:bg-white/5 rounded-xl p-4 border border-border/60 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
                   <Shield className="w-3.5 h-3.5" />
                   Starting Balance
                 </div>
-                <p className="text-xl font-bold text-foreground tabular-nums">
+                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
                   ${startingBalance.toLocaleString()}
                 </p>
               </div>
               
-              <div className="bg-secondary/50 dark:bg-white/5 rounded-xl p-4 border border-border/60 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
                   <TrendingUp className="w-3.5 h-3.5" />
                   Current Equity
                 </div>
-                <p className="text-xl font-bold text-foreground tabular-nums">
+                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
                   ${currentEquity.toLocaleString()}
                 </p>
                 <p className={cn(
@@ -225,21 +226,21 @@ export default function PropFirmHeroCard({
                 </p>
               </div>
               
-              <div className="bg-secondary/50 dark:bg-white/5 rounded-xl p-4 border border-border/60 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
                   <Calendar className="w-3.5 h-3.5" />
                   Days Active
                 </div>
-                <p className="text-xl font-bold text-foreground tabular-nums">
+                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
                   {daysActive}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-gray-500 dark:text-white/40 mt-1">
                   days
                 </p>
               </div>
               
-              <div className="bg-secondary/50 dark:bg-white/5 rounded-xl p-4 border border-border/60 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
                   <Clock className="w-3.5 h-3.5" />
                   Profit/Loss
                 </div>
@@ -257,8 +258,8 @@ export default function PropFirmHeroCard({
             <div className="text-center">
               <CircularProgress progress={profitProgress} type="profit" />
               <div className="mt-3 space-y-1">
-                <p className="text-xs text-muted-foreground">Profit Target</p>
-                <p className="text-sm font-semibold text-foreground">
+                <p className="text-xs text-gray-500 dark:text-white/50">Profit Target</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   ${profitTargetValue.toLocaleString()}
                 </p>
               </div>
@@ -267,8 +268,8 @@ export default function PropFirmHeroCard({
             <div className="text-center">
               <CircularProgress progress={drawdownProgress} type="drawdown" />
               <div className="mt-3 space-y-1">
-                <p className="text-xs text-muted-foreground">Max Drawdown</p>
-                <p className="text-sm font-semibold text-foreground">
+                <p className="text-xs text-gray-500 dark:text-white/50">Max Drawdown</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   ${maxDrawdownValue.toLocaleString()}
                 </p>
               </div>

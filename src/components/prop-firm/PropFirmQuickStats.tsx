@@ -39,7 +39,7 @@ function StatCard({
       case "warning":
         return "from-amber-500/5 to-amber-600/[0.02] dark:from-amber-500/10 dark:to-amber-600/5 border-amber-500/20"
       default:
-        return "from-secondary/50 to-secondary/30 dark:from-white/5 dark:to-white/[0.02] border-border/60 dark:border-white/10"
+        return "from-gray-50 to-gray-100/50 dark:from-white/5 dark:to-white/[0.02] border-gray-200 dark:border-white/10"
     }
   }
 
@@ -59,21 +59,21 @@ function StatCard({
   return (
     <div className={cn(
       "relative overflow-hidden rounded-xl border backdrop-blur-sm",
-      "bg-gradient-to-br bg-card",
+      "bg-white dark:bg-transparent bg-gradient-to-br",
       getVariantStyles(),
       "p-4 transition-all hover:scale-[1.02] hover:border-amber-500/30"
     )}>
       <div className="flex items-start justify-between">
         <div className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center",
-          "bg-secondary/70 dark:bg-white/5 border border-border/60 dark:border-white/10"
+          "bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10"
         )}>
           <Icon className={cn("w-4 h-4", getIconColor())} />
         </div>
         {trend && (
           <div className={cn(
             "flex items-center gap-1 text-xs font-medium",
-            trend === "up" ? "text-emerald-600 dark:text-emerald-400" : trend === "down" ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
+            trend === "up" ? "text-emerald-600 dark:text-emerald-400" : trend === "down" ? "text-red-600 dark:text-red-400" : "text-gray-400 dark:text-white/40"
           )}>
             {trend === "up" && <TrendingUp className="w-3 h-3" />}
             {trend === "down" && <TrendingDown className="w-3 h-3" />}
@@ -82,10 +82,10 @@ function StatCard({
       </div>
       
       <div className="mt-3">
-        <p className="text-xs text-muted-foreground mb-1">{label}</p>
-        <p className="text-lg font-bold text-foreground tabular-nums">{value}</p>
+        <p className="text-xs text-gray-500 dark:text-white/40 mb-1">{label}</p>
+        <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{value}</p>
         {subValue && (
-          <p className="text-xs text-muted-foreground mt-0.5">{subValue}</p>
+          <p className="text-xs text-gray-400 dark:text-white/30 mt-0.5">{subValue}</p>
         )}
       </div>
     </div>

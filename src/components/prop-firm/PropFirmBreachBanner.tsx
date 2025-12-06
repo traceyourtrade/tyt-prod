@@ -22,7 +22,7 @@ export default function PropFirmBreachBanner({ type }: PropFirmBreachBannerProps
   return (
     <div className={cn(
       "relative overflow-hidden rounded-xl border backdrop-blur-sm",
-      "bg-gradient-to-r from-red-500/10 via-red-600/5 to-red-500/10 dark:from-red-500/20 dark:via-red-600/10 dark:to-red-500/20",
+      "bg-gradient-to-r from-red-500/5 via-red-600/[0.02] to-red-500/5 dark:from-red-500/20 dark:via-red-600/10 dark:to-red-500/20",
       "border-red-500/30 shadow-lg shadow-red-500/5 dark:shadow-red-500/10"
     )}>
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4wMyIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4wMyIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50" />
@@ -34,7 +34,7 @@ export default function PropFirmBreachBanner({ type }: PropFirmBreachBannerProps
           </div>
           <div>
             <p className="text-base font-bold text-red-600 dark:text-red-400">{message}</p>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm text-gray-500 dark:text-white/50 mt-0.5">
               Your trades are preserved. Reset to start a new challenge with current settings.
             </p>
           </div>
@@ -56,7 +56,7 @@ export default function PropFirmBreachBanner({ type }: PropFirmBreachBannerProps
           </button>
           <button
             onClick={() => setDismissed(true)}
-            className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 dark:hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2.5 text-gray-400 dark:text-white/40 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

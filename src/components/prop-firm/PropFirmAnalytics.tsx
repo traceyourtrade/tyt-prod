@@ -27,9 +27,9 @@ function ChartCard({
   return (
     <div className={cn(
       "relative overflow-hidden rounded-xl border backdrop-blur-sm",
-      "bg-card",
-      "bg-gradient-to-br from-secondary/50 to-secondary/30 dark:from-white/5 dark:to-white/[0.02]",
-      "border-border/60 dark:border-white/10",
+      "bg-white dark:bg-transparent",
+      "bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-white/5 dark:to-white/[0.02]",
+      "border-gray-200 dark:border-white/10",
       "p-4"
     )}>
       <div className="flex items-center gap-3 mb-4">
@@ -39,7 +39,7 @@ function ChartCard({
         )}>
           <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         </div>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
       </div>
       {children}
     </div>
@@ -49,8 +49,8 @@ function ChartCard({
 function TradeRow({ trade, index }: { trade: Trade; index: number }) {
   return (
     <div className={cn(
-      "flex items-center justify-between py-3 border-b border-border/40 dark:border-white/5 last:border-0",
-      "hover:bg-muted/50 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg transition-colors"
+      "flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/5 last:border-0",
+      "hover:bg-gray-50 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg transition-colors"
     )}>
       <div className="flex items-center gap-3">
         <div className={cn(
@@ -62,8 +62,8 @@ function TradeRow({ trade, index }: { trade: Trade; index: number }) {
           {index + 1}
         </div>
         <div>
-          <p className="text-sm font-medium text-foreground">{trade.Item}</p>
-          <p className="text-xs text-muted-foreground">{trade.date} • {trade.Type}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{trade.Item}</p>
+          <p className="text-xs text-gray-500 dark:text-white/50">{trade.date} • {trade.Type}</p>
         </div>
       </div>
       <p className={cn(
@@ -118,8 +118,8 @@ export default function PropFirmAnalytics() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || !payload.length) return null
     return (
-      <div className="bg-popover border border-border rounded-lg p-3 shadow-xl">
-        <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      <div className="bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-white/10 rounded-lg p-3 shadow-xl">
+        <p className="text-xs text-gray-500 dark:text-white/50 mb-1">{label}</p>
         <p className={cn(
           "text-sm font-bold",
           payload[0].value >= settings.startingBalance ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
@@ -146,15 +146,17 @@ export default function PropFirmAnalytics() {
                   </defs>
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
-                    axisLine={{ stroke: 'var(--border)' }}
+                    tick={{ fill: '#6B7280', fontSize: 11 }}
+                    axisLine={{ stroke: '#E5E7EB' }}
                     tickLine={false}
+                    className="dark:[&_text]:fill-white/50 dark:[&_line]:stroke-white/10"
                   />
                   <YAxis 
-                    tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
-                    axisLine={{ stroke: 'var(--border)' }}
+                    tick={{ fill: '#6B7280', fontSize: 11 }}
+                    axisLine={{ stroke: '#E5E7EB' }}
                     tickLine={false}
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                    className="dark:[&_text]:fill-white/50 dark:[&_line]:stroke-white/10"
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Area
@@ -174,7 +176,7 @@ export default function PropFirmAnalytics() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+              <div className="h-full flex items-center justify-center text-gray-400 dark:text-white/40 text-sm">
                 No trading data available
               </div>
             )}
@@ -189,7 +191,7 @@ export default function PropFirmAnalytics() {
               <TradeRow key={`${trade.date}-${index}`} trade={trade} index={index} />
             ))
           ) : (
-            <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
+            <div className="h-48 flex items-center justify-center text-gray-400 dark:text-white/40 text-sm">
               No trades yet
             </div>
           )}
