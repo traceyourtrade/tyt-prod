@@ -453,28 +453,6 @@ const DailyJournal = () => {
             </Link>
           </div>
 
-          {/* Stats Summary - Desktop */}
-          <div className="hidden lg:flex items-center gap-3">
-            <div className={`px-4 py-2 rounded-lg border ${stats.totalPnL >= 0 ? "bg-profit/10 border-profit/20" : "bg-loss/10 border-loss/20"}`}>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total P&L</p>
-              <p className={`text-lg font-bold ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
-                {formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
-              </p>
-            </div>
-            <div className="px-4 py-2 rounded-lg bg-card border border-border">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Win Rate</p>
-              <p className="text-lg font-bold text-foreground">{stats.winRate}%</p>
-            </div>
-            <div className="px-4 py-2 rounded-lg bg-card border border-border">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Record</p>
-              <p className="text-lg font-bold">
-                <span className="text-profit">{stats.winners}</span>
-                <span className="text-muted-foreground mx-1">/</span>
-                <span className="text-loss">{stats.losers}</span>
-              </p>
-            </div>
-          </div>
-
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="hidden md:flex p-2 rounded-lg bg-card border border-border hover:bg-muted transition-colors"
@@ -895,6 +873,28 @@ const DailyJournal = () => {
               className="hidden lg:block flex-shrink-0 border-l border-border bg-card/50 overflow-hidden"
             >
               <div className="w-80 p-4 space-y-4 overflow-y-auto h-full">
+                {/* Summary Stats */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className={`p-3 rounded-xl border ${stats.totalPnL >= 0 ? "bg-profit/10 border-profit/20" : "bg-loss/10 border-loss/20"}`}>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Total P&L</p>
+                    <p className={`text-base font-bold ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
+                      {formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-card border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Win Rate</p>
+                    <p className="text-base font-bold text-foreground">{stats.winRate}%</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-card border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Record</p>
+                    <p className="text-base font-bold">
+                      <span className="text-profit">{stats.winners}</span>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="text-loss">{stats.losers}</span>
+                    </p>
+                  </div>
+                </div>
+
                 {/* Calendar */}
                 <div className="bg-card border border-border rounded-xl p-4">
                   <div className="flex items-center justify-between mb-4">
