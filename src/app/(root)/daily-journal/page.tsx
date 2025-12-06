@@ -449,7 +449,7 @@ const DailyJournal = () => {
               placeholder="Search trades..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border/50 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200"
+              className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border rounded-2xl text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200"
             />
           </div>
 
@@ -457,7 +457,7 @@ const DailyJournal = () => {
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="w-full flex items-center justify-between px-4 py-2.5 bg-background/50 border border-border/50 rounded-xl text-sm text-foreground hover:bg-muted/50 hover:border-border transition-all duration-200"
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-background/50 border border-border rounded-2xl text-sm text-foreground hover:bg-muted/50 hover:border-border transition-all duration-200"
             >
               <span className="flex items-center gap-2.5">
                 <Filter className="w-4 h-4 text-muted-foreground" />
@@ -472,7 +472,7 @@ const DailyJournal = () => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-2 glass border border-border/50 rounded-xl shadow-xl overflow-hidden z-50"
+                  className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-50"
                 >
                   {[
                     { value: "all", label: "All Trades", icon: null },
