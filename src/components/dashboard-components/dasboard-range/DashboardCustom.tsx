@@ -5,7 +5,7 @@ import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import Calendar from "../Calendar";
 import PnLDailyChart from "./Graphs/PnLDailyChart";
 // Stores
-import useAccountDetails from '@/store/accountdetails';
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarDays, faArrowRightArrowLeft, faPenClip, faRightLeft } from '@fortawesome/free-solid-svg-icons';
 
@@ -56,7 +56,7 @@ const DashboardCustom: React.FC = () => {
   const today = new Date();
 
   // Get accounts data
-  const { selectedAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
 
   // Extract and sort all trades (oldest to newest)
   const extractTradeData = (accounts: Account[]): Trade[] => {

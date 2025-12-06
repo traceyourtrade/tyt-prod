@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
 // Stores
-import useAccountDetails from '@/store/accountdetails';
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import calendarPopUp from '@/store/calendarPopUp';
 
 // Functions
@@ -54,7 +54,7 @@ interface GroupedTrade {
 
 const DashboardWeek: React.FC = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
-  const { selectedAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
 
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: { [key: string]: GroupedTrade }, trade: Trade) => {

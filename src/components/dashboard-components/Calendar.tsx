@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown, TrendingUp, BarChart3, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import useAccountDetails from "@/store/accountdetails";
+import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import calendarPopUp from "@/store/calendarPopUp";
 import datesforcal from "@/store/datesforcal";
 import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
@@ -30,7 +30,7 @@ interface GroupedTrade {
 const Calendar = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { setcalMonth, setcalYear } = datesforcal();
-  const { selectedAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
 
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])

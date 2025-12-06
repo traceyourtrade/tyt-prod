@@ -24,7 +24,7 @@ import {
 
 import calendarPopUp from "@/store/calendarPopUp";
 import notifications from "@/store/notifications";
-import useAccountDetails from "@/store/accountdetails";
+import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import { useDataStore } from "@/store/store";
 
 import Logo from "@/images/Logo.png";
@@ -63,7 +63,7 @@ interface ChartData {
 const CalendarPopup = () => {
   const { showTr, setShowTr, dataDate, setDateHard, setAddTrades, setShowEditTradePopUp, setEditTradeData } = calendarPopUp();
   const { setAlertBoxG } = notifications();
-  const { selectedAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
   const { bkurl } = useDataStore();
   const tokenn = Cookies.get("Trace Your Trades");
   const popupRef = useRef<HTMLDivElement>(null);

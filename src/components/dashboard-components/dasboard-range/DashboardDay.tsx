@@ -13,7 +13,7 @@ import PnLchartDaily from "./Graphs/PnLDailyChart";
 import VeriticalBarGraph from "./Graphs/VerticalBarGraph";
 
 // Stores
-import useAccountDetails from '@/store/accountdetails';
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 
 // Functions
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
@@ -39,7 +39,7 @@ interface DayData {
   tradeLength: number;
 }
 const DashboardDay: React.FC = () => {
-  const { selectedAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
 
   interface Trade {
     date: string;

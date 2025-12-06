@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import useAccountDetails from '@/store/accountdetails';
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
 
 interface TradeData {
@@ -21,7 +21,7 @@ interface Account {
 
 export default function PerformanceRadar() {
   const [isDark, setIsDark] = useState(true);
-  const { selectedAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
 
   useEffect(() => {

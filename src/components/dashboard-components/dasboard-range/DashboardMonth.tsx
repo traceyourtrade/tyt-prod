@@ -12,7 +12,7 @@ import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
-import useAccountDetails from '@/store/accountdetails';
+import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
 
 interface TradeData {
@@ -28,7 +28,7 @@ interface Account {
 }
 
 const DashboardMonth: React.FC = () => {
-  const { selectedAccounts } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
 
   function isCurrentMonth(dateString: string): boolean {
