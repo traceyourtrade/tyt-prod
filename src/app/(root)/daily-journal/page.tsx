@@ -451,15 +451,6 @@ const DailyJournal = () => {
             <Link href="/dashboard" className="p-2 rounded-lg hover:bg-muted transition-colors md:hidden">
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground">Daily Journal</h1>
-                <p className="text-xs text-muted-foreground hidden md:block">Review and reflect on your trades</p>
-              </div>
-            </div>
           </div>
 
           {/* Stats Summary - Desktop */}
