@@ -31,6 +31,13 @@ import {
   PanelRight,
   Clock,
   CheckCircle2,
+  Activity,
+  Flame,
+  Award,
+  ArrowUpRight,
+  ArrowDownRight,
+  LayoutGrid,
+  Sparkles,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
@@ -131,12 +138,12 @@ const demoTemplates: Template[] = [
 ];
 
 const demoTrades: Trade[] = [
-  { id: "demo-1", date: new Date().toISOString().split("T")[0], EntryTime: "09:32:00", Profit: 1250, Item: "AAPL", symbol: "AAPL", Type: "Long", side: "Long", strategy: "Momentum" },
-  { id: "demo-2", date: new Date().toISOString().split("T")[0], EntryTime: "10:15:00", Profit: -380, Item: "TSLA", symbol: "TSLA", Type: "Short", side: "Short", strategy: "Breakout" },
-  { id: "demo-3", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "11:45:00", Profit: 890, Item: "NVDA", symbol: "NVDA", Type: "Long", side: "Long", strategy: "Scalping" },
-  { id: "demo-4", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "14:20:00", Profit: -520, Item: "MSFT", symbol: "MSFT", Type: "Long", side: "Long", strategy: "Swing" },
-  { id: "demo-5", date: new Date(Date.now() - 2 * 86400000).toISOString().split("T")[0], EntryTime: "09:55:00", Profit: 2100, Item: "META", symbol: "META", Type: "Long", side: "Long", strategy: "Reversal" },
-  { id: "demo-6", date: new Date(Date.now() - 3 * 86400000).toISOString().split("T")[0], EntryTime: "13:10:00", Profit: 450, Item: "GOOGL", symbol: "GOOGL", Type: "Short", side: "Short", strategy: "Momentum" },
+  { id: "demo-1", date: new Date().toISOString().split("T")[0], EntryTime: "09:32:00", Profit: 1250, Item: "AAPL", symbol: "AAPL", Type: "Long", side: "Long", strategy: "Momentum", entryPrice: "178.50", exitPrice: "182.35" },
+  { id: "demo-2", date: new Date().toISOString().split("T")[0], EntryTime: "10:15:00", Profit: -380, Item: "TSLA", symbol: "TSLA", Type: "Short", side: "Short", strategy: "Breakout", entryPrice: "245.80", exitPrice: "248.10" },
+  { id: "demo-3", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "11:45:00", Profit: 890, Item: "NVDA", symbol: "NVDA", Type: "Long", side: "Long", strategy: "Scalping", entryPrice: "485.20", exitPrice: "492.75" },
+  { id: "demo-4", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "14:20:00", Profit: -520, Item: "MSFT", symbol: "MSFT", Type: "Long", side: "Long", strategy: "Swing", entryPrice: "378.90", exitPrice: "375.40" },
+  { id: "demo-5", date: new Date(Date.now() - 2 * 86400000).toISOString().split("T")[0], EntryTime: "09:55:00", Profit: 2100, Item: "META", symbol: "META", Type: "Long", side: "Long", strategy: "Reversal", entryPrice: "312.50", exitPrice: "324.80" },
+  { id: "demo-6", date: new Date(Date.now() - 3 * 86400000).toISOString().split("T")[0], EntryTime: "13:10:00", Profit: 450, Item: "GOOGL", symbol: "GOOGL", Type: "Short", side: "Short", strategy: "Momentum", entryPrice: "141.20", exitPrice: "138.95" },
 ];
 
 const commonTags = ["FOMO", "Perfect Setup", "Revenge Trade", "Followed Plan", "Overtraded", "Early Exit", "Late Entry", "News Play", "Gap Fill", "Trend Follow"];
@@ -154,12 +161,12 @@ const getTemplateIcon = (iconName: string) => {
 
 const getTemplateColor = (color: string) => {
   switch (color) {
-    case "blue": return "text-blue-500 bg-blue-500/10";
-    case "yellow": return "text-yellow-500 bg-yellow-500/10";
-    case "green": return "text-green-500 bg-green-500/10";
-    case "pink": return "text-pink-500 bg-pink-500/10";
-    case "purple": return "text-purple-500 bg-purple-500/10";
-    default: return "text-primary bg-primary/10";
+    case "blue": return "text-blue-400 bg-blue-500/20 border-blue-500/30";
+    case "yellow": return "text-yellow-400 bg-yellow-500/20 border-yellow-500/30";
+    case "green": return "text-emerald-400 bg-emerald-500/20 border-emerald-500/30";
+    case "pink": return "text-pink-400 bg-pink-500/20 border-pink-500/30";
+    case "purple": return "text-purple-400 bg-purple-500/20 border-purple-500/30";
+    default: return "text-primary bg-primary/20 border-primary/30";
   }
 };
 
@@ -284,7 +291,29 @@ const DailyJournal = () => {
     const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : totalWins > 0 ? "∞" : "0.00";
     const avgWin = winners > 0 ? totalWins / winners : 0;
     const avgLoss = losers > 0 ? totalLosses / losers : 0;
-    return { winners, losers, totalPnL, winRate, profitFactor, avgWin, avgLoss, totalTrades: trades.length };
+    
+    // Calculate streaks
+    let currentStreak = 0;
+    let maxWinStreak = 0;
+    let tempStreak = 0;
+    const sortedTrades = [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    for (const trade of sortedTrades) {
+      if (trade.Profit > 0) {
+        tempStreak++;
+        maxWinStreak = Math.max(maxWinStreak, tempStreak);
+      } else {
+        tempStreak = 0;
+      }
+    }
+    
+    // Current streak
+    for (const trade of sortedTrades) {
+      if (trade.Profit > 0) currentStreak++;
+      else break;
+    }
+    
+    return { winners, losers, totalPnL, winRate, profitFactor, avgWin, avgLoss, totalTrades: trades.length, currentStreak, maxWinStreak };
   }, [trades]);
 
   const calendarData = useMemo(() => {
@@ -405,26 +434,27 @@ const DailyJournal = () => {
     const cells = [];
     const today = new Date();
 
-    for (let i = 0; i < firstDay; i++) cells.push(<div key={`e-${i}`} className="h-7" />);
+    for (let i = 0; i < firstDay; i++) cells.push(<div key={`e-${i}`} className="h-8" />);
 
     for (let day = 1; day <= days; day++) {
       const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
       const pnl = calendarData[dateStr] || 0;
       const isToday = new Date(selectedYear, selectedMonth, day).toDateString() === today.toDateString();
 
-      let bgClass = "";
-      if (pnl > 500) bgClass = "bg-profit text-white";
-      else if (pnl > 0) bgClass = "bg-profit/40 text-profit";
-      else if (pnl < -500) bgClass = "bg-loss text-white";
-      else if (pnl < 0) bgClass = "bg-loss/40 text-loss";
+      let cellClass = "bg-transparent text-muted-foreground/60 hover:bg-white/5";
+      if (pnl > 1000) cellClass = "bg-gradient-to-br from-profit to-profit/70 text-white shadow-lg shadow-profit/25";
+      else if (pnl > 0) cellClass = "bg-profit/30 text-profit";
+      else if (pnl < -1000) cellClass = "bg-gradient-to-br from-loss to-loss/70 text-white shadow-lg shadow-loss/25";
+      else if (pnl < 0) cellClass = "bg-loss/30 text-loss";
 
       cells.push(
-        <div
+        <motion.div
           key={day}
-          className={`h-7 w-7 rounded-md flex items-center justify-center text-xs font-medium transition-colors ${bgClass} ${isToday ? "ring-2 ring-primary ring-offset-1 ring-offset-background" : ""} ${!bgClass ? "text-foreground hover:bg-muted" : ""}`}
+          whileHover={{ scale: 1.1 }}
+          className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold cursor-pointer transition-all ${cellClass} ${isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-[#0D0F12]" : ""}`}
         >
           {day}
-        </div>
+        </motion.div>
       );
     }
     return cells;
@@ -439,733 +469,676 @@ const DailyJournal = () => {
     return `${hour12}:${m} ${ampm}`;
   };
 
+  // Calculate max P&L for bar scaling
+  const maxAbsPnL = useMemo(() => {
+    return Math.max(...trades.map(t => Math.abs(t.Profit)), 1);
+  }, [trades]);
+
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border px-3 py-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-          </Link>
-          <h1 className="text-sm font-semibold text-foreground">Journal</h1>
-        </div>
-        <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
-          <button
-            onClick={() => setMobileView("list")}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${mobileView === "list" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}
-          >
-            Trades
-          </button>
-          <button
-            onClick={() => setMobileView("content")}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${mobileView === "content" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}
-          >
-            Journal
-          </button>
+    <div className="min-h-screen bg-[#0A0B0E]">
+      {/* Premium Header - Command Center */}
+      <div className="sticky top-0 z-50 backdrop-blur-xl bg-[#0A0B0E]/80 border-b border-white/5">
+        <div className="max-w-[1800px] mx-auto px-4 md:px-6">
+          {/* Top Bar */}
+          <div className="h-16 flex items-center justify-between">
+            {/* Left - Branding */}
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard" className="p-2 rounded-xl hover:bg-white/5 transition-colors">
+                <ArrowLeft className="w-5 h-5 text-white/60" />
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-primary/80 to-primary/50 flex items-center justify-center shadow-lg shadow-primary/25">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-white">Trading Journal</h1>
+                  <p className="text-xs text-white/40">Command Center</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right - Controls */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors hidden md:flex"
+              >
+                {isSidebarOpen ? <PanelRightClose className="w-5 h-5 text-white/60" /> : <PanelRight className="w-5 h-5 text-white/60" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Strip - Premium Metrics Bar */}
+          <div className="py-4 flex items-center gap-4 overflow-x-auto scrollbar-none">
+            {/* Total P&L - Hero Stat */}
+            <div className="flex-shrink-0 relative">
+              <div className={`px-6 py-4 rounded-2xl ${stats.totalPnL >= 0 ? "bg-gradient-to-br from-profit/20 via-profit/10 to-transparent border border-profit/20" : "bg-gradient-to-br from-loss/20 via-loss/10 to-transparent border border-loss/20"}`}>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/[0.03] to-transparent" />
+                <div className="relative">
+                  <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest mb-1">Total P&L</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-3xl font-black tracking-tight ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
+                      {formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
+                    </span>
+                    {stats.totalPnL >= 0 ? (
+                      <ArrowUpRight className="w-6 h-6 text-profit" />
+                    ) : (
+                      <ArrowDownRight className="w-6 h-6 text-loss" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Win Rate */}
+              <div className="px-5 py-3 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-colors">
+                <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-0.5">Win Rate</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl font-bold text-white">{stats.winRate}%</span>
+                  <div className="flex-1 h-1.5 w-16 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${stats.winRate}%` }}
+                      className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Win/Loss Count */}
+              <div className="px-5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+                <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-0.5">Record</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold text-profit">{stats.winners}</span>
+                  <span className="text-white/20">/</span>
+                  <span className="text-xl font-bold text-loss">{stats.losers}</span>
+                </div>
+              </div>
+
+              {/* Profit Factor */}
+              <div className="px-5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+                <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-0.5">Profit Factor</p>
+                <span className="text-xl font-bold text-white">{stats.profitFactor}</span>
+              </div>
+
+              {/* Streak */}
+              <div className="px-5 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+                <p className="text-[10px] font-medium text-white/40 uppercase tracking-wider mb-0.5">Streak</p>
+                <div className="flex items-center gap-1.5">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span className="text-xl font-bold text-white">{stats.currentStreak}</span>
+                </div>
+              </div>
+
+              {/* Avg Win */}
+              <div className="px-5 py-3 rounded-xl bg-profit/5 border border-profit/10">
+                <p className="text-[10px] font-medium text-profit/60 uppercase tracking-wider mb-0.5">Avg Win</p>
+                <span className="text-lg font-bold text-profit">{formatCompactCurrency(stats.avgWin, currency, exchangeRate)}</span>
+              </div>
+
+              {/* Avg Loss */}
+              <div className="px-5 py-3 rounded-xl bg-loss/5 border border-loss/10">
+                <p className="text-[10px] font-medium text-loss/60 uppercase tracking-wider mb-0.5">Avg Loss</p>
+                <span className="text-lg font-bold text-loss">{formatCompactCurrency(stats.avgLoss, currency, exchangeRate)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Left Panel - Trade List */}
-      <div className={`w-full md:w-[320px] border border-border/30 flex-col bg-card shrink-0 md:rounded-xl md:m-3 md:mr-0 pt-14 md:pt-0 ${mobileView === "list" ? "flex" : "hidden md:flex"}`}>
-        <div className="p-4 border-b border-border/30 space-y-3">
-          <div className="hidden md:flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <BookOpen className="w-4.5 h-4.5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-base font-semibold text-foreground">Journal</h1>
-              <p className="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wider">Trade entries</p>
-            </div>
-          </div>
-
-          {/* Search - Clean Style */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
-            <input
-              type="text"
-              placeholder="Search trades..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-muted/30 border border-border/30 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all"
-            />
-          </div>
-
-          {/* Filter Dropdown */}
-          <div className="relative" ref={filterRef}>
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="w-full flex items-center justify-between px-3 py-2.5 bg-muted/30 border border-border/30 rounded-lg text-sm text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <span className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-muted-foreground/50" />
-                <span className="font-medium">{filter === "all" ? "All Trades" : filter === "winners" ? "Winners" : "Losers"}</span>
-              </span>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground/50 transition-transform ${isFilterOpen ? "rotate-180" : ""}`} />
-            </button>
-            <AnimatePresence>
-              {isFilterOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 right-0 mt-1 bg-card border border-border/50 rounded-lg shadow-lg overflow-hidden z-50"
-                >
-                  {[
-                    { value: "all", label: "All Trades", icon: null, color: "" },
-                    { value: "winners", label: "Winners", icon: TrendingUp, color: "text-profit" },
-                    { value: "losers", label: "Losers", icon: TrendingDown, color: "text-loss" },
-                  ].map((opt) => {
-                    const Icon = opt.icon;
-                    return (
-                      <button
-                        key={opt.value}
-                        onClick={() => {
-                          setFilter(opt.value as typeof filter);
-                          setIsFilterOpen(false);
-                        }}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors ${filter === opt.value ? "bg-primary/10 text-primary" : `text-foreground hover:bg-muted/50 ${opt.color}`}`}
-                      >
-                        {Icon && <Icon className="w-4 h-4" />}
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Trade List */}
-        <div className="flex-1 overflow-y-auto scrollbar-sleek">
-          {Object.keys(groupedTrades).length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="w-12 h-12 rounded-lg bg-muted/30 flex items-center justify-center mx-auto mb-3">
-                <BookOpen className="w-6 h-6 text-muted-foreground/40" />
+      {/* Main Content */}
+      <div className="max-w-[1800px] mx-auto px-4 md:px-6 py-6">
+        <div className="flex gap-6">
+          {/* Left Panel - Trade List with P&L Bars */}
+          <div className={`${mobileView === "list" || window.innerWidth >= 768 ? "flex" : "hidden"} w-full md:w-[380px] flex-col flex-shrink-0`}>
+            {/* Search & Filter */}
+            <div className="mb-4 space-y-3">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <input
+                  type="text"
+                  placeholder="Search symbols..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white/[0.03] border border-white/5 rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all"
+                />
               </div>
-              <p className="text-muted-foreground/60 text-sm font-medium">No trades found</p>
+              
+              {/* Filter Pills */}
+              <div className="flex items-center gap-2">
+                {["all", "winners", "losers"].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f as typeof filter)}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      filter === f
+                        ? f === "winners" ? "bg-profit/20 text-profit border border-profit/30" 
+                          : f === "losers" ? "bg-loss/20 text-loss border border-loss/30"
+                          : "bg-white/10 text-white border border-white/20"
+                        : "bg-white/[0.03] text-white/50 border border-white/5 hover:bg-white/[0.06]"
+                    }`}
+                  >
+                    {f === "all" ? "All Trades" : f === "winners" ? `Winners (${stats.winners})` : `Losers (${stats.losers})`}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : (
-            Object.entries(groupedTrades).map(([dateLabel, dateTrades]) => (
-              <div key={dateLabel}>
-                <div className="px-4 py-2 text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider bg-muted/20 sticky top-0 z-10 border-b border-border/20">
-                  {dateLabel}
+
+            {/* Trade List with Visual P&L Bars */}
+            <div className="flex-1 space-y-2 overflow-y-auto max-h-[calc(100vh-320px)] scrollbar-sleek pr-2">
+              {Object.keys(groupedTrades).length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+                    <BookOpen className="w-8 h-8 text-white/20" />
+                  </div>
+                  <p className="text-white/40 font-medium">No trades found</p>
                 </div>
-                {dateTrades.map((trade, idx) => {
-                  const getTradeKey = (t: Trade) => t._id || t.id || `${t.date}-${t.EntryTime || t.time || ''}-${t.Item || t.symbol || ''}-${t.Profit}`;
-                  const tradeKey = getTradeKey(trade);
-                  const selectedKey = selectedTrade ? getTradeKey(selectedTrade) : null;
-                  const isSelected = tradeKey === selectedKey;
-                  const isJournaled = Boolean(trade.jrData && (
-                    trade.jrData.sentiment ||
-                    trade.jrData.templateId ||
-                    trade.jrData.tags?.length > 0 ||
-                    Object.keys(trade.jrData.prompts || {}).some(k => trade.jrData?.prompts?.[k]?.trim())
-                  ));
-                  const isProfit = trade.Profit >= 0;
-                  const entryPrice = trade.entryPrice ? parseFloat(String(trade.entryPrice)) : null;
-                  const exitPrice = trade.exitPrice ? parseFloat(String(trade.exitPrice)) : null;
-                  
-                  return (
-                    <motion.button
-                      key={tradeKey || `${trade.date}-${idx}`}
-                      onClick={() => handleSelectTrade(trade)}
-                      whileTap={{ scale: 0.99 }}
-                      className={`group w-full px-3 py-3 mx-1 my-0.5 rounded-lg transition-all ${isSelected 
-                        ? `bg-muted/40 border-l-2 ${isProfit ? "border-l-profit" : "border-l-loss"}` 
-                        : "hover:bg-muted/20 border-l-2 border-l-transparent"}`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        {/* Left: Symbol + Details */}
-                        <div className="flex items-start gap-2.5 flex-1 min-w-0">
-                          {/* Symbol Badge */}
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${isProfit ? "bg-profit/10 text-profit" : "bg-loss/10 text-loss"}`}>
-                            {(trade.Item || trade.symbol || "?").slice(0, 2)}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0 text-left">
-                            {/* Symbol + Time */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground truncate">{trade.Item || trade.symbol}</span>
-                              <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {formatTime(trade.EntryTime || trade.time)}
-                              </span>
-                            </div>
+              ) : (
+                Object.entries(groupedTrades).map(([dateLabel, dateTrades]) => (
+                  <div key={dateLabel}>
+                    <div className="sticky top-0 z-10 py-2 px-1">
+                      <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{dateLabel}</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {dateTrades.map((trade, idx) => {
+                        const getTradeKey = (t: Trade) => t._id || t.id || `${t.date}-${t.EntryTime || t.time || ''}-${t.Item || t.symbol || ''}-${t.Profit}`;
+                        const tradeKey = getTradeKey(trade);
+                        const selectedKey = selectedTrade ? getTradeKey(selectedTrade) : null;
+                        const isSelected = tradeKey === selectedKey;
+                        const isJournaled = Boolean(trade.jrData && (
+                          trade.jrData.sentiment ||
+                          trade.jrData.templateId ||
+                          trade.jrData.tags?.length ||
+                          Object.keys(trade.jrData.prompts || {}).some(k => trade.jrData?.prompts?.[k]?.trim())
+                        ));
+                        const isProfit = trade.Profit >= 0;
+                        const pnlBarWidth = Math.min((Math.abs(trade.Profit) / maxAbsPnL) * 100, 100);
+                        const entryPrice = trade.entryPrice ? parseFloat(String(trade.entryPrice)) : null;
+                        const exitPrice = trade.exitPrice ? parseFloat(String(trade.exitPrice)) : null;
+
+                        return (
+                          <motion.button
+                            key={tradeKey || `${trade.date}-${idx}`}
+                            onClick={() => handleSelectTrade(trade)}
+                            whileHover={{ x: 4 }}
+                            whileTap={{ scale: 0.99 }}
+                            className={`group relative w-full overflow-hidden rounded-xl transition-all ${
+                              isSelected
+                                ? "bg-white/[0.08] ring-1 ring-white/20"
+                                : "bg-white/[0.02] hover:bg-white/[0.05] border border-white/5"
+                            }`}
+                          >
+                            {/* P&L Background Bar */}
+                            <div
+                              className={`absolute inset-y-0 left-0 transition-all ${isProfit ? "bg-profit/10" : "bg-loss/10"}`}
+                              style={{ width: `${pnlBarWidth}%` }}
+                            />
                             
-                            {/* Entry/Exit Prices */}
-                            {entryPrice && exitPrice && (
-                              <div className="flex items-center gap-3 mt-1">
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[9px] text-muted-foreground/40 uppercase">Entry</span>
-                                  <span className="text-[11px] font-medium text-foreground/80">${entryPrice.toFixed(2)}</span>
+                            <div className="relative flex items-center p-3 gap-3">
+                              {/* Symbol Badge */}
+                              <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${
+                                isProfit 
+                                  ? "bg-gradient-to-br from-profit/30 to-profit/10 border border-profit/20" 
+                                  : "bg-gradient-to-br from-loss/30 to-loss/10 border border-loss/20"
+                              }`}>
+                                <span className={`text-sm font-bold ${isProfit ? "text-profit" : "text-loss"}`}>
+                                  {(trade.Item || trade.symbol || "?").slice(0, 3)}
+                                </span>
+                                <span className="text-[8px] text-white/40 font-medium">{trade.side || trade.Type}</span>
+                              </div>
+
+                              {/* Trade Info */}
+                              <div className="flex-1 min-w-0 text-left">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-sm font-bold text-white">{trade.Item || trade.symbol}</span>
+                                  {isJournaled && (
+                                    <div className="w-5 h-5 rounded-md bg-primary/20 flex items-center justify-center">
+                                      <CheckCircle2 className="w-3 h-3 text-primary" />
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="text-muted-foreground/30">→</div>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[9px] text-muted-foreground/40 uppercase">Exit</span>
-                                  <span className="text-[11px] font-medium text-foreground/80">${exitPrice.toFixed(2)}</span>
+                                
+                                {/* Entry/Exit with Mini Chart */}
+                                <div className="flex items-center gap-2">
+                                  {entryPrice && exitPrice ? (
+                                    <>
+                                      <span className="text-xs text-white/50 font-medium">${entryPrice.toFixed(2)}</span>
+                                      <svg width="24" height="12" className="shrink-0">
+                                        <path
+                                          d={isProfit ? "M2 10 L12 2 L22 10" : "M2 2 L12 10 L22 2"}
+                                          stroke={isProfit ? "#4EBF94" : "#EF4444"}
+                                          strokeWidth="2"
+                                          fill="none"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
+                                      </svg>
+                                      <span className="text-xs text-white/50 font-medium">${exitPrice.toFixed(2)}</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-white/30">{formatTime(trade.EntryTime || trade.time)}</span>
+                                  )}
                                 </div>
                               </div>
-                            )}
-                          </div>
+
+                              {/* P&L */}
+                              <div className="text-right">
+                                <span className={`text-lg font-black ${isProfit ? "text-profit" : "text-loss"}`}>
+                                  {isProfit ? "+" : ""}{formatCompactCurrency(trade.Profit, currency, exchangeRate)}
+                                </span>
+                                {trade.strategy && (
+                                  <p className="text-[10px] text-white/30 font-medium">{trade.strategy}</p>
+                                )}
+                              </div>
+                            </div>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Center Panel - Journal Content */}
+          <div className={`flex-1 min-w-0 ${mobileView === "content" || window.innerWidth >= 768 ? "block" : "hidden"}`}>
+            {selectedTrade ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                {/* Trade Header Card */}
+                <div className={`relative overflow-hidden rounded-2xl p-6 ${
+                  selectedTrade.Profit >= 0 
+                    ? "bg-gradient-to-br from-profit/20 via-profit/5 to-transparent border border-profit/20" 
+                    : "bg-gradient-to-br from-loss/20 via-loss/5 to-transparent border border-loss/20"
+                }`}>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/[0.02] to-transparent" />
+                  
+                  <div className="relative flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-black text-xl ${
+                          selectedTrade.Profit >= 0 
+                            ? "bg-profit/30 text-profit border border-profit/30" 
+                            : "bg-loss/30 text-loss border border-loss/30"
+                        }`}>
+                          {(selectedTrade.Item || selectedTrade.symbol || "?").slice(0, 3)}
                         </div>
-                        
-                        {/* Right: Mini Chart + P&L */}
-                        <div className="flex flex-col items-end gap-1.5 shrink-0">
-                          {/* Mini Sparkline */}
-                          {entryPrice && exitPrice && (
-                            <svg width="40" height="16" className="opacity-70">
-                              <line 
-                                x1="4" y1={isProfit ? "12" : "4"} 
-                                x2="36" y2={isProfit ? "4" : "12"} 
-                                stroke={isProfit ? "#4EBF94" : "#EF4444"} 
-                                strokeWidth="2" 
-                                strokeLinecap="round"
-                              />
-                              <circle cx="4" cy={isProfit ? "12" : "4"} r="2" fill={isProfit ? "#4EBF94" : "#EF4444"} />
-                              <circle cx="36" cy={isProfit ? "4" : "12"} r="2" fill={isProfit ? "#4EBF94" : "#EF4444"} />
-                            </svg>
-                          )}
-                          
-                          {/* P&L Badge */}
-                          <div className="flex items-center gap-1.5">
-                            {isJournaled && (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                            )}
-                            <span className={`text-sm font-bold ${isProfit ? "text-profit" : "text-loss"}`}>
-                              {formatCompactCurrency(trade.Profit, currency, exchangeRate)}
+                        <div>
+                          <h2 className="text-2xl font-black text-white">{selectedTrade.Item || selectedTrade.symbol}</h2>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white/60 text-xs font-medium">
+                              {selectedTrade.side || selectedTrade.Type}
                             </span>
+                            {selectedTrade.strategy && (
+                              <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white/60 text-xs font-medium">
+                                {selectedTrade.strategy}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
 
-      {/* Center Panel - Journal Workspace */}
-      <div className={`flex-1 flex-col overflow-hidden bg-background pt-14 md:pt-0 ${mobileView === "content" ? "flex" : "hidden md:flex"}`}>
-        <AnimatePresence mode="wait">
-          {!selectedTrade ? (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 flex items-center justify-center"
-            >
-              <div className="text-center">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-primary/5">
-                  <BookOpen className="w-9 h-9 text-primary/70" />
-                </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2 tracking-tight">Select a trade to journal</h2>
-                <p className="text-muted-foreground/80 text-sm">Choose a trade from the list to start journaling</p>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key={selectedTrade.id || selectedTrade.date}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-              className="flex-1 overflow-y-auto scrollbar-sleek p-6 space-y-5"
-            >
-              {/* Trade Header - Clean Card */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-                className={`bg-card border rounded-xl p-5 ${selectedTrade.Profit >= 0 ? "border-profit/20" : "border-loss/20"}`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    {/* Symbol Badge */}
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${selectedTrade.Profit >= 0 ? "bg-profit/10 text-profit" : "bg-loss/10 text-loss"}`}>
-                      <span className="text-lg font-bold">
-                        {(selectedTrade.Item || selectedTrade.symbol || "?").slice(0, 2)}
+                      {/* Price Details */}
+                      <div className="grid grid-cols-3 gap-6">
+                        <div>
+                          <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium mb-1">Entry Price</p>
+                          <p className="text-lg font-bold text-white">
+                            ${selectedTrade.entryPrice ? parseFloat(String(selectedTrade.entryPrice)).toFixed(2) : "—"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium mb-1">Exit Price</p>
+                          <p className="text-lg font-bold text-white">
+                            ${selectedTrade.exitPrice ? parseFloat(String(selectedTrade.exitPrice)).toFixed(2) : "—"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium mb-1">Time</p>
+                          <p className="text-lg font-bold text-white">{formatTime(selectedTrade.EntryTime || selectedTrade.time) || "—"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* P&L Display */}
+                    <div className="text-right">
+                      <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium mb-1">P&L</p>
+                      <span className={`text-4xl font-black tracking-tight ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                        {selectedTrade.Profit >= 0 ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
                       </span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
-                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase ${(selectedTrade.Type || selectedTrade.side) === "Long" 
-                          ? "bg-profit/10 text-profit" 
-                          : "bg-loss/10 text-loss"}`}>
-                          {selectedTrade.Type || selectedTrade.side}
-                        </span>
-                      </div>
-                      <div className="text-sm text-muted-foreground/70 mt-1.5 flex items-center gap-2 font-medium">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {new Date(selectedTrade.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                        </span>
-                        <span className="text-muted-foreground/30">•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          {formatTime(selectedTrade.EntryTime || selectedTrade.time)}
-                        </span>
-                        {selectedTrade.strategy && (
-                          <>
-                            <span className="text-muted-foreground/30">•</span>
-                            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-xs font-medium">{selectedTrade.strategy}</span>
-                          </>
-                        )}
-                      </div>
-                      
-                      {/* Entry/Exit Prices in Header */}
-                      {selectedTrade.entryPrice && selectedTrade.exitPrice && (
-                        <div className="flex items-center gap-4 mt-3 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground/50 text-xs">Entry</span>
-                            <span className="font-semibold text-foreground">${parseFloat(String(selectedTrade.entryPrice)).toFixed(2)}</span>
-                          </div>
-                          <div className="text-muted-foreground/30">→</div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground/50 text-xs">Exit</span>
-                            <span className="font-semibold text-foreground">${parseFloat(String(selectedTrade.exitPrice)).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* P&L Display */}
-                  <div className="flex flex-col items-end">
-                    <div className={`text-2xl font-bold ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                      {formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
-                    </div>
-                    <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${selectedTrade.Profit >= 0 ? "text-profit/70" : "text-loss/70"}`}>
-                      {selectedTrade.Profit >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                      {selectedTrade.Profit >= 0 ? "Winner" : "Loser"}
-                    </div>
                   </div>
                 </div>
-              </motion.div>
 
-              {/* Screenshots - Clean Card */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.05 }}
-                className="bg-card border border-border/30 rounded-xl p-5"
-              >
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center">
-                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <span>Screenshots</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground/50 uppercase tracking-wider">Entry & Exit</span>
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {["before", "after"].map((type) => {
-                    const url = type === "before" ? selectedTrade.beforeURL : selectedTrade.afterURL;
-                    return (
-                      <div key={type} className="group">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={`text-[10px] font-semibold uppercase tracking-wider ${type === "before" ? "text-muted-foreground/60" : "text-muted-foreground/60"}`}>
-                            {type === "before" ? "Before Trade" : "After Trade"}
-                          </span>
-                        </div>
-                        {url ? (
-                          <div
-                            onClick={() => setLightboxImage(url)}
-                            className="relative aspect-video rounded-lg overflow-hidden border border-border/30 cursor-pointer bg-muted/10 hover:border-primary/30 transition-colors"
-                          >
-                            <img src={url} alt={`${type} screenshot`} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <span className="flex items-center gap-2 text-white text-sm font-medium">
-                                <ImageIcon className="w-4 h-4" />
-                                View
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <label className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-border/30 hover:border-primary/30 bg-muted/10 cursor-pointer transition-colors">
-                            <div className="w-10 h-10 rounded-lg bg-muted/30 flex items-center justify-center mb-2">
-                              <Upload className="w-4 h-4 text-muted-foreground/50" />
-                            </div>
-                            <span className="text-xs text-muted-foreground/50 font-medium">
-                              Upload {type}
-                            </span>
-                            <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, type as "before" | "after")} className="hidden" />
-                          </label>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-
-              {/* Template Tabs - Clean Navigation */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.1 }}
-                className="bg-card border border-border/30 rounded-xl p-5"
-              >
-                {/* Tab Navigation */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-4 mb-4 border-b border-border/20 scrollbar-hide">
-                  {templates.map((template, idx) => {
-                    const Icon = getTemplateIcon(template.icon);
-                    const isActive = idx === selectedTemplateIdx;
-                    return (
+                {/* Sentiment Selection */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    How was this trade?
+                  </h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: "great", emoji: "🎯", label: "Great", color: "profit" },
+                      { id: "okay", emoji: "😐", label: "Okay", color: "yellow" },
+                      { id: "poor", emoji: "😔", label: "Poor", color: "loss" },
+                    ].map((s) => (
                       <button
-                        key={template.name}
-                        onClick={() => setSelectedTemplateIdx(idx)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                          isActive 
-                            ? "bg-primary text-primary-foreground" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                        key={s.id}
+                        onClick={() => handleSentimentChange(s.id as "great" | "okay" | "poor")}
+                        className={`relative p-4 rounded-xl transition-all ${
+                          journalData.sentiment === s.id
+                            ? s.color === "profit" ? "bg-profit/20 border-2 border-profit ring-4 ring-profit/20"
+                              : s.color === "yellow" ? "bg-yellow-500/20 border-2 border-yellow-500 ring-4 ring-yellow-500/20"
+                              : "bg-loss/20 border-2 border-loss ring-4 ring-loss/20"
+                            : "bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20"
                         }`}
                       >
-                        <Icon className="w-4 h-4" />
-                        {template.name}
+                        <div className="text-3xl mb-2">{s.emoji}</div>
+                        <div className={`text-sm font-semibold ${
+                          journalData.sentiment === s.id 
+                            ? s.color === "profit" ? "text-profit" : s.color === "yellow" ? "text-yellow-400" : "text-loss"
+                            : "text-white/60"
+                        }`}>
+                          {s.label}
+                        </div>
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
 
-                {/* Prompts - Clean Floating Label Inputs */}
-                <div className="space-y-5">
-                  {templates[selectedTemplateIdx]?.prompts.map((prompt, idx) => {
-                    const hasValue = Boolean(journalData.prompts?.[prompt.id]);
-                    return (
-                      <div key={prompt.id} className="relative">
+                {/* Template Selection */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <LayoutGrid className="w-4 h-4 text-primary" />
+                    Journal Template
+                  </h3>
+                  <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2">
+                    {templates.map((template, idx) => {
+                      const Icon = getTemplateIcon(template.icon);
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedTemplateIdx(idx)}
+                          className={`flex-shrink-0 px-4 py-3 rounded-xl transition-all ${
+                            selectedTemplateIdx === idx
+                              ? getTemplateColor(template.color) + " ring-1 ring-current"
+                              : "bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] text-white/60"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            <span className="text-sm font-semibold whitespace-nowrap">{template.name}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Journal Prompts */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    {templates[selectedTemplateIdx]?.name || "Notes"}
+                  </h3>
+                  <div className="space-y-4">
+                    {templates[selectedTemplateIdx]?.prompts.map((prompt) => (
+                      <div key={prompt.id} className="group">
+                        <label className="block text-xs font-medium text-white/40 uppercase tracking-wider mb-2">
+                          {prompt.label}
+                        </label>
                         {prompt.type === "textarea" ? (
-                          <div className="relative">
-                            <textarea
-                              id={`prompt-${prompt.id}`}
-                              placeholder=" "
-                              value={journalData.prompts?.[prompt.id] || ""}
-                              onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                              rows={3}
-                              className="peer w-full px-4 pt-6 pb-3 bg-muted/20 border border-border/30 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 resize-none transition-all"
-                            />
-                            {/* Floating Label */}
-                            <label 
-                              htmlFor={`prompt-${prompt.id}`}
-                              className={`absolute left-4 transition-all pointer-events-none font-medium
-                                ${hasValue 
-                                  ? "top-2 text-[10px] text-primary uppercase tracking-wider" 
-                                  : "top-4 text-sm text-muted-foreground/50 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-primary peer-focus:uppercase peer-focus:tracking-wider"
-                                }`}
-                            >
-                              {prompt.label}
-                            </label>
-                          </div>
+                          <textarea
+                            value={journalData.prompts?.[prompt.id] || ""}
+                            onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
+                            placeholder={prompt.placeholder}
+                            rows={3}
+                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] focus:ring-4 focus:ring-primary/10 resize-none transition-all"
+                          />
                         ) : (
-                          <div className="relative">
-                            <input
-                              id={`prompt-${prompt.id}`}
-                              type="text"
-                              placeholder=" "
-                              value={journalData.prompts?.[prompt.id] || ""}
-                              onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                              className="peer w-full px-4 pt-6 pb-2 bg-muted/20 border border-border/30 rounded-lg text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all"
-                            />
-                            {/* Floating Label */}
-                            <label 
-                              htmlFor={`prompt-${prompt.id}`}
-                              className={`absolute left-4 transition-all pointer-events-none font-medium
-                                ${hasValue 
-                                  ? "top-2 text-[10px] text-primary uppercase tracking-wider" 
-                                  : "top-4 text-sm text-muted-foreground/50 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-primary peer-focus:uppercase peer-focus:tracking-wider"
-                                }`}
-                            >
-                              {prompt.label}
-                            </label>
-                          </div>
+                          <input
+                            type="text"
+                            value={journalData.prompts?.[prompt.id] || ""}
+                            onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
+                            placeholder={prompt.placeholder}
+                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] focus:ring-4 focus:ring-primary/10 transition-all"
+                          />
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-
-              {/* Sentiment - Clean Mood Selector */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.15 }}
-                className="bg-card border border-border/30 rounded-xl p-5"
-              >
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-pink-500/10 flex items-center justify-center">
-                    <Heart className="w-4 h-4 text-pink-500/70" />
+                    ))}
                   </div>
-                  How do you feel about this trade?
-                </h3>
-                <div className="flex gap-3">
-                  {[
-                    { value: "great", emoji: "😊", label: "Great", activeColor: "border-profit bg-profit/10" },
-                    { value: "okay", emoji: "😐", label: "Okay", activeColor: "border-yellow-400 bg-yellow-400/10" },
-                    { value: "poor", emoji: "😞", label: "Poor", activeColor: "border-loss bg-loss/10" },
-                  ].map((opt) => {
-                    const isActive = journalData.sentiment === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        onClick={() => handleSentimentChange(opt.value as "great" | "okay" | "poor")}
-                        className={`flex-1 flex flex-col items-center gap-2 py-4 rounded-lg border-2 transition-all ${
-                          isActive 
-                            ? opt.activeColor 
-                            : "border-border/30 hover:border-muted-foreground/30 bg-muted/10"
-                        }`}
-                      >
-                        <span className="text-3xl">{opt.emoji}</span>
-                        <span className={`text-xs font-semibold uppercase tracking-wider ${isActive ? "text-foreground" : "text-muted-foreground/60"}`}>
-                          {opt.label}
-                        </span>
-                      </button>
-                    );
-                  })}
                 </div>
-              </motion.div>
 
-              {/* Tags - Clean Tag System */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.2 }}
-                className="bg-card border border-border/30 rounded-xl p-5"
-              >
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Target className="w-4 h-4 text-primary" />
-                  </div>
-                  Tags
-                  <span className="ml-auto text-[10px] text-muted-foreground/50 uppercase tracking-wider">
-                    {journalData.tags?.length || 0} selected
-                  </span>
-                </h3>
-                
-                {/* Selected Tags */}
-                <div className="flex flex-wrap gap-2 mb-4 min-h-[36px]">
-                  <AnimatePresence>
+                {/* Tags */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Tags
+                  </h3>
+                  
+                  {/* Selected Tags */}
+                  <div className="flex flex-wrap gap-2 mb-4">
                     {journalData.tags?.map((tag) => (
-                      <motion.span
+                      <span
                         key={tag}
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.9, opacity: 0 }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-md text-sm font-medium border border-primary/20"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-sm font-medium border border-primary/30"
                       >
                         {tag}
-                        <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/60 transition-colors">
+                        <button onClick={() => handleRemoveTag(tag)} className="hover:text-white">
                           <X className="w-3 h-3" />
                         </button>
-                      </motion.span>
+                      </span>
                     ))}
-                  </AnimatePresence>
-                  {(!journalData.tags || journalData.tags.length === 0) && (
-                    <span className="text-xs text-muted-foreground/40">No tags added yet</span>
-                  )}
-                </div>
-                
-                {/* Tag Input */}
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Add a custom tag..."
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddTag(tagInput)}
-                    className="flex-1 px-3 py-2.5 bg-muted/20 border border-border/30 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all"
-                  />
-                  <button
-                    onClick={() => handleAddTag(tagInput)}
-                    className="px-3 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                
-                {/* Suggested Tags */}
-                <div>
-                  <div className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider mb-2">Suggestions</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {commonTags.filter((t) => !journalData.tags?.includes(t)).slice(0, 6).map((tag) => (
+                  </div>
+
+                  {/* Common Tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {commonTags.filter(t => !journalData.tags?.includes(t)).slice(0, 8).map((tag) => (
                       <button
                         key={tag}
                         onClick={() => handleAddTag(tag)}
-                        className="px-3 py-1.5 text-xs text-muted-foreground/60 font-medium border border-border/30 rounded-md hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors"
+                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-lg text-xs font-medium transition-colors border border-white/5"
                       >
                         + {tag}
                       </button>
                     ))}
                   </div>
                 </div>
-              </motion.div>
 
-              {/* Save Button - Clean CTA */}
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                {/* Screenshots */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
+                  <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-primary" />
+                    Trade Screenshots
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {["before", "after"].map((type) => (
+                      <div key={type}>
+                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium mb-2">
+                          {type === "before" ? "Entry Setup" : "Exit Result"}
+                        </p>
+                        {selectedTrade[`${type}URL`] ? (
+                          <div
+                            className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group"
+                            onClick={() => setLightboxImage(selectedTrade[`${type}URL`])}
+                          >
+                            <img
+                              src={selectedTrade[`${type}URL`]}
+                              alt={`${type} screenshot`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <span className="text-white text-sm font-medium">View</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center aspect-video rounded-xl border-2 border-dashed border-white/10 hover:border-primary/40 cursor-pointer transition-colors bg-white/[0.02] hover:bg-white/[0.04]">
+                            <Upload className="w-6 h-6 text-white/30 mb-2" />
+                            <span className="text-xs text-white/30 font-medium">Upload</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleImageUpload(e, type as "before" | "after")}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <motion.button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full py-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-bold rounded-xl shadow-lg shadow-primary/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      Save Journal Entry
+                    </>
+                  )}
+                </motion.button>
+              </motion.div>
+            ) : (
+              /* Empty State */
+              <div className="h-full flex flex-col items-center justify-center py-20">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 shadow-xl shadow-primary/10">
+                  <BookOpen className="w-12 h-12 text-primary/60" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Select a Trade</h3>
+                <p className="text-white/40 text-center max-w-xs">Choose a trade from the list to start journaling your thoughts and analysis</p>
+              </div>
+            )}
+          </div>
+
+          {/* Right Sidebar - Analytics */}
+          <AnimatePresence>
+            {isSidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="hidden lg:block w-[320px] flex-shrink-0 space-y-4"
               >
-                <Save className="w-5 h-5" />
-                <span>{isSaving ? "Saving..." : "Save Journal Entry"}</span>
-                {isSaving && (
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                )}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {/* Calendar Card */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      Performance Calendar
+                    </h4>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setSelectedMonth((m) => (m === 0 ? (setSelectedYear((y) => y - 1), 11) : m - 1))}
+                        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4 text-white/60" />
+                      </button>
+                      <span className="text-xs font-bold text-white px-2 min-w-[80px] text-center">
+                        {new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" })}
+                      </span>
+                      <button
+                        onClick={() => setSelectedMonth((m) => (m === 11 ? (setSelectedYear((y) => y + 1), 0) : m + 1))}
+                        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4 text-white/60" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+                      <div key={i} className="h-8 flex items-center justify-center text-[10px] font-bold text-white/30 uppercase">
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
+                  
+                  {/* Legend */}
+                  <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded bg-profit" />
+                      <span className="text-[10px] text-white/40">Profit</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded bg-loss" />
+                      <span className="text-[10px] text-white/40">Loss</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Performance Summary */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+                    <BarChart3 className="w-4 h-4 text-primary" />
+                    Performance Breakdown
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    {/* Best Trade */}
+                    <div className="p-3 rounded-xl bg-profit/5 border border-profit/10">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Trophy className="w-4 h-4 text-profit" />
+                        <span className="text-[10px] text-profit/60 uppercase tracking-wider font-bold">Best Trade</span>
+                      </div>
+                      <span className="text-xl font-black text-profit">
+                        +{formatCompactCurrency(Math.max(...trades.map(t => t.Profit), 0), currency, exchangeRate)}
+                      </span>
+                    </div>
+
+                    {/* Worst Trade */}
+                    <div className="p-3 rounded-xl bg-loss/5 border border-loss/10">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Target className="w-4 h-4 text-loss" />
+                        <span className="text-[10px] text-loss/60 uppercase tracking-wider font-bold">Worst Trade</span>
+                      </div>
+                      <span className="text-xl font-black text-loss">
+                        {formatCompactCurrency(Math.min(...trades.map(t => t.Profit), 0), currency, exchangeRate)}
+                      </span>
+                    </div>
+
+                    {/* Total Trades */}
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Activity className="w-4 h-4 text-white/40" />
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider font-bold">Total Trades</span>
+                      </div>
+                      <span className="text-xl font-black text-white">{stats.totalTrades}</span>
+                    </div>
+
+                    {/* Max Streak */}
+                    <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Flame className="w-4 h-4 text-orange-500" />
+                        <span className="text-[10px] text-orange-500/60 uppercase tracking-wider font-bold">Best Streak</span>
+                      </div>
+                      <span className="text-xl font-black text-orange-400">{stats.maxWinStreak} wins</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Right Panel - Stats Sidebar - Clean Design */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="hidden lg:block border border-border/30 bg-card shrink-0 overflow-hidden rounded-xl m-3 ml-0"
-          >
-            <div className="w-[320px] h-full overflow-y-auto scrollbar-sleek p-5 space-y-4">
-              {/* Toggle Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <BarChart3 className="w-4 h-4 text-primary" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-foreground">Statistics</h3>
-                </div>
-                <button onClick={() => setIsSidebarOpen(false)} className="p-1.5 rounded-lg hover:bg-muted/30 transition-colors">
-                  <PanelRightClose className="w-4 h-4 text-muted-foreground/60" />
-                </button>
-              </div>
-
-              {/* Period P&L - Clean Card */}
-              <div className={`border rounded-lg p-4 ${stats.totalPnL >= 0 ? "border-profit/20 bg-profit/5" : "border-loss/20 bg-loss/5"}`}>
-                <div className="text-[10px] text-muted-foreground/60 uppercase tracking-wider font-semibold mb-1">Total P&L</div>
-                <div className={`text-3xl font-bold ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
-                  {formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
-                </div>
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-profit/10 rounded-md">
-                    <Trophy className="w-3.5 h-3.5 text-profit" />
-                    <span className="text-sm font-semibold text-profit">{stats.winners} wins</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-loss/10 rounded-md">
-                    <Target className="w-3.5 h-3.5 text-loss" />
-                    <span className="text-sm font-semibold text-loss">{stats.losers} losses</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mini Calendar - Clean */}
-              <div className="border border-border/30 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    Calendar
-                  </h4>
-                  <div className="flex items-center gap-1 bg-muted/20 rounded-md p-0.5">
-                    <button onClick={() => setSelectedMonth((m) => (m === 0 ? (setSelectedYear((y) => y - 1), 11) : m - 1))} className="p-1 rounded hover:bg-muted/40 transition-colors">
-                      <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
-                    </button>
-                    <span className="text-xs font-semibold text-foreground px-2 min-w-[45px] text-center">
-                      {new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short" })}
-                    </span>
-                    <button onClick={() => setSelectedMonth((m) => (m === 11 ? (setSelectedYear((y) => y + 1), 0) : m + 1))} className="p-1 rounded hover:bg-muted/40 transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                    </button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-7 gap-1 mb-1">
-                  {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                    <div key={i} className="h-5 flex items-center justify-center text-[9px] font-semibold text-muted-foreground/50 uppercase">{d}</div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-1">{renderCalendar()}</div>
-                <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-border/20">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-profit" />
-                    <span className="text-[10px] text-muted-foreground/60 font-medium">Profit</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-loss" />
-                    <span className="text-[10px] text-muted-foreground/60 font-medium">Loss</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Stats - Clean */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-muted-foreground" />
-                  Quick Stats
-                </h4>
-                
-                {/* Win Rate */}
-                <div className="border border-border/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-muted-foreground/60 font-medium uppercase tracking-wider">Win Rate</span>
-                    <span className="text-xl font-bold text-foreground">{stats.winRate}%</span>
-                  </div>
-                  <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stats.winRate}%` }}
-                      transition={{ duration: 0.8 }}
-                      className="h-full bg-primary rounded-full"
-                    />
-                  </div>
-                </div>
-                
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="border border-border/30 rounded-lg p-3">
-                    <div className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium mb-1">Profit Factor</div>
-                    <div className="text-xl font-bold text-foreground">{stats.profitFactor}</div>
-                  </div>
-                  <div className="border border-border/30 rounded-lg p-3">
-                    <div className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium mb-1">Total Trades</div>
-                    <div className="text-xl font-bold text-foreground">{stats.totalTrades}</div>
-                  </div>
-                  <div className="border border-profit/20 bg-profit/5 rounded-lg p-3">
-                    <div className="flex items-center gap-1 mb-1">
-                      <TrendingUp className="w-3 h-3 text-profit" />
-                      <span className="text-[9px] text-profit/70 uppercase tracking-wider font-medium">Avg Win</span>
-                    </div>
-                    <div className="text-lg font-bold text-profit">{formatCompactCurrency(stats.avgWin, currency, exchangeRate)}</div>
-                  </div>
-                  <div className="border border-loss/20 bg-loss/5 rounded-lg p-3">
-                    <div className="flex items-center gap-1 mb-1">
-                      <TrendingDown className="w-3 h-3 text-loss" />
-                      <span className="text-[9px] text-loss/70 uppercase tracking-wider font-medium">Avg Loss</span>
-                    </div>
-                    <div className="text-lg font-bold text-loss">{formatCompactCurrency(stats.avgLoss, currency, exchangeRate)}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar Toggle (when closed) */}
-      {!isSidebarOpen && (
-        <motion.button
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          onClick={() => setIsSidebarOpen(true)}
-          className="fixed right-4 top-1/2 -translate-y-1/2 p-3 bg-card border border-border rounded-xl shadow-lg hover:bg-muted transition-all duration-200 z-40"
-        >
-          <PanelRight className="w-5 h-5 text-muted-foreground" />
-        </motion.button>
-      )}
-
-      {/* Lightbox */}
+      {/* Image Lightbox */}
       <AnimatePresence>
         {lightboxImage && (
           <motion.div
@@ -1173,26 +1146,41 @@ const DailyJournal = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setLightboxImage(null)}
-            className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-8"
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
           >
-            <motion.img
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              src={lightboxImage}
-              alt="Screenshot"
-              className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
-            />
-            <button
-              onClick={() => setLightboxImage(null)}
-              className="absolute top-6 right-6 p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition-all duration-200"
-            >
+            <button className="absolute top-4 right-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors">
               <X className="w-6 h-6 text-white" />
             </button>
+            <img src={lightboxImage} alt="Trade screenshot" className="max-w-full max-h-full rounded-xl" />
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A0B0E]/95 backdrop-blur-xl border-t border-white/5 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMobileView("list")}
+            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+              mobileView === "list" 
+                ? "bg-primary text-white" 
+                : "bg-white/5 text-white/50"
+            }`}
+          >
+            Trades
+          </button>
+          <button
+            onClick={() => setMobileView("content")}
+            className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+              mobileView === "content" 
+                ? "bg-primary text-white" 
+                : "bg-white/5 text-white/50"
+            }`}
+          >
+            Journal
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
