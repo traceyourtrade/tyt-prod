@@ -8,6 +8,7 @@ import PropFirmQuickStats from "./PropFirmQuickStats"
 import PropFirmCompactSettings from "./PropFirmCompactSettings"
 import PropFirmAnalytics from "./PropFirmAnalytics"
 import PropFirmBreachBanner from "./PropFirmBreachBanner"
+import PropFirmSuggestions from "./PropFirmSuggestions"
 import { AlertTriangle, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -136,120 +137,128 @@ export default function PropFirmDashboard() {
   }, [calculations, setChallengeStatus])
 
   return (
-    <div className="space-y-6">
-      {challengeStatus === "breached" && (
-        <PropFirmBreachBanner type={dailyBreached ? "daily_drawdown" : "drawdown"} />
-      )}
+    <div className="flex gap-6">
+      <div className="flex-1 space-y-6 min-w-0">
+        {challengeStatus === "breached" && (
+          <PropFirmBreachBanner type={dailyBreached ? "daily_drawdown" : "drawdown"} />
+        )}
 
-      <PropFirmHeroCard
-        status={challengeStatus}
-        startingBalance={settings.startingBalance}
-        currentEquity={calculations.currentEquity}
-        profitProgress={calculations.profitProgress}
-        drawdownProgress={calculations.drawdownUsedPercent}
-        profitTargetValue={calculations.profitTargetValue}
-        maxDrawdownValue={calculations.maxDrawdownValue}
-        currentProfit={calculations.currentProfit}
-        drawdownUsed={calculations.drawdownFromPeak}
-        challengeStartDate={settings.challengeStartDate}
-      />
+        <PropFirmHeroCard
+          status={challengeStatus}
+          startingBalance={settings.startingBalance}
+          currentEquity={calculations.currentEquity}
+          profitProgress={calculations.profitProgress}
+          drawdownProgress={calculations.drawdownUsedPercent}
+          profitTargetValue={calculations.profitTargetValue}
+          maxDrawdownValue={calculations.maxDrawdownValue}
+          currentProfit={calculations.currentProfit}
+          drawdownUsed={calculations.drawdownFromPeak}
+          challengeStartDate={settings.challengeStartDate}
+        />
 
-      {calculations.dailyDrawdownValue && (
-        <div className={cn(
-          "relative overflow-hidden rounded-xl border backdrop-blur-sm p-4",
-          "bg-white dark:bg-transparent bg-gradient-to-br",
-          calculations.dailyDrawdownUsedPercent >= 85 
-            ? "from-red-500/5 to-red-600/[0.02] dark:from-red-500/10 dark:to-red-600/5 border-red-500/20" 
-            : calculations.dailyDrawdownUsedPercent >= 60 
-              ? "from-amber-500/5 to-amber-600/[0.02] dark:from-amber-500/10 dark:to-amber-600/5 border-amber-500/20"
-              : "from-gray-50 to-gray-100/50 dark:from-white/5 dark:to-white/[0.02] border-gray-200 dark:border-white/10"
-        )}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center",
-                calculations.dailyDrawdownUsedPercent >= 85 
-                  ? "bg-red-500/10 dark:bg-red-500/20 border border-red-500/20"
-                  : calculations.dailyDrawdownUsedPercent >= 60
-                    ? "bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20"
-                    : "bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10"
-              )}>
-                <Clock className={cn(
-                  "w-5 h-5",
+        {calculations.dailyDrawdownValue && (
+          <div className={cn(
+            "relative overflow-hidden rounded-xl border backdrop-blur-sm p-4",
+            "bg-white dark:bg-transparent bg-gradient-to-br",
+            calculations.dailyDrawdownUsedPercent >= 85 
+              ? "from-red-500/5 to-red-600/[0.02] dark:from-red-500/10 dark:to-red-600/5 border-red-500/20" 
+              : calculations.dailyDrawdownUsedPercent >= 60 
+                ? "from-amber-500/5 to-amber-600/[0.02] dark:from-amber-500/10 dark:to-amber-600/5 border-amber-500/20"
+                : "from-gray-50 to-gray-100/50 dark:from-white/5 dark:to-white/[0.02] border-gray-200 dark:border-white/10"
+          )}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center",
+                  calculations.dailyDrawdownUsedPercent >= 85 
+                    ? "bg-red-500/10 dark:bg-red-500/20 border border-red-500/20"
+                    : calculations.dailyDrawdownUsedPercent >= 60
+                      ? "bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20"
+                      : "bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10"
+                )}>
+                  <Clock className={cn(
+                    "w-5 h-5",
+                    calculations.dailyDrawdownUsedPercent >= 85 
+                      ? "text-red-600 dark:text-red-400"
+                      : calculations.dailyDrawdownUsedPercent >= 60
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-gray-400 dark:text-white/60"
+                  )} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Daily Drawdown</p>
+                  <p className="text-xs text-gray-500 dark:text-white/40">
+                    Today&apos;s loss: ${calculations.dailyLoss.toLocaleString()} of ${calculations.dailyDrawdownValue.toLocaleString()} limit
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <div className="w-48 h-2 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
+                  <div 
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      calculations.dailyDrawdownUsedPercent >= 85 
+                        ? "bg-red-500"
+                        : calculations.dailyDrawdownUsedPercent >= 60
+                          ? "bg-amber-500"
+                          : "bg-emerald-500"
+                    )}
+                    style={{ width: `${Math.min(calculations.dailyDrawdownUsedPercent, 100)}%` }}
+                  />
+                </div>
+                <span className={cn(
+                  "text-lg font-bold tabular-nums",
                   calculations.dailyDrawdownUsedPercent >= 85 
                     ? "text-red-600 dark:text-red-400"
                     : calculations.dailyDrawdownUsedPercent >= 60
                       ? "text-amber-600 dark:text-amber-400"
-                      : "text-gray-400 dark:text-white/60"
-                )} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Daily Drawdown</p>
-                <p className="text-xs text-gray-500 dark:text-white/40">
-                  Today&apos;s loss: ${calculations.dailyLoss.toLocaleString()} of ${calculations.dailyDrawdownValue.toLocaleString()} limit
-                </p>
+                      : "text-emerald-600 dark:text-emerald-400"
+                )}>
+                  {calculations.dailyDrawdownUsedPercent.toFixed(1)}%
+                </span>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="w-48 h-2 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
-                <div 
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500",
-                    calculations.dailyDrawdownUsedPercent >= 85 
-                      ? "bg-red-500"
-                      : calculations.dailyDrawdownUsedPercent >= 60
-                        ? "bg-amber-500"
-                        : "bg-emerald-500"
-                  )}
-                  style={{ width: `${Math.min(calculations.dailyDrawdownUsedPercent, 100)}%` }}
-                />
-              </div>
-              <span className={cn(
-                "text-lg font-bold tabular-nums",
+            {calculations.dailyDrawdownUsedPercent >= 60 && (
+              <div className={cn(
+                "flex items-center gap-2 mt-3 pt-3 border-t text-xs",
                 calculations.dailyDrawdownUsedPercent >= 85 
-                  ? "text-red-600 dark:text-red-400"
-                  : calculations.dailyDrawdownUsedPercent >= 60
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-emerald-600 dark:text-emerald-400"
+                  ? "border-red-500/20 text-red-600 dark:text-red-400"
+                  : "border-amber-500/20 text-amber-600 dark:text-amber-400"
               )}>
-                {calculations.dailyDrawdownUsedPercent.toFixed(1)}%
-              </span>
-            </div>
+                <AlertTriangle className="w-3.5 h-3.5" />
+                {calculations.dailyDrawdownUsedPercent >= 85 
+                  ? "Critical: Approaching daily drawdown limit!"
+                  : "Warning: Daily drawdown exceeds safe zone"
+                }
+              </div>
+            )}
           </div>
-          
-          {calculations.dailyDrawdownUsedPercent >= 60 && (
-            <div className={cn(
-              "flex items-center gap-2 mt-3 pt-3 border-t text-xs",
-              calculations.dailyDrawdownUsedPercent >= 85 
-                ? "border-red-500/20 text-red-600 dark:text-red-400"
-                : "border-amber-500/20 text-amber-600 dark:text-amber-400"
-            )}>
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {calculations.dailyDrawdownUsedPercent >= 85 
-                ? "Critical: Approaching daily drawdown limit!"
-                : "Warning: Daily drawdown exceeds safe zone"
-              }
-            </div>
-          )}
+        )}
+
+        <PropFirmQuickStats
+          netPnL={calculations.totalPnL}
+          winRate={calculations.winRate}
+          profitFactor={calculations.profitFactor}
+          totalTrades={calculations.totalTrades}
+          avgWin={calculations.avgWin}
+          avgLoss={calculations.avgLoss}
+          riskRewardRatio={calculations.riskRewardRatio}
+          todayPnL={calculations.todayPnL}
+          currentEquity={calculations.currentEquity}
+        />
+
+        <PropFirmCompactSettings />
+
+        <PropFirmAnalytics />
+      </div>
+
+      <div className="hidden xl:block w-80 flex-shrink-0">
+        <div className="sticky top-6">
+          <PropFirmSuggestions />
         </div>
-      )}
-
-      <PropFirmQuickStats
-        netPnL={calculations.totalPnL}
-        winRate={calculations.winRate}
-        profitFactor={calculations.profitFactor}
-        totalTrades={calculations.totalTrades}
-        avgWin={calculations.avgWin}
-        avgLoss={calculations.avgLoss}
-        riskRewardRatio={calculations.riskRewardRatio}
-        todayPnL={calculations.todayPnL}
-        currentEquity={calculations.currentEquity}
-      />
-
-      <PropFirmCompactSettings />
-
-      <PropFirmAnalytics />
+      </div>
     </div>
   )
 }
