@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, Info } from "lucide-react";
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 interface DataPoint {
   time: string;
@@ -14,6 +15,7 @@ interface GradientAreaChartProps {
 }
 
 const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
+  const { currency, exchangeRate } = useCurrencyStore();
   const [colors, setColors] = useState({ 
     profit: '#22C55E', 
     loss: '#EF4444',
@@ -57,13 +59,7 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
   const zeroOffset = calculateOffset(data);
 
   const formatCompact = (num: number) => {
-    const formatted = Intl.NumberFormat("en", {
-      notation: "compact",
-      compactDisplay: "short",
-      maximumFractionDigits: 1,
-    }).format(Math.abs(num));
-
-    return num < 0 ? `-$${formatted}` : `$${formatted}`;
+    return formatCompactCurrency(num, currency, exchangeRate);
   };
 
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {

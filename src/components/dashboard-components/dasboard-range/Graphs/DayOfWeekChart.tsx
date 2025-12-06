@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Calendar } from "lucide-react";
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 interface TradeData {
   date: string;
@@ -15,6 +16,7 @@ interface DayOfWeekChartProps {
 }
 
 const DayOfWeekChart: React.FC<DayOfWeekChartProps> = ({ data }) => {
+  const { currency, exchangeRate } = useCurrencyStore();
   const [colors, setColors] = useState({ 
     profit: '#22C55E', 
     loss: '#EF4444',
@@ -41,12 +43,7 @@ const DayOfWeekChart: React.FC<DayOfWeekChartProps> = ({ data }) => {
   });
 
   const formatCompact = (num: number) => {
-    const formatted = Intl.NumberFormat("en", {
-      notation: "compact",
-      compactDisplay: "short",
-      maximumFractionDigits: 1,
-    }).format(Math.abs(num));
-    return num < 0 ? `-$${formatted}` : `$${formatted}`;
+    return formatCompactCurrency(num, currency, exchangeRate);
   };
 
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; payload: { trades: number } }>; label?: string }) => {

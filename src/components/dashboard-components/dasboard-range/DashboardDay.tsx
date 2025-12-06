@@ -14,6 +14,7 @@ import VeriticalBarGraph from "./Graphs/VerticalBarGraph";
 
 // Stores
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 
 // Functions
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
@@ -40,6 +41,7 @@ interface DayData {
 }
 const DashboardDay: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
+  const { currency, exchangeRate } = useCurrencyStore();
 
   interface Trade {
     date: string;
@@ -426,7 +428,7 @@ const DashboardDay: React.FC = () => {
                           <td className={`px-3.5 py-2.5 text-sm font-semibold ${
                             data.Profit < 0 ? "text-red-400" : "text-green-400"
                           }`}>
-                            {data.Profit < 0 ? `-$${Math.abs(data.Profit)}` : `$${data.Profit}`}
+                            {formatCompactCurrency(data.Profit, currency, exchangeRate)}
                           </td>
                           <td className="px-3.5 py-2.5 text-white text-sm">NET ROI</td>
                           <td className="px-3.5 py-2.5 text-white text-sm">RR RATIO</td>
