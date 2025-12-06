@@ -16,6 +16,7 @@ import {
   Plus,
   LogOut,
   Calculator,
+  Sparkles,
 } from "lucide-react"
 
 const ProjournxLogo = ({ className }: { className?: string }) => (
@@ -71,6 +72,7 @@ const mainNavItems = [
   { name: "Notebook", href: "/notebook", icon: FileText },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Strategies", href: "/strategies", icon: Target },
+  { name: "Playbook", href: "/playbook", icon: Sparkles },
   { name: "Lot Size Calculator", href: "/lot-calculator", icon: Calculator },
 ]
 
