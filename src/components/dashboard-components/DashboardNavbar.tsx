@@ -9,7 +9,6 @@ import notebookStore from "@/store/notebookStore";
 import calendarPopUp from "@/store/calendarPopUp";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDollarSign, faIndianRupeeSign, faPercent, faAsterisk, faCaretDown, faUserGear, faFileInvoice } from '@fortawesome/free-solid-svg-icons';
-import { PanelLeft } from "lucide-react";
 
 interface Account {
   _id: string;
@@ -108,15 +107,8 @@ const DashboardNav = ({ expanded, setExpanded }: DashboardNavProps) => {
   return (
     <div className="w-full -mt-5 h-16 flex items-center justify-between transition-all duration-300 px-4 font-inter">
 
-      {/* <h1 className="text-white text-xl font-inter text-[24px] font-bold mt-25">
-        {" "}
-      </h1> */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className={`w-10 h-10 text-white/70 hover:text-white transition-all cursor-pointer outline-none hover:bg-[#272727] rounded-xl z-50 top-5 ease-in-out duration-500 flex items-center justify-center`}
-      >
-        <PanelLeft size={18} />
-      </button>
+      {/* Left spacer for layout balance */}
+      <div className="w-10" />
 
       {/* Right Section - Navigation Items */}
       <div className="flex items-center">
