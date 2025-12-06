@@ -163,12 +163,22 @@ The Prop Firm mode features a completely redesigned UI that's visually distinct 
 
 ### Core Components
 - `PropFirmModeToggle.tsx` - Segmented control to switch between Live Trading and Prop Firm modes
-- `PropFirmDashboard.tsx` - Main dashboard orchestrator with calculations and breach detection
+- `PropFirmDashboard.tsx` - Main dashboard orchestrator with two-column layout (main content left, suggestions sidebar right)
 - `PropFirmHeroCard.tsx` - Large hero section with dual circular progress gauges for profit target and drawdown, status indicator, and key metrics grid
 - `PropFirmQuickStats.tsx` - 8-column stat grid with themed cards (Net P&L, Win Rate, Profit Factor, Current Equity, Avg Win, Avg Loss, Risk:Reward, Today's P&L)
 - `PropFirmCompactSettings.tsx` - Collapsible settings panel with challenge configuration inputs
 - `PropFirmAnalytics.tsx` - Simplified analytics with equity curve chart and recent trades list
 - `PropFirmBreachBanner.tsx` - Glassmorphism alert banner when challenge is breached
+- `PropFirmSuggestions.tsx` - Sticky sidebar (320px, visible on xl+) featuring partner prop firms with affiliate monetization
+
+### Prop Firm Suggestions (Monetization Sidebar)
+The PropFirmSuggestions component displays recommended prop firms for affiliate revenue:
+- **Featured Firms:** Funding Pips, The 5%ers, Funded Next, FTMO, Alpha Capitals
+- **Starting prices** displayed for each firm
+- **Coupon code:** "PROJOURNX" with 15% off badge
+- **Copy-to-clipboard** functionality for the coupon code
+- **External "Buy" buttons** linking to each prop firm's website
+- Disclosure: "We may earn a commission from these links"
 
 ### Legacy Components (still available)
 - `PropFirmSettings.tsx` - Full settings form (used in settings page)
