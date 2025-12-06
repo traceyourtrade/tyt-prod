@@ -11,7 +11,7 @@ import DayOfWeekChart from "./Graphs/DayOfWeekChart";
 import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
-import { DraggableWidget, EditModeToolbar } from '@/components/dashboard/DraggableWidgetGrid';
+import { SortableWidget, EditModeToolbar, WidgetGrid } from '@/components/dashboard/DraggableWidgetGrid';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
@@ -32,7 +32,7 @@ interface Account {
 const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
-  const { layout, swapWidgets, isEditMode } = useDashboardLayoutStore();
+  const { layout, isEditMode } = useDashboardLayoutStore();
 
   function isCurrentMonth(dateString: string): boolean {
     const date = new Date(dateString);
@@ -76,60 +76,59 @@ const DashboardMonth: React.FC = () => {
     accBal: calculateBalance(selectedAccounts).toFixed(2),
   };
 
-  const isWidgetVisible = (widgetId: string) => {
-    const item = layout.find(l => l.widgetId === widgetId);
-    return item?.visible ?? true;
-  };
-
   const sortedLayout = [...layout].sort((a, b) => a.order - b.order);
-  const visibleWidgets = sortedLayout.filter(l => l.visible || isEditMode);
+  const visibleWidgetIds = sortedLayout
+    .filter(l => l.visible || isEditMode)
+    .map(l => l.widgetId);
 
-  const widgetComponents: Record<string, { component: React.ReactNode; gridClass?: string }> = {
+  const widgetComponents: Record<string, { component: React.ReactNode; span?: 'full' | 'double' | 'single' }> = {
     'stats-overview': { 
       component: <DashWidgets {...dashWidgetProps} />,
-      gridClass: 'col-span-full'
+      span: 'full'
     },
     'calendar': { 
       component: <Calendar />,
-      gridClass: 'md:col-span-2'
+      span: 'single'
     },
     'cumulative-pnl': { 
-      component: <PnLDailyChart data={data} />
+      component: <PnLDailyChart data={data} />,
+      span: 'single'
     },
     'trades-table': { 
-      component: <TradesWidget data={thisMonthData} />
+      component: <TradesWidget data={thisMonthData} />,
+      span: 'single'
     },
     'daily-pnl-bar': { 
-      component: <DailyPnLBarChart data={thisMonthData} />
+      component: <DailyPnLBarChart data={thisMonthData} />,
+      span: 'single'
     },
     'day-of-week': { 
-      component: <DayOfWeekChart data={thisMonthData} />
+      component: <DayOfWeekChart data={thisMonthData} />,
+      span: 'single'
     },
     'symbol-pnl': { 
-      component: <SymbolPnLChart data={thisMonthData} />
+      component: <SymbolPnLChart data={thisMonthData} />,
+      span: 'single'
     },
     'hourly-pnl': { 
-      component: <HourlyPnLChart data={thisMonthData} />
+      component: <HourlyPnLChart data={thisMonthData} />,
+      span: 'single'
     },
     'radar': { 
       component: <Radar />,
-      gridClass: 'md:col-span-2'
+      span: 'single'
     },
   };
 
-  const handleMoveUp = (widgetId: string) => {
-    const currentIndex = visibleWidgets.findIndex(l => l.widgetId === widgetId);
-    if (currentIndex > 0) {
-      const prevWidget = visibleWidgets[currentIndex - 1];
-      swapWidgets(widgetId, prevWidget.widgetId);
-    }
-  };
-
-  const handleMoveDown = (widgetId: string) => {
-    const currentIndex = visibleWidgets.findIndex(l => l.widgetId === widgetId);
-    if (currentIndex < visibleWidgets.length - 1) {
-      const nextWidget = visibleWidgets[currentIndex + 1];
-      swapWidgets(widgetId, nextWidget.widgetId);
+  const getSpanClass = (widgetId: string) => {
+    const span = widgetComponents[widgetId]?.span;
+    switch (span) {
+      case 'full':
+        return 'md:col-span-2';
+      case 'double':
+        return 'md:col-span-2';
+      default:
+        return '';
     }
   };
 
@@ -139,29 +138,24 @@ const DashboardMonth: React.FC = () => {
         <EditModeToolbar />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {visibleWidgets.map((layoutItem, index) => {
-          const widgetConfig = widgetComponents[layoutItem.widgetId];
-          if (!widgetConfig) return null;
-          
-          const canMoveUp = index > 0;
-          const canMoveDown = index < visibleWidgets.length - 1;
-
-          return (
-            <DraggableWidget 
-              key={layoutItem.widgetId} 
-              widgetId={layoutItem.widgetId}
-              className={widgetConfig.gridClass}
-              onMoveUp={() => handleMoveUp(layoutItem.widgetId)}
-              onMoveDown={() => handleMoveDown(layoutItem.widgetId)}
-              canMoveUp={canMoveUp}
-              canMoveDown={canMoveDown}
-            >
-              {widgetConfig.component}
-            </DraggableWidget>
-          );
-        })}
-      </div>
+      <WidgetGrid widgetIds={visibleWidgetIds}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {visibleWidgetIds.map((widgetId) => {
+            const widgetConfig = widgetComponents[widgetId];
+            if (!widgetConfig) return null;
+            
+            return (
+              <SortableWidget 
+                key={widgetId} 
+                widgetId={widgetId}
+                className={getSpanClass(widgetId)}
+              >
+                {widgetConfig.component}
+              </SortableWidget>
+            );
+          })}
+        </div>
+      </WidgetGrid>
     </div>
   );
 };
