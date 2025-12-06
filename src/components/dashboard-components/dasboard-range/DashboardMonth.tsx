@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import Calendar from "../Calendar";
 import TradesWidget from "../TradesWidget";
@@ -11,14 +11,11 @@ import DayOfWeekChart from "./Graphs/DayOfWeekChart";
 import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
-import { WidgetWrapper, EditModeToolbar } from '@/components/dashboard/DraggableWidgetGrid';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
-import type { GridPosition } from '@/store/dashboardLayoutStore';
+import { EditModeToolbar } from '@/components/dashboard/DraggableWidgetGrid';
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
-import GridLayout from 'react-grid-layout';
-import 'react-grid-layout/css/styles.css';
 
 interface TradeData {
   date: string;
@@ -35,22 +32,7 @@ interface Account {
 const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
-  const { layout, isEditMode, gridPositions, updateGridPositions } = useDashboardLayoutStore();
-  const [mounted, setMounted] = useState(false);
-  const [containerWidth, setContainerWidth] = useState(1200);
-
-  useEffect(() => {
-    setMounted(true);
-    const updateWidth = () => {
-      const container = document.getElementById('dashboard-grid-container');
-      if (container) {
-        setContainerWidth(container.offsetWidth);
-      }
-    };
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, []);
+  const { layout } = useDashboardLayoutStore();
 
   function isCurrentMonth(dateString: string): boolean {
     const date = new Date(dateString);
@@ -99,89 +81,51 @@ const DashboardMonth: React.FC = () => {
     return item?.visible ?? true;
   };
 
-  const widgetComponents: Record<string, React.ReactNode> = {
-    'stats-overview': <DashWidgets {...dashWidgetProps} />,
-    'calendar': <Calendar />,
-    'cumulative-pnl': <PnLDailyChart data={data} />,
-    'trades-table': <TradesWidget data={thisMonthData} />,
-    'daily-pnl-bar': <DailyPnLBarChart data={thisMonthData} />,
-    'day-of-week': <DayOfWeekChart data={thisMonthData} />,
-    'symbol-pnl': <SymbolPnLChart data={thisMonthData} />,
-    'hourly-pnl': <HourlyPnLChart data={thisMonthData} />,
-    'radar': <Radar />,
-  };
-
-  const visibleGridPositions = gridPositions.filter(pos => 
-    isWidgetVisible(pos.i) || isEditMode
-  );
-
-  const handleLayoutChange = (newLayout: GridLayout.Layout[]) => {
-    const updatedPositions = gridPositions.map(pos => {
-      const updated = newLayout.find(l => l.i === pos.i);
-      if (updated) {
-        return {
-          ...pos,
-          x: updated.x,
-          y: updated.y,
-          w: updated.w,
-          h: updated.h,
-        };
-      }
-      return pos;
-    });
-    updateGridPositions(updatedPositions as GridPosition[]);
-  };
-
-  if (!mounted) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-end">
-          <EditModeToolbar />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Object.entries(widgetComponents).map(([id, component]) => (
-            isWidgetVisible(id) && (
-              <div key={id} className="bg-card rounded-xl">
-                {component}
-              </div>
-            )
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-end">
         <EditModeToolbar />
       </div>
 
-      <div id="dashboard-grid-container" className="w-full">
-        <GridLayout
-          className="layout"
-          layout={visibleGridPositions}
-          cols={12}
-          rowHeight={80}
-          width={containerWidth}
-          onLayoutChange={handleLayoutChange}
-          isDraggable={isEditMode}
-          isResizable={isEditMode}
-          margin={[16, 16]}
-          containerPadding={[0, 0]}
-          useCSSTransforms={true}
-          compactType="vertical"
-          preventCollision={false}
-          draggableHandle=".drag-handle"
-        >
-          {visibleGridPositions.map((pos) => (
-            <div key={pos.i} className={isEditMode ? "drag-handle" : ""}>
-              <WidgetWrapper widgetId={pos.i}>
-                {widgetComponents[pos.i]}
-              </WidgetWrapper>
-            </div>
-          ))}
-        </GridLayout>
+      {isWidgetVisible('stats-overview') && (
+        <DashWidgets {...dashWidgetProps} />
+      )}
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('calendar') && (
+          <div className="xl:col-span-2">
+            <Calendar />
+          </div>
+        )}
+
+        <div className="xl:col-span-1 flex flex-col gap-4">
+          {isWidgetVisible('cumulative-pnl') && (
+            <PnLDailyChart data={data} />
+          )}
+          {isWidgetVisible('trades-table') && (
+            <TradesWidget data={thisMonthData} />
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('daily-pnl-bar') && (
+          <DailyPnLBarChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('day-of-week') && (
+          <DayOfWeekChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('symbol-pnl') && (
+          <SymbolPnLChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('hourly-pnl') && (
+          <HourlyPnLChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('radar') && (
+          <div className="md:col-span-2">
+            <Radar />
+          </div>
+        )}
       </div>
     </div>
   );
