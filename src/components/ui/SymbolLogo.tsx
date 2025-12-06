@@ -49,11 +49,11 @@ export function SymbolLogo({
   }
 
   return (
-    <div className={`${baseClasses} bg-white dark:bg-zinc-800`}>
+    <div className={baseClasses}>
       <img
         src={logoUrl}
         alt={symbol}
-        className="w-full h-full object-contain p-1"
+        className="w-full h-full object-contain"
         onError={() => setHasError(true)}
       />
     </div>
