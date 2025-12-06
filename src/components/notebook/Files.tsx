@@ -16,9 +16,12 @@ import {
   Clock,
   Sparkles,
   Plus,
-  BookOpen
+  BookOpen,
+  LayoutTemplate
 } from "lucide-react";
 import notifications from "@/store/notifications";
+import TemplatePicker from "./TemplatePicker";
+import { NotebookTemplate } from "@/lib/notebookTemplates";
 
 interface FileType {
   filename: string;
@@ -57,6 +60,18 @@ const Files = ({
 }: FilesProps) => {
   const { setAlertBoxG } = notifications();
   const [isFileOpen, setIsFileOpen] = useState(true);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<NotebookTemplate | null>(null);
+
+  const handleTemplateSelect = (template: NotebookTemplate) => {
+    setSelectedTemplate(template);
+    setShowTemplatePicker(false);
+    setFileShow(true);
+  };
+
+  const handleNewNoteClick = () => {
+    setShowTemplatePicker(true);
+  };
 
   const uploadFile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,10 +257,18 @@ const Files = ({
               exit={{ opacity: 0, y: -10 }}
               className="mb-4"
             >
-              <div className="flex flex-col gap-2 p-3 bg-profit/5 rounded-lg border border-profit/20">
+              <div className={`flex flex-col gap-3 p-3 rounded-lg border ${selectedTemplate ? `${selectedTemplate.bgColor} ${selectedTemplate.borderColor}` : "bg-profit/5 border-profit/20"}`}>
+                {selectedTemplate && (
+                  <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                    <div className={`w-6 h-6 rounded-md ${selectedTemplate.bgColor} flex items-center justify-center`}>
+                      <selectedTemplate.icon className={`h-3 w-3 ${selectedTemplate.color}`} />
+                    </div>
+                    <span className={`text-xs font-medium ${selectedTemplate.color}`}>{selectedTemplate.name} Template</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-md bg-profit/10 flex items-center justify-center flex-shrink-0">
-                    <FilePlus className="h-4 w-4 text-profit" />
+                  <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${selectedTemplate ? selectedTemplate.bgColor : "bg-profit/10"}`}>
+                    <FilePlus className={`h-4 w-4 ${selectedTemplate ? selectedTemplate.color : "text-profit"}`} />
                   </div>
                   <input 
                     className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
@@ -261,13 +284,13 @@ const Files = ({
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={uploadFile}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-profit text-white hover:bg-profit/90 transition-colors text-sm font-medium"
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-white transition-colors text-sm font-medium ${selectedTemplate?.id === "trade-idea" ? "bg-amber-500 hover:bg-amber-500/90" : selectedTemplate?.id === "market-analysis" ? "bg-blue-500 hover:bg-blue-500/90" : selectedTemplate?.id === "weekly-review" ? "bg-purple-500 hover:bg-purple-500/90" : selectedTemplate?.id === "strategy-doc" ? "bg-profit hover:bg-profit/90" : selectedTemplate?.id === "psychology" ? "bg-pink-500 hover:bg-pink-500/90" : "bg-profit hover:bg-profit/90"}`}
                   >
                     <Check className="h-4 w-4" />
-                    <span>Create</span>
+                    <span>Create Note</span>
                   </button>
                   <button 
-                    onClick={() => { setFileShow(false); setNewFile(""); }}
+                    onClick={() => { setFileShow(false); setNewFile(""); setSelectedTemplate(null); }}
                     className="px-3 py-2.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-muted-foreground"
                   >
                     Cancel
@@ -279,13 +302,17 @@ const Files = ({
             <motion.button 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              onClick={() => setFileShow(true)} 
-              className="w-full flex items-center gap-2 px-3 py-3 mb-4 bg-muted/30 border border-dashed border-border rounded-lg hover:bg-muted/50 hover:border-profit/30 transition-all group active:scale-[0.98]"
+              onClick={handleNewNoteClick} 
+              className="w-full flex items-center gap-2 px-3 py-3 mb-4 bg-gradient-to-r from-profit/5 to-primary/5 border border-profit/20 rounded-lg hover:from-profit/10 hover:to-primary/10 hover:border-profit/30 transition-all group active:scale-[0.98]"
             >
-              <div className="w-8 h-8 rounded-md bg-muted group-hover:bg-profit/10 flex items-center justify-center transition-colors flex-shrink-0">
-                <Plus className="h-4 w-4 text-muted-foreground group-hover:text-profit transition-colors" />
+              <div className="w-8 h-8 rounded-md bg-profit/10 group-hover:bg-profit/20 flex items-center justify-center transition-colors flex-shrink-0">
+                <LayoutTemplate className="h-4 w-4 text-profit" />
               </div>
-              <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">New Note</span>
+              <div className="flex-1 text-left">
+                <span className="text-sm font-medium text-foreground block">New Note</span>
+                <span className="text-[10px] text-muted-foreground">Choose a template</span>
+              </div>
+              <Sparkles className="h-4 w-4 text-profit/50 group-hover:text-profit transition-colors flex-shrink-0" />
             </motion.button>
           )}
         </AnimatePresence>
@@ -453,6 +480,13 @@ const Files = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Template Picker Modal */}
+      <TemplatePicker
+        isOpen={showTemplatePicker}
+        onClose={() => setShowTemplatePicker(false)}
+        onSelect={handleTemplateSelect}
+      />
     </div>
   )
 }

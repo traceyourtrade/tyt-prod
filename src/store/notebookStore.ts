@@ -8,6 +8,8 @@ interface NotebookFile {
     content: {
         title: string;
         content: string;
+        templateId?: string;
+        fields?: Record<string, string>;
     };
     tradeId?: string;
 }
@@ -70,7 +72,22 @@ const demoNotebookData: NotebookFolder[] = [
                 lastUpdate: Date.now() - 1 * 60 * 60 * 1000,
                 content: {
                     title: "EUR/USD Long Setup",
-                    content: "Strong bullish momentum on H4. Price broke above key resistance at 1.0850. Looking for pullback to 1.0820 support zone for long entry. Target: 1.0920. Stop loss below 1.0780."
+                    content: "Strong bullish momentum on H4. Price broke above key resistance at 1.0850. Looking for pullback to 1.0820 support zone for long entry. Target: 1.0920. Stop loss below 1.0780.",
+                    templateId: "trade-idea",
+                    fields: {
+                        symbol: "EUR/USD",
+                        sentiment: "bullish",
+                        timeframe: "H4",
+                        setupType: "breakout",
+                        entry: "1.0820",
+                        stopLoss: "1.0780",
+                        takeProfit: "1.0920",
+                        riskReward: "1:2.5",
+                        confidence: "4",
+                        reasoning: "Strong bullish momentum on H4. Price broke above key resistance at 1.0850. Looking for pullback to 1.0820 support zone for long entry.",
+                        keyLevels: "Support: 1.0800, 1.0820\nResistance: 1.0850, 1.0920",
+                        notes: "Wait for London session for best entry."
+                    }
                 },
                 tradeId: "trade_001"
             },
@@ -80,7 +97,19 @@ const demoNotebookData: NotebookFolder[] = [
                 lastUpdate: Date.now() - 12 * 60 * 60 * 1000,
                 content: {
                     title: "GBP/JPY Analysis",
-                    content: "Consolidation pattern forming on daily chart. Waiting for breakout confirmation before taking position. Key levels: Support 186.50, Resistance 188.20."
+                    content: "Consolidation pattern forming on daily chart. Waiting for breakout confirmation before taking position. Key levels: Support 186.50, Resistance 188.20.",
+                    templateId: "market-analysis",
+                    fields: {
+                        market: "GBP/JPY",
+                        date: "Dec 5, 2024",
+                        overallBias: "neutral",
+                        technicalAnalysis: "Consolidation pattern forming on daily chart. Price trading between 186.50 and 188.20. RSI at 50 level, no clear direction.",
+                        fundamentalAnalysis: "BOJ rate decision coming up. GBP supported by strong services PMI.",
+                        keyEvents: "BOJ Meeting - Dec 7\nUK GDP - Dec 8",
+                        watchlist: "GBP/JPY, EUR/JPY, USD/JPY",
+                        levels: "Support: 186.50\nResistance: 188.20",
+                        tradePlan: "Wait for breakout above 188.20 or breakdown below 186.50 before taking position."
+                    }
                 },
                 tradeId: "trade_002"
             },
@@ -90,7 +119,20 @@ const demoNotebookData: NotebookFolder[] = [
                 lastUpdate: Date.now() - 2 * 24 * 60 * 60 * 1000,
                 content: {
                     title: "Weekly Review - Dec Week 1",
-                    content: "Total trades: 8\nWin rate: 62.5%\nBest trade: EUR/USD +2.5R\nWorst trade: USD/CAD -1R\n\nKey learnings:\n- Patience on entries improved results\n- Need to work on early exits"
+                    content: "Total trades: 8\nWin rate: 62.5%\nBest trade: EUR/USD +2.5R\nWorst trade: USD/CAD -1R",
+                    templateId: "weekly-review",
+                    fields: {
+                        weekOf: "Dec 2-6, 2024",
+                        totalTrades: "8",
+                        winRate: "62.5%",
+                        netPnL: "+$1,250",
+                        bestTrade: "EUR/USD Long - Caught breakout above 1.0850, rode it to 1.0920 for +2.5R. Patience on entry paid off.",
+                        worstTrade: "USD/CAD Short - Entered too early before confirmation, got stopped out -1R. Should have waited for break of support.",
+                        rulesFollowed: "mostly",
+                        lessonsLearned: "Patience on entries improved results significantly. The best trades came when I waited for confirmation rather than jumping in early.",
+                        improvements: "Need to work on early exits. Left money on the table on 2 trades by closing too early.",
+                        goals: "Focus on letting winners run to full target. No early exits unless technical reason."
+                    }
                 }
             }
         ]
@@ -106,7 +148,22 @@ const demoNotebookData: NotebookFolder[] = [
                 lastUpdate: Date.now() - 3 * 24 * 60 * 60 * 1000,
                 content: {
                     title: "Gold Swing Trade",
-                    content: "XAU/USD forming inverse head and shoulders on weekly. Neckline at 2050. Target 2150 if breakout confirms. Risk: 1.5% of account."
+                    content: "XAU/USD forming inverse head and shoulders on weekly.",
+                    templateId: "trade-idea",
+                    fields: {
+                        symbol: "XAU/USD",
+                        sentiment: "bullish",
+                        timeframe: "W1",
+                        setupType: "reversal",
+                        entry: "2050",
+                        stopLoss: "1990",
+                        takeProfit: "2150",
+                        riskReward: "1:1.67",
+                        confidence: "3",
+                        reasoning: "Inverse head and shoulders pattern forming on weekly. Neckline at 2050. Historical support at 2000 provides good risk:reward.",
+                        keyLevels: "Neckline: 2050\nSupport: 2000, 1990\nTarget: 2150",
+                        notes: "Risk 1.5% of account on this trade. May take 2-4 weeks to play out."
+                    }
                 }
             },
             {
@@ -115,7 +172,22 @@ const demoNotebookData: NotebookFolder[] = [
                 lastUpdate: Date.now() - 5 * 24 * 60 * 60 * 1000,
                 content: {
                     title: "S&P 500 Short Thesis",
-                    content: "Bearish divergence on RSI at all-time highs. Watching for distribution pattern. Will short on break below 4550 with tight stop."
+                    content: "Bearish divergence on RSI at all-time highs.",
+                    templateId: "trade-idea",
+                    fields: {
+                        symbol: "SPX500",
+                        sentiment: "bearish",
+                        timeframe: "D1",
+                        setupType: "reversal",
+                        entry: "4550",
+                        stopLoss: "4620",
+                        takeProfit: "4400",
+                        riskReward: "1:2.1",
+                        confidence: "2",
+                        reasoning: "Bearish divergence on RSI at all-time highs. Distribution pattern forming. VIX showing signs of bottoming.",
+                        keyLevels: "ATH: 4600\nSupport: 4550, 4500, 4400",
+                        notes: "Wait for break below 4550 before entry. High risk trade - reduce position size."
+                    }
                 }
             }
         ]
