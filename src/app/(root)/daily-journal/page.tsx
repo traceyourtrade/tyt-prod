@@ -28,6 +28,7 @@ import {
   PanelRightClose,
   PanelRight,
   Clock,
+  CheckCircle2,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
@@ -539,12 +540,19 @@ const DailyJournal = () => {
                   {dateLabel}
                 </div>
                 {dateTrades.map((trade, idx) => {
-                  const tradeIdentifier = trade._id || trade.id;
-                  const selectedIdentifier = selectedTrade?._id || selectedTrade?.id;
-                  const isSelected = (tradeIdentifier && selectedIdentifier && tradeIdentifier === selectedIdentifier) || (selectedTrade?.date === trade.date && selectedTrade?.EntryTime === trade.EntryTime);
+                  const getTradeKey = (t: Trade) => t._id || t.id || `${t.date}-${t.EntryTime || t.time || ''}-${t.Item || t.symbol || ''}-${t.Profit}`;
+                  const tradeKey = getTradeKey(trade);
+                  const selectedKey = selectedTrade ? getTradeKey(selectedTrade) : null;
+                  const isSelected = tradeKey === selectedKey;
+                  const isJournaled = Boolean(trade.jrData && (
+                    trade.jrData.sentiment ||
+                    trade.jrData.templateId ||
+                    trade.jrData.tags?.length > 0 ||
+                    Object.keys(trade.jrData.prompts || {}).some(k => trade.jrData?.prompts?.[k]?.trim())
+                  ));
                   return (
                     <motion.button
-                      key={tradeIdentifier || `${trade.date}-${idx}`}
+                      key={tradeKey || `${trade.date}-${idx}`}
                       onClick={() => handleSelectTrade(trade)}
                       whileHover={{ x: 3, transition: { duration: 0.15 } }}
                       whileTap={{ scale: 0.98 }}
@@ -562,8 +570,15 @@ const DailyJournal = () => {
                           </div>
                         </div>
                       </div>
-                      <div className={`text-sm font-bold tracking-tight ${trade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                        {formatCompactCurrency(trade.Profit, currency, exchangeRate)}
+                      <div className="flex items-center gap-2">
+                        {isJournaled && (
+                          <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center" title="Journaled">
+                            <CheckCircle2 className="w-3 h-3 text-primary" />
+                          </div>
+                        )}
+                        <div className={`text-sm font-bold tracking-tight ${trade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                          {formatCompactCurrency(trade.Profit, currency, exchangeRate)}
+                        </div>
                       </div>
                     </motion.button>
                   );
