@@ -66,7 +66,7 @@ function PropFirmCard({ firm }: { firm: PropFirm }) {
     <div className={cn(
       "relative flex items-center gap-3 p-3 rounded-xl",
       "bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10",
-      "hover:border-amber-500/30 hover:bg-amber-500/5 dark:hover:bg-amber-500/10",
+      "hover:border-gray-300 dark:hover:border-white/20 hover:bg-gray-100 dark:hover:bg-white/[0.08]",
       "transition-all group"
     )}>
       {firm.highlight && (
@@ -98,7 +98,7 @@ function PropFirmCard({ firm }: { firm: PropFirm }) {
           {firm.name}
         </p>
         <p className="text-xs text-gray-500 dark:text-white/50">
-          From <span className="text-amber-600 dark:text-amber-400 font-bold">${firm.startingPrice}</span>
+          From <span className="text-emerald-600 dark:text-emerald-400 font-bold">${firm.startingPrice}</span>
         </p>
       </div>
       
@@ -133,17 +133,16 @@ export default function PropFirmSuggestions() {
   return (
     <div className={cn(
       "relative overflow-hidden rounded-xl border backdrop-blur-sm",
-      "bg-white dark:bg-transparent",
-      "bg-gradient-to-br from-amber-500/5 via-amber-600/[0.02] to-transparent dark:from-amber-500/10 dark:via-amber-600/5",
-      "border-amber-500/20",
+      "bg-white dark:bg-[#141414]",
+      "border-gray-200 dark:border-white/10",
       "p-4"
     )}>
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4wMiIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4wMiIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50" />
       
       <div className="relative">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center">
-            <Award className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10 flex items-center justify-center">
+            <Award className="w-4 h-4 text-gray-600 dark:text-white/70" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white">Prop Firms We Suggest</h3>
@@ -153,7 +152,7 @@ export default function PropFirmSuggestions() {
 
         <div className={cn(
           "mb-4 p-3 rounded-xl",
-          "bg-gradient-to-r from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10",
+          "bg-gradient-to-r from-amber-500/10 to-amber-600/5 dark:from-amber-500/15 dark:to-amber-600/5",
           "border border-amber-500/20"
         )}>
           <div className="flex items-center gap-2 mb-2">
@@ -163,7 +162,7 @@ export default function PropFirmSuggestions() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <code className="flex-1 px-3 py-2 bg-white dark:bg-black/20 border border-amber-500/30 rounded-lg text-sm font-mono font-bold text-gray-900 dark:text-white tracking-wider">
+            <code className="flex-1 px-3 py-2 bg-white dark:bg-black/30 border border-gray-200 dark:border-white/10 rounded-lg text-sm font-mono font-bold text-gray-900 dark:text-white tracking-wider">
               {COUPON_CODE.toUpperCase()}
             </code>
             <button
