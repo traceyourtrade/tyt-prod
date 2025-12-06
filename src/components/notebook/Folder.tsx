@@ -204,32 +204,37 @@ const Folder = ({
             exit={{ opacity: 0, y: -10 }}
             className="mb-4"
           >
-            <div className="flex items-center gap-2 p-2.5 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
-                <FolderPlus className="h-3.5 w-3.5 text-primary" />
+            <div className="flex flex-col gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <FolderPlus className="h-4 w-4 text-primary" />
+                </div>
+                <input 
+                  name="newFolder" 
+                  className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
+                  placeholder="Folder name..." 
+                  value={newFolder} 
+                  onChange={(e) => setNewFolder(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && uploadFolder(e)}
+                  maxLength={20}
+                  autoFocus
+                />
               </div>
-              <input 
-                name="newFolder" 
-                className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
-                placeholder="Folder name..." 
-                value={newFolder} 
-                onChange={(e) => setNewFolder(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && uploadFolder(e)}
-                maxLength={20}
-                autoFocus
-              />
-              <button 
-                onClick={uploadFolder}
-                className="p-1.5 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors"
-              >
-                <Check className="h-3.5 w-3.5" />
-              </button>
-              <button 
-                onClick={() => { setFolderShow(false); setNewFolder(""); }}
-                className="p-1.5 rounded-md hover:bg-muted transition-colors"
-              >
-                <X className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={uploadFolder}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors text-sm font-medium"
+                >
+                  <Check className="h-4 w-4" />
+                  <span>Create</span>
+                </button>
+                <button 
+                  onClick={() => { setFolderShow(false); setNewFolder(""); }}
+                  className="px-3 py-2.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-muted-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </motion.div>
         ) : (
@@ -237,13 +242,13 @@ const Folder = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             onClick={() => setFolderShow(true)} 
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 mb-4 bg-gradient-to-r from-primary/5 to-profit/5 border border-primary/20 rounded-lg hover:from-primary/10 hover:to-profit/10 hover:border-primary/30 transition-all group"
+            className="w-full flex items-center gap-2.5 px-3 py-3 mb-4 bg-gradient-to-r from-primary/5 to-profit/5 border border-primary/20 rounded-lg hover:from-primary/10 hover:to-profit/10 hover:border-primary/30 transition-all group active:scale-[0.98]"
           >
-            <div className="w-7 h-7 rounded-md bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
-              <Plus className="h-3.5 w-3.5 text-primary" />
+            <div className="w-8 h-8 rounded-md bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors flex-shrink-0">
+              <Plus className="h-4 w-4 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground">New Folder</span>
-            <Sparkles className="ml-auto h-3.5 w-3.5 text-primary/50 group-hover:text-primary transition-colors" />
+            <Sparkles className="ml-auto h-4 w-4 text-primary/50 group-hover:text-primary transition-colors flex-shrink-0" />
           </motion.button>
         )}
       </AnimatePresence>

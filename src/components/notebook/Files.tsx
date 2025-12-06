@@ -242,32 +242,37 @@ const Files = ({
               exit={{ opacity: 0, y: -10 }}
               className="mb-4"
             >
-              <div className="flex items-center gap-2 p-2.5 bg-profit/5 rounded-lg border border-profit/20">
-                <div className="w-6 h-6 rounded-md bg-profit/10 flex items-center justify-center">
-                  <FilePlus className="h-3 w-3 text-profit" />
+              <div className="flex flex-col gap-2 p-3 bg-profit/5 rounded-lg border border-profit/20">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-md bg-profit/10 flex items-center justify-center flex-shrink-0">
+                    <FilePlus className="h-4 w-4 text-profit" />
+                  </div>
+                  <input 
+                    className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
+                    placeholder="Note name..." 
+                    value={newFile} 
+                    name="newFile" 
+                    onChange={(e) => setNewFile(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && uploadFile(e)}
+                    maxLength={30}
+                    autoFocus
+                  />
                 </div>
-                <input 
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground" 
-                  placeholder="Note name..." 
-                  value={newFile} 
-                  name="newFile" 
-                  onChange={(e) => setNewFile(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && uploadFile(e)}
-                  maxLength={30}
-                  autoFocus
-                />
-                <button 
-                  onClick={uploadFile}
-                  className="p-1.5 rounded-md bg-profit text-white hover:bg-profit/90 transition-colors"
-                >
-                  <Check className="h-3 w-3" />
-                </button>
-                <button 
-                  onClick={() => { setFileShow(false); setNewFile(""); }}
-                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
-                >
-                  <X className="h-3 w-3 text-muted-foreground" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={uploadFile}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-profit text-white hover:bg-profit/90 transition-colors text-sm font-medium"
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>Create</span>
+                  </button>
+                  <button 
+                    onClick={() => { setFileShow(false); setNewFile(""); }}
+                    className="px-3 py-2.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-muted-foreground"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -275,12 +280,12 @@ const Files = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={() => setFileShow(true)} 
-              className="w-full flex items-center gap-2 px-3 py-2 mb-4 bg-muted/30 border border-dashed border-border rounded-lg hover:bg-muted/50 hover:border-profit/30 transition-all group"
+              className="w-full flex items-center gap-2 px-3 py-3 mb-4 bg-muted/30 border border-dashed border-border rounded-lg hover:bg-muted/50 hover:border-profit/30 transition-all group active:scale-[0.98]"
             >
-              <div className="w-6 h-6 rounded-md bg-muted group-hover:bg-profit/10 flex items-center justify-center transition-colors">
-                <Plus className="h-3 w-3 text-muted-foreground group-hover:text-profit transition-colors" />
+              <div className="w-8 h-8 rounded-md bg-muted group-hover:bg-profit/10 flex items-center justify-center transition-colors flex-shrink-0">
+                <Plus className="h-4 w-4 text-muted-foreground group-hover:text-profit transition-colors" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">New Note</span>
+              <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">New Note</span>
             </motion.button>
           )}
         </AnimatePresence>

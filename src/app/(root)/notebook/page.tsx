@@ -64,30 +64,38 @@ const Notebook = () => {
       <div className="sticky top-0 z-20 bg-card/80 backdrop-blur-xl border-b border-border">
         <div className="h-0.5 bg-gradient-to-r from-primary via-profit to-primary opacity-60" />
         
-        <div className="px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center gap-3 md:gap-4">
-            {/* Mobile Menu Button */}
-            <button 
-              onClick={() => setShowMobileSidebar(true)}
-              className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
-            >
-              <Menu className="h-5 w-5 text-muted-foreground" />
-            </button>
-
+        <div className="px-3 md:px-6 py-2.5 md:py-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Mobile Back Button */}
-            {mobilePanel !== "folders" && (
+            {mobilePanel !== "folders" ? (
               <button 
                 onClick={mobilePanel === "content" ? handleBackToFiles : handleBackToFolders}
-                className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+                className="md:hidden p-2 -ml-1 rounded-lg hover:bg-muted transition-colors flex-shrink-0"
               >
                 <ChevronLeft className="h-5 w-5 text-muted-foreground" />
               </button>
+            ) : (
+              <div className="md:hidden w-7 h-7 rounded-lg bg-gradient-to-br from-primary/20 to-profit/20 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="h-3.5 w-3.5 text-primary" />
+              </div>
             )}
+
+            {/* Mobile Title */}
+            <div className="md:hidden flex-1 min-w-0">
+              <h1 className="text-sm font-semibold text-foreground truncate">
+                {mobilePanel === "folders" ? "Notebook" : mobilePanel === "files" ? selectedFolder : "Note"}
+              </h1>
+              {mobilePanel === "folders" && (
+                <p className="text-[10px] text-muted-foreground">
+                  {notes.length} folders · {totalNotes} notes
+                </p>
+              )}
+            </div>
 
             {/* Desktop Folder Panel Toggle */}
             <button
               onClick={() => setIsFolderPanelOpen(!isFolderPanelOpen)}
-              className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted transition-colors"
+              className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted transition-colors flex-shrink-0"
               title={isFolderPanelOpen ? "Hide folders" : "Show folders"}
             >
               {isFolderPanelOpen ? (
@@ -97,10 +105,10 @@ const Notebook = () => {
               )}
             </button>
 
-            {/* Title with Stats */}
+            {/* Desktop Title with Stats */}
             <div className="hidden md:flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-profit/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-profit/20 flex items-center justify-center flex-shrink-0">
                   <BookOpen className="h-4 w-4 text-primary" />
                 </div>
                 <div>
@@ -112,8 +120,8 @@ const Notebook = () => {
               </div>
             </div>
 
-            {/* Search */}
-            <div className="flex-1 max-w-md relative">
+            {/* Search - Hidden on mobile folders view, show icon only */}
+            <div className="hidden md:flex flex-1 max-w-md relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 name="search"
@@ -121,12 +129,17 @@ const Notebook = () => {
                 placeholder="Search notes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 md:py-2.5 bg-background/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-background/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
               />
             </div>
 
+            {/* Mobile Search Button */}
+            <button className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors flex-shrink-0">
+              <Search className="h-5 w-5 text-muted-foreground" />
+            </button>
+
             {/* Filter Button */}
-            <button className="hidden md:flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg hover:bg-muted hover:border-primary/30 transition-all group">
+            <button className="hidden md:flex items-center gap-2 px-3 py-2 bg-muted/50 border border-border rounded-lg hover:bg-muted hover:border-primary/30 transition-all group flex-shrink-0">
               <Filter className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
               <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Filter</span>
             </button>
