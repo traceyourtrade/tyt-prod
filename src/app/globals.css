@@ -64,65 +64,65 @@
 }
 
 /* =====================================================
-   LIGHT THEME - Soft, Eye-Friendly Palette
-   Warmer off-white tones to reduce eye strain
+   LIGHT THEME - Ultra Soft, Paper-like Palette
+   Cream/beige tones for maximum eye comfort
    ===================================================== */
 :root {
   --radius: 0.75rem;
   
-  --background: #f5f5f4;
-  --foreground: #292524;
+  --background: #f0eeeb;
+  --foreground: #3d3a37;
   
-  --card: #fafaf9;
-  --card-foreground: #292524;
+  --card: #f7f5f3;
+  --card-foreground: #3d3a37;
   
-  --popover: #fafaf9;
-  --popover-foreground: #292524;
+  --popover: #f7f5f3;
+  --popover-foreground: #3d3a37;
   
   --primary: #2563EB;
   --primary-dark: #1D4ED8;
   --primary-light: #60A5FA;
-  --primary-soft: #eff6ff;
+  --primary-soft: #eef4fc;
   --primary-foreground: #ffffff;
   
-  --secondary: #e7e5e4;
-  --secondary-foreground: #44403c;
+  --secondary: #e8e5e1;
+  --secondary-foreground: #57534e;
   
-  --muted: #e7e5e4;
-  --muted-foreground: #78716c;
+  --muted: #e8e5e1;
+  --muted-foreground: #8a8580;
   
-  --accent: #e7e5e4;
-  --accent-foreground: #292524;
+  --accent: #e8e5e1;
+  --accent-foreground: #3d3a37;
   
   --destructive: #dc2626;
-  --warning: #eab308;
+  --warning: #d97706;
   
-  --border: #d6d3d1;
-  --input: #d6d3d1;
+  --border: #ddd9d5;
+  --input: #ddd9d5;
   --ring: #2563EB;
   
   --profit: #4EBF94;
   --loss: #dc2626;
-  --breakeven: #78716c;
+  --breakeven: #8a8580;
   
   --chart-1: #2563EB;
   --chart-2: #4EBF94;
   --chart-3: #ca8a04;
   --chart-4: #dc2626;
   --chart-5: #60A5FA;
-  --chart-text: #57534e;
+  --chart-text: #6b6560;
   
-  --sidebar: #fafaf9;
-  --sidebar-foreground: #44403c;
+  --sidebar: #f7f5f3;
+  --sidebar-foreground: #57534e;
   --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e7e5e4;
-  --sidebar-accent-foreground: #292524;
-  --sidebar-border: #d6d3d1;
+  --sidebar-accent: #e8e5e1;
+  --sidebar-accent-foreground: #3d3a37;
+  --sidebar-border: #ddd9d5;
   --sidebar-ring: #2563EB;
   
-  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-card-hover: 0 2px 4px -1px rgb(0 0 0 / 0.05);
 }
 
 /* =====================================================
