@@ -250,7 +250,9 @@ export default function PropFirmDashboard() {
           currentEquity={calculations.currentEquity}
         />
 
-        <Calendar />
+        <div className="w-full overflow-hidden">
+          <Calendar />
+        </div>
 
         <PropFirmCompactSettings />
 
