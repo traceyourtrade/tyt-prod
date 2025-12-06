@@ -432,7 +432,7 @@ const DailyJournal = () => {
   return (
     <div className="h-screen bg-background flex overflow-hidden">
       {/* Left Panel - Trade List */}
-      <div className="w-[300px] border-r border-border flex flex-col bg-card shrink-0 rounded-r-2xl">
+      <div className="w-[300px] border border-border flex flex-col bg-card shrink-0 rounded-2xl m-3 mr-0">
         <div className="p-5 border-b border-border space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -789,7 +789,7 @@ const DailyJournal = () => {
             animate={{ width: 340, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-l border-border bg-card shrink-0 overflow-hidden rounded-l-2xl"
+            className="border border-border bg-card shrink-0 overflow-hidden rounded-2xl m-3 ml-0"
           >
             <div className="w-[340px] h-full overflow-y-auto scrollbar-sleek p-6 space-y-5">
               {/* Toggle */}
