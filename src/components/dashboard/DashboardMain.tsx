@@ -69,46 +69,44 @@ const DashboardMain = () => {
           </p>
         </div>
         
-        {/* Time Range Selector - Only show in normal mode */}
-        {!isPropFirmMode && (
-          <div className="relative" ref={dropdownRef}>
-            <Button
-              variant="outline"
-              className="min-w-[140px] justify-between"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              {selected}
-              <ChevronDown className={cn(
-                "h-4 w-4 ml-2 transition-transform",
-                isOpen && "rotate-180"
-              )} />
-            </Button>
-            
-            {isOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
-                <div className="p-1">
-                  {timeRangeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      className={cn(
-                        "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
-                        selected === option.value 
-                          ? "bg-primary/10 text-primary" 
-                          : "hover:bg-muted text-foreground"
-                      )}
-                      onClick={() => {
-                        setSelected(option.value);
-                        setIsOpen(false);
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+        {/* Time Range Selector - Always show */}
+        <div className="relative" ref={dropdownRef}>
+          <Button
+            variant="outline"
+            className="min-w-[140px] justify-between"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {selected}
+            <ChevronDown className={cn(
+              "h-4 w-4 ml-2 transition-transform",
+              isOpen && "rotate-180"
+            )} />
+          </Button>
+          
+          {isOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
+              <div className="p-1">
+                {timeRangeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className={cn(
+                      "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
+                      selected === option.value 
+                        ? "bg-primary/10 text-primary" 
+                        : "hover:bg-muted text-foreground"
+                    )}
+                    onClick={() => {
+                      setSelected(option.value);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Notification Bar */}
@@ -125,17 +123,15 @@ const DashboardMain = () => {
       )}
 
       {/* Dashboard Content */}
-      <div className="animate-fade-in">
-        {isPropFirmMode ? (
-          <PropFirmDashboard />
-        ) : (
-          <>
-            {selected === "Daily" && <DashboardDay />}
-            {selected === "Weekly" && <DashboardWeek />}
-            {selected === "Monthly" && <DashboardMonth />}
-            {selected === "Custom" && <DashboardCustom />}
-          </>
-        )}
+      <div className="animate-fade-in space-y-6">
+        {/* Prop Firm Challenge Tracking (when enabled) */}
+        {isPropFirmMode && <PropFirmDashboard />}
+        
+        {/* Regular Dashboard Analytics (always shown) */}
+        {selected === "Daily" && <DashboardDay />}
+        {selected === "Weekly" && <DashboardWeek />}
+        {selected === "Monthly" && <DashboardMonth />}
+        {selected === "Custom" && <DashboardCustom />}
       </div>
     </div>
   );
