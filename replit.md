@@ -28,7 +28,7 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
 
 ### Feature Specifications
 - **Dashboard:** Performance overview with charts.
-- **Daily Journal:** Daily trading notes and reflections with redesigned trade cards and screenshot support.
+- **Daily Journal:** Premium UI with glassmorphism cards, gradient accents, and refined color psychology. Features floating-label inputs with animated transitions, gradient progress bars with ambient glows, pill-style template navigation tabs, premium sentiment selectors, and Framer Motion micro-animations throughout. Trade list sidebar has gradient backgrounds with P&L color-coded badges.
 - **Notebook:** Three-column layout for organizing general trading notes and strategies with a rich text editor.
 - **Reports & Strategies:** Redesigned pages with tab navigation, theme-aware charts, and modern stat grids for analytics.
 - **Playbook:** AI-powered pattern detection (`src/components/playbook/`) identifies winning trade setups based on historical data (strategy, symbol, time, day patterns). Users can add these to a personal playbook. Requires a minimum of 10 trades for detection.
