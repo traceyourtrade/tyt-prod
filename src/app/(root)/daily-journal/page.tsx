@@ -194,6 +194,8 @@ const DailyJournal = () => {
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxType, setLightboxType] = useState<"before" | "after" | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const [tagInput, setTagInput] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -360,6 +362,40 @@ const DailyJournal = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleDeleteScreenshot = async (type: "before" | "after") => {
+    if (!selectedTrade || isDemo) return;
+    
+    try {
+      const tradeId = selectedTrade._id || selectedTrade.id || "";
+      await fetch("/api/daily-journal/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiName: "deleteImage",
+          id: tradeId,
+          imgType: type === "before" ? "beforeURL" : "afterURL",
+          tokenn,
+          accountType: selectedTrade.accountType || "",
+        }),
+      });
+      setAccounts();
+      setLightboxImage(null);
+      setLightboxType(null);
+    } catch (error) {
+      console.error("Error deleting screenshot:", error);
+    }
+  };
+
+  const openLightbox = (url: string, type: "before" | "after") => {
+    setLightboxImage(url);
+    setLightboxType(type);
+  };
+
+  const closeLightbox = () => {
+    setLightboxImage(null);
+    setLightboxType(null);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "before" | "after") => {
@@ -751,7 +787,7 @@ const DailyJournal = () => {
                         {selectedTrade[`${type}URL`] ? (
                           <div
                             className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group border border-border"
-                            onClick={() => setLightboxImage(selectedTrade[`${type}URL`])}
+                            onClick={() => openLightbox(selectedTrade[`${type}URL`], type as "before" | "after")}
                           >
                             <img
                               src={selectedTrade[`${type}URL`]}
@@ -1124,22 +1160,75 @@ const DailyJournal = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setLightboxImage(null)}
+            onClick={closeLightbox}
             className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
           >
-            <motion.button
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute top-4 right-4 p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+            {/* Top Actions Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-4 left-4 right-4 flex items-center justify-between"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="w-6 h-6 text-white" />
-            </motion.button>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm font-medium">
+                  {lightboxType === "before" ? "Entry Screenshot" : "Exit Screenshot"}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* Replace Button */}
+                {!isDemo && lightboxType && (
+                  <label className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/80 hover:bg-primary text-white text-sm font-medium cursor-pointer transition-colors">
+                    <Upload className="w-4 h-4" />
+                    Replace
+                    <input
+                      ref={replaceInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (lightboxType) {
+                          handleImageUpload(e, lightboxType);
+                          closeLightbox();
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+                
+                {/* Delete Button */}
+                {!isDemo && lightboxType && (
+                  <button
+                    onClick={() => {
+                      if (lightboxType && confirm("Delete this screenshot?")) {
+                        handleDeleteScreenshot(lightboxType);
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-loss/80 hover:bg-loss text-white text-sm font-medium transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Delete
+                  </button>
+                )}
+                
+                {/* Close Button */}
+                <button
+                  onClick={closeLightbox}
+                  className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            </motion.div>
+            
             <motion.img
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
+              onClick={(e) => e.stopPropagation()}
               src={lightboxImage}
               alt="Trade screenshot"
-              className="max-w-full max-h-full rounded-2xl shadow-2xl"
+              className="max-w-full max-h-[calc(100vh-120px)] rounded-2xl shadow-2xl"
             />
           </motion.div>
         )}
