@@ -85,7 +85,7 @@ const DashboardMain = () => {
               </Button>
               
               {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
+                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
                   <div className="p-1">
                     {timeRangeOptions.map((option) => (
                       <button
