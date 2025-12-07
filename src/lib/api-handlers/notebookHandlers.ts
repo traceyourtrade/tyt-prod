@@ -539,7 +539,7 @@ export async function renameFileHandler(req: any, userId: string, token: string)
 // ADD NOTES FROM DAILY JOURNAL
 export async function addNotesFromDailyJournalHandler(req: any, userId: string, token: string) {
     try {
-        const { tradeId, symbol, time, date, accountType } = req;
+        const { tradeId, symbol, time, date, accountType, pnl } = req;
 
         const rootUser = await getUserFromToken(token);
         if (!rootUser) {
@@ -606,6 +606,7 @@ export async function addNotesFromDailyJournalHandler(req: any, userId: string, 
             created: timestamp,
             lastUpdate: timestamp,
             tradeId,
+            pnl: pnl !== undefined ? pnl : null,
             content: {
                 title: finalFileName,
                 content: ''

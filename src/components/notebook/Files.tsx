@@ -17,7 +17,9 @@ import {
   Sparkles,
   Plus,
   BookOpen,
-  LayoutTemplate
+  LayoutTemplate,
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 import notifications from "@/store/notifications";
 import TemplatePicker from "./TemplatePicker";
@@ -26,6 +28,8 @@ import { NotebookTemplate } from "@/lib/notebookTemplates";
 interface FileType {
   filename: string;
   created: string;
+  pnl?: number | null;
+  tradeId?: string;
 }
 
 interface NoteType {
@@ -383,45 +387,82 @@ const Files = ({
                 )}
               </motion.div>
             ) : (
-              filteredFiles.map((file, index) => (
-                <motion.div
-                  key={file.filename}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="group relative"
-                >
-                  <button 
-                    onClick={() => setFile(file.filename)}
-                    className="w-full p-2.5 bg-card/50 border border-border rounded-lg hover:border-primary/30 hover:bg-card transition-all text-left"
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-profit/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate pr-6">
-                          {file.filename}
-                        </p>
-                        <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
-                          <Clock className="h-2.5 w-2.5" />
-                          <span>{formatDate(file.created)}</span>
+              <>
+                {filteredFiles.map((file, index) => {
+                  const hasPnl = file.pnl !== undefined && file.pnl !== null;
+                  const isProfit = hasPnl && file.pnl! > 0;
+                  const isDailyJournal = selectedFolder === "Daily Journal";
+                  
+                  return (
+                    <motion.div
+                      key={file.filename}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="group relative"
+                    >
+                      <button 
+                        onClick={() => setFile(file.filename)}
+                        className={`w-full p-2.5 bg-card/50 border rounded-lg hover:bg-card transition-all text-left ${
+                          isDailyJournal && hasPnl
+                            ? isProfit 
+                              ? "border-l-2 border-l-profit border-t-border border-r-border border-b-border hover:border-l-profit hover:border-profit/30"
+                              : "border-l-2 border-l-loss border-t-border border-r-border border-b-border hover:border-l-loss hover:border-loss/30"
+                            : "border-border hover:border-primary/30"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                            isDailyJournal && hasPnl
+                              ? isProfit 
+                                ? "bg-profit/10"
+                                : "bg-loss/10"
+                              : "bg-gradient-to-br from-primary/10 to-profit/10"
+                          }`}>
+                            {isDailyJournal && hasPnl ? (
+                              isProfit ? (
+                                <TrendingUp className="h-3.5 w-3.5 text-profit" />
+                              ) : (
+                                <TrendingDown className="h-3.5 w-3.5 text-loss" />
+                              )
+                            ) : (
+                              <FileText className="h-3.5 w-3.5 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-medium text-foreground truncate flex-1 pr-2">
+                                {file.filename}
+                              </p>
+                              {isDailyJournal && hasPnl && (
+                                <span className={`text-[10px] font-semibold flex-shrink-0 ${
+                                  isProfit ? "text-profit" : "text-loss"
+                                }`}>
+                                  {isProfit ? "+" : ""}{file.pnl!.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground">
+                              <Clock className="h-2.5 w-2.5" />
+                              <span>{formatDate(file.created)}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </button>
+                      </button>
 
-                  {/* Menu Button */}
-                  <button
-                    onClick={(e) => handleMenuClick(e, index, file.filename)}
-                    className={`absolute top-2 right-2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all ${
-                      visibleOptions === index ? "opacity-100 bg-muted" : ""
-                    }`}
-                  >
-                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
-                </motion.div>
-              ))
+                      {/* Menu Button */}
+                      <button
+                        onClick={(e) => handleMenuClick(e, index, file.filename)}
+                        className={`absolute top-2 right-2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all ${
+                          visibleOptions === index ? "opacity-100 bg-muted" : ""
+                        }`}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </>
             )}
           </motion.div>
         )}

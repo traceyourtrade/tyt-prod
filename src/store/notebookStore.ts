@@ -12,6 +12,7 @@ interface NotebookFile {
         fields?: Record<string, string>;
     };
     tradeId?: string;
+    pnl?: number | null;
 }
 
 interface NotebookFolder {
@@ -51,6 +52,7 @@ interface NotebookStore {
         time: string;
         date: string;
         accountType: string;
+        pnl?: number;
     }) => Promise<{ success: boolean; message?: string; error?: string; finalFileName?: string }>;
     
     // Utility
@@ -89,7 +91,8 @@ const demoNotebookData: NotebookFolder[] = [
                         notes: "Wait for London session for best entry."
                     }
                 },
-                tradeId: "trade_001"
+                tradeId: "trade_001",
+                pnl: 485
             },
             {
                 filename: "GBP/JPY Analysis",
@@ -111,7 +114,8 @@ const demoNotebookData: NotebookFolder[] = [
                         tradePlan: "Wait for breakout above 188.20 or breakdown below 186.50 before taking position."
                     }
                 },
-                tradeId: "trade_002"
+                tradeId: "trade_002",
+                pnl: -215
             },
             {
                 filename: "Weekly Review - Dec Week 1",
@@ -133,7 +137,8 @@ const demoNotebookData: NotebookFolder[] = [
                         improvements: "Need to work on early exits. Left money on the table on 2 trades by closing too early.",
                         goals: "Focus on letting winners run to full target. No early exits unless technical reason."
                     }
-                }
+                },
+                pnl: null
             }
         ]
     },
