@@ -212,14 +212,12 @@ export default function RootLayout({
       <div className={cn("px-3 mt-6", collapsed && !mobileOpen && "mt-4 px-2")}>
         <button
           className={cn(
-            "group relative w-full flex items-center justify-center gap-2.5 py-3 font-medium text-sm transition-all duration-300 ease-out",
+            "group relative w-full flex items-center justify-center gap-2.5 py-3 font-medium text-sm transition-all duration-200 ease-out",
             "rounded-full",
-            "bg-gradient-to-b from-[#3B82F6] to-[#2563EB]",
+            "bg-[#3B82F6]",
             "text-white",
-            "shadow-[0_4px_20px_rgba(59,130,246,0.35)]",
-            "hover:shadow-[0_8px_30px_rgba(59,130,246,0.5)]",
-            "hover:-translate-y-0.5",
-            "active:translate-y-0 active:shadow-[0_2px_10px_rgba(59,130,246,0.3)]",
+            "hover:bg-[#2563EB]",
+            "active:scale-[0.98]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515]",
             collapsed && !mobileOpen ? "px-0 w-11 h-11 mx-auto" : "px-5"
           )}
