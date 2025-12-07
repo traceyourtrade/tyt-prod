@@ -316,12 +316,12 @@ const JRContent = ({ dailyData }: JRContentProps) => {
     }
   };
 
-  const addNotes = async (tradeId: string, symbol: string, time: string, date: string, accountType: string) => {
+  const addNotes = async (tradeId: string, symbol: string, time: string, date: string, accountType: string, pnl?: number) => {
     try {
       const res = await fetch(`/api/notebook/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tradeId, tokenn, userId, symbol, time, date, accountType, apiName: "addNotesFromDailyJournal" }),
+        body: JSON.stringify({ tradeId, tokenn, userId, symbol, time, date, accountType, pnl, apiName: "addNotesFromDailyJournal" }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -820,7 +820,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                           </button>
                         ) : (
                           <button
-                            onClick={() => addNotes(trade.id, trade.Item, trade.time, trade.date, trade.accountType)}
+                            onClick={() => addNotes(trade.id, trade.Item, trade.time, trade.date, trade.accountType, trade.Profit)}
                             className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded-xl transition-all"
                           >
                             <Plus className="w-4 h-4" />
