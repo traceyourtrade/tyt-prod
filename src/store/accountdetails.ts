@@ -20,13 +20,13 @@ const generateDemoTradeData = () => {
   const strategies = ['Momentum', 'Breakout', 'Reversal', 'Scalping', 'Swing'];
   const tradingHours = ['09', '10', '11', '12', '13', '14', '15'];
   
-  // November 2025 trading days (weekdays only, 20 trading days)
-  // Note: Using Nov 3-28, 2025 for demo data
-  const novTradingDays = [
-    '2025-11-03', '2025-11-04', '2025-11-05', '2025-11-06', '2025-11-07',
-    '2025-11-10', '2025-11-11', '2025-11-12', '2025-11-13', '2025-11-14',
-    '2025-11-17', '2025-11-18', '2025-11-19', '2025-11-20', '2025-11-21',
-    '2025-11-24', '2025-11-25', '2025-11-26', '2025-11-28', '2025-11-29'
+  // Recent trading days (last 30 days from Dec 7, 2025)
+  // 20 trading days spread across Nov-Dec 2025
+  const tradingDays = [
+    '2025-11-11', '2025-11-12', '2025-11-13', '2025-11-14', '2025-11-15',
+    '2025-11-18', '2025-11-19', '2025-11-20', '2025-11-21', '2025-11-22',
+    '2025-11-25', '2025-11-26', '2025-11-27', '2025-11-29',
+    '2025-12-02', '2025-12-03', '2025-12-04', '2025-12-05', '2025-12-06', '2025-12-07'
   ];
   
   // Target: $6,567 profit, 67% win rate over 20 trading days
@@ -62,7 +62,7 @@ const generateDemoTradeData = () => {
   }
   
   for (let i = 0; i < totalTrades; i++) {
-    const dateStr = novTradingDays[i % novTradingDays.length];
+    const dateStr = tradingDays[i % tradingDays.length];
     const profit = allProfits[i];
     const symbol = symbols[Math.floor(Math.random() * symbols.length)];
     const hour = tradingHours[Math.floor(Math.random() * tradingHours.length)];
