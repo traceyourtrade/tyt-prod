@@ -1,5 +1,6 @@
 "use client"
 import { useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   Pencil, 
@@ -20,7 +21,8 @@ import {
   Lightbulb,
   Brain,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ExternalLink
 } from "lucide-react";
 import { getTemplateById, NOTEBOOK_TEMPLATES } from "@/lib/notebookTemplates";
 
@@ -36,6 +38,7 @@ interface FileType {
   created: string;
   lastUpdate?: string;
   content?: FileContent;
+  tradeId?: string;
 }
 
 interface NoteType {
@@ -52,6 +55,7 @@ interface ViewModeProps {
 
 const ViewMode = ({ notes, selectedFolder, selectedFile, changeMode }: ViewModeProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const currentFileData = notes
     .find(note => note.folderName === selectedFolder)
@@ -252,15 +256,40 @@ const ViewMode = ({ notes, selectedFolder, selectedFile, changeMode }: ViewModeP
               </div>
             </div>
             
-            <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => changeMode("EDIT")} 
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary/90 text-white rounded-lg hover:from-primary/90 hover:to-primary transition-all text-sm font-medium shadow-sm"
-            >
-              <Pencil className="h-4 w-4" />
-              <span className="hidden md:inline">Edit</span>
-            </motion.button>
+            <div className="flex items-center gap-2">
+              {currentFileData?.tradeId && (
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    let dateStr = '';
+                    if (currentFileData.created) {
+                      const parsedDate = new Date(currentFileData.created);
+                      if (!isNaN(parsedDate.getTime())) {
+                        dateStr = parsedDate.toISOString().split('T')[0];
+                      }
+                    }
+                    const params = new URLSearchParams();
+                    if (dateStr) params.set('date', dateStr);
+                    params.set('tradeId', currentFileData.tradeId!);
+                    router.push(`/daily-journal?${params.toString()}`);
+                  }} 
+                  className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted border border-border rounded-lg transition-all text-sm font-medium text-foreground"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="hidden md:inline">View Trade</span>
+                </motion.button>
+              )}
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => changeMode("EDIT")} 
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary/90 text-white rounded-lg hover:from-primary/90 hover:to-primary transition-all text-sm font-medium shadow-sm"
+              >
+                <Pencil className="h-4 w-4" />
+                <span className="hidden md:inline">Edit</span>
+              </motion.button>
+            </div>
           </div>
         </div>
       </div>
