@@ -185,7 +185,7 @@ const QuickFillDropdown: React.FC<QuickFillDropdownProps> = ({ promptId, promptT
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className={`absolute right-0 top-full mt-1 max-h-64 overflow-y-auto bg-popover backdrop-blur-xl border border-border rounded-lg shadow-2xl z-50 ${
+            className={`absolute right-0 top-full mt-1 max-h-64 overflow-y-auto bg-[hsl(var(--background))] backdrop-blur-xl border border-border rounded-lg shadow-2xl z-[9999] ${
               promptType === 'text' ? 'w-24' : 'w-72'
             }`}
           >
