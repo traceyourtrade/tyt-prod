@@ -849,6 +849,7 @@ const DailyJournal = () => {
                         <div className="absolute right-2 top-1 z-10">
                           <QuickFillDropdown
                             promptId={prompt.id}
+                            promptType={prompt.type === "textarea" ? "textarea" : "text"}
                             currentValue={journalData.prompts?.[prompt.id] || ""}
                             onSelect={(value) => handlePromptChange(prompt.id, value)}
                           />

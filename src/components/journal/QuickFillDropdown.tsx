@@ -6,11 +6,12 @@ import { ChevronDown, Sparkles } from 'lucide-react';
 
 interface QuickFillDropdownProps {
   promptId: string;
+  promptType: 'textarea' | 'text';
   currentValue: string;
   onSelect: (value: string) => void;
 }
 
-const quickFillOptions: Record<string, string[]> = {
+const textareaOptions: Record<string, string[]> = {
   went_well: [
     "Followed my trading plan exactly as designed",
     "Entered at the perfect support/resistance level",
@@ -49,7 +50,7 @@ const quickFillOptions: Record<string, string[]> = {
   ],
   follow_plan: [
     "Yes - followed entry, stop, and target exactly",
-    "Yes - but adjusted target based on market conditions",
+    "Yes - adjusted target based on market conditions",
     "Partially - entered correctly but exited early",
     "Partially - good setup but wrong position size",
     "No - entered before my signal triggered",
@@ -84,15 +85,6 @@ const quickFillOptions: Record<string, string[]> = {
     "Risk/reward no longer favorable",
     "Took partial profits, stopped out remainder",
     "Recognized failed setup pattern",
-  ],
-  setup_grade: [
-    "10 - Perfect setup, A+ execution",
-    "9 - Excellent setup, minor improvements possible",
-    "8 - Strong setup, good execution",
-    "7 - Solid setup, room for improvement",
-    "6 - Average setup, need more criteria",
-    "5 - Below average, shouldn't have traded",
-    "4 or below - Poor setup, learning experience",
   ],
   would_take_again: [
     "Yes - setup was valid, execution was correct",
@@ -134,22 +126,20 @@ const quickFillOptions: Record<string, string[]> = {
     "Disappointed but not discouraged",
     "Need to step away and reset mentally",
   ],
-  confidence: [
-    "10 - Maximum confidence, perfect setup",
-    "9 - Very confident, all criteria met",
-    "8 - High confidence, strong setup",
-    "7 - Good confidence, minor uncertainty",
-    "6 - Moderate confidence, some concerns",
-    "5 - Uncertain, borderline trade",
-    "4 or below - Low confidence, shouldn't have traded",
-  ],
 };
 
-const QuickFillDropdown: React.FC<QuickFillDropdownProps> = ({ promptId, currentValue, onSelect }) => {
+const textInputOptions: Record<string, string[]> = {
+  setup_grade: ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"],
+  confidence: ["10", "9", "8", "7", "6", "5", "4", "3", "2", "1"],
+};
+
+const QuickFillDropdown: React.FC<QuickFillDropdownProps> = ({ promptId, promptType, currentValue, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const options = quickFillOptions[promptId] || quickFillOptions.notes || [];
+  const options = promptType === 'text' 
+    ? textInputOptions[promptId] 
+    : textareaOptions[promptId];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -162,15 +152,19 @@ const QuickFillDropdown: React.FC<QuickFillDropdownProps> = ({ promptId, current
   }, []);
 
   const handleSelect = (option: string) => {
-    if (currentValue) {
-      onSelect(currentValue + '\n\n' + option);
-    } else {
+    if (promptType === 'text') {
       onSelect(option);
+    } else {
+      if (currentValue && currentValue.trim()) {
+        onSelect(currentValue.trim() + '\n\n' + option);
+      } else {
+        onSelect(option);
+      }
     }
     setIsOpen(false);
   };
 
-  if (options.length === 0) return null;
+  if (!options || options.length === 0) return null;
 
   return (
     <div ref={dropdownRef} className="relative">
@@ -191,14 +185,18 @@ const QuickFillDropdown: React.FC<QuickFillDropdownProps> = ({ promptId, current
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-1 w-72 max-h-64 overflow-y-auto bg-card border border-border rounded-lg shadow-xl z-50"
+            className={`absolute right-0 top-full mt-1 max-h-64 overflow-y-auto bg-card border border-border rounded-lg shadow-xl z-50 ${
+              promptType === 'text' ? 'w-24' : 'w-72'
+            }`}
           >
             <div className="p-1">
               {options.map((option, index) => (
                 <button
                   key={index}
                   onClick={() => handleSelect(option)}
-                  className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-muted rounded-md transition-colors"
+                  className={`w-full text-left px-3 py-2 text-xs text-foreground hover:bg-muted rounded-md transition-colors ${
+                    promptType === 'text' ? 'text-center font-medium' : ''
+                  }`}
                 >
                   {option}
                 </button>
