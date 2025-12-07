@@ -8,12 +8,10 @@ import {
     CategoryScale,
     LinearScale,
     Tooltip,
-    Title,
+    Legend,
 } from "chart.js";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Title);
+ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 interface ChartData {
     time: string;
@@ -30,67 +28,93 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ data }) => {
         labels: data.map((d) => d.time),
         datasets: [
             {
-                label: "Price",
+                label: "P&L",
                 data: data.map((d) => d.value),
                 backgroundColor: data.map((d) =>
-                    d.value >= 0 ? "rgba(21, 147, 132, 0.43)" : "rgba(255, 119, 119, 0.32)"
+                    d.value >= 0 ? "rgba(78, 191, 148, 0.6)" : "rgba(239, 68, 68, 0.6)"
                 ),
                 borderColor: data.map((d) =>
-                    d.value >= 0 ? "#2fa87a" : "rgba(255, 119, 119, 1)"
+                    d.value >= 0 ? "#4EBF94" : "#EF4444"
                 ),
-                borderWidth: 0,
-                barThickness: 25,
+                borderWidth: 1,
+                borderRadius: 4,
+                barThickness: 'flex' as const,
+                maxBarThickness: 40,
             },
         ],
     };
 
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
+            legend: {
+                display: false,
+            },
             tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 10,
+                cornerRadius: 8,
                 callbacks: {
                     label: function (tooltipItem: any) {
-                        let item = data[tooltipItem.dataIndex];
-                        return `${item.Item}: ${item.value}`;
+                        const item = data[tooltipItem.dataIndex];
+                        const value = item.value >= 0 ? `+$${item.value.toFixed(2)}` : `-$${Math.abs(item.value).toFixed(2)}`;
+                        return item.Item ? `${item.Item}: ${value}` : value;
                     },
                 },
             },
         },
         scales: {
             x: {
-                title: {
-                    display: true,
-                    text: "Time",
+                grid: {
+                    display: false,
                 },
-                categoryPercentage: 0.5,
-                barPercentage: 0.5,
+                ticks: {
+                    color: 'rgba(156, 163, 175, 0.8)',
+                    font: {
+                        size: 10,
+                    },
+                    maxRotation: 45,
+                    minRotation: 0,
+                },
+                border: {
+                    display: false,
+                },
             },
             y: {
-                title: {
-                    display: true,
-                    text: "Price",
-                },
                 grid: {
-                    drawBorder: false,
-                    color: (context: any) => {
-                        if (context.tick.value === 0) {
-                            return "#bebebe";
-                        }
-                        return "rgba(0, 0, 0, 0.1)";
+                    color: 'rgba(156, 163, 175, 0.1)',
+                },
+                ticks: {
+                    color: 'rgba(156, 163, 175, 0.8)',
+                    font: {
+                        size: 10,
                     },
+                    callback: function(value: number | string) {
+                        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                        return numValue >= 0 ? `$${numValue}` : `-$${Math.abs(numValue)}`;
+                    },
+                },
+                border: {
+                    display: false,
                 },
             },
         },
     };
 
-    return (
-        <div className="vertical-graph">
-            <h2 className="w-full text-white text-lg text-center border border-[#1b1b1b] pb-4 mt-3">
-                Net Daily P&L <FontAwesomeIcon icon={faCircleInfo} className="text-xs relative -top-0.5 -right-1 cursor-pointer" />
-            </h2>
-            <div className="chart-container">
-                <Bar data={chartData} options={options} />
+    if (!data || data.length === 0) {
+        return (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                No trade data available
             </div>
+        );
+    }
+
+    return (
+        <div className="w-full h-full">
+            <Bar data={chartData} options={options} />
         </div>
     );
 };
