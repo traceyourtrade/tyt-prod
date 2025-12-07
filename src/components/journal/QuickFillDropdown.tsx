@@ -171,7 +171,7 @@ const QuickFillDropdown: React.FC<QuickFillDropdownProps> = ({ promptId, promptT
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-primary bg-muted/50 hover:bg-primary/10 rounded-md transition-all"
+        className="relative z-0 flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-primary bg-muted/50 hover:bg-primary/10 rounded-md transition-all"
       >
         <Sparkles className="w-3 h-3" />
         <span>Quick Fill</span>
@@ -185,7 +185,7 @@ const QuickFillDropdown: React.FC<QuickFillDropdownProps> = ({ promptId, promptT
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className={`absolute right-0 top-full mt-1 max-h-64 overflow-y-auto bg-[hsl(var(--background))] backdrop-blur-xl border border-border rounded-lg shadow-2xl z-[9999] ${
+            className={`absolute right-0 top-full mt-1 max-h-64 overflow-y-auto bg-[hsl(var(--background))] backdrop-blur-xl border border-border rounded-lg shadow-2xl z-50 ${
               promptType === 'text' ? 'w-24' : 'w-72'
             }`}
           >
