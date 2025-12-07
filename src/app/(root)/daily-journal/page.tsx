@@ -734,46 +734,85 @@ const DailyJournal = () => {
                 animate={{ opacity: 1 }}
                 className="p-4 md:p-6 space-y-4"
               >
-                {/* Clean Trade Header */}
-                <div className="pb-4 border-b border-border/50">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <SymbolLogo 
-                        symbol={selectedTrade.Item || selectedTrade.symbol || "?"} 
-                        size="lg"
-                        isProfit={selectedTrade.Profit >= 0}
-                        isSelected={true}
-                      />
+                {/* Premium Trade Header Card */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`relative p-4 rounded-2xl border overflow-hidden ${
+                    selectedTrade.Profit >= 0 
+                      ? "bg-gradient-to-br from-profit/5 via-card to-profit/10 border-profit/20" 
+                      : "bg-gradient-to-br from-loss/5 via-card to-loss/10 border-loss/20"
+                  }`}
+                >
+                  {/* Glow Effect */}
+                  <div className={`absolute -top-20 -right-20 w-40 h-40 rounded-full blur-3xl opacity-30 ${
+                    selectedTrade.Profit >= 0 ? "bg-profit" : "bg-loss"
+                  }`} />
+                  
+                  <div className="relative flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      {/* Enhanced Symbol Logo */}
+                      <div className={`relative p-0.5 rounded-xl ${
+                        selectedTrade.Profit >= 0 
+                          ? "bg-gradient-to-br from-profit/50 to-profit/20" 
+                          : "bg-gradient-to-br from-loss/50 to-loss/20"
+                      }`}>
+                        <div className="bg-card rounded-[10px] p-1">
+                          <SymbolLogo 
+                            symbol={selectedTrade.Item || selectedTrade.symbol || "?"} 
+                            size="lg"
+                            isProfit={selectedTrade.Profit >= 0}
+                            isSelected={true}
+                          />
+                        </div>
+                      </div>
+                      
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-lg font-semibold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-xl font-bold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                             (selectedTrade.side || selectedTrade.Type)?.toLowerCase() === "long" 
-                              ? "bg-profit/10 text-profit" 
-                              : "bg-loss/10 text-loss"
+                              ? "bg-profit/20 text-profit border border-profit/30" 
+                              : "bg-loss/20 text-loss border border-loss/30"
                           }`}>
-                            {selectedTrade.side || selectedTrade.Type}
+                            {(selectedTrade.side || selectedTrade.Type)?.toUpperCase()}
                           </span>
                           {selectedTrade.strategy && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                               {selectedTrade.strategy}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
-                          <span>{formatTime(selectedTrade.EntryTime || selectedTrade.time) || "—"}</span>
-                          <span className="text-muted-foreground/30">·</span>
-                          <span>Entry ${selectedTrade.entryPrice ? parseFloat(String(selectedTrade.entryPrice)).toFixed(2) : "—"}</span>
-                          <span className="text-muted-foreground/30">→</span>
-                          <span>Exit ${selectedTrade.exitPrice ? parseFloat(String(selectedTrade.exitPrice)).toFixed(2) : "—"}</span>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/50">
+                            <Clock className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">{formatTime(selectedTrade.EntryTime || selectedTrade.time) || "—"}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/50">
+                            <ArrowDownRight className="w-3 h-3 text-profit" />
+                            <span className="text-xs text-foreground">${selectedTrade.entryPrice ? parseFloat(String(selectedTrade.entryPrice)).toFixed(2) : "—"}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted/50">
+                            <ArrowUpRight className="w-3 h-3 text-loss" />
+                            <span className="text-xs text-foreground">${selectedTrade.exitPrice ? parseFloat(String(selectedTrade.exitPrice)).toFixed(2) : "—"}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className={`text-xl font-bold tabular-nums ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                      {selectedTrade.Profit >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(selectedTrade.Profit), currency, exchangeRate)}
+                    
+                    {/* P&L Display */}
+                    <div className="text-right">
+                      <motion.div 
+                        initial={{ scale: 0.9 }}
+                        animate={{ scale: 1 }}
+                        className={`text-2xl font-bold tabular-nums ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}
+                      >
+                        {selectedTrade.Profit >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(selectedTrade.Profit), currency, exchangeRate)}
+                      </motion.div>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">P&L</span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Screenshots - Clean Card */}
                 <div className="p-4 bg-card border border-border rounded-xl">
