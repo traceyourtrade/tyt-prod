@@ -340,16 +340,106 @@ const ViewMode = ({ notes, selectedFolder, selectedFile, changeMode }: ViewModeP
                   })}
               </div>
             ) : (
-              <div className="bg-card/50 border border-border rounded-xl p-6 md:p-8">
-                <div
-                  ref={contentRef}
-                  className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-foreground leading-relaxed [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-medium [&_p]:text-sm [&_ul]:text-sm [&_ol]:text-sm [&_li]:my-1"
-                  dangerouslySetInnerHTML={
-                    currentFileData?.content?.content
-                      ? { __html: currentFileData.content.content }
-                      : { __html: '<p class="text-muted-foreground italic">No content yet. Click Edit to add content.</p>' }
-                  }
-                />
+              <div className="space-y-4">
+                {/* Note Info Card */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-card via-card to-muted/30 border border-border rounded-2xl">
+                  {/* Decorative Background */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary/5 to-transparent rounded-full blur-2xl" />
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-profit/5 to-transparent rounded-full blur-2xl" />
+                  
+                  {/* Content */}
+                  <div className="relative p-6 md:p-8">
+                    {/* Quick Stats Row */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                      <div className="flex items-center gap-3 p-3 bg-background/50 border border-border/50 rounded-xl">
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Type</p>
+                          <p className="text-sm font-medium text-foreground truncate">Note</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 p-3 bg-background/50 border border-border/50 rounded-xl">
+                        <div className="w-9 h-9 rounded-lg bg-profit/10 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="h-4 w-4 text-profit" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Status</p>
+                          <p className="text-sm font-medium text-foreground">Active</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 p-3 bg-background/50 border border-border/50 rounded-xl">
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                          <Calendar className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Created</p>
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {currentFileData?.created 
+                              ? new Date(currentFileData.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                              : 'Today'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 p-3 bg-background/50 border border-border/50 rounded-xl">
+                        <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                          <Clock className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Updated</p>
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {currentFileData?.lastUpdate 
+                              ? new Date(currentFileData.lastUpdate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                              : 'Just now'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Divider */}
+                    <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mb-6" />
+                    
+                    {/* Content Section */}
+                    <div className="relative">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-1 h-4 bg-gradient-to-b from-primary to-primary/50 rounded-full" />
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Content</h3>
+                      </div>
+                      
+                      <div
+                        ref={contentRef}
+                        className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-foreground leading-relaxed [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-medium [&_p]:text-sm [&_ul]:text-sm [&_ol]:text-sm [&_li]:my-1 min-h-[120px]"
+                        dangerouslySetInnerHTML={
+                          currentFileData?.content?.content
+                            ? { __html: currentFileData.content.content }
+                            : { __html: '<p class="text-muted-foreground italic">No content yet. Click Edit to add content.</p>' }
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Quick Actions */}
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => changeMode("EDIT")}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-colors group"
+                  >
+                    <Edit3 className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">Edit Note</span>
+                  </motion.button>
+                  
+                  <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border border-border rounded-xl">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <span className="text-xs text-muted-foreground">Tip: Add details to make this note more useful</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
