@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ChevronDown, Calendar, TrendingUp, TrendingDown, Target, Flame, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, TrendingUp, TrendingDown, Target, Flame, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
@@ -53,7 +52,6 @@ const DashboardWeek: React.FC = () => {
   const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false);
   const [showYearView, setShowYearView] = useState<boolean>(false);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -153,7 +151,6 @@ const DashboardWeek: React.FC = () => {
   const handleMonthSelect = (monthIdx: number) => {
     const newDate = new Date(selectedYear, monthIdx, 1);
     setCurrentDate(newDate);
-    setSelectedMonth(monthIdx);
     setDisplayWeekIndex(0);
     setIsDropdownVisible(false);
     setShowYearView(false);
@@ -248,11 +245,12 @@ const DashboardWeek: React.FC = () => {
       <DashWidgets {...dashWidgetProps} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Left Column - Calendar + Insight Tiles */}
         <div className="xl:col-span-2 space-y-4">
-          {/* Week Calendar - Matching Monthly Calendar Design */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-5 overflow-hidden">
+          {/* Week Calendar */}
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-5">
             {/* Header */}
-            <div className="flex justify-between items-center mb-4 sm:mb-5">
+            <div className="flex justify-between items-center mb-4">
               <button 
                 onClick={handlePrevWeek}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -265,11 +263,11 @@ const DashboardWeek: React.FC = () => {
                   onClick={() => setIsDropdownVisible(!isDropdownVisible)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-muted/50 transition-colors"
                 >
-                  <span className="text-base sm:text-lg font-semibold text-foreground">
+                  <span className="text-base font-semibold text-foreground">
                     Week {displayWeekIndex + 1}
                   </span>
                   <span className="text-muted-foreground">•</span>
-                  <span className="text-base sm:text-lg text-muted-foreground">
+                  <span className="text-base text-muted-foreground">
                     {currentMonth} {currentYear}
                   </span>
                   <ChevronDown className={cn(
@@ -343,16 +341,16 @@ const DashboardWeek: React.FC = () => {
             </div>
 
             {/* Day Headers */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1 sm:mb-2">
+            <div className="grid grid-cols-7 gap-1.5 mb-2">
               {dayNames.map((day) => (
-                <div key={day} className="text-center text-[8px] sm:text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider py-1 sm:py-2">
+                <div key={day} className="text-center text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider py-1">
                   {day}
                 </div>
               ))}
             </div>
 
-            {/* Week Days - Matching Monthly Calendar Cell Design */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+            {/* Week Days - Compact cells */}
+            <div className="grid grid-cols-7 gap-1.5">
               {currentWeek.map((date, index) => {
                 const dayData = date ? getDayData(date) : null;
                 const isToday = date && date.toDateString() === new Date().toDateString();
@@ -373,7 +371,7 @@ const DashboardWeek: React.FC = () => {
                     key={index}
                     onClick={() => handleDateClick(date)}
                     className={cn(
-                      "aspect-square sm:h-[100px] sm:aspect-auto rounded-xl flex flex-col justify-center items-center cursor-pointer transition-all duration-200 relative",
+                      "h-16 rounded-xl flex flex-col justify-center items-center cursor-pointer transition-all duration-200 relative",
                       getProfitBgClass(),
                       isToday && "ring-2 ring-primary ring-inset"
                     )}
@@ -381,7 +379,7 @@ const DashboardWeek: React.FC = () => {
                     {date && (
                       <>
                         <span className={cn(
-                          "text-[10px] sm:text-xs font-medium",
+                          "text-xs font-medium",
                           hasTrades ? "text-foreground/70" : "text-muted-foreground/60"
                         )}>
                           {date.getDate()}
@@ -389,12 +387,12 @@ const DashboardWeek: React.FC = () => {
                         {hasTrades && (
                           <>
                             <span className={cn(
-                              "text-[10px] sm:text-sm font-bold mt-0.5",
+                              "text-sm font-bold",
                               isProfit ? "text-profit" : isLoss ? "text-loss" : "text-muted-foreground"
                             )}>
                               {formatCurrencyDisplay(dayData.profit)}
                             </span>
-                            <span className="text-[8px] sm:text-[9px] text-muted-foreground/70 hidden sm:block">
+                            <span className="text-[8px] text-muted-foreground/70">
                               {dayData.tradeLength} {dayData.tradeLength === 1 ? 'trade' : 'trades'}
                             </span>
                           </>
@@ -406,19 +404,12 @@ const DashboardWeek: React.FC = () => {
               })}
             </div>
           </div>
-        </div>
 
-        {/* Right Sidebar */}
-        <div className="xl:col-span-1 flex flex-col gap-4">
-          {/* Cumulative P&L Chart - No wrapper, using component's built-in header */}
-          <PnLDailyChart data={PNLcumulative} />
-
-          {/* Insight Tiles Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Avg Win */}
+          {/* Insight Tiles - Responsive Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="p-1.5 rounded-lg bg-profit/10">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-profit/10">
                   <TrendingUp className="w-3 h-3 text-profit" />
                 </div>
                 <span className="text-[10px] text-muted-foreground font-medium">Avg Win</span>
@@ -428,10 +419,9 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            {/* Avg Loss */}
             <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="p-1.5 rounded-lg bg-loss/10">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-loss/10">
                   <TrendingDown className="w-3 h-3 text-loss" />
                 </div>
                 <span className="text-[10px] text-muted-foreground font-medium">Avg Loss</span>
@@ -441,36 +431,33 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            {/* Best Trade */}
             <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="p-1.5 rounded-lg bg-profit/10">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-profit/10">
                   <Target className="w-3 h-3 text-profit" />
                 </div>
-                <span className="text-[10px] text-muted-foreground font-medium">Best Trade</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Best</span>
               </div>
               <p className={cn("text-sm font-bold", bestTrade >= 0 ? "text-profit" : "text-loss")}>
                 {formatCompactCurrency(bestTrade, currency, exchangeRate)}
               </p>
             </div>
 
-            {/* Worst Trade */}
             <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="p-1.5 rounded-lg bg-loss/10">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-loss/10">
                   <Target className="w-3 h-3 text-loss" />
                 </div>
-                <span className="text-[10px] text-muted-foreground font-medium">Worst Trade</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Worst</span>
               </div>
               <p className={cn("text-sm font-bold", worstTrade >= 0 ? "text-profit" : "text-loss")}>
                 {formatCompactCurrency(worstTrade, currency, exchangeRate)}
               </p>
             </div>
 
-            {/* Current Streak */}
             <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className={cn("p-1.5 rounded-lg", streak.type === 'win' ? "bg-profit/10" : streak.type === 'loss' ? "bg-loss/10" : "bg-muted/50")}>
+              <div className="flex items-center gap-2 mb-1">
+                <div className={cn("p-1 rounded-lg", streak.type === 'win' ? "bg-profit/10" : streak.type === 'loss' ? "bg-loss/10" : "bg-muted/50")}>
                   <Flame className={cn("w-3 h-3", streak.type === 'win' ? "text-profit" : streak.type === 'loss' ? "text-loss" : "text-muted-foreground")} />
                 </div>
                 <span className="text-[10px] text-muted-foreground font-medium">Streak</span>
@@ -480,20 +467,23 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            {/* Trading Days */}
             <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <div className="p-1.5 rounded-lg bg-primary/10">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-primary/10">
                   <BarChart3 className="w-3 h-3 text-primary" />
                 </div>
-                <span className="text-[10px] text-muted-foreground font-medium">Trading Days</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Days</span>
               </div>
               <p className="text-sm font-bold text-foreground">
                 {tradingDays} / 7
               </p>
             </div>
           </div>
+        </div>
 
+        {/* Right Sidebar - Chart + Trades only */}
+        <div className="xl:col-span-1 flex flex-col gap-4">
+          <PnLDailyChart data={PNLcumulative} />
           <TradesWidget data={allTrades} />
         </div>
       </div>

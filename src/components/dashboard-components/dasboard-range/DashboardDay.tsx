@@ -2,8 +2,9 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Calendar, TrendingUp, Clock } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Calendar, TrendingUp, TrendingDown, Clock, Target, Flame, BarChart3 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import TradesWidget from "../TradesWidget";
@@ -11,7 +12,7 @@ import PnLchartDaily from "./Graphs/PnLDailyChart";
 import VeriticalBarGraph from "./Graphs/VerticalBarGraph";
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
-import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
+import useCurrencyStore, { formatCurrencyValue, formatCompactCurrency } from "@/store/currencyStore";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
 interface TradeData {
@@ -111,6 +112,11 @@ const DashboardDay: React.FC = () => {
   const winrate = todayData.length ? ((todayData.filter(t => t.Profit > 0).length / todayData.length) * 100).toFixed(2) : "0.00";
   const metrics = calculateRiskRewardRatio(todayData);
   const totalPnL = todayData.reduce((total, { Profit }) => total + Profit, 0);
+  const winCount = todayData.filter(t => t.Profit > 0).length;
+  const lossCount = todayData.filter(t => t.Profit < 0).length;
+
+  const bestTrade = todayData.length > 0 ? Math.max(...todayData.map(t => t.Profit)) : 0;
+  const worstTrade = todayData.length > 0 ? Math.min(...todayData.map(t => t.Profit)) : 0;
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 
@@ -181,26 +187,21 @@ const DashboardDay: React.FC = () => {
   };
 
   const selectedDateObj = new Date(selectedDate);
-  const formattedDisplayDate = selectedDateObj.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric"
-  });
+  const isWeekend = selectedDateObj.getDay() === 0 || selectedDateObj.getDay() === 6;
 
   const dashWidgetProps = {
     data,
     pnl: parseFloat(totalPnL.toFixed(2)),
     winrate: parseFloat(winrate),
-    winners: todayData.filter(t => t.Profit > 0).length,
-    losers: todayData.filter(t => t.Profit < 0).length,
+    winners: winCount,
+    losers: lossCount,
     profitF: calculateProfitFactor(todayData),
     avgProfits: parseFloat(metrics.avgWin),
     avgLoses: parseFloat(metrics.avgLoss),
     rrRatio: metrics.rrRatio,
     accBal: parseFloat(calculateBalance(selectedAccounts).toFixed(2)),
-    totalProfits: todayData.reduce((sum, t) => t.Profit > 0 ? sum + t.Profit : sum, 0),
-    totalLoses: todayData.reduce((sum, t) => t.Profit < 0 ? sum + t.Profit : sum, 0),
+    totalProfits: todayData.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0),
+    totalLoses: todayData.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0),
   };
 
   return (
@@ -208,17 +209,22 @@ const DashboardDay: React.FC = () => {
       <DashWidgets {...dashWidgetProps} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Left Column - Date Picker + Trade History + Insight Tiles */}
         <div className="xl:col-span-2 space-y-4">
           {/* Date Navigation Header */}
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Calendar className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-foreground">Daily Overview</h2>
-                  <p className="text-sm text-muted-foreground">{formattedDisplayDate}</p>
+                  <h2 className="text-base font-semibold text-foreground">
+                    {selectedDateObj.toLocaleDateString("en-US", { weekday: "long" })}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedDateObj.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                  </p>
                 </div>
               </div>
 
@@ -303,19 +309,8 @@ const DashboardDay: React.FC = () => {
             </div>
           </div>
 
-          {/* Cumulative P&L Chart */}
-          <div className="bg-card border border-border rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              Cumulative P&L
-            </h3>
-            <div className="h-[180px]">
-              <PnLchartDaily data={data} />
-            </div>
-          </div>
-
           {/* Trade History Table */}
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary" />
               Trade History
@@ -367,17 +362,90 @@ const DashboardDay: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Insight Tiles - Responsive Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-profit/10">
+                  <TrendingUp className="w-3 h-3 text-profit" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Avg Win</span>
+              </div>
+              <p className="text-sm font-bold text-profit">
+                {formatCompactCurrency(parseFloat(metrics.avgWin) || 0, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-loss/10">
+                  <TrendingDown className="w-3 h-3 text-loss" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Avg Loss</span>
+              </div>
+              <p className="text-sm font-bold text-loss">
+                {formatCompactCurrency(Math.abs(parseFloat(metrics.avgLoss)) || 0, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-profit/10">
+                  <Target className="w-3 h-3 text-profit" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Best</span>
+              </div>
+              <p className={cn("text-sm font-bold", bestTrade >= 0 ? "text-profit" : "text-loss")}>
+                {formatCompactCurrency(bestTrade, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-loss/10">
+                  <Target className="w-3 h-3 text-loss" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Worst</span>
+              </div>
+              <p className={cn("text-sm font-bold", worstTrade >= 0 ? "text-profit" : "text-loss")}>
+                {formatCompactCurrency(worstTrade, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-primary/10">
+                  <BarChart3 className="w-3 h-3 text-primary" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Trades</span>
+              </div>
+              <p className="text-sm font-bold text-foreground">
+                {todayData.length}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className={cn("p-1 rounded-lg", totalPnL >= 0 ? "bg-profit/10" : "bg-loss/10")}>
+                  <Flame className={cn("w-3 h-3", totalPnL >= 0 ? "text-profit" : "text-loss")} />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Net P&L</span>
+              </div>
+              <p className={cn("text-sm font-bold", totalPnL >= 0 ? "text-profit" : "text-loss")}>
+                {formatCompactCurrency(totalPnL, currency, exchangeRate)}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Right Sidebar */}
         <div className="xl:col-span-1 flex flex-col gap-4">
-          <div className="bg-card border border-border rounded-xl p-4">
+          <PnLchartDaily data={data} />
+
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center">
-                <svg className="w-3 h-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
+              <BarChart3 className="w-4 h-4 text-primary" />
               Trade Distribution
             </h3>
             <div className="h-[160px]">

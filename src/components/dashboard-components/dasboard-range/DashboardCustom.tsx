@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, ChevronLeft, ChevronRight, ArrowRightLeft, TrendingUp } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Calendar, ChevronLeft, ChevronRight, ArrowRightLeft, TrendingUp, TrendingDown, Target, Flame, BarChart3 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import PnLDailyChart from "./Graphs/PnLDailyChart";
 import TradesWidget from "../TradesWidget";
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
+import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
 interface TradeData {
@@ -31,6 +33,7 @@ interface ProcessedData {
 
 const DashboardCustom: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
+  const { currency, exchangeRate } = useCurrencyStore();
 
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -95,6 +98,14 @@ const DashboardCustom: React.FC = () => {
   const lossCount = displayTrades.filter(t => t.Profit < 0).length;
   const winrate = displayTrades.length > 0 ? (winCount / displayTrades.length) * 100 : 0;
   const metrics = calculateRiskRewardRatio(displayTrades);
+
+  const bestTrade = displayTrades.length > 0 ? Math.max(...displayTrades.map(t => t.Profit)) : 0;
+  const worstTrade = displayTrades.length > 0 ? Math.min(...displayTrades.map(t => t.Profit)) : 0;
+
+  const tradingDays = useMemo(() => {
+    const uniqueDates = new Set(displayTrades.map(t => t.date));
+    return uniqueDates.size;
+  }, [displayTrades]);
 
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
@@ -198,56 +209,57 @@ const DashboardCustom: React.FC = () => {
   };
 
   const formatDateDisplay = (date: Date | null): string => {
-    if (!date) return "Select date";
+    if (!date) return "Select";
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const renderCalendarGrid = (year: number, month: number) => {
     const days = generateCalendarDays(year, month);
     return (
-      <div className="grid grid-cols-7 gap-1">
-        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-          <div key={i} className="h-6 flex items-center justify-center text-xs font-medium text-muted-foreground">
-            {d}
-          </div>
-        ))}
-        {days.map((day, index) => {
-          if (day === null) {
-            return <div key={`empty-${index}`} className="h-8" />;
-          }
-          const date = new Date(year, month, day);
-          const isDisabled = date > today;
-          const isSelected = isSelectedDate(day, month, year);
-          const inRange = isInRange(day, month, year);
-          const isToday = date.toDateString() === new Date().toDateString();
+      <>
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+            <div key={i} className="h-6 flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+              {d}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-0.5">
+          {days.map((day, i) => {
+            if (day === null) {
+              return <div key={`empty-${i}`} className="h-7" />;
+            }
+            const dateObj = new Date(year, month, day);
+            const isFuture = dateObj > today;
+            const isRangeStart = tempStart && dateObj.getTime() === tempStart.getTime();
+            const isRangeEnd = tempEnd && dateObj.getTime() === tempEnd.getTime();
+            const inRange = isInRange(day, month, year);
 
-          return (
-            <button
-              key={day}
-              onClick={() => !isDisabled && handleDateClick(day, month, year)}
-              onMouseEnter={() => {
-                if (tempStart && !tempEnd && !isDisabled) {
-                  setHoverDate(date);
-                }
-              }}
-              disabled={isDisabled}
-              className={`h-8 w-full rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
-                isDisabled
-                  ? "text-muted-foreground/40 cursor-not-allowed"
-                  : isSelected
-                    ? "bg-primary text-primary-foreground"
-                    : inRange
-                      ? "bg-primary/20 text-primary"
-                      : isToday
-                        ? "ring-1 ring-primary text-foreground"
-                        : "text-foreground hover:bg-muted"
-              }`}
-            >
-              {day}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={day}
+                disabled={isFuture}
+                onClick={() => handleDateClick(day, month, year)}
+                onMouseEnter={() => {
+                  if (tempStart && !tempEnd) {
+                    setHoverDate(new Date(year, month, day));
+                  }
+                }}
+                className={cn(
+                  "h-7 w-7 rounded text-xs font-medium flex items-center justify-center transition-all",
+                  isFuture && "text-muted-foreground/40 cursor-not-allowed",
+                  !isFuture && !isRangeStart && !isRangeEnd && !inRange && "hover:bg-muted text-foreground",
+                  isRangeStart && "bg-primary text-primary-foreground rounded-l-lg",
+                  isRangeEnd && "bg-primary text-primary-foreground rounded-r-lg",
+                  inRange && "bg-primary/20 text-foreground"
+                )}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+      </>
     );
   };
 
@@ -262,8 +274,8 @@ const DashboardCustom: React.FC = () => {
     avgLoses: parseFloat(metrics.avgLoss),
     rrRatio: metrics.rrRatio,
     accBal: parseFloat(calculateBalance(selectedAccounts).toFixed(2)),
-    totalProfits: displayTrades.reduce((sum, t) => t.Profit > 0 ? sum + t.Profit : sum, 0),
-    totalLoses: displayTrades.reduce((sum, t) => t.Profit < 0 ? sum + t.Profit : sum, 0),
+    totalProfits: displayTrades.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0),
+    totalLoses: displayTrades.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0),
   };
 
   return (
@@ -271,9 +283,10 @@ const DashboardCustom: React.FC = () => {
       <DashWidgets {...dashWidgetProps} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Left Column */}
         <div className="xl:col-span-2 space-y-4">
           {/* Date Range Picker Header */}
-          <div className="bg-card border border-border rounded-xl p-4">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -393,13 +406,80 @@ const DashboardCustom: React.FC = () => {
           </div>
 
           {/* Cumulative P&L Chart */}
-          <div className="bg-card border border-border rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              Cumulative P&L
-            </h3>
-            <div className="h-[220px]">
-              <PnLDailyChart data={processedData} />
+          <PnLDailyChart data={processedData} />
+
+          {/* Insight Tiles - Responsive Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-profit/10">
+                  <TrendingUp className="w-3 h-3 text-profit" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Avg Win</span>
+              </div>
+              <p className="text-sm font-bold text-profit">
+                {formatCompactCurrency(parseFloat(metrics.avgWin) || 0, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-loss/10">
+                  <TrendingDown className="w-3 h-3 text-loss" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Avg Loss</span>
+              </div>
+              <p className="text-sm font-bold text-loss">
+                {formatCompactCurrency(Math.abs(parseFloat(metrics.avgLoss)) || 0, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-profit/10">
+                  <Target className="w-3 h-3 text-profit" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Best</span>
+              </div>
+              <p className={cn("text-sm font-bold", bestTrade >= 0 ? "text-profit" : "text-loss")}>
+                {formatCompactCurrency(bestTrade, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-loss/10">
+                  <Target className="w-3 h-3 text-loss" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Worst</span>
+              </div>
+              <p className={cn("text-sm font-bold", worstTrade >= 0 ? "text-profit" : "text-loss")}>
+                {formatCompactCurrency(worstTrade, currency, exchangeRate)}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1 rounded-lg bg-primary/10">
+                  <BarChart3 className="w-3 h-3 text-primary" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Days</span>
+              </div>
+              <p className="text-sm font-bold text-foreground">
+                {tradingDays}
+              </p>
+            </div>
+
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <div className={cn("p-1 rounded-lg", totalPnL >= 0 ? "bg-profit/10" : "bg-loss/10")}>
+                  <Flame className={cn("w-3 h-3", totalPnL >= 0 ? "text-profit" : "text-loss")} />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">Trades</span>
+              </div>
+              <p className="text-sm font-bold text-foreground">
+                {displayTrades.length}
+              </p>
             </div>
           </div>
         </div>
