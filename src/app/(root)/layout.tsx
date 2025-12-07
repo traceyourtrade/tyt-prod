@@ -209,18 +209,18 @@ export default function RootLayout({
       )}
 
       {/* Add Trades Button - Premium Floating Pill CTA */}
-      <div className={cn("px-3 mt-4", collapsed && !mobileOpen && "mt-3 px-2")}>
+      <div className={cn("px-3 mt-6", collapsed && !mobileOpen && "mt-4 px-2")}>
         <button
           className={cn(
             "group relative w-full flex items-center justify-center gap-2.5 py-3 font-medium text-sm transition-all duration-300 ease-out",
             "rounded-full",
-            "bg-gradient-to-b from-[#4EBF94] to-[#3da97f]",
+            "bg-gradient-to-b from-[#3B82F6] to-[#2563EB]",
             "text-white",
-            "shadow-[0_4px_20px_rgba(78,191,148,0.35)]",
-            "hover:shadow-[0_8px_30px_rgba(78,191,148,0.5)]",
+            "shadow-[0_4px_20px_rgba(59,130,246,0.35)]",
+            "hover:shadow-[0_8px_30px_rgba(59,130,246,0.5)]",
             "hover:-translate-y-0.5",
-            "active:translate-y-0 active:shadow-[0_2px_10px_rgba(78,191,148,0.3)]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4EBF94]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515]",
+            "active:translate-y-0 active:shadow-[0_2px_10px_rgba(59,130,246,0.3)]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515]",
             collapsed && !mobileOpen ? "px-0 w-11 h-11 mx-auto" : "px-5"
           )}
           onClick={() => {
@@ -239,7 +239,7 @@ export default function RootLayout({
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide">
+      <nav className="flex-1 overflow-y-auto py-5 px-2 scrollbar-hide">
         <ul className="space-y-1">
           {mainNavItems.map((item) => {
             const Icon = item.icon
