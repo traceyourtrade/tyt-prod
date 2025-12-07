@@ -49,7 +49,57 @@ export async function getNotesHandler(req: any, userId: string, token: string) {
             return NextResponse.json({ error: "User doesnt have notes" }, { status: 404 });
         }
 
-        return NextResponse.json({ data: isNote.notes });
+        // Populate P&L for Daily Journal entries that have tradeId but no pnl
+        const notesData = JSON.parse(JSON.stringify(isNote.notes));
+        
+        // Find Daily Journal folder
+        const dailyJournalFolder = notesData.find((folder: any) => folder.folderName === "Daily Journal");
+        
+        if (dailyJournalFolder && dailyJournalFolder.files && dailyJournalFolder.files.length > 0) {
+            // Get all trade models
+            const [ManualModel, FileUploadModel, AutoSyncModel] = await Promise.all([
+                getManualModel(),
+                getFileUploadModel(),
+                getAutoSyncModel()
+            ]);
+
+            // Fetch all trades for this user
+            const [manualTrades, fileUploadTrades, autoSyncTrades] = await Promise.all([
+                ManualModel.findOne({ uniqueId: userId }),
+                FileUploadModel.findOne({ uniqueId: userId }),
+                AutoSyncModel.findOne({ uniqueId: userId })
+            ]);
+
+            // Create a map of tradeId -> Profit
+            const tradeMap = new Map<string, number>();
+            
+            const addTradesToMap = (doc: any) => {
+                if (doc?.tradeData) {
+                    doc.tradeData.forEach((trade: any) => {
+                        if (trade.id && trade.Profit !== undefined) {
+                            tradeMap.set(trade.id, trade.Profit);
+                        }
+                    });
+                }
+            };
+
+            addTradesToMap(manualTrades);
+            addTradesToMap(fileUploadTrades);
+            addTradesToMap(autoSyncTrades);
+
+            // Populate pnl for Daily Journal files
+            dailyJournalFolder.files = dailyJournalFolder.files.map((file: any) => {
+                if (file.tradeId && (file.pnl === undefined || file.pnl === null)) {
+                    const profit = tradeMap.get(file.tradeId);
+                    if (profit !== undefined) {
+                        file.pnl = profit;
+                    }
+                }
+                return file;
+            });
+        }
+
+        return NextResponse.json({ data: notesData });
 
     } catch (error) {
         console.error("Get notes error:", error);
