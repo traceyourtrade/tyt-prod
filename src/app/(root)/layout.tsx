@@ -208,30 +208,27 @@ export default function RootLayout({
         </button>
       )}
 
-      {/* Add Trades Button - Premium Floating Pill CTA */}
+      {/* Add Trades Button */}
       <div className={cn("px-3 mt-6", collapsed && !mobileOpen && "mt-4 px-2")}>
         <button
           className={cn(
-            "group relative w-full flex items-center justify-center gap-2.5 py-3 font-medium text-sm transition-all duration-200 ease-out",
-            "rounded-full",
+            "w-full flex items-center justify-center gap-2 py-2.5 font-medium text-sm transition-all duration-200",
+            "rounded-lg",
             "bg-[#3B82F6]",
             "text-white",
             "hover:bg-[#2563EB]",
-            "active:scale-[0.98]",
+            "active:bg-[#1D4ED8]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515]",
-            collapsed && !mobileOpen ? "px-0 w-11 h-11 mx-auto" : "px-5"
+            collapsed && !mobileOpen ? "px-0 w-10 h-10 mx-auto" : "px-4"
           )}
           onClick={() => {
             setAddTrades()
             setMobileOpen(false)
           }}
         >
-          <Plus className={cn(
-            "h-[18px] w-[18px] transition-transform duration-300 ease-out",
-            "group-hover:rotate-90"
-          )} />
+          <Plus className="h-4 w-4" />
           {(!collapsed || mobileOpen) && (
-            <span className="tracking-wide">Add Trade</span>
+            <span>Add Trade</span>
           )}
         </button>
       </div>
