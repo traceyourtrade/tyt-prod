@@ -15,10 +15,11 @@ The application is built on Next.js 16 with React 19 and Tailwind CSS. It uses N
 
 ### UI/UX Decisions
 The UI features a complete redesign inspired by Notion, Linear, and Stripe, adopting a premium neutral dashboard aesthetic.
-- **Color Scheme:** A primary blue palette for branding, with specific green/red for profit/loss, and a neutral black palette for dark theme backgrounds (default) and a grayscale palette for light theme.
+- **Color Scheme:** A primary blue palette for branding, with specific green/red for profit/loss (#4EBF94 for profit), and a neutral black palette for dark theme backgrounds (default) and a grayscale palette for light theme.
 - **Design System:** Utilizes consistent design tokens for color modes, typography, borders, and card components.
 - **Page Designs:** Key pages like Dashboard, Daily Journal, Settings, Reports, Notebook, Strategies, Login, and Lot Size Calculator have been redesigned for a modern, clean, and intuitive user experience.
 - **Component Library:** A custom UI component library is located in `src/components/ui/` for reusable elements like buttons, badges, inputs, selects, stat cards, tables, modals, and tabs.
+- **Sidebar:** Premium redesigned sidebar with glassmorphic effect (backdrop-blur + translucent gradient), profit green (#4EBF94) accents, animated left glow bar for active states, Framer Motion micro-animations, and keyboard-accessible focus states. Features gradient Add Trade CTA button, premium user profile card with avatar glow, and smooth collapse/expand transitions.
 
 ### Technical Implementations
 - **Frontend:** Next.js 16.0.1, React 19, Tailwind CSS v4.
