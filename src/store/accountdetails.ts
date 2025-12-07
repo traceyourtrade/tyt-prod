@@ -16,21 +16,54 @@ interface Account {
 
 const generateDemoTradeData = () => {
   const trades = [];
-  const today = new Date();
   const symbols = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'SPY', 'QQQ'];
   const strategies = ['Momentum', 'Breakout', 'Reversal', 'Scalping', 'Swing'];
   const tradingHours = ['09', '10', '11', '12', '13', '14', '15'];
   
-  for (let i = 0; i < 45; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-    const dateStr = date.toISOString().split('T')[0];
-    
-    const isWin = Math.random() > 0.4;
-    const profit = isWin 
-      ? Math.floor(Math.random() * 2000) + 100 
-      : -(Math.floor(Math.random() * 800) + 50);
-    
+  // November 2025 trading days (weekdays only, 20 trading days)
+  // Note: Using Nov 3-28, 2025 for demo data
+  const novTradingDays = [
+    '2025-11-03', '2025-11-04', '2025-11-05', '2025-11-06', '2025-11-07',
+    '2025-11-10', '2025-11-11', '2025-11-12', '2025-11-13', '2025-11-14',
+    '2025-11-17', '2025-11-18', '2025-11-19', '2025-11-20', '2025-11-21',
+    '2025-11-24', '2025-11-25', '2025-11-26', '2025-11-28', '2025-11-29'
+  ];
+  
+  // Target: $6,567 profit, 67% win rate over 20 trading days
+  // ~30 trades total: 20 wins, 10 losses = 67% win rate
+  const totalTrades = 30;
+  const winCount = 20;
+  const lossCount = 10;
+  
+  // Calculate average win/loss to hit $6,567 profit
+  // If avg win = $450 and avg loss = $350: 20*450 - 10*350 = 9000 - 3500 = $5,500
+  // Adjust: avg win = $480, avg loss = $330: 20*480 - 10*330 = 9600 - 3300 = $6,300 (close)
+  const avgWin = 490;
+  const avgLoss = 310;
+  
+  const winProfits = Array(winCount).fill(0).map(() => 
+    Math.floor(avgWin + (Math.random() - 0.5) * 300)
+  );
+  const lossProfits = Array(lossCount).fill(0).map(() => 
+    -Math.floor(avgLoss + (Math.random() - 0.5) * 200)
+  );
+  
+  // Adjust last win to hit target of $6,567
+  const currentTotal = winProfits.reduce((a, b) => a + b, 0) + lossProfits.reduce((a, b) => a + b, 0);
+  const adjustment = 6567 - currentTotal;
+  winProfits[winProfits.length - 1] += adjustment;
+  
+  const allProfits = [...winProfits, ...lossProfits];
+  
+  // Shuffle and distribute across trading days
+  for (let i = allProfits.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allProfits[i], allProfits[j]] = [allProfits[j], allProfits[i]];
+  }
+  
+  for (let i = 0; i < totalTrades; i++) {
+    const dateStr = novTradingDays[i % novTradingDays.length];
+    const profit = allProfits[i];
     const symbol = symbols[Math.floor(Math.random() * symbols.length)];
     const hour = tradingHours[Math.floor(Math.random() * tradingHours.length)];
     const minute = Math.floor(Math.random() * 60).toString().padStart(2, '0');
@@ -57,7 +90,7 @@ const demoAccounts: Account[] = [
     checked: true,
     accountName: "Demo Trading Account",
     accountId: "demo-001",
-    accountBalance: 125000,
+    accountBalance: 17672,
     accountType: "Paper Trading",
     broker: "Demo Broker",
     description: "Demo account for UI preview",
@@ -81,13 +114,13 @@ const demoProfileData = {
   uniqueId: "demo-user",
   fullName: "Demo Trader",
   email: "demo@example.com",
-  accountValue: 125000,
+  accountValue: 17672,
 };
 
 const demoStrategies = [
-  { name: "Momentum", winRate: 68, trades: 24, profit: 4250 },
-  { name: "Breakout", winRate: 55, trades: 18, profit: 1820 },
-  { name: "Reversal", winRate: 72, trades: 12, profit: 2100 },
+  { name: "Momentum", winRate: 71, trades: 14, profit: 3200 },
+  { name: "Breakout", winRate: 62, trades: 10, profit: 1850 },
+  { name: "Reversal", winRate: 67, trades: 6, profit: 1517 },
 ];
 
 interface ProfileData {
