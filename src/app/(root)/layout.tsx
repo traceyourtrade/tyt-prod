@@ -253,7 +253,8 @@ export default function RootLayout({
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
                   )}
                   <Icon className={cn(
-                    "h-[18px] w-[18px] flex-shrink-0 transition-colors duration-200",
+                    "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
+                    "group-hover:scale-110",
                     active ? "text-white" : "text-white/60 group-hover:text-white"
                   )} />
                   {(!collapsed || mobileOpen) && (
@@ -291,7 +292,8 @@ export default function RootLayout({
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
                   )}
                   <Icon className={cn(
-                    "h-[18px] w-[18px] flex-shrink-0 transition-colors duration-200",
+                    "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
+                    "group-hover:scale-110",
                     active ? "text-white" : "text-white/60 group-hover:text-white"
                   )} />
                   {(!collapsed || mobileOpen) && (
@@ -340,14 +342,14 @@ export default function RootLayout({
         
         <button
           className={cn(
-            "w-full flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
+            "group w-full flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
             "text-white/60 hover:text-red-400 hover:bg-red-500/10",
             collapsed && !mobileOpen && "justify-center px-2",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500/50"
           )}
           onClick={handleLogout}
         >
-          <LogOut className="h-[18px] w-[18px] flex-shrink-0" />
+          <LogOut className="h-[18px] w-[18px] flex-shrink-0 transition-all duration-200 group-hover:scale-110" />
           {(!collapsed || mobileOpen) && <span>Log out</span>}
         </button>
       </div>
