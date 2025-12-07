@@ -381,7 +381,7 @@ export default function RootLayout({
       <aside 
         className={cn(
           "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out",
-          "bg-card border-r border-border/50",
+          "bg-[#151515] border-r border-border/50",
           collapsed ? "w-[68px]" : "w-[240px]"
         )}
       >
@@ -392,7 +392,7 @@ export default function RootLayout({
       <aside 
         className={cn(
           "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[240px] flex-col transition-transform duration-300 ease-out",
-          "bg-card border-r border-border/50",
+          "bg-[#151515] border-r border-border/50",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
