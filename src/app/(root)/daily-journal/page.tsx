@@ -47,6 +47,7 @@ import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
 import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { SymbolLogo } from "@/components/ui/SymbolLogo";
+import QuickFillDropdown from "@/components/journal/QuickFillDropdown";
 
 interface Trade {
   id?: string;
@@ -835,7 +836,7 @@ const DailyJournal = () => {
                   </div>
                 </div>
 
-                {/* Journal Prompts - Clean Floating Labels */}
+                {/* Journal Prompts - Clean Floating Labels with Quick Fill */}
                 <div className="p-4 bg-card border border-border rounded-xl space-y-4">
                   <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {templates[selectedTemplateIdx]?.name || "Notes"}
@@ -844,6 +845,15 @@ const DailyJournal = () => {
                     const hasValue = Boolean(journalData.prompts?.[prompt.id]);
                     return (
                       <div key={prompt.id} className="relative">
+                        {/* Quick Fill Button */}
+                        <div className="absolute right-2 top-1 z-10">
+                          <QuickFillDropdown
+                            promptId={prompt.id}
+                            currentValue={journalData.prompts?.[prompt.id] || ""}
+                            onSelect={(value) => handlePromptChange(prompt.id, value)}
+                          />
+                        </div>
+                        
                         {prompt.type === "textarea" ? (
                           <>
                             <textarea
@@ -851,7 +861,7 @@ const DailyJournal = () => {
                               value={journalData.prompts?.[prompt.id] || ""}
                               onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
                               rows={3}
-                              className="peer w-full px-3 pt-5 pb-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder-transparent focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50 resize-none transition-all"
+                              className="peer w-full px-3 pt-7 pb-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder-transparent focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50 resize-none transition-all"
                               placeholder={prompt.placeholder}
                             />
                             <label
@@ -872,7 +882,7 @@ const DailyJournal = () => {
                               type="text"
                               value={journalData.prompts?.[prompt.id] || ""}
                               onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                              className="peer w-full px-3 pt-5 pb-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder-transparent focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                              className="peer w-full px-3 pt-7 pb-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder-transparent focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-all"
                               placeholder={prompt.placeholder}
                             />
                             <label
