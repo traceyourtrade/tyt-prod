@@ -12,7 +12,6 @@ import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
-import { EditModeToolbar } from '@/components/dashboard/DraggableWidgetGrid';
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
@@ -83,10 +82,6 @@ const DashboardMonth: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <EditModeToolbar />
-      </div>
-
       {isWidgetVisible('stats-overview') && (
         <DashWidgets {...dashWidgetProps} />
       )}

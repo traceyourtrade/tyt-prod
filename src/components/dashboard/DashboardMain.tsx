@@ -11,6 +11,7 @@ import usePropFirmStore from "@/store/propFirmStore";
 import notifications from "@/store/notifications";
 
 import { PropFirmModeToggle, PropFirmDashboard } from "@/components/prop-firm";
+import { EditModeToolbar } from "@/components/dashboard/DraggableWidgetGrid";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -69,42 +70,45 @@ const DashboardMain = () => {
         </div>
         
         {!isPropFirmMode && (
-          <div className="relative" ref={dropdownRef}>
-            <Button
-              variant="outline"
-              className="min-w-[140px] justify-between"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              {selected}
-              <ChevronDown className={cn(
-                "h-4 w-4 ml-2 transition-transform",
-                isOpen && "rotate-180"
-              )} />
-            </Button>
-            
-            {isOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
-                <div className="p-1">
-                  {timeRangeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      className={cn(
-                        "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
-                        selected === option.value 
-                          ? "bg-primary/10 text-primary" 
-                          : "hover:bg-muted text-foreground"
-                      )}
-                      onClick={() => {
-                        setSelected(option.value);
-                        setIsOpen(false);
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+          <div className="flex items-center gap-3">
+            <div className="relative" ref={dropdownRef}>
+              <Button
+                variant="outline"
+                className="min-w-[140px] justify-between"
+                onClick={() => setIsOpen(!isOpen)}
+              >
+                {selected}
+                <ChevronDown className={cn(
+                  "h-4 w-4 ml-2 transition-transform",
+                  isOpen && "rotate-180"
+                )} />
+              </Button>
+              
+              {isOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 animate-fade-in">
+                  <div className="p-1">
+                    {timeRangeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
+                          selected === option.value 
+                            ? "bg-primary/10 text-primary" 
+                            : "hover:bg-muted text-foreground"
+                        )}
+                        onClick={() => {
+                          setSelected(option.value);
+                          setIsOpen(false);
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+            <EditModeToolbar />
           </div>
         )}
       </div>
