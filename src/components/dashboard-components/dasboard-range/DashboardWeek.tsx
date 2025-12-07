@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Calendar, TrendingUp, BarChart3, Trophy, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import PnLDailyChart from "./Graphs/PnLDailyChart";
@@ -25,19 +25,11 @@ interface Account {
   [key: string]: unknown;
 }
 
-interface Trade {
-  date: string;
-  Profit: number;
-  Item: string;
-  [key: string]: unknown;
-}
-
 interface GroupedTrade {
   date: string;
-  trades: Trade[];
+  trades: TradeData[];
   profit: number;
   tradeLength: number;
-  [key: string]: unknown;
 }
 
 const DashboardWeek: React.FC = () => {
@@ -46,7 +38,7 @@ const DashboardWeek: React.FC = () => {
   const { currency, exchangeRate } = useCurrencyStore();
 
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
-    .reduce((acc: { [key: string]: GroupedTrade }, trade: Trade) => {
+    .reduce((acc: { [key: string]: GroupedTrade }, trade: TradeData) => {
       if (!acc[trade.date]) acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
       acc[trade.date].trades.push(trade);
       acc[trade.date].profit += trade.Profit;
@@ -140,10 +132,6 @@ const DashboardWeek: React.FC = () => {
     return thisWeekData.flatMap(day => day.trades);
   }, [thisWeekData]);
 
-  const weeklyProfit = useMemo(() => {
-    return thisWeekData.reduce((total, day) => total + day.profit, 0);
-  }, [thisWeekData]);
-
   const handlePrevWeek = () => {
     if (currentWeekIndex > 0) {
       setCurrentWeekIndex(currentWeekIndex - 1);
@@ -212,104 +200,96 @@ const DashboardWeek: React.FC = () => {
   const winCount = allTrades.filter(t => t.Profit > 0).length;
   const lossCount = allTrades.filter(t => t.Profit < 0).length;
 
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+  const dashWidgetProps = {
+    data: PNLcumulative,
+    pnl: parseFloat(allTrades.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2)),
+    winrate: parseFloat(((allTrades.filter(trade => trade.Profit > 0).length / allTrades.length * 100) || 0).toFixed(2)),
+    winners: winCount,
+    losers: lossCount,
+    profitF: calculateProfitFactor(allTrades),
+    avgProfits: parseFloat(metrics.avgWin),
+    avgLoses: parseFloat(metrics.avgLoss),
+    rrRatio: metrics.rrRatio,
+    accBal: parseFloat(calculateBalance(selectedAccounts).toFixed(2)),
+    totalProfits: allTrades.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0),
+    totalLoses: allTrades.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0),
+  };
 
   return (
-    <div className="w-full min-h-screen bg-background">
-      <DashWidgets
-        data={PNLcumulative}
-        pnl={parseFloat(allTrades.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2))}
-        winrate={parseFloat(((allTrades.filter(trade => trade.Profit > 0).length / allTrades.length * 100) || 0).toFixed(2))}
-        winners={winCount}
-        losers={lossCount}
-        profitF={calculateProfitFactor(allTrades)}
-        avgProfits={parseFloat(metrics.avgWin)}
-        avgLoses={parseFloat(metrics.avgLoss)}
-        rrRatio={metrics.rrRatio}
-        accBal={parseFloat(calculateBalance(selectedAccounts).toFixed(2))}
-        totalProfits={0}
-        totalLoses={0}
-      />
+    <div className="space-y-4">
+      <DashWidgets {...dashWidgetProps} />
 
-      <div className="px-4 pb-6 space-y-5">
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-primary" />
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 space-y-4">
+          {/* Week Navigation Header */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-foreground">Week {currentWeekIndex + 1}</h2>
+                  <p className="text-sm text-muted-foreground">{currentMonth} {currentYear}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground tracking-tight">Weekly Overview</h2>
-                <p className="text-sm text-muted-foreground">{currentMonth} {currentYear}</p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1.5 rounded-lg bg-muted text-xs font-semibold text-foreground">
-                Week {currentWeekIndex + 1}
-              </span>
-
-              <div className="flex items-center gap-1">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+              <div className="flex items-center gap-2">
+                <button
                   onClick={handlePrevWeek}
-                  className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                  className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5 text-foreground" />
-                </motion.button>
+                  <ChevronLeft className="w-4 h-4 text-foreground" />
+                </button>
 
                 <div className="relative" ref={datePickerRef}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  <button
                     onClick={toggleDatePicker}
-                    className="px-4 py-2 rounded-xl bg-primary/10 text-primary font-medium text-sm hover:bg-primary/15 transition-colors flex items-center gap-2"
+                    className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-medium text-sm hover:bg-primary/15 transition-colors flex items-center gap-1"
                   >
                     <span>{currentMonth.slice(0, 3)} {currentYear}</span>
                     <ChevronRight className={`w-4 h-4 transition-transform ${showDatePicker ? "rotate-90" : ""}`} />
-                  </motion.button>
+                  </button>
 
                   <AnimatePresence>
                     {showDatePicker && (
                       <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-4 shadow-xl min-w-[280px]"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-4 shadow-xl min-w-[260px]"
                       >
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center justify-between mb-3">
                           <button
                             onClick={() => setSelectedYear(y => y - 1)}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                            className="p-1 rounded hover:bg-muted transition-colors"
                           >
                             <ChevronLeft className="w-4 h-4 text-muted-foreground" />
                           </button>
                           <span className="text-sm font-semibold text-foreground">{selectedYear}</span>
                           <button
                             onClick={() => setSelectedYear(y => y + 1)}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                            className="p-1 rounded hover:bg-muted transition-colors"
                           >
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-1.5">
                           {monthNames.map((month, idx) => (
-                            <motion.button
+                            <button
                               key={month}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
                               onClick={() => handleMonthSelect(idx)}
-                              className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                              className={`py-2 px-2 rounded-lg text-xs font-medium transition-all ${
                                 idx === currentDate.getMonth() && selectedYear === currentDate.getFullYear()
                                   ? "bg-primary text-primary-foreground"
                                   : "text-foreground hover:bg-muted"
                               }`}
                             >
                               {month.slice(0, 3)}
-                            </motion.button>
+                            </button>
                           ))}
                         </div>
                       </motion.div>
@@ -317,141 +297,95 @@ const DashboardWeek: React.FC = () => {
                   </AnimatePresence>
                 </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   onClick={handleNextWeek}
-                  className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                  className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
                 >
-                  <ChevronRight className="w-5 h-5 text-foreground" />
-                </motion.button>
+                  <ChevronRight className="w-4 h-4 text-foreground" />
+                </button>
               </div>
+            </div>
+          </div>
+
+          {/* Week Calendar Grid */}
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 border-b border-border">
+              {dayNames.map((day, i) => (
+                <div key={i} className="py-2.5 text-center text-xs font-semibold text-muted-foreground tracking-wide bg-muted/30">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Week Days */}
+            <div className="grid grid-cols-7">
+              {currentWeek.map((date, index) => {
+                const dayData = date ? getDayData(date) : null;
+                const isToday = date && date.toDateString() === new Date().toDateString();
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleDateClick(date)}
+                    disabled={!date}
+                    className={`relative min-h-[80px] sm:min-h-[100px] p-2 sm:p-3 border-r border-border last:border-r-0 transition-all flex flex-col items-center justify-center gap-0.5 ${
+                      !date
+                        ? "bg-muted/20 cursor-default"
+                        : dayData
+                          ? dayData.profit >= 0
+                            ? "bg-profit/5 hover:bg-profit/10"
+                            : "bg-loss/5 hover:bg-loss/10"
+                          : "hover:bg-muted/30"
+                    } ${isToday ? "ring-2 ring-primary ring-inset" : ""}`}
+                  >
+                    {date && (
+                      <>
+                        <span className={`text-base sm:text-lg font-bold ${
+                          dayData
+                            ? dayData.profit >= 0 ? "text-profit" : "text-loss"
+                            : "text-foreground"
+                        }`}>
+                          {date.getDate()}
+                        </span>
+                        {dayData && (
+                          <>
+                            <span className={`text-xs sm:text-sm font-semibold ${
+                              dayData.profit >= 0 ? "text-profit" : "text-loss"
+                            }`}>
+                              {formatCompactCurrency(dayData.profit, currency, exchangeRate)}
+                            </span>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground">
+                              {dayData.tradeLength} trade{dayData.tradeLength !== 1 ? "s" : ""}
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-5">
-            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-              <div className="grid grid-cols-7">
-                {dayNames.map((day, i) => (
-                  <div key={i} className="py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/30">
-                    {day}
-                  </div>
-                ))}
+        {/* Right Sidebar */}
+        <div className="xl:col-span-1 flex flex-col gap-4">
+          <div className="bg-card border border-border rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center">
+                <svg className="w-3 h-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
               </div>
-
-              <div className="grid grid-cols-7">
-                {currentWeek.map((date, index) => {
-                  const dayData = date ? getDayData(date) : null;
-                  const isToday = date && date.toDateString() === new Date().toDateString();
-
-                  return (
-                    <motion.button
-                      key={index}
-                      whileHover={{ scale: date ? 1.02 : 1 }}
-                      whileTap={{ scale: date ? 0.98 : 1 }}
-                      onClick={() => handleDateClick(date)}
-                      disabled={!date}
-                      className={`relative min-h-[100px] p-3 border-r border-b border-border last:border-r-0 transition-all flex flex-col items-center justify-center gap-1 ${
-                        !date
-                          ? "bg-muted/20 cursor-default"
-                          : dayData
-                            ? dayData.profit >= 0
-                              ? "bg-profit/10 hover:bg-profit/15"
-                              : "bg-loss/10 hover:bg-loss/15"
-                            : "hover:bg-muted/30"
-                      } ${isToday ? "ring-2 ring-primary ring-inset" : ""}`}
-                    >
-                      {date && (
-                        <>
-                          <span className={`text-lg font-bold ${
-                            dayData
-                              ? dayData.profit >= 0
-                                ? "text-profit"
-                                : "text-loss"
-                              : "text-foreground"
-                          }`}>
-                            {date.getDate()}
-                          </span>
-                          {dayData && (
-                            <>
-                              <span className={`text-sm font-semibold ${
-                                dayData.profit >= 0 ? "text-profit" : "text-loss"
-                              }`}>
-                                {formatCompactCurrency(dayData.profit, currency, exchangeRate)}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {dayData.tradeLength} trade{dayData.tradeLength !== 1 ? "s" : ""}
-                              </span>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <BarChart3 className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Total Trades</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{allTrades.length}</p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${weeklyProfit >= 0 ? "bg-profit/10" : "bg-loss/10"}`}>
-                    <TrendingUp className={`w-3.5 h-3.5 ${weeklyProfit >= 0 ? "text-profit" : "text-loss"}`} />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Weekly P&L</span>
-                </div>
-                <p className={`text-xl font-bold ${weeklyProfit >= 0 ? "text-profit" : "text-loss"}`}>
-                  {formatCompactCurrency(weeklyProfit, currency, exchangeRate)}
-                </p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-profit/10 flex items-center justify-center">
-                    <Trophy className="w-3.5 h-3.5 text-profit" />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Winners</span>
-                </div>
-                <p className="text-xl font-bold text-profit">{winCount}</p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-loss/10 flex items-center justify-center">
-                    <Target className="w-3.5 h-3.5 text-loss" />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Losers</span>
-                </div>
-                <p className="text-xl font-bold text-loss">{lossCount}</p>
-              </div>
+              Net Cumulative P&L
+            </h3>
+            <div className="h-[160px]">
+              <PnLDailyChart data={PNLcumulative} />
             </div>
           </div>
 
-          <div className="space-y-5">
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                Cumulative P&L
-              </h3>
-              <div className="h-[180px]">
-                <PnLDailyChart data={PNLcumulative} />
-              </div>
-            </div>
-
-            <TradesWidget data={allTrades} />
-          </div>
+          <TradesWidget data={allTrades} />
         </div>
       </div>
     </div>

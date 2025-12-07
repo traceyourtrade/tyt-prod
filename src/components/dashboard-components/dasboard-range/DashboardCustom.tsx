@@ -2,14 +2,13 @@
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, ChevronLeft, ChevronRight, ArrowRightLeft, X, TrendingUp, BarChart3, Trophy, Target } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, ArrowRightLeft, TrendingUp } from "lucide-react";
 
 import DashWidgets from "../dashboard-widgets/DashboardWidget";
 import PnLDailyChart from "./Graphs/PnLDailyChart";
 import TradesWidget from "../TradesWidget";
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
-import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
 interface TradeData {
@@ -25,13 +24,6 @@ interface Account {
   tradeData?: TradeData[];
 }
 
-interface Trade {
-  date: string;
-  Profit: number;
-  time?: string;
-  Item?: string;
-}
-
 interface ProcessedData {
   time: string;
   value: number;
@@ -39,7 +31,6 @@ interface ProcessedData {
 
 const DashboardCustom: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
-  const { currency, exchangeRate } = useCurrencyStore();
 
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -216,13 +207,13 @@ const DashboardCustom: React.FC = () => {
     return (
       <div className="grid grid-cols-7 gap-1">
         {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-          <div key={i} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">
+          <div key={i} className="h-6 flex items-center justify-center text-xs font-medium text-muted-foreground">
             {d}
           </div>
         ))}
         {days.map((day, index) => {
           if (day === null) {
-            return <div key={`empty-${index}`} className="h-9" />;
+            return <div key={`empty-${index}`} className="h-8" />;
           }
           const date = new Date(year, month, day);
           const isDisabled = date > today;
@@ -231,10 +222,8 @@ const DashboardCustom: React.FC = () => {
           const isToday = date.toDateString() === new Date().toDateString();
 
           return (
-            <motion.button
+            <button
               key={day}
-              whileHover={{ scale: isDisabled ? 1 : 1.1 }}
-              whileTap={{ scale: isDisabled ? 1 : 0.95 }}
               onClick={() => !isDisabled && handleDateClick(day, month, year)}
               onMouseEnter={() => {
                 if (tempStart && !tempEnd && !isDisabled) {
@@ -242,11 +231,11 @@ const DashboardCustom: React.FC = () => {
                 }
               }}
               disabled={isDisabled}
-              className={`h-9 w-full rounded-lg text-sm font-medium flex items-center justify-center transition-all ${
+              className={`h-8 w-full rounded-lg text-xs font-medium flex items-center justify-center transition-all ${
                 isDisabled
                   ? "text-muted-foreground/40 cursor-not-allowed"
                   : isSelected
-                    ? "bg-primary text-primary-foreground shadow-lg"
+                    ? "bg-primary text-primary-foreground"
                     : inRange
                       ? "bg-primary/20 text-primary"
                       : isToday
@@ -255,215 +244,169 @@ const DashboardCustom: React.FC = () => {
               }`}
             >
               {day}
-            </motion.button>
+            </button>
           );
         })}
       </div>
     );
   };
 
+  const dashWidgetProps = {
+    data: processedData,
+    pnl: parseFloat(totalPnL.toFixed(2)),
+    winrate: parseFloat(winrate.toFixed(2)),
+    winners: winCount,
+    losers: lossCount,
+    profitF: calculateProfitFactor(displayTrades),
+    avgProfits: parseFloat(metrics.avgWin),
+    avgLoses: parseFloat(metrics.avgLoss),
+    rrRatio: metrics.rrRatio,
+    accBal: parseFloat(calculateBalance(selectedAccounts).toFixed(2)),
+    totalProfits: displayTrades.reduce((sum, t) => t.Profit > 0 ? sum + t.Profit : sum, 0),
+    totalLoses: displayTrades.reduce((sum, t) => t.Profit < 0 ? sum + t.Profit : sum, 0),
+  };
+
   return (
-    <div className="w-full min-h-screen bg-background">
-      <div className="px-4 pt-4 pb-2">
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-primary" />
+    <div className="space-y-4">
+      <DashWidgets {...dashWidgetProps} />
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 space-y-4">
+          {/* Date Range Picker Header */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-foreground">Custom Date Range</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {startDate && endDate
+                      ? `${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}`
+                      : "Select a date range to analyze"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground tracking-tight">Custom Date Range</h2>
-                <p className="text-sm text-muted-foreground">
-                  {startDate && endDate
-                    ? `${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}`
-                    : "Select a date range to analyze"}
-                </p>
+
+              <div className="relative" ref={calendarRef}>
+                <button
+                  onClick={() => setShowCalendar(!showCalendar)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted border border-border transition-colors text-sm"
+                >
+                  <span className="font-medium text-foreground">
+                    {formatDateDisplay(startDate)}
+                  </span>
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="font-medium text-foreground">
+                    {formatDateDisplay(endDate)}
+                  </span>
+                </button>
+
+                <AnimatePresence>
+                  {showCalendar && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-4 shadow-xl"
+                    >
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        {/* Left Calendar */}
+                        <div className="min-w-[220px]">
+                          <div className="flex items-center justify-between mb-3">
+                            <button
+                              onClick={() => handlePrevMonth('left')}
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                            >
+                              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                            <span className="text-xs font-semibold text-foreground">
+                              {monthNames[leftMonth]} {leftYear}
+                            </span>
+                            <button
+                              onClick={() => handleNextMonth('left')}
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                            >
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </div>
+                          {renderCalendarGrid(leftYear, leftMonth)}
+                        </div>
+
+                        <div className="hidden sm:block w-px bg-border" />
+
+                        {/* Right Calendar */}
+                        <div className="min-w-[220px]">
+                          <div className="flex items-center justify-between mb-3">
+                            <button
+                              onClick={() => handlePrevMonth('right')}
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                            >
+                              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                            <span className="text-xs font-semibold text-foreground">
+                              {monthNames[rightMonth]} {rightYear}
+                            </span>
+                            <button
+                              onClick={() => handleNextMonth('right')}
+                              className="p-1 rounded hover:bg-muted transition-colors"
+                            >
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </div>
+                          {renderCalendarGrid(rightYear, rightMonth)}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 pt-3 border-t border-border gap-3">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="px-2 py-1 rounded bg-muted text-foreground font-medium">
+                            {formatDateDisplay(tempStart)}
+                          </span>
+                          <span>to</span>
+                          <span className="px-2 py-1 rounded bg-muted text-foreground font-medium">
+                            {formatDateDisplay(tempEnd)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleClear}
+                            className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            Clear
+                          </button>
+                          <button
+                            onClick={handleApply}
+                            disabled={!tempStart || !tempEnd}
+                            className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
+          </div>
 
-            <div className="relative" ref={calendarRef}>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowCalendar(!showCalendar)}
-                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-muted/50 hover:bg-muted border border-border transition-colors"
-              >
-                <span className="text-sm font-medium text-foreground">
-                  {formatDateDisplay(startDate)}
-                </span>
-                <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">
-                  {formatDateDisplay(endDate)}
-                </span>
-              </motion.button>
-
-              <AnimatePresence>
-                {showCalendar && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-5 shadow-xl"
-                  >
-                    <div className="flex gap-6">
-                      <div className="min-w-[260px]">
-                        <div className="flex items-center justify-between mb-4">
-                          <button
-                            onClick={() => handlePrevMonth('left')}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                          <span className="text-sm font-semibold text-foreground">
-                            {monthNames[leftMonth]} {leftYear}
-                          </span>
-                          <button
-                            onClick={() => handleNextMonth('left')}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                        </div>
-                        {renderCalendarGrid(leftYear, leftMonth)}
-                      </div>
-
-                      <div className="w-px bg-border" />
-
-                      <div className="min-w-[260px]">
-                        <div className="flex items-center justify-between mb-4">
-                          <button
-                            onClick={() => handlePrevMonth('right')}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                          <span className="text-sm font-semibold text-foreground">
-                            {monthNames[rightMonth]} {rightYear}
-                          </span>
-                          <button
-                            onClick={() => handleNextMonth('right')}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                          </button>
-                        </div>
-                        {renderCalendarGrid(rightYear, rightMonth)}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-5 pt-4 border-t border-border">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="px-2 py-1 rounded bg-muted text-foreground font-medium">
-                          {formatDateDisplay(tempStart)}
-                        </span>
-                        <span>to</span>
-                        <span className="px-2 py-1 rounded bg-muted text-foreground font-medium">
-                          {formatDateDisplay(tempEnd)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={handleClear}
-                          className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          Clear
-                        </button>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={handleApply}
-                          disabled={!tempStart || !tempEnd}
-                          className="px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Apply
-                        </motion.button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+          {/* Cumulative P&L Chart */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              Cumulative P&L
+            </h3>
+            <div className="h-[220px]">
+              <PnLDailyChart data={processedData} />
             </div>
           </div>
         </div>
-      </div>
 
-      <DashWidgets
-        data={processedData}
-        pnl={parseFloat(totalPnL.toFixed(2))}
-        winrate={parseFloat(winrate.toFixed(2))}
-        winners={winCount}
-        losers={lossCount}
-        profitF={calculateProfitFactor(displayTrades)}
-        avgProfits={parseFloat(metrics.avgWin)}
-        avgLoses={parseFloat(metrics.avgLoss)}
-        rrRatio={metrics.rrRatio}
-        accBal={parseFloat(calculateBalance(selectedAccounts).toFixed(2))}
-        totalProfits={0}
-        totalLoses={0}
-      />
-
-      <div className="px-4 pb-6 space-y-5">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 space-y-5">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <BarChart3 className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Total Trades</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{displayTrades.length}</p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${totalPnL >= 0 ? "bg-profit/10" : "bg-loss/10"}`}>
-                    <TrendingUp className={`w-3.5 h-3.5 ${totalPnL >= 0 ? "text-profit" : "text-loss"}`} />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Net P&L</span>
-                </div>
-                <p className={`text-xl font-bold ${totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
-                  {formatCompactCurrency(totalPnL, currency, exchangeRate)}
-                </p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-profit/10 flex items-center justify-center">
-                    <Trophy className="w-3.5 h-3.5 text-profit" />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Winners</span>
-                </div>
-                <p className="text-xl font-bold text-profit">{winCount}</p>
-              </div>
-
-              <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-lg bg-loss/10 flex items-center justify-center">
-                    <Target className="w-3.5 h-3.5 text-loss" />
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">Losers</span>
-                </div>
-                <p className="text-xl font-bold text-loss">{lossCount}</p>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                Cumulative P&L
-              </h3>
-              <div className="h-[250px]">
-                <PnLDailyChart data={processedData} />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <TradesWidget data={displayTrades} />
-          </div>
+        {/* Right Sidebar */}
+        <div className="xl:col-span-1 flex flex-col gap-4">
+          <TradesWidget data={displayTrades} />
         </div>
       </div>
     </div>
