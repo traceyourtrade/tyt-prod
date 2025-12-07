@@ -69,14 +69,15 @@ export function Sidebar({
     <aside 
       className={cn(
         "fixed left-0 top-0 z-40 flex h-screen flex-col transition-all duration-300 ease-out",
-        "bg-gradient-to-b from-[#0C1117] via-[#0F1419] to-[#0C1117]",
-        "dark:from-[#0C1117] dark:via-[#0F1419] dark:to-[#0C1117]",
-        "border-r border-white/[0.06]",
+        "bg-[#0C1117]/95 backdrop-blur-xl",
+        "border-r border-white/[0.08]",
         collapsed ? "w-[72px]" : "w-[260px]"
       )}
     >
-      {/* Subtle inner glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent pointer-events-none" />
+      {/* Glassmorphic gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] via-transparent to-white/[0.02] pointer-events-none" />
+      {/* Subtle inner glow on the right edge */}
+      <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-white/10 via-white/5 to-white/10 pointer-events-none" />
       
       {/* Logo Section */}
       <div className={cn(
@@ -131,7 +132,7 @@ export function Sidebar({
         
         {!collapsed && (
           <motion.button
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-all"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4EBF94]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C1117]"
             onClick={onToggle}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -144,7 +145,7 @@ export function Sidebar({
       {/* Collapse button when collapsed */}
       {collapsed && (
         <motion.button
-          className="mx-auto mt-2 w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-all"
+          className="mx-auto mt-2 w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4EBF94]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C1117]"
           onClick={onToggle}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -161,12 +162,10 @@ export function Sidebar({
             "bg-gradient-to-r from-[#4EBF94] to-[#3AAE83]",
             "text-white shadow-lg shadow-[#4EBF94]/25",
             "hover:shadow-xl hover:shadow-[#4EBF94]/35",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C1117]",
             collapsed ? "px-0" : "px-4"
           )}
-          onClick={() => {
-            onAddTrades?.()
-            document.body.classList.add("no-scroll")
-          }}
+          onClick={() => onAddTrades?.()}
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -234,6 +233,7 @@ export function Sidebar({
                   href={item.href}
                   className={cn(
                     "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4EBF94]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C1117]",
                     active 
                       ? "bg-gradient-to-r from-[#4EBF94]/15 to-transparent text-[#4EBF94]" 
                       : "text-white/60 hover:text-white hover:bg-white/5",
@@ -318,6 +318,7 @@ export function Sidebar({
                     href={item.href}
                     className={cn(
                       "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4EBF94]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C1117]",
                       active 
                         ? "bg-gradient-to-r from-[#4EBF94]/15 to-transparent text-[#4EBF94]" 
                         : "text-white/60 hover:text-white hover:bg-white/5",
@@ -402,6 +403,7 @@ export function Sidebar({
             className={cn(
               "group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
               "text-white/40 hover:text-red-400 hover:bg-red-500/10",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C1117]",
               collapsed && "justify-center px-0"
             )}
             onClick={onLogout}
