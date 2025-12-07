@@ -817,38 +817,76 @@ const DailyJournal = () => {
                   </div>
                 </div>
 
-                {/* Sentiment Selector - Clean */}
+                {/* Sentiment Slider */}
                 <div className="p-4 bg-card border border-border rounded-xl">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">How was this trade?</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "great", label: "Great", color: "profit" },
-                      { id: "okay", label: "Okay", color: "amber" },
-                      { id: "poor", label: "Poor", color: "loss" },
-                    ].map((s) => (
-                      <button
-                        key={s.id}
-                        onClick={() => handleSentimentChange(s.id as "great" | "okay" | "poor")}
-                        className={`relative py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
-                          journalData.sentiment === s.id
-                            ? s.color === "profit" 
-                              ? "border-profit bg-profit/10 text-profit" 
-                              : s.color === "amber" 
-                              ? "border-amber-500 bg-amber-500/10 text-amber-500"
-                              : "border-loss bg-loss/10 text-loss"
-                            : "border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">How was this trade?</h3>
+                  
+                  {/* Slider Container */}
+                  <div className="relative px-2">
+                    {/* Track Background */}
+                    <div className="relative h-10 rounded-full bg-gradient-to-r from-loss/20 via-amber-500/20 to-profit/20 border border-border overflow-hidden">
+                      {/* Active Highlight */}
+                      <motion.div
+                        className={`absolute inset-y-0 w-1/3 rounded-full ${
+                          journalData.sentiment === "great" 
+                            ? "right-0 bg-profit/30 border border-profit/50" 
+                            : journalData.sentiment === "okay"
+                            ? "left-1/3 bg-amber-500/30 border border-amber-500/50"
+                            : journalData.sentiment === "poor"
+                            ? "left-0 bg-loss/30 border border-loss/50"
+                            : ""
                         }`}
-                      >
-                        {journalData.sentiment === s.id && (
-                          <motion.div
-                            layoutId="sentiment-bg"
-                            className="absolute inset-0 rounded-lg"
-                            transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
-                          />
-                        )}
-                        <span className="relative z-10">{s.label}</span>
-                      </button>
-                    ))}
+                        layoutId="sentiment-highlight"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                      />
+                      
+                      {/* Clickable Segments */}
+                      <div className="absolute inset-0 grid grid-cols-3">
+                        <button
+                          onClick={() => handleSentimentChange("poor")}
+                          className="flex items-center justify-center gap-1.5 transition-all hover:bg-loss/10"
+                        >
+                          <span className={`text-sm font-medium transition-colors ${
+                            journalData.sentiment === "poor" ? "text-loss" : "text-muted-foreground"
+                          }`}>
+                            Poor
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => handleSentimentChange("okay")}
+                          className="flex items-center justify-center gap-1.5 transition-all hover:bg-amber-500/10 border-x border-border/30"
+                        >
+                          <span className={`text-sm font-medium transition-colors ${
+                            journalData.sentiment === "okay" ? "text-amber-500" : "text-muted-foreground"
+                          }`}>
+                            Okay
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => handleSentimentChange("great")}
+                          className="flex items-center justify-center gap-1.5 transition-all hover:bg-profit/10"
+                        >
+                          <span className={`text-sm font-medium transition-colors ${
+                            journalData.sentiment === "great" ? "text-profit" : "text-muted-foreground"
+                          }`}>
+                            Great
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Indicator Dots */}
+                    <div className="flex justify-between mt-2 px-[16.67%]">
+                      <div className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                        journalData.sentiment === "poor" ? "bg-loss" : "bg-muted-foreground/30"
+                      }`} />
+                      <div className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                        journalData.sentiment === "okay" ? "bg-amber-500" : "bg-muted-foreground/30"
+                      }`} />
+                      <div className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                        journalData.sentiment === "great" ? "bg-profit" : "bg-muted-foreground/30"
+                      }`} />
+                    </div>
                   </div>
                 </div>
 
