@@ -50,18 +50,18 @@ import useAccountDetails from "@/store/accountdetails"
 import calendarPopUp from "@/store/calendarPopUp"
 
 const mainNavItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen },
-  { name: "Notebook", href: "/notebook", icon: FileText },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Strategies", href: "/strategies", icon: Target },
-  { name: "Playbook", href: "/playbook", icon: Sparkles },
-  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "#3B82F6" },
+  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, color: "#8B5CF6" },
+  { name: "Notebook", href: "/notebook", icon: FileText, color: "#F59E0B" },
+  { name: "Reports", href: "/reports", icon: BarChart3, color: "#4EBF94" },
+  { name: "Strategies", href: "/strategies", icon: Target, color: "#EF4444" },
+  { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#EC4899" },
+  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#06B6D4" },
 ]
 
 const bottomNavItems = [
-  { name: "Support", href: "/support", icon: HelpCircle },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Support", href: "/support", icon: HelpCircle, color: "#6B7280" },
+  { name: "Settings", href: "/settings", icon: Settings, color: "#6B7280" },
 ]
 
 const pageTitles: Record<string, string> = {
@@ -258,13 +258,18 @@ export default function RootLayout({
                   )}
                 >
                   {active && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
+                    <div 
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
                   )}
-                  <Icon className={cn(
-                    "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
-                    "group-hover:scale-110",
-                    active ? "text-white" : "text-white/60 group-hover:text-white"
-                  )} />
+                  <Icon 
+                    className={cn(
+                      "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
+                      "group-hover:scale-110"
+                    )} 
+                    style={{ color: item.color }}
+                  />
                   {(!collapsed || mobileOpen) && (
                     <span className="truncate">{item.name}</span>
                   )}
@@ -297,13 +302,18 @@ export default function RootLayout({
                   )}
                 >
                   {active && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
+                    <div 
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
                   )}
-                  <Icon className={cn(
-                    "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
-                    "group-hover:scale-110",
-                    active ? "text-white" : "text-white/60 group-hover:text-white"
-                  )} />
+                  <Icon 
+                    className={cn(
+                      "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
+                      "group-hover:scale-110"
+                    )} 
+                    style={{ color: item.color }}
+                  />
                   {(!collapsed || mobileOpen) && (
                     <span className="truncate">{item.name}</span>
                   )}
