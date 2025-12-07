@@ -50,18 +50,18 @@ import useAccountDetails from "@/store/accountdetails"
 import calendarPopUp from "@/store/calendarPopUp"
 
 const mainNavItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "#3B82F6" },
-  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, color: "#8B5CF6" },
-  { name: "Notebook", href: "/notebook", icon: FileText, color: "#F59E0B" },
-  { name: "Reports", href: "/reports", icon: BarChart3, color: "#4EBF94" },
-  { name: "Strategies", href: "/strategies", icon: Target, color: "#EF4444" },
-  { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#EC4899" },
-  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#06B6D4" },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "#6B8ACD" },
+  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, color: "#9B8AC4" },
+  { name: "Notebook", href: "/notebook", icon: FileText, color: "#C9A86C" },
+  { name: "Reports", href: "/reports", icon: BarChart3, color: "#7CB89E" },
+  { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A" },
+  { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B" },
+  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4" },
 ]
 
 const bottomNavItems = [
-  { name: "Support", href: "/support", icon: HelpCircle, color: "#6B7280" },
-  { name: "Settings", href: "/settings", icon: Settings, color: "#6B7280" },
+  { name: "Support", href: "/support", icon: HelpCircle, color: "#8B8B8B" },
+  { name: "Settings", href: "/settings", icon: Settings, color: "#8B8B8B" },
 ]
 
 const pageTitles: Record<string, string> = {
@@ -156,7 +156,7 @@ export default function RootLayout({
     <div className="h-full flex flex-col">
       {/* Sidebar Header with Logo */}
       <div className={cn(
-        "flex items-center h-14 px-4 border-b border-white/[0.06]",
+        "flex items-center h-14 px-4 border-b border-border",
         collapsed && !mobileOpen ? "justify-center" : "justify-between"
       )}>
         <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group" onClick={() => setMobileOpen(false)}>
@@ -218,7 +218,7 @@ export default function RootLayout({
             "text-white",
             "hover:bg-[#2563EB]",
             "active:bg-[#1D4ED8]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151515]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
             collapsed && !mobileOpen ? "px-0 w-10 h-10 mx-auto" : "px-4"
           )}
           onClick={() => {
@@ -248,8 +248,8 @@ export default function RootLayout({
                     "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
                     "rounded-md",
                     active 
-                      ? "bg-white/[0.08] text-white" 
-                      : "text-white/60 hover:text-white hover:bg-white/[0.04]",
+                      ? "bg-muted text-foreground" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                     collapsed && !mobileOpen && "justify-center px-2",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
                   )}
@@ -278,7 +278,7 @@ export default function RootLayout({
       </nav>
 
       {/* Bottom Navigation */}
-      <div className="py-2 px-2 border-t border-white/[0.06]">
+      <div className="py-2 px-2 border-t border-border">
         <ul className="space-y-1">
           {bottomNavItems.map((item) => {
             const Icon = item.icon
@@ -292,8 +292,8 @@ export default function RootLayout({
                     "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
                     "rounded-md",
                     active 
-                      ? "bg-white/[0.08] text-white" 
-                      : "text-white/60 hover:text-white hover:bg-white/[0.04]",
+                      ? "bg-muted text-foreground" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                     collapsed && !mobileOpen && "justify-center px-2",
                     "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
                   )}
@@ -322,14 +322,14 @@ export default function RootLayout({
       </div>
 
       {/* User Section */}
-      <div className="p-2 border-t border-white/[0.06]">
+      <div className="p-2 border-t border-border">
         {profileData.fullName && (
           <Link 
             href="/settings"
             onClick={() => setMobileOpen(false)}
             className={cn(
               "flex items-center gap-2.5 rounded-md p-2 mb-1 transition-all duration-200 ease-out",
-              "hover:bg-white/[0.04]",
+              "hover:bg-muted/50",
               collapsed && !mobileOpen && "justify-center",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
             )}
@@ -340,14 +340,14 @@ export default function RootLayout({
                   {userInitials}
                 </span>
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4EBF94] rounded-full border-2 border-[#151515]" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4EBF94] rounded-full border-2 border-card" />
             </div>
             {(!collapsed || mobileOpen) && (
               <div className="overflow-hidden flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-white truncate">
+                <p className="text-[13px] font-medium text-foreground truncate">
                   {profileData.fullName}
                 </p>
-                <p className="text-[11px] text-white/40 truncate">
+                <p className="text-[11px] text-muted-foreground truncate">
                   {maskedEmail}
                 </p>
               </div>
@@ -358,7 +358,7 @@ export default function RootLayout({
         <button
           className={cn(
             "group w-full flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
-            "text-white/60 hover:text-red-400 hover:bg-red-500/10",
+            "text-muted-foreground hover:text-red-400 hover:bg-red-500/10",
             collapsed && !mobileOpen && "justify-center px-2",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500/50"
           )}
@@ -400,7 +400,7 @@ export default function RootLayout({
       <aside 
         className={cn(
           "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out",
-          "bg-[#151515] border-r border-border/50",
+          "bg-card border-r border-border",
           collapsed ? "w-[68px]" : "w-[240px]"
         )}
       >
@@ -411,7 +411,7 @@ export default function RootLayout({
       <aside 
         className={cn(
           "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[240px] flex-col transition-transform duration-300 ease-out",
-          "bg-[#151515] border-r border-border/50",
+          "bg-card border-r border-border",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
