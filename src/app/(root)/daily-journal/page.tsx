@@ -42,7 +42,6 @@ import {
   LayoutDashboard,
   Pencil,
   Eye,
-  Check,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
@@ -972,21 +971,15 @@ const DailyJournal = () => {
                             className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
                               rulesCompliance[rule.id]
                                 ? "bg-profit/5 border-profit/30"
-                                : "bg-background border-border hover:border-muted-foreground/30"
+                                : "bg-muted/30 border-border hover:border-primary/30"
                             }`}
                           >
-                            <div 
-                              onClick={() => toggleRuleCompliance(rule.id)}
-                              className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border transition-colors ${
-                                rulesCompliance[rule.id] 
-                                  ? "bg-profit border-profit" 
-                                  : "border-muted-foreground/40 bg-transparent"
-                              }`}
-                            >
-                              {rulesCompliance[rule.id] && (
-                                <Check className="w-3 h-3 text-white" />
-                              )}
-                            </div>
+                            <input
+                              type="checkbox"
+                              checked={rulesCompliance[rule.id] || false}
+                              onChange={() => toggleRuleCompliance(rule.id)}
+                              className="mt-0.5 w-4 h-4 rounded border-border text-profit focus:ring-profit/50 accent-profit"
+                            />
                             <span className={`text-sm leading-relaxed ${
                               rulesCompliance[rule.id] ? "text-foreground" : "text-muted-foreground"
                             }`}>
