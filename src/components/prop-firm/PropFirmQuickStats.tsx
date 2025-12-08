@@ -61,18 +61,19 @@ function StatCard({
       "relative overflow-hidden rounded-xl border backdrop-blur-sm",
       "bg-white dark:bg-transparent bg-gradient-to-br",
       getVariantStyles(),
-      "p-4 transition-all hover:scale-[1.02] hover:border-amber-500/30"
+      "p-3 transition-all hover:scale-[1.02] hover:border-amber-500/30",
+      "min-h-[100px] flex flex-col"
     )}>
       <div className="flex items-start justify-between">
         <div className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center",
+          "w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0",
           "bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10"
         )}>
-          <Icon className={cn("w-4 h-4", getIconColor())} />
+          <Icon className={cn("w-3.5 h-3.5", getIconColor())} />
         </div>
         {trend && (
           <div className={cn(
-            "flex items-center gap-1 text-xs font-medium",
+            "flex items-center gap-1 text-xs font-medium flex-shrink-0",
             trend === "up" ? "text-emerald-600 dark:text-emerald-400" : trend === "down" ? "text-red-600 dark:text-red-400" : "text-gray-400 dark:text-white/40"
           )}>
             {trend === "up" && <TrendingUp className="w-3 h-3" />}
@@ -81,11 +82,11 @@ function StatCard({
         )}
       </div>
       
-      <div className="mt-3">
-        <p className="text-xs text-gray-500 dark:text-white/40 mb-1">{label}</p>
-        <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{value}</p>
+      <div className="mt-2 flex-1 min-w-0">
+        <p className="text-[11px] text-gray-500 dark:text-white/40 mb-0.5 truncate">{label}</p>
+        <p className="text-base font-bold text-gray-900 dark:text-white tabular-nums truncate">{value}</p>
         {subValue && (
-          <p className="text-xs text-gray-400 dark:text-white/30 mt-0.5">{subValue}</p>
+          <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5 truncate">{subValue}</p>
         )}
       </div>
     </div>
@@ -132,7 +133,7 @@ export default function PropFirmQuickStats({
       <StatCard
         icon={TrendingUp}
         label="Net P&L"
-        value={`${netPnL >= 0 ? "+" : ""}$${Math.abs(netPnL).toLocaleString()}`}
+        value={`${netPnL >= 0 ? "+" : ""}$${Math.abs(netPnL).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
         variant={netPnL >= 0 ? "profit" : "loss"}
         trend={netPnL >= 0 ? "up" : "down"}
       />
@@ -154,21 +155,21 @@ export default function PropFirmQuickStats({
       
       <StatCard
         icon={BarChart3}
-        label="Current Equity"
-        value={`$${currentEquity.toLocaleString()}`}
+        label="Equity"
+        value={`$${currentEquity.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
       />
       
       <StatCard
         icon={TrendingUp}
         label="Avg Win"
-        value={`+$${avgWin.toLocaleString()}`}
+        value={`+$${avgWin.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
         variant="profit"
       />
       
       <StatCard
         icon={TrendingDown}
         label="Avg Loss"
-        value={`-$${Math.abs(avgLoss).toLocaleString()}`}
+        value={`-$${Math.abs(avgLoss).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
         variant="loss"
       />
       
@@ -182,7 +183,7 @@ export default function PropFirmQuickStats({
       <StatCard
         icon={Zap}
         label="Today's P&L"
-        value={`${todayPnL >= 0 ? "+" : ""}$${Math.abs(todayPnL).toLocaleString()}`}
+        value={`${todayPnL >= 0 ? "+" : ""}$${Math.abs(todayPnL).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
         variant={todayPnL >= 0 ? "profit" : "loss"}
         trend={todayPnL >= 0 ? "up" : todayPnL < 0 ? "down" : "neutral"}
       />

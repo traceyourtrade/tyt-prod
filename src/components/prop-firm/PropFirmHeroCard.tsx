@@ -210,13 +210,13 @@ export default function PropFirmHeroCard({
                 </p>
               </div>
               
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5 overflow-hidden">
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  Current Equity
+                  <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">Current Equity</span>
                 </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
-                  ${currentEquity.toLocaleString()}
+                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums truncate">
+                  ${currentEquity.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                 </p>
                 <p className={cn(
                   "text-xs font-medium mt-1",
@@ -239,16 +239,16 @@ export default function PropFirmHeroCard({
                 </p>
               </div>
               
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5 overflow-hidden">
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <Clock className="w-3.5 h-3.5" />
-                  Profit/Loss
+                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">Profit/Loss</span>
                 </div>
                 <p className={cn(
-                  "text-xl font-bold tabular-nums",
+                  "text-xl font-bold tabular-nums truncate",
                   currentProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                 )}>
-                  {currentProfit >= 0 ? "+" : ""}${Math.abs(currentProfit).toLocaleString()}
+                  {currentProfit >= 0 ? "+" : ""}${Math.abs(currentProfit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
