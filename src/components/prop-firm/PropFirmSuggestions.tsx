@@ -70,7 +70,7 @@ function PropFirmCard({ firm }: { firm: PropFirm }) {
       "transition-all group"
     )}>
       {firm.highlight && (
-        <div className="absolute -top-2 right-3 px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full">
+        <div className="absolute -top-2 right-3 px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full">
           {firm.highlight}
         </div>
       )}
@@ -108,9 +108,9 @@ function PropFirmCard({ firm }: { firm: PropFirm }) {
         rel="noopener noreferrer"
         className={cn(
           "flex items-center gap-1.5 px-3 py-1.5",
-          "bg-amber-500 hover:bg-amber-600 text-white",
+          "bg-blue-500 hover:bg-blue-600 text-white",
           "rounded-lg text-xs font-semibold",
-          "transition-all hover:scale-105 shadow-sm shadow-amber-500/20",
+          "transition-all hover:scale-105 shadow-sm shadow-blue-500/20",
           "flex-shrink-0"
         )}
       >
@@ -152,12 +152,12 @@ export default function PropFirmSuggestions() {
 
         <div className={cn(
           "mb-4 p-3 rounded-xl",
-          "bg-gradient-to-r from-amber-500/10 to-amber-600/5 dark:from-amber-500/15 dark:to-amber-600/5",
-          "border border-amber-500/20"
+          "bg-gradient-to-r from-blue-500/10 to-blue-600/5 dark:from-blue-500/15 dark:to-blue-600/5",
+          "border border-blue-500/20"
         )}>
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+            <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
               {DISCOUNT}% OFF with our code!
             </span>
           </div>
@@ -171,7 +171,7 @@ export default function PropFirmSuggestions() {
                 "p-2 rounded-lg border transition-all",
                 copied 
                   ? "bg-emerald-500 border-emerald-500 text-white" 
-                  : "bg-amber-500 hover:bg-amber-600 border-amber-500 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 border-blue-500 text-white"
               )}
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
