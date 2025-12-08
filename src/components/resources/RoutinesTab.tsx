@@ -17,7 +17,17 @@ import {
   Trash2,
   GripVertical,
   RotateCcw,
+  type LucideIcon,
 } from "lucide-react";
+
+const iconMap: Record<string, LucideIcon> = {
+  Sun,
+  Activity,
+  Moon,
+  Plus,
+  Calendar,
+  Clock,
+};
 
 interface RoutineItem {
   id: string;
@@ -28,17 +38,21 @@ interface RoutineItem {
 interface Routine {
   id: string;
   name: string;
-  icon: React.ElementType;
+  iconName: string;
   color: string;
   items: RoutineItem[];
   isCustom?: boolean;
 }
 
+const getIcon = (iconName: string): LucideIcon => {
+  return iconMap[iconName] || Plus;
+};
+
 const defaultRoutines: Routine[] = [
   {
     id: "pre-market",
     name: "Pre-Market Checklist",
-    icon: Sun,
+    iconName: "Sun",
     color: "text-amber-500",
     items: [
       { id: "pm1", text: "Check economic calendar for high-impact news", completed: false },
@@ -53,7 +67,7 @@ const defaultRoutines: Routine[] = [
   {
     id: "during-trade",
     name: "During Trade Reminders",
-    icon: Activity,
+    iconName: "Activity",
     color: "text-blue-500",
     items: [
       { id: "dt1", text: "Is this trade part of my plan?", completed: false },
@@ -67,7 +81,7 @@ const defaultRoutines: Routine[] = [
   {
     id: "post-market",
     name: "Post-Market Review",
-    icon: Moon,
+    iconName: "Moon",
     color: "text-purple-500",
     items: [
       { id: "pm1", text: "Record all trades in journal with screenshots", completed: false },
@@ -110,22 +124,43 @@ const RoutinesTab = () => {
     return new Date(dateString).toDateString() === yesterday.toDateString();
   };
 
+  const migrateRoutineData = (routines: Routine[]): Routine[] => {
+    return routines.map((routine) => {
+      if (!routine.iconName) {
+        const iconNameMap: Record<string, string> = {
+          "pre-market": "Sun",
+          "during-trade": "Activity",
+          "post-market": "Moon",
+        };
+        return {
+          ...routine,
+          iconName: iconNameMap[routine.id] || (routine.isCustom ? "Calendar" : "Plus"),
+        };
+      }
+      return routine;
+    });
+  };
+
   useEffect(() => {
     const today = getTodayString();
     
     const savedData = localStorage.getItem("tradingRoutinesData");
     if (savedData) {
-      const data: RoutineCompletionData = JSON.parse(savedData);
+      const data = JSON.parse(savedData);
+      const migratedRoutines = migrateRoutineData(data.routines);
       
       if (data.lastResetDate !== today) {
-        const resetRoutines = data.routines.map((routine) => ({
+        const resetRoutines = migratedRoutines.map((routine) => ({
           ...routine,
           items: routine.items.map((item) => ({ ...item, completed: false })),
         }));
         setRoutines(resetRoutines);
         saveRoutinesToStorage(resetRoutines, today);
       } else {
-        setRoutines(data.routines);
+        setRoutines(migratedRoutines);
+        if (migratedRoutines !== data.routines) {
+          saveRoutinesToStorage(migratedRoutines, data.lastResetDate);
+        }
       }
     } else {
       setRoutines(defaultRoutines);
@@ -216,7 +251,7 @@ const RoutinesTab = () => {
     const newRoutine: Routine = {
       id: `custom-${Date.now()}`,
       name: newRoutineName,
-      icon: Calendar,
+      iconName: "Calendar",
       color: "text-emerald-500",
       items: [],
       isCustom: true,
@@ -314,7 +349,7 @@ const RoutinesTab = () => {
       {/* Routines List */}
       <div className="space-y-4">
         {routines.map((routine) => {
-          const Icon = routine.icon;
+          const Icon = getIcon(routine.iconName);
           const isExpanded = expandedRoutine === routine.id;
           const completionPct = getCompletionPercentage(routine);
           const completedCount = routine.items.filter((i) => i.completed).length;
