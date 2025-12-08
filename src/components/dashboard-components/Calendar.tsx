@@ -33,6 +33,13 @@ const Calendar = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
 
+  const accountBalance = useMemo(() => {
+    return (selectedAccounts as Account[]).reduce((sum, acc) => {
+      const balance = Number((acc as any).accountBalance) || 0;
+      return sum + balance;
+    }, 0);
+  }, [selectedAccounts]);
+
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: Record<string, GroupedTrade>, trade: Trade) => {
       if (!acc[trade.date]) {
@@ -74,7 +81,7 @@ const Calendar = () => {
   }, []);
 
   const formatCurrencyDisplay = (num: number) => {
-    return formatCompactCurrency(Math.abs(num), currency, exchangeRate);
+    return formatCompactCurrency(Math.abs(num), currency, exchangeRate, accountBalance);
   };
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
@@ -349,7 +356,7 @@ const Calendar = () => {
                 "text-xs font-bold mt-0.5",
                 profit > 0 ? "text-profit" : profit < 0 ? "text-loss" : "text-muted-foreground/50"
               )}>
-                {profit !== 0 ? formatCurrencyDisplay(profit) : formatCompactCurrency(0, currency, exchangeRate)}
+                {profit !== 0 ? formatCurrencyDisplay(profit) : formatCompactCurrency(0, currency, exchangeRate, accountBalance)}
               </span>
             </div>
           ))}

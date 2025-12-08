@@ -76,8 +76,35 @@ export const formatCurrencyValue = (
 export const formatCompactCurrency = (
   value: number, 
   currency: CurrencyType, 
-  exchangeRate: number = 83.5
+  exchangeRate: number = 83.5,
+  accountBalance?: number,
+  riskAmount?: number
 ): string => {
+  // Handle PERCENT mode - show as percentage of account balance
+  if (currency === "PERCENT") {
+    if (accountBalance && accountBalance > 0) {
+      const percent = (value / accountBalance) * 100;
+      if (percent >= 1000) {
+        return `${(percent / 1000).toFixed(1)}K%`;
+      }
+      return `${percent.toFixed(1)}%`;
+    }
+    // Fallback: just show value with % suffix
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}K%`;
+    }
+    return `${value.toFixed(1)}%`;
+  }
+  
+  // Handle R Factor mode
+  if (currency === "R") {
+    if (riskAmount && riskAmount > 0) {
+      const rValue = value / riskAmount;
+      return `${rValue.toFixed(1)}R`;
+    }
+    return `${value.toFixed(1)}R`;
+  }
+  
   let displayValue = value;
   if (currency === "INR") {
     displayValue = value * exchangeRate;
@@ -93,7 +120,7 @@ export const formatCompactCurrency = (
     } else if (absValue >= 100000) {
       formatted = `${(absValue / 100000).toFixed(1)}L`;
     } else if (absValue >= 1000) {
-      formatted = `${(absValue / 1000).toFixed(0)}K`;
+      formatted = `${(absValue / 1000).toFixed(1)}K`;
     } else {
       formatted = absValue.toFixed(0);
     }
