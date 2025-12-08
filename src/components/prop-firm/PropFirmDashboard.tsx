@@ -23,6 +23,7 @@ export default function PropFirmDashboard() {
   const { settings, peakEquity, challengeStatus, updatePeakEquity, setChallengeStatus } = usePropFirmStore()
   const { selectedAccounts } = useModeFilteredAccounts()
   const [dailyBreached, setDailyBreached] = useState(false)
+  const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false)
 
   const calculations = useMemo(() => {
     let totalPnL = 0
@@ -259,9 +260,15 @@ export default function PropFirmDashboard() {
         <PropFirmAnalytics />
       </div>
 
-      <div className="hidden xl:block w-80 flex-shrink-0">
+      <div className={cn(
+        "hidden xl:block flex-shrink-0 transition-all duration-300",
+        suggestionsCollapsed ? "w-16" : "w-80"
+      )}>
         <div className="sticky top-6">
-          <PropFirmSuggestions />
+          <PropFirmSuggestions 
+            isCollapsed={suggestionsCollapsed}
+            onToggleCollapse={() => setSuggestionsCollapsed(!suggestionsCollapsed)}
+          />
         </div>
       </div>
     </div>

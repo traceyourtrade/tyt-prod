@@ -122,9 +122,20 @@ function PropFirmCard({ firm }: { firm: PropFirm }) {
   )
 }
 
-export default function PropFirmSuggestions() {
+interface PropFirmSuggestionsProps {
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
+}
+
+export default function PropFirmSuggestions({ 
+  isCollapsed: controlledCollapsed, 
+  onToggleCollapse 
+}: PropFirmSuggestionsProps = {}) {
   const [copied, setCopied] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [internalCollapsed, setInternalCollapsed] = useState(false)
+  
+  const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed
+  const toggleCollapse = onToggleCollapse || (() => setInternalCollapsed(!internalCollapsed))
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(COUPON_CODE)
@@ -135,7 +146,7 @@ export default function PropFirmSuggestions() {
   return (
     <div className="relative flex">
       <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
+        onClick={toggleCollapse}
         className={cn(
           "absolute -left-3 top-1/2 -translate-y-1/2 z-10",
           "w-6 h-12 rounded-l-lg",
@@ -168,7 +179,7 @@ export default function PropFirmSuggestions() {
               "flex flex-col items-center justify-center py-4 px-2 cursor-pointer",
               "hover:bg-gray-50 dark:hover:bg-white/5"
             )}
-            onClick={() => setIsCollapsed(false)}
+            onClick={toggleCollapse}
           >
             <Award className="w-5 h-5 text-gray-600 dark:text-white/70 mb-2" />
             <span 
