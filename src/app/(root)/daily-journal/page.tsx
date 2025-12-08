@@ -177,7 +177,7 @@ const getTemplateColor = (color: string) => {
 };
 
 const DailyJournal = () => {
-  const { selectedAccounts, setAccounts } = useAccountDetails();
+  const { selectedAccounts, setAccounts, profileData } = useAccountDetails();
   const { currency, exchangeRate } = useCurrencyStore();
   const tokenn = Cookies.get("Trace Your Trades") || "";
 
@@ -200,8 +200,12 @@ const DailyJournal = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [mobileView, setMobileView] = useState<"list" | "content">("list");
+  const [isStrategyDropdownOpen, setIsStrategyDropdownOpen] = useState(false);
 
   const filterRef = useRef<HTMLDivElement>(null);
+  const strategyDropdownRef = useRef<HTMLDivElement>(null);
+  
+  const existingStrategies: string[] = (profileData?.otherData?.strategy || []).filter((s: string) => s && s !== "Select");
 
   useEffect(() => {
     setAccounts();
@@ -243,10 +247,38 @@ const DailyJournal = () => {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
         setIsFilterOpen(false);
       }
+      if (strategyDropdownRef.current && !strategyDropdownRef.current.contains(e.target as Node)) {
+        setIsStrategyDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const updateTradeStrategy = async (strategy: string) => {
+    if (!selectedTrade || isDemo) return;
+    
+    try {
+      const tradeId = selectedTrade._id || selectedTrade.id;
+      await fetch("/api/daily-journal/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiName: "editDropdowns",
+          id: tradeId,
+          type: "strategy",
+          value: strategy,
+          tokenn,
+          accountType: selectedTrade.accountType,
+        }),
+      });
+      setSelectedTrade({ ...selectedTrade, strategy });
+      setIsStrategyDropdownOpen(false);
+      setAccounts();
+    } catch (error) {
+      console.error("Error updating strategy:", error);
+    }
+  };
 
   useEffect(() => {
     if (selectedTrade?.jrData) {
@@ -745,7 +777,7 @@ const DailyJournal = () => {
                         isSelected={true}
                       />
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h2 className="text-lg font-semibold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
                           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                             (selectedTrade.side || selectedTrade.Type)?.toLowerCase() === "long" 
@@ -754,11 +786,54 @@ const DailyJournal = () => {
                           }`}>
                             {selectedTrade.side || selectedTrade.Type}
                           </span>
-                          {selectedTrade.strategy && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                              {selectedTrade.strategy}
-                            </span>
-                          )}
+                          <div className="relative" ref={strategyDropdownRef}>
+                            <button
+                              onClick={() => setIsStrategyDropdownOpen(!isStrategyDropdownOpen)}
+                              className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded transition-all ${
+                                selectedTrade.strategy && selectedTrade.strategy !== "Select"
+                                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                              }`}
+                            >
+                              <Target className="w-2.5 h-2.5" />
+                              {selectedTrade.strategy && selectedTrade.strategy !== "Select" ? selectedTrade.strategy : "Strategy"}
+                              <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+                            </button>
+                            <AnimatePresence>
+                              {isStrategyDropdownOpen && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="absolute left-0 top-full mt-1 z-50 bg-card border border-border rounded-lg shadow-xl min-w-[140px] overflow-hidden"
+                                >
+                                  <div className="max-h-48 overflow-y-auto py-1">
+                                    {existingStrategies.length > 0 ? (
+                                      existingStrategies.map((strategy) => (
+                                        <button
+                                          key={strategy}
+                                          onClick={() => updateTradeStrategy(strategy)}
+                                          className={`w-full px-3 py-1.5 text-xs text-left hover:bg-muted/50 flex items-center justify-between transition-colors ${
+                                            selectedTrade.strategy === strategy ? "bg-primary/10 text-primary" : "text-foreground"
+                                          }`}
+                                        >
+                                          {strategy}
+                                          {selectedTrade.strategy === strategy && (
+                                            <CheckCircle2 className="w-3 h-3 text-primary" />
+                                          )}
+                                        </button>
+                                      ))
+                                    ) : (
+                                      <div className="px-3 py-2 text-xs text-muted-foreground">
+                                        No strategies available
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                         <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
                           <span>{formatTime(selectedTrade.EntryTime || selectedTrade.time) || "—"}</span>
