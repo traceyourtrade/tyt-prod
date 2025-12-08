@@ -144,23 +144,24 @@ export default function PropFirmSuggestions({
   }
 
   return (
-    <div className="relative flex">
+    <div className="relative flex items-start gap-1">
       <button
         onClick={toggleCollapse}
         className={cn(
-          "absolute -left-3 top-1/2 -translate-y-1/2 z-10",
-          "w-6 h-12 rounded-l-lg",
-          "bg-gray-100 dark:bg-white/10 border border-r-0 border-gray-200 dark:border-white/10",
-          "hover:bg-gray-200 dark:hover:bg-white/20",
+          "mt-3 z-10",
+          "w-5 h-10 rounded-md",
+          "bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/10",
+          "hover:bg-blue-50 dark:hover:bg-blue-500/20 hover:border-blue-300 dark:hover:border-blue-500/30",
           "flex items-center justify-center",
-          "transition-all"
+          "transition-all duration-200",
+          "shadow-sm"
         )}
         title={isCollapsed ? "Expand" : "Collapse"}
       >
         {isCollapsed ? (
-          <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-white/70" />
+          <ChevronLeft className="w-3 h-3 text-gray-500 dark:text-white/60" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-gray-600 dark:text-white/70" />
+          <ChevronRight className="w-3 h-3 text-gray-500 dark:text-white/60" />
         )}
       </button>
 
