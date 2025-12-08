@@ -286,7 +286,7 @@ const DashboardCustom: React.FC = () => {
         {/* Left Column */}
         <div className="xl:col-span-2 space-y-4">
           {/* Date Range Picker Header */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 overflow-visible relative z-20">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
