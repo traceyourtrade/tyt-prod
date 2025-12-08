@@ -76,6 +76,7 @@ interface JournalData {
   prompts?: Record<string, string>;
   sentiment?: "great" | "okay" | "poor";
   tags?: string[];
+  rulesCompliance?: Record<string, boolean>;
 }
 
 interface Template {
@@ -201,6 +202,9 @@ const DailyJournal = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [mobileView, setMobileView] = useState<"list" | "content">("list");
   const [isStrategyDropdownOpen, setIsStrategyDropdownOpen] = useState(false);
+  const [strategyRules, setStrategyRules] = useState<{id: string; text: string}[]>([]);
+  const [rulesCompliance, setRulesCompliance] = useState<Record<string, boolean>>({});
+  const [loadingRules, setLoadingRules] = useState(false);
 
   const filterRef = useRef<HTMLDivElement>(null);
   const strategyDropdownRef = useRef<HTMLDivElement>(null);
@@ -275,10 +279,57 @@ const DailyJournal = () => {
       setSelectedTrade({ ...selectedTrade, strategy });
       setIsStrategyDropdownOpen(false);
       setAccounts();
+      fetchStrategyRules(strategy);
     } catch (error) {
       console.error("Error updating strategy:", error);
     }
   };
+
+  const fetchStrategyRules = async (strategyName: string, existingCompliance?: Record<string, boolean>) => {
+    if (!strategyName || strategyName === "Select") {
+      setStrategyRules([]);
+      setRulesCompliance({});
+      return;
+    }
+    
+    setLoadingRules(true);
+    try {
+      const res = await fetch(`/api/strategy/get?apiName=getStrategyRules&strategyName=${encodeURIComponent(strategyName)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStrategyRules(data.rules || []);
+        if (existingCompliance && Object.keys(existingCompliance).length > 0) {
+          setRulesCompliance(existingCompliance);
+        } else {
+          const initialCompliance: Record<string, boolean> = {};
+          (data.rules || []).forEach((rule: {id: string}) => {
+            initialCompliance[rule.id] = false;
+          });
+          setRulesCompliance(initialCompliance);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching strategy rules:", error);
+    } finally {
+      setLoadingRules(false);
+    }
+  };
+
+  const toggleRuleCompliance = (ruleId: string) => {
+    setRulesCompliance(prev => ({
+      ...prev,
+      [ruleId]: !prev[ruleId]
+    }));
+  };
+
+  useEffect(() => {
+    if (selectedTrade?.strategy && selectedTrade.strategy !== "Select") {
+      fetchStrategyRules(selectedTrade.strategy, selectedTrade.jrData?.rulesCompliance);
+    } else {
+      setStrategyRules([]);
+      setRulesCompliance({});
+    }
+  }, [selectedTrade?.strategy, selectedTrade?.id]);
 
   useEffect(() => {
     if (selectedTrade?.jrData) {
@@ -377,6 +428,11 @@ const DailyJournal = () => {
 
     try {
       const tradeId = selectedTrade._id || selectedTrade.id;
+      const jrDataWithRules = {
+        ...journalData,
+        templateId: templates[selectedTemplateIdx]?.name,
+        rulesCompliance: strategyRules.length > 0 ? rulesCompliance : undefined
+      };
       await fetch("/api/daily-journal/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -385,7 +441,7 @@ const DailyJournal = () => {
           id: tradeId,
           tokenn,
           accountType: selectedTrade.accountType,
-          jrData: { ...journalData, templateId: templates[selectedTemplateIdx]?.name },
+          jrData: jrDataWithRules,
         }),
       });
       setAccounts();
@@ -891,6 +947,50 @@ const DailyJournal = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Strategy Rules Checklist */}
+                {selectedTrade?.strategy && selectedTrade.strategy !== "Select" && strategyRules.length > 0 && (
+                  <div className="p-4 bg-card border border-border rounded-xl">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Strategy Rules
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        {Object.values(rulesCompliance).filter(Boolean).length}/{strategyRules.length} followed
+                      </span>
+                    </div>
+                    {loadingRules ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {strategyRules.map((rule) => (
+                          <label
+                            key={rule.id}
+                            className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                              rulesCompliance[rule.id]
+                                ? "bg-profit/5 border-profit/30"
+                                : "bg-muted/30 border-border hover:border-primary/30"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={rulesCompliance[rule.id] || false}
+                              onChange={() => toggleRuleCompliance(rule.id)}
+                              className="mt-0.5 w-4 h-4 rounded border-border text-profit focus:ring-profit/50 accent-profit"
+                            />
+                            <span className={`text-sm leading-relaxed ${
+                              rulesCompliance[rule.id] ? "text-foreground" : "text-muted-foreground"
+                            }`}>
+                              {rule.text}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Sentiment Slider */}
                 <div className="p-4 bg-card border border-border rounded-xl">
