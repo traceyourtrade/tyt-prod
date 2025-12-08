@@ -499,7 +499,7 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                 </div>
 
                 {/* Middle: Tags (Strategy & Quality) */}
-                <div className="hidden md:flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   {/* Strategy Tag */}
                   <div className="relative" onClick={(e) => e.stopPropagation()}>
                     <button
