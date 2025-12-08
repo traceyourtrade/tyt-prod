@@ -35,6 +35,10 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
 - **Playbook:** AI-powered pattern detection (`src/components/playbook/`) identifies winning trade setups based on historical data (strategy, symbol, time, day patterns). Users can add these to a personal playbook. Requires a minimum of 10 trades for detection.
 - **Prop Firm Mode:** A dedicated mode (`src/components/prop-firm/`) with a distinct amber/gold accent color scheme, circular progress gauges, and glassmorphism effects. It tracks challenge progress with profit targets and drawdown limits, including daily drawdown, and offers a "Challenge Command Center" design. Features a mode toggle and account type filtering (Normal vs. Prop Firm accounts).
 - **Lot Size Calculator:** A dedicated tool for forex position sizing with pip value calculations, input validation, and risk presets.
+- **Resource Center:** A comprehensive trading education hub at `/resources` with three main tabs:
+  - **Knowledge Hub:** 8 categorized trading education articles (Technical Analysis, Risk Management, Strategy, Fundamentals) with search, category filtering, expandable content, and read time estimates.
+  - **Psychology Corner:** Daily affirmations carousel with auto-rotation, psychology tips grid organized by category (Discipline, Mindset, Emotions, Pitfalls), and common trading pitfalls section.
+  - **Routines Tab:** Pre-built checklists (Pre-Market, During Trade, Post-Market), custom routine creation, item editing/deletion, daily automatic reset, streak tracking with farming protection. Uses localStorage for persistence.
 - **Account Type System:** A new `isPropFirm` field in user accounts allows filtering accounts based on "Live Trading" or "Prop Firm" modes throughout the application.
 
 ### System Design Choices
