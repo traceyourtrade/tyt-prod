@@ -971,14 +971,14 @@ const DailyJournal = () => {
                             className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
                               rulesCompliance[rule.id]
                                 ? "bg-profit/5 border-profit/30"
-                                : "bg-muted/30 border-border hover:border-primary/30"
+                                : "bg-background border-border hover:border-muted-foreground/30"
                             }`}
                           >
                             <input
                               type="checkbox"
                               checked={rulesCompliance[rule.id] || false}
                               onChange={() => toggleRuleCompliance(rule.id)}
-                              className="mt-0.5 w-4 h-4 rounded border-border text-profit focus:ring-profit/50 accent-profit"
+                              className="mt-0.5 w-4 h-4 rounded border-border accent-[#4EBF94]"
                             />
                             <span className={`text-sm leading-relaxed ${
                               rulesCompliance[rule.id] ? "text-foreground" : "text-muted-foreground"
