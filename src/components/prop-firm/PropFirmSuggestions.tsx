@@ -173,17 +173,17 @@ export default function PropFirmSuggestions({
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className={cn(
-              "overflow-hidden rounded-xl border backdrop-blur-sm",
+              "w-10 overflow-hidden rounded-xl border backdrop-blur-sm",
               "bg-white dark:bg-[#141414]",
               "border-gray-200 dark:border-white/10",
-              "flex flex-col items-center justify-center py-4 px-2 cursor-pointer",
+              "flex flex-col items-center justify-center py-4 cursor-pointer",
               "hover:bg-gray-50 dark:hover:bg-white/5"
             )}
             onClick={toggleCollapse}
           >
-            <Award className="w-5 h-5 text-gray-600 dark:text-white/70 mb-2" />
+            <Award className="w-4 h-4 text-gray-600 dark:text-white/70 mb-2" />
             <span 
-              className="text-[10px] font-bold text-gray-600 dark:text-white/70" 
+              className="text-[9px] font-bold text-gray-600 dark:text-white/70 whitespace-nowrap" 
               style={{ writingMode: 'vertical-lr' }}
             >
               Prop Firms

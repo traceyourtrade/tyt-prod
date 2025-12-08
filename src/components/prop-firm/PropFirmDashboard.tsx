@@ -261,8 +261,8 @@ export default function PropFirmDashboard() {
       </div>
 
       <div className={cn(
-        "hidden xl:block flex-shrink-0 transition-all duration-300",
-        suggestionsCollapsed ? "w-16" : "w-80"
+        "hidden xl:block flex-shrink-0 transition-all duration-300 overflow-hidden",
+        suggestionsCollapsed ? "w-14" : "w-80"
       )}>
         <div className="sticky top-6">
           <PropFirmSuggestions 
