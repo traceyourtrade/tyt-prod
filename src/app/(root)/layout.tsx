@@ -31,6 +31,7 @@ import {
   X,
   Calculator,
   Sparkles,
+  GraduationCap,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -56,6 +57,7 @@ const mainNavItems = [
   { name: "Reports", href: "/reports", icon: BarChart3, color: "#7CB89E" },
   { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A" },
   { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B" },
+  { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8" },
   { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4" },
 ]
 
