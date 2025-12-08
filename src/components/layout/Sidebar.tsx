@@ -20,6 +20,7 @@ import {
   Calculator,
   Sparkles,
   ChevronRight,
+  GraduationCap,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -41,6 +42,7 @@ const mainNavItems = [
   { name: "Reports", href: "/reports", icon: BarChart3, color: "from-cyan-500/20 to-cyan-600/10" },
   { name: "Strategies", href: "/strategies", icon: Target, color: "from-rose-500/20 to-rose-600/10" },
   { name: "Playbook", href: "/playbook", icon: Sparkles, color: "from-emerald-500/20 to-emerald-600/10" },
+  { name: "Resources", href: "/resources", icon: GraduationCap, color: "from-teal-500/20 to-teal-600/10" },
   { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "from-indigo-500/20 to-indigo-600/10" },
 ]
 
