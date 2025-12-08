@@ -12,7 +12,8 @@ import {
   Building2,
   Wallet,
   Settings,
-  Zap
+  Zap,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
@@ -33,7 +34,7 @@ const AccountsDropdown = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   const { accounts, updateAccView, checkAll } = useAccountDetails();
-  const { setAddAcc } = calendarPopUp();
+  const { setAddAcc, setDeleteAccData, setDeleteAcc } = calendarPopUp();
   const { isEnabled: isPropFirmMode } = usePropFirmStore();
 
   const filteredAccounts = useMemo(() => {
@@ -77,6 +78,13 @@ const AccountsDropdown = () => {
         }
       }
     }
+  };
+
+  const handleDeleteAccount = (e: React.MouseEvent, account: any) => {
+    e.stopPropagation();
+    setDeleteAccData(account);
+    setDeleteAcc();
+    setIsOpen(false);
   };
 
   const getDisplayText = () => {
@@ -191,30 +199,38 @@ const AccountsDropdown = () => {
                 {/* Account List */}
                 <div className="max-h-64 overflow-y-auto p-2 space-y-1">
                   {filteredAccounts.map((account) => (
-                    <button
+                    <div
                       key={account._id || account.accountName}
-                      onClick={() => handleToggleAccount(account.accountName)}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
                     >
                       {/* Checkbox */}
-                      <div className={cn(
-                        "w-5 h-5 rounded flex items-center justify-center transition-all flex-shrink-0",
-                        account.checked 
-                          ? "bg-primary text-white" 
-                          : "border-2 border-border group-hover:border-primary/50"
-                      )}>
+                      <button
+                        onClick={() => handleToggleAccount(account.accountName)}
+                        className={cn(
+                          "w-5 h-5 rounded flex items-center justify-center transition-all flex-shrink-0 cursor-pointer",
+                          account.checked 
+                            ? "bg-primary text-white" 
+                            : "border-2 border-border group-hover:border-primary/50"
+                        )}
+                      >
                         {account.checked && <Check className="w-3.5 h-3.5" />}
-                      </div>
+                      </button>
 
                       {/* Broker Icon */}
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center flex-shrink-0">
+                      <div 
+                        onClick={() => handleToggleAccount(account.accountName)}
+                        className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center flex-shrink-0 cursor-pointer"
+                      >
                         <span className="text-[10px] font-bold text-blue-400">
                           {brokerIcons[account.broker || ""] || "AC"}
                         </span>
                       </div>
 
                       {/* Account Info */}
-                      <div className="flex-1 min-w-0 text-left">
+                      <div 
+                        onClick={() => handleToggleAccount(account.accountName)}
+                        className="flex-1 min-w-0 text-left cursor-pointer"
+                      >
                         <p className="text-sm font-medium text-foreground truncate">
                           {account.accountName}
                         </p>
@@ -225,11 +241,23 @@ const AccountsDropdown = () => {
 
                       {/* Balance */}
                       {account.accountBalance && (
-                        <span className="text-xs font-medium text-profit flex-shrink-0">
+                        <span 
+                          onClick={() => handleToggleAccount(account.accountName)}
+                          className="text-xs font-medium text-profit flex-shrink-0 cursor-pointer"
+                        >
                           ${Number(account.accountBalance).toLocaleString()}
                         </span>
                       )}
-                    </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={(e) => handleDeleteAccount(e, account)}
+                        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 transition-all flex-shrink-0"
+                        title="Delete account"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500 transition-colors" />
+                      </button>
+                    </div>
                   ))}
                 </div>
 
