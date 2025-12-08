@@ -23,7 +23,10 @@ import {
   TrendingDown,
   Zap,
   Eye,
-  ImageIcon
+  ImageIcon,
+  ListChecks,
+  Square,
+  CheckSquare
 } from "lucide-react";
 
 import useAccountDetails from "@/store/accountdetails";
@@ -84,6 +87,10 @@ const JRContent = ({ dailyData }: JRContentProps) => {
     accountType: string;
     tradeName: string;
   } | null>(null);
+  
+  const [strategyRules, setStrategyRules] = useState<{id: string; text: string}[]>([]);
+  const [rulesCompliance, setRulesCompliance] = useState<Record<string, boolean>>({});
+  const [loadingRules, setLoadingRules] = useState(false);
 
   const itemsPerPage = 5;
   const totalPages = Math.ceil((dailyData?.length || 0) / itemsPerPage);
@@ -164,12 +171,57 @@ const JRContent = ({ dailyData }: JRContentProps) => {
     }
   };
 
+  const fetchStrategyRules = async (strategyName: string, existingCompliance?: Record<string, boolean>) => {
+    if (!strategyName || strategyName === "Select") {
+      setStrategyRules([]);
+      setRulesCompliance({});
+      return;
+    }
+    
+    setLoadingRules(true);
+    try {
+      const res = await fetch(`/api/strategy/get?apiName=getStrategyRules&strategyName=${encodeURIComponent(strategyName)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStrategyRules(data.rules || []);
+        if (existingCompliance && Object.keys(existingCompliance).length > 0) {
+          setRulesCompliance(existingCompliance);
+        } else {
+          const initialCompliance: Record<string, boolean> = {};
+          (data.rules || []).forEach((rule: {id: string}) => {
+            initialCompliance[rule.id] = false;
+          });
+          setRulesCompliance(initialCompliance);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching strategy rules:", error);
+    } finally {
+      setLoadingRules(false);
+    }
+  };
+
+  const toggleRuleCompliance = (ruleId: string) => {
+    setRulesCompliance(prev => ({
+      ...prev,
+      [ruleId]: !prev[ruleId]
+    }));
+  };
+
   const toggleExpand = (id: string, trade: Trade) => {
     if (expandedId === id) {
       setExpandedId(null);
+      setStrategyRules([]);
+      setRulesCompliance({});
     } else {
       setExpandedId(id);
       setJrData(trade.jrData || { rfe: "", widw: "", wni: "", lfnt: "" });
+      if (trade.strategy && trade.strategy !== "Select") {
+        fetchStrategyRules(trade.strategy, trade.jrData?.rulesCompliance);
+      } else {
+        setStrategyRules([]);
+        setRulesCompliance({});
+      }
     }
     setActiveDropdown(null);
   };
@@ -299,13 +351,19 @@ const JRContent = ({ dailyData }: JRContentProps) => {
   const submitJrData = async (id: string, accountType: string) => {
     setSavingId(id);
     try {
+      const jrDataWithRules = {
+        ...jrData,
+        rulesCompliance: strategyRules.length > 0 ? rulesCompliance : undefined
+      };
       const res = await fetch(`/api/daily-journal/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, tokenn, jrData, accountType, apiName: "uploadJournalData" }),
+        body: JSON.stringify({ id, tokenn, jrData: jrDataWithRules, accountType, apiName: "uploadJournalData" }),
       });
       if (res.ok) {
         setExpandedId(null);
+        setStrategyRules([]);
+        setRulesCompliance({});
         setAccounts();
         setAlertBoxG("Journal saved!", "success");
       }
@@ -767,6 +825,60 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                             </div>
                           </div>
                         </div>
+
+                        {/* Strategy Rules Checklist */}
+                        {trade.strategy && trade.strategy !== "Select" && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <ListChecks className="w-3.5 h-3.5 text-primary" />
+                              </div>
+                              <h4 className="text-sm font-semibold text-foreground">Strategy Rules</h4>
+                              {strategyRules.length > 0 && (
+                                <span className="ml-auto text-[10px] font-medium text-muted-foreground">
+                                  {Object.values(rulesCompliance).filter(Boolean).length}/{strategyRules.length} followed
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="bg-muted/20 rounded-xl p-3 border border-border/30">
+                              {loadingRules ? (
+                                <div className="flex items-center justify-center py-4">
+                                  <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                </div>
+                              ) : strategyRules.length > 0 ? (
+                                <div className="space-y-2">
+                                  {strategyRules.map((rule) => (
+                                    <button
+                                      key={rule.id}
+                                      onClick={() => toggleRuleCompliance(rule.id)}
+                                      className={`w-full flex items-start gap-3 p-2.5 rounded-lg transition-all text-left ${
+                                        rulesCompliance[rule.id]
+                                          ? 'bg-profit/10 border border-profit/20'
+                                          : 'hover:bg-muted/30 border border-transparent'
+                                      }`}
+                                    >
+                                      {rulesCompliance[rule.id] ? (
+                                        <CheckSquare className="w-4 h-4 text-profit flex-shrink-0 mt-0.5" />
+                                      ) : (
+                                        <Square className="w-4 h-4 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
+                                      )}
+                                      <span className={`text-xs ${
+                                        rulesCompliance[rule.id] ? 'text-foreground' : 'text-muted-foreground'
+                                      }`}>
+                                        {rule.text}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground/60 text-center py-3">
+                                  No rules defined for this strategy
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Right Column: Journal Notes (spans 7 cols) */}

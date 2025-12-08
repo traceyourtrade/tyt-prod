@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react";
 import Cookies from "js-cookie";
-import { MoreVertical, Send, X, Plus, Search, Target, TrendingUp, BarChart3, Percent } from "lucide-react";
+import { MoreVertical, Send, X, Plus, Search, Target, TrendingUp, BarChart3, Percent, ListChecks, Trash2 } from "lucide-react";
 import StrategyPopup from "@/components/strategy/components/StrategyPopUp";
 import { useDataStore } from "@/store/store";
 
@@ -40,10 +40,16 @@ interface StrategiesProps {
   strategiesDataObj: { [key: string]: Trade[] };
 }
 
+interface StrategyRule {
+  id: string;
+  text: string;
+}
+
 interface NewStrategy {
   name: string;
   tags: string;
   author: string;
+  rules: StrategyRule[];
 }
 
 const Strategies = ({ allStrategies, strategies, strategiesDataObj }: StrategiesProps) => {
@@ -58,7 +64,9 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
     name: "",
     tags: "",
     author: "",
+    rules: [],
   });
+  const [newRuleText, setNewRuleText] = useState("");
   const [selectedStrategy, setSelectedStrategy] = useState<CombinedData & { name: string } | null>(null);
   const [error, setError] = useState("");
 
@@ -129,7 +137,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
       const data = await res.json();
 
       if (res.status === 200) {
-        setNewStrategy({ name: "", tags: "", author: "" });
+        setNewStrategy({ name: "", tags: "", author: "", rules: [] });
         setShowPopup(false);
       } else {
         console.log(data);
@@ -175,6 +183,28 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
     }
   };
 
+  const addRule = () => {
+    if (!newRuleText.trim()) return;
+    
+    const rule: StrategyRule = {
+      id: `rule-${Date.now()}`,
+      text: newRuleText.trim()
+    };
+    
+    setNewStrategy({
+      ...newStrategy,
+      rules: [...newStrategy.rules, rule]
+    });
+    setNewRuleText("");
+  };
+
+  const removeRule = (ruleId: string) => {
+    setNewStrategy({
+      ...newStrategy,
+      rules: newStrategy.rules.filter(r => r.id !== ruleId)
+    });
+  };
+
   const handleAddStrategy = async (e: React.MouseEvent) => {
     e.preventDefault();
 
@@ -191,14 +221,19 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         },
         body: JSON.stringify({
           apiName:'addStrategy',
-          tokenn, strategy: newStrategy.name, tags: newStrategy.tags, description: newStrategy.author
+          tokenn, 
+          strategy: newStrategy.name, 
+          tags: newStrategy.tags, 
+          description: newStrategy.author,
+          rules: newStrategy.rules
         })
       });
 
       const data = await res.json();
 
       if (res.status === 200) {
-        setNewStrategy({ name: "", tags: "", author: "" });
+        setNewStrategy({ name: "", tags: "", author: "", rules: [] });
+        setNewRuleText("");
         setShowPopup(false);
       } else {
         console.log(data);
@@ -442,7 +477,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
           onClick={() => setShowPopup(false)}
         >
           <div
-            className="bg-card border border-border p-6 rounded-xl w-[400px] shadow-2xl"
+            className="bg-card border border-border p-6 rounded-xl w-[500px] max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-6">
@@ -493,6 +528,68 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                   }
                   className="w-full px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
                 />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-1.5">
+                  <ListChecks className="h-4 w-4 text-primary" />
+                  Strategy Rules / Checklist
+                </label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Add rules that must be followed when trading this strategy. These will appear as a checklist when journaling.
+                </p>
+                
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    placeholder="e.g., Wait for confirmation candle"
+                    value={newRuleText}
+                    onChange={(e) => setNewRuleText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addRule();
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 rounded-lg border border-border bg-muted text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
+                  />
+                  <button
+                    type="button"
+                    onClick={addRule}
+                    className="px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {newStrategy.rules.length > 0 && (
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {newStrategy.rules.map((rule, index) => (
+                      <div
+                        key={rule.id}
+                        className="flex items-center gap-2 p-2.5 bg-muted rounded-lg group"
+                      >
+                        <span className="w-5 h-5 flex items-center justify-center rounded bg-primary/10 text-primary text-xs font-medium">
+                          {index + 1}
+                        </span>
+                        <span className="flex-1 text-sm text-foreground">{rule.text}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeRule(rule.id)}
+                          className="p-1 text-muted-foreground hover:text-loss opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {newStrategy.rules.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic py-2">
+                    No rules added yet. Add rules to create a trading checklist.
+                  </p>
+                )}
               </div>
 
               {error && (

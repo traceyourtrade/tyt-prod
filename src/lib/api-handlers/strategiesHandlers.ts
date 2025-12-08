@@ -30,7 +30,7 @@ async function getUserFromToken(token: string) {
 // ADD STRATEGY
 export async function addStrategyHandler(req:any, userId: string, token: string) {
     try {
-        const { strategy, tags, description } = req;
+        const { strategy, tags, description, rules } = req;
 
         // Validate inputs
         if (!strategy) {
@@ -67,6 +67,12 @@ export async function addStrategyHandler(req:any, userId: string, token: string)
             processedTags = tags.map((tag) => tag.trim());
         }
 
+        // Process rules array
+        let processedRules: { id: string; text: string }[] = [];
+        if (Array.isArray(rules)) {
+            processedRules = rules.filter(rule => rule && rule.text && rule.text.trim().length > 0);
+        }
+
         // Check if user already has strategies
         const existingStrategies = await Strategy.find({ uniqueId: rootUser.uniqueId });
 
@@ -79,6 +85,7 @@ export async function addStrategyHandler(req:any, userId: string, token: string)
             strategy: strategy.trim(),
             ...(description && { description }),
             ...(processedTags.length > 0 && { tags: processedTags }),
+            ...(processedRules.length > 0 && { rules: processedRules }),
             isDefault,
         });
 
@@ -348,6 +355,43 @@ export async function getStrategiesHandler(req:any, userId: string, token: strin
 
     } catch (error) {
         console.error("Error fetching strategies:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}
+
+// GET STRATEGY RULES
+export async function getStrategyRulesHandler(req: NextRequest, userId: string, token: string) {
+    try {
+        const url = new URL(req.url);
+        const strategyName = url.searchParams.get('strategyName');
+
+        if (!strategyName) {
+            return NextResponse.json({ error: "Strategy name is required" }, { status: 400 });
+        }
+
+        const rootUser = await getUserFromToken(token);
+        if (!rootUser) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        const Strategy = await getStrategyModel();
+        const strategy = await Strategy.findOne({ 
+            uniqueId: rootUser.uniqueId, 
+            strategy: strategyName 
+        });
+
+        if (!strategy) {
+            return NextResponse.json({ rules: [] });
+        }
+
+        return NextResponse.json({ 
+            rules: strategy.rules || [],
+            strategyName: strategy.strategy,
+            strategyId: strategy._id
+        });
+
+    } catch (error) {
+        console.error("Error fetching strategy rules:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

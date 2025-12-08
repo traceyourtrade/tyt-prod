@@ -1,15 +1,26 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { connectMainDB } from "@/lib/db/connect";
 
+export interface IStrategyRule {
+    id: string;
+    text: string;
+}
+
 export interface IStrategy extends Document {
     uniqueId: string;
     strategy: string;
     description?: string;
     tags?: string[];
     imgLink?: string;
+    rules?: IStrategyRule[];
     isDefault: boolean;
     createdDate: Date;
 }
+
+const strategyRuleSchema = new Schema<IStrategyRule>({
+    id: { type: String, required: true },
+    text: { type: String, required: true }
+}, { _id: false });
 
 const strategySchema = new Schema<IStrategy>({
     uniqueId: { type: String, required: true },
@@ -17,6 +28,7 @@ const strategySchema = new Schema<IStrategy>({
     description: String,
     tags: [String],
     imgLink: String,
+    rules: [strategyRuleSchema],
     isDefault: { type: Boolean, default: false },
     createdDate: { type: Date, default: Date.now }
 });

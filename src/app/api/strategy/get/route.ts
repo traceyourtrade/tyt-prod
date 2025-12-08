@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 
 // Import GET handler functions
 import { 
-    getStrategiesHandler
+    getStrategiesHandler,
+    getStrategyRulesHandler
 } from '../../../../lib/api-handlers/strategiesHandlers';
 
 export async function GET(req: NextRequest) {
@@ -26,6 +27,9 @@ export async function GET(req: NextRequest) {
         switch (apiName) {
             case "getStrategies":
                 return await getStrategiesHandler(req, userId, token);
+            
+            case "getStrategyRules":
+                return await getStrategyRulesHandler(req, userId, token);
             
             default:
                 return NextResponse.json({ error: "API endpoint not found" }, { status: 404 });
