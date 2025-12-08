@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCircleLeft } from "@fortawesome/free-solid-svg-icons";
+import { X, Trash2, AlertTriangle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import calendarPopUp from "@/store/calendarPopUp";
 import notifications from "@/store/notifications";
 import useAccountDetails from "@/store/accountdetails";
 import { useDataStore } from "@/store/store";
-
+import { cn } from "@/lib/utils";
 
 interface AccountDetails {
   accountName: string;
@@ -25,18 +25,12 @@ interface DeleteAccData {
   description?: string;
 }
 
-
 const DeleteAccPopup = () => {
   const { showDeleteAcc, setDeleteAcc, deleteAccData } = calendarPopUp();
   const { setAccounts } = useAccountDetails();
-  const { setAlertBoxG, accStatusPolling } = notifications();
+  const { setAlertBoxG } = notifications();
   const { bkurl } = useDataStore();
 
-  const [accountType, setAccountType] = useState<string>("Select your Account Type");
-  const [broker, setBroker] = useState<string>("Select your Broker");
-  const [investorId, setInvestorId] = useState<string>("");
-  const [investorPw, setInvestorPw] = useState<string>("");
-  const [server, setServer] = useState<string>("");
   const [accountDetails, setAccDetails] = useState<AccountDetails>({
     accountName: "",
     accountBalance: "",
@@ -45,30 +39,26 @@ const DeleteAccPopup = () => {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [confirmAccountName, setConfirmAccountName] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const data = deleteAccData as DeleteAccData;
-    setAccountType(data.accountType || "Select your Account Type");
-    setBroker(data.broker || "Select your Broker");
-    setInvestorId(data.investorId || "");
-    setInvestorPw(data.investorPw || "");
-    setServer(data.serverName || "");
     setAccDetails({
       accountName: data.accountName || "",
       accountBalance: data.accountBalance || "",
       description: data.description || ""
     });
+    setConfirmAccountName("");
+    setError("");
+    setSuccess("");
   }, [deleteAccData]);
-
-  const handleOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setAccDetails({ ...accountDetails, [name]: value });
-  };
-
 
   const handleDelete = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (confirmAccountName !== accountDetails.accountName) return;
 
+    setIsDeleting(true);
     const { accountName } = accountDetails;
 
     try {
@@ -79,7 +69,7 @@ const DeleteAccPopup = () => {
         },
         body: JSON.stringify({
           accountName,
-          apiName:deleteAccData.accountType === 'Broker Sync' ? 'deleteAsyncAcc' : 'deleteFileManual'
+          apiName: (deleteAccData as DeleteAccData).accountType === 'Broker Sync' ? 'deleteAsyncAcc' : 'deleteFileManual'
         })
       });
 
@@ -93,100 +83,164 @@ const DeleteAccPopup = () => {
           setDeleteAcc();
           setAlertBoxG("Your account has been deleted.", "async-alert");
           setAccounts();
+          setIsDeleting(false);
         }, 1500);
       } else {
         setError(data.error || "Something went wrong");
+        setIsDeleting(false);
       }
     } catch (err) {
       setError("An unexpected error occurred");
+      setIsDeleting(false);
     }
   };
 
+  const isConfirmValid = confirmAccountName === accountDetails.accountName;
+
   return (
-<div
-  className={`fixed inset-0 flex justify-start pt-12 min-h-screen 
-  bg-black/40 backdrop-blur-md 
-  ${showDeleteAcc ? "block" : "hidden"}`}
->
-
-      <div className="w-11/12 max-w-[500px] h-fit bg-[#22212161] backdrop-blur-[30px] border border-gray-600 rounded-[25px] shadow-2xl scale-90 mx-auto">
-        <div className="relative p-6">
-          <div className="absolute top-5 left-5">
-            <button 
-              onClick={() => setDeleteAcc()} 
-              className="text-xs text-gray-400 font-semibold cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors"
-            >
-              <FontAwesomeIcon icon={faCircleLeft} />
-              Back
-            </button>
-          </div>
-
-          <div className="text-center mt-2">
-            {/* Logo placeholder - replace with your actual logo */}
-            <div className="w-[70px] h-[70px] mx-auto mt-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">TYT</span>
-            </div>
-          </div>
-
-          <h2 className="text-center text-2xl font-semibold text-white mb-2">Delete Account</h2>
+    <AnimatePresence>
+      {showDeleteAcc && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setDeleteAcc()}
+          />
           
-          <div className="text-center text-sm text-gray-300 mb-5">
-            Enter <strong className="text-white">{accountDetails.accountName}</strong> to confirm delete
-          </div>
-          
-          <div className="text-center text-sm text-red-400 mb-5">
-            This will delete all your trade data from us.
-          </div>
-
-          <div className="w-full flex flex-col items-center mt-5">
-            <input
-              placeholder="Enter Account Name"
-              type="text"
-              value={confirmAccountName}
-              onChange={(e) => { 
-                setConfirmAccountName(e.target.value); 
-                setError(""); 
-                setSuccess(""); 
-              }}
-              className={`w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none transition-colors text-black ${
-                confirmAccountName && confirmAccountName !== accountDetails.accountName 
-                  ? "border-2 border-red-500" 
-                  : "border-2 border-transparent"
-              }`}
-            />
-          </div>
-
-          <div className="w-full flex justify-center my-6">
-            <div className="w-1/2 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-70 rounded"></div>
-          </div>
-
-          {error && (
-            <p className="text-red-400 text-xs text-center mb-2 animate-pulse">{error}</p>
-          )}
-          {success && (
-            <p className="text-green-400 text-xs text-center mb-2 animate-pulse">{success}</p>
-          )}
-
-          <button
-            className={`w-36 mx-auto block py-3 rounded-[25px] text-sm text-white font-semibold border-none outline-none transition-all duration-200 ${
-              confirmAccountName === accountDetails.accountName 
-                ? "bg-red-600 hover:bg-red-700 cursor-pointer transform hover:scale-105" 
-                : "bg-gray-500 cursor-not-allowed"
-            }`}
-            onClick={handleDelete}
-            disabled={confirmAccountName !== accountDetails.accountName}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
           >
-            Delete Account
-          </button>
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500" />
+            
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                    <Trash2 className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Delete Account</h2>
+                    <p className="text-sm text-muted-foreground">This action cannot be undone</p>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setDeleteAcc()}
+                  className="p-2 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
 
-          <button className="w-full text-center text-purple-400 text-xs font-semibold mt-4 mb-2 cursor-pointer hover:text-purple-300 transition-colors">
-            Need Help ?
-          </button>
-        </div>
-      </div>
-    </div>
+              <div className="mb-6 p-4 rounded-xl bg-red-500/5 border border-red-500/20">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-500 mb-1">Warning</p>
+                    <p className="text-sm text-muted-foreground">
+                      You are about to permanently delete <span className="font-semibold text-foreground">{accountDetails.accountName}</span> and all associated trade data. This action is irreversible.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Type <span className="font-semibold text-red-500">{accountDetails.accountName}</span> to confirm
+                  </label>
+                  <input
+                    type="text"
+                    value={confirmAccountName}
+                    onChange={(e) => { 
+                      setConfirmAccountName(e.target.value); 
+                      setError(""); 
+                      setSuccess(""); 
+                    }}
+                    placeholder="Enter account name"
+                    className={cn(
+                      "w-full px-4 py-3 rounded-xl text-sm font-medium",
+                      "bg-muted/50 border transition-all duration-200",
+                      "placeholder:text-muted-foreground/50 text-foreground",
+                      "focus:outline-none focus:ring-2 focus:ring-red-500/30",
+                      isConfirmValid 
+                        ? "border-green-500/50 bg-green-500/5" 
+                        : confirmAccountName 
+                          ? "border-red-500/50" 
+                          : "border-border"
+                    )}
+                  />
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {error && (
+                    <motion.p 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-red-500 text-sm text-center"
+                    >
+                      {error}
+                    </motion.p>
+                  )}
+                  {success && (
+                    <motion.p 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-green-500 text-sm text-center"
+                    >
+                      {success}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    onClick={() => setDeleteAcc()}
+                    className="flex-1 px-4 py-3 rounded-xl text-sm font-medium text-foreground bg-muted hover:bg-muted/80 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={!isConfirmValid || isDeleting}
+                    className={cn(
+                      "flex-1 px-4 py-3 rounded-xl text-sm font-medium text-white transition-all duration-200",
+                      "flex items-center justify-center gap-2",
+                      isConfirmValid && !isDeleting
+                        ? "bg-red-600 hover:bg-red-700 cursor-pointer" 
+                        : "bg-muted text-muted-foreground cursor-not-allowed"
+                    )}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        Delete Account
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
-
 
 export default DeleteAccPopup;
