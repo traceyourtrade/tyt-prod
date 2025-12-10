@@ -34,6 +34,7 @@ import { useDataStore } from "@/store/store";
 import notebookStore from "@/store/notebookStore";
 import notifications from "@/store/notifications";
 import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
+import ShareTradeModal from "@/components/shared/ShareTradeModal";
 
 interface Trade {
   id: string;
@@ -91,6 +92,12 @@ const JRContent = ({ dailyData }: JRContentProps) => {
   const [strategyRules, setStrategyRules] = useState<{id: string; text: string}[]>([]);
   const [rulesCompliance, setRulesCompliance] = useState<Record<string, boolean>>({});
   const [loadingRules, setLoadingRules] = useState(false);
+  const [shareModal, setShareModal] = useState<{
+    isOpen: boolean;
+    tradeId: string;
+    accountId: string;
+    tradeSummary: { symbol?: string; pnl?: number; date?: string };
+  } | null>(null);
 
   const itemsPerPage = 5;
   const totalPages = Math.ceil((dailyData?.length || 0) / itemsPerPage);
@@ -394,24 +401,21 @@ const JRContent = ({ dailyData }: JRContentProps) => {
     }
   };
 
-  const handleShare = async (index: number) => {
-    const element = document.getElementById(`trade-card-${index}`);
-    if (!element) return;
-
-    try {
-      const canvas = await html2canvas(element, { backgroundColor: "#0a0a0a", useCORS: true, scale: 2 });
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) return;
-
-      const file = new File([blob], `trade-${index}.png`, { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: `Trade ${index + 1}` });
-      } else {
-        setAlertBoxG("Sharing not supported on this device.", "error");
+  const handleShare = (trade: Trade) => {
+    setShareModal({
+      isOpen: true,
+      tradeId: trade.id,
+      accountId: trade.accountType,
+      tradeSummary: {
+        symbol: trade.Item,
+        pnl: trade.Profit,
+        date: new Date(trade.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        })
       }
-    } catch (error) {
-      console.error(error);
-    }
+    });
   };
 
   const getQualityLabel = (quality: Record<string, boolean>) => {
@@ -639,9 +643,10 @@ const JRContent = ({ dailyData }: JRContentProps) => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleShare(index);
+                        handleShare(trade);
                       }}
                       className="p-2 rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-all"
+                      title="Share trade"
                     >
                       <Share2 className="w-4 h-4" />
                     </button>
@@ -1106,6 +1111,17 @@ const JRContent = ({ dailyData }: JRContentProps) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Share Trade Modal */}
+      {shareModal && (
+        <ShareTradeModal
+          isOpen={shareModal.isOpen}
+          onClose={() => setShareModal(null)}
+          tradeId={shareModal.tradeId}
+          accountId={shareModal.accountId}
+          tradeSummary={shareModal.tradeSummary}
+        />
+      )}
     </div>
   );
 };
