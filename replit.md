@@ -48,6 +48,20 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
   - **Benchmarks:** Monthly P&L comparisons, consistency score, rolling 30-trade performance, profitable months tracking
   - **Trade Quality:** Auto-scoring based on strategy/SL/TP presence, quality vs profitability correlation, improvement tracking
   - **Correlations:** Symbol performance rankings, strategy effectiveness, symbol pair correlations
+- **Trade Sharing:** Share individual trades with other users for feedback at `/shared/[token]`:
+  - Generate shareable links for any trade with public/private visibility options
+  - Privacy controls: hide dollar amounts, hide account size, set link expiration
+  - Private sharing restricts access to specific email addresses
+  - Comment/feedback system for viewers to provide input on shared trades
+  - View count tracking for shared trade links
+  - ShareTradeModal component in `src/components/shared/ShareTradeModal.tsx`
+- **Leaderboard:** Community rankings at `/leaderboard` with opt-in participation:
+  - Four ranking categories: Consistency Score, R-Multiple, Win Rate, Profit Factor
+  - Three time periods: This Week, This Month, All Time
+  - Opt-in system with privacy controls (anonymous names, display name customization)
+  - Rank change indicators showing movement since last update
+  - Top 3 positions feature special badges (gold, silver, bronze)
+  - User can view their own ranking across all categories
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for app routes, components, utilities (`lib`, `utils`), database models, state management (`store`), and type definitions.

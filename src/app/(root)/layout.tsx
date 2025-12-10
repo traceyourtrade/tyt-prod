@@ -33,6 +33,7 @@ import {
   Sparkles,
   GraduationCap,
   BrainCircuit,
+  Trophy,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -59,6 +60,7 @@ const mainNavItems = [
   { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A" },
   { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B" },
   { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, color: "#8B5CF6" },
+  { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "#F59E0B" },
   { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8" },
   { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4" },
 ]
@@ -85,6 +87,7 @@ const pageTitles: Record<string, string> = {
   "/strategies/compare": "Compare",
   "/playbook": "Playbook",
   "/ai-analysis": "AI Analysis",
+  "/leaderboard": "Leaderboard",
   "/lot-calculator": "Lot Calculator",
   "/settings": "Settings",
   "/support": "Support",
