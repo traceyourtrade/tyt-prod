@@ -40,6 +40,14 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
   - **Psychology Corner:** Daily affirmations carousel with auto-rotation, psychology tips grid organized by category (Discipline, Mindset, Emotions, Pitfalls), and common trading pitfalls section.
   - **Routines Tab:** Pre-built checklists (Pre-Market, During Trade, Post-Market), custom routine creation, item editing/deletion, daily automatic reset, streak tracking with farming protection. Uses localStorage for persistence.
 - **Account Type System:** A new `isPropFirm` field in user accounts allows filtering accounts based on "Live Trading" or "Prop Firm" modes throughout the application.
+- **AI Analysis:** Advanced statistical analysis hub at `/ai-analysis` with 7 modules (no actual AI, uses rule-based statistics):
+  - **Streak Analysis:** Win/loss streak tracking, longest/average streaks, post-streak pattern detection (overconfidence warnings)
+  - **Risk Analysis:** Max drawdown, daily P&L extremes, position sizing consistency, risk:reward ratio trends
+  - **Time Insights:** Best/worst trading hours, session performance (Asian/London/NY), holding time analysis
+  - **Emotional Patterns:** Revenge trading detection (trades within 15min of loss), overtrading days, recovery time analysis
+  - **Benchmarks:** Monthly P&L comparisons, consistency score, rolling 30-trade performance, profitable months tracking
+  - **Trade Quality:** Auto-scoring based on strategy/SL/TP presence, quality vs profitability correlation, improvement tracking
+  - **Correlations:** Symbol performance rankings, strategy effectiveness, symbol pair correlations
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for app routes, components, utilities (`lib`, `utils`), database models, state management (`store`), and type definitions.
