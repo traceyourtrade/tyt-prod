@@ -42,12 +42,14 @@ import {
   LayoutDashboard,
   Pencil,
   Eye,
+  Share2,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
 import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { SymbolLogo } from "@/components/ui/SymbolLogo";
 import QuickFillDropdown from "@/components/journal/QuickFillDropdown";
+import ShareTradeModal from "@/components/shared/ShareTradeModal";
 
 interface Trade {
   id?: string;
@@ -196,6 +198,12 @@ const DailyJournal = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxType, setLightboxType] = useState<"before" | "after" | null>(null);
+  const [shareModal, setShareModal] = useState<{
+    isOpen: boolean;
+    tradeId: string;
+    accountId: string;
+    tradeSummary: { symbol?: string; pnl?: number; date?: string };
+  } | null>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [tagInput, setTagInput] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -900,8 +908,34 @@ const DailyJournal = () => {
                         </div>
                       </div>
                     </div>
-                    <div className={`text-xl font-bold tabular-nums ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
-                      {selectedTrade.Profit >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(selectedTrade.Profit), currency, exchangeRate)}
+                    <div className="flex items-center gap-3">
+                      {!isDemo && (selectedTrade.id || selectedTrade._id) && (
+                        <button
+                          onClick={() => setShareModal({
+                            isOpen: true,
+                            tradeId: selectedTrade.id || selectedTrade._id || "",
+                            accountId: selectedTrade.accountType || "",
+                            tradeSummary: {
+                              symbol: selectedTrade.Item || selectedTrade.symbol,
+                              pnl: selectedTrade.Profit,
+                              date: selectedTrade.date 
+                                ? new Date(selectedTrade.date).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric"
+                                  })
+                                : undefined
+                            }
+                          })}
+                          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                          title="Share trade"
+                        >
+                          <Share2 className="w-5 h-5" />
+                        </button>
+                      )}
+                      <div className={`text-xl font-bold tabular-nums ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                        {selectedTrade.Profit >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(selectedTrade.Profit), currency, exchangeRate)}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1476,6 +1510,17 @@ const DailyJournal = () => {
           </motion.button>
         </div>
       </div>
+
+      {/* Share Trade Modal */}
+      {shareModal && (
+        <ShareTradeModal
+          isOpen={shareModal.isOpen}
+          onClose={() => setShareModal(null)}
+          tradeId={shareModal.tradeId}
+          accountId={shareModal.accountId}
+          tradeSummary={shareModal.tradeSummary}
+        />
+      )}
     </div>
   );
 };
