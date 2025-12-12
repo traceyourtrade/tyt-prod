@@ -75,13 +75,26 @@ const DashboardDay: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (showCalendar && buttonRef.current) {
+  const updateDropdownPosition = () => {
+    if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.right - 280 + window.scrollX,
+        top: rect.bottom + 8,
+        left: rect.right - 280,
       });
+    }
+  };
+
+  useEffect(() => {
+    if (showCalendar) {
+      updateDropdownPosition();
+      
+      const handleScroll = () => {
+        updateDropdownPosition();
+      };
+      
+      window.addEventListener('scroll', handleScroll, true);
+      return () => window.removeEventListener('scroll', handleScroll, true);
     }
   }, [showCalendar]);
 
