@@ -78,10 +78,29 @@ const DashboardDay: React.FC = () => {
   const updateDropdownPosition = () => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 8,
-        left: rect.right - 280,
-      });
+      const isMobile = window.innerWidth < 640;
+      const padding = 16;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const calendarWidth = Math.min(280, viewportWidth - padding * 2);
+      
+      if (isMobile) {
+        const centeredLeft = (viewportWidth - calendarWidth) / 2;
+        
+        setDropdownPosition({
+          top: padding,
+          left: Math.max(padding, centeredLeft),
+        });
+      } else {
+        const desiredLeft = rect.right - calendarWidth;
+        const safeLeft = Math.max(padding, Math.min(desiredLeft, viewportWidth - calendarWidth - padding));
+        const safeTop = Math.max(padding, Math.min(rect.bottom + 8, viewportHeight - 380));
+        
+        setDropdownPosition({
+          top: safeTop,
+          left: safeLeft,
+        });
+      }
     }
   };
 
@@ -93,8 +112,19 @@ const DashboardDay: React.FC = () => {
         updateDropdownPosition();
       };
       
+      const handleResize = () => {
+        updateDropdownPosition();
+      };
+      
       window.addEventListener('scroll', handleScroll, true);
-      return () => window.removeEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
+      
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
+      };
     }
   }, [showCalendar]);
 
@@ -286,7 +316,7 @@ const DashboardDay: React.FC = () => {
                           left: dropdownPosition.left,
                           zIndex: 9999,
                         }}
-                        className="bg-card border border-border rounded-xl p-4 shadow-2xl min-w-[280px]"
+                        className="bg-card border border-border rounded-xl p-4 shadow-2xl w-[280px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-auto"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <button
