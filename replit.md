@@ -67,6 +67,13 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
   - Coming soon brokers: MetaTrader 4, TradingView, Zerodha, Interactive Brokers
   - Premium glassmorphic card design with gradient broker logos
   - Features: Auto-sync, Secure API, Real-time status indicators
+- **Support Page:** Comprehensive help center at `/support` with:
+  - Glassmorphic hero section with gradient orbs matching app design
+  - Quick Links grid to Resource Center, AI Analysis, Settings, Lot Calculator
+  - Help Topics cards (Getting Started, Analytics, Notebook, Settings) with color-coded icons
+  - FAQ section with tab-based categories and expandable accordion
+  - Contact Form with email submission to support team (sends confirmation to user)
+  - API endpoint at `/api/support/contact` for form processing
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for app routes, components, utilities (`lib`, `utils`), database models, state management (`store`), and type definitions.
