@@ -6,13 +6,11 @@ import {
   Link2, 
   RefreshCw, 
   CheckCircle2, 
-  AlertCircle,
   Clock,
   ChevronRight,
   Zap,
   Shield,
   Globe,
-  Settings,
   ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,7 +31,28 @@ const brokerConnections: BrokerConnection[] = [
     name: "MetaTrader 5",
     logo: "MT5",
     description: "Connect your MT5 account for automatic trade sync",
-    status: "coming_soon"
+    status: "disconnected"
+  },
+  {
+    id: "binance",
+    name: "Binance",
+    logo: "BN",
+    description: "Connect your Binance account via API",
+    status: "disconnected"
+  },
+  {
+    id: "angelone",
+    name: "Angel One",
+    logo: "AO",
+    description: "Sync trades from your Angel One account",
+    status: "disconnected"
+  },
+  {
+    id: "upstox",
+    name: "Upstox",
+    logo: "UP",
+    description: "Connect your Upstox account for trade sync",
+    status: "disconnected"
   },
   {
     id: "mt4",
@@ -47,13 +66,6 @@ const brokerConnections: BrokerConnection[] = [
     name: "TradingView",
     logo: "TV",
     description: "Import trades from TradingView paper trading",
-    status: "coming_soon"
-  },
-  {
-    id: "binance",
-    name: "Binance",
-    logo: "BN",
-    description: "Connect your Binance account via API",
     status: "coming_soon"
   },
   {
@@ -80,7 +92,7 @@ const BrokerCard = ({ broker }: { broker: BrokerConnection }) => {
       case "connected":
         return <CheckCircle2 className="w-5 h-5 text-profit" />;
       case "disconnected":
-        return <AlertCircle className="w-5 h-5 text-warning" />;
+        return <Link2 className="w-5 h-5 text-primary" />;
       case "coming_soon":
         return <Clock className="w-5 h-5 text-muted-foreground" />;
     }
@@ -91,7 +103,7 @@ const BrokerCard = ({ broker }: { broker: BrokerConnection }) => {
       case "connected":
         return "Connected";
       case "disconnected":
-        return "Disconnected";
+        return "Available";
       case "coming_soon":
         return "Coming Soon";
     }
@@ -110,6 +122,10 @@ const BrokerCard = ({ broker }: { broker: BrokerConnection }) => {
         return "from-red-500 to-red-600";
       case "interactive":
         return "from-cyan-500 to-cyan-600";
+      case "angelone":
+        return "from-green-500 to-green-600";
+      case "upstox":
+        return "from-violet-500 to-violet-600";
       default:
         return "from-gray-500 to-gray-600";
     }
@@ -144,7 +160,7 @@ const BrokerCard = ({ broker }: { broker: BrokerConnection }) => {
             <span className={cn(
               "px-2 py-0.5 rounded-full text-xs font-medium",
               broker.status === "connected" && "bg-profit/10 text-profit",
-              broker.status === "disconnected" && "bg-warning/10 text-warning",
+              broker.status === "disconnected" && "bg-primary/10 text-primary",
               broker.status === "coming_soon" && "bg-muted text-muted-foreground"
             )}>
               {getStatusText()}
@@ -250,7 +266,7 @@ const AutoSync = () => {
         </div>
       </div>
 
-      {/* Coming Soon Notice */}
+      {/* Help Notice */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -258,13 +274,12 @@ const AutoSync = () => {
         className="p-4 rounded-xl bg-muted/20 border border-border/50 text-center"
       >
         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-          <Settings className="w-6 h-6 text-primary animate-spin-slow" />
+          <Zap className="w-6 h-6 text-primary" />
         </div>
-        <h4 className="font-medium text-foreground mb-1">We&apos;re Building This</h4>
+        <h4 className="font-medium text-foreground mb-1">Click to Connect</h4>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          Auto-sync is coming soon. For now, use{" "}
-          <span className="text-primary font-medium">File Upload</span> or{" "}
-          <span className="text-primary font-medium">Manual Entry</span> to add your trades.
+          Select an available broker above to connect your trading account.
+          More integrations are coming soon!
         </p>
         
         {/* Request Feature */}
