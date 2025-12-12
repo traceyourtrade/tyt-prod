@@ -9,7 +9,7 @@ import DashboardWeek from "@/components/dashboard-components/dasboard-range/Dash
 import useAccountDetails from "@/store/accountdetails";
 import usePropFirmStore from "@/store/propFirmStore";
 import notifications from "@/store/notifications";
-import useCurrencyStore, { currencySymbols } from "@/store/currencyStore";
+import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
 
 import { PropFirmModeToggle, PropFirmDashboard } from "@/components/prop-firm";
 import { EditModeToolbar } from "@/components/dashboard/DraggableWidgetGrid";
@@ -174,10 +174,7 @@ const DashboardMain = () => {
                     todayStats.todayPnL > 0 ? "text-profit" : todayStats.todayPnL < 0 ? "text-loss" : "text-muted-foreground"
                   )}>
                     {todayStats.todayPnL > 0 ? <TrendingUp className="w-4 h-4" /> : todayStats.todayPnL < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
-                    {currency === "PERCENT" || currency === "R" 
-                      ? `${Math.abs(todayStats.todayPnL).toLocaleString()}${currency === "PERCENT" ? "%" : "R"}`
-                      : `${currencySymbols[currency]}${Math.abs(currency === "INR" ? todayStats.todayPnL * exchangeRate : todayStats.todayPnL).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-                    }
+                    {formatCurrencyValue(todayStats.todayPnL, currency, exchangeRate)}
                   </p>
                 </div>
                 <div className="w-px h-10 bg-border hidden sm:block" />
