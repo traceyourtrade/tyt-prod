@@ -171,19 +171,11 @@ export default function RootLayout({
           {(collapsed && !mobileOpen) ? (
             <div className="w-8 h-8 flex items-center justify-center">
               <Image 
-                src="/images/logo-dark.png" 
+                src="/images/logo-icon.png" 
                 width={32} 
                 height={32} 
                 alt="ProJournX" 
-                className="h-7 w-auto object-contain hidden dark:block"
-                unoptimized
-              />
-              <Image 
-                src="/images/logo-light.png" 
-                width={32} 
-                height={32} 
-                alt="ProJournX" 
-                className="h-7 w-auto object-contain dark:hidden"
+                className="w-7 h-7 object-contain"
                 unoptimized
               />
             </div>
