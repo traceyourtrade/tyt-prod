@@ -98,6 +98,8 @@ export default function WelcomePage() {
                         width={80}
                         height={80}
                         alt="Logo"
+                        loading="eager"
+                        priority
                         className="w-20 h-auto object-contain mb-12 dark:block hidden"
                     />
                     <Image
@@ -105,6 +107,8 @@ export default function WelcomePage() {
                         width={80}
                         height={80}
                         alt="Logo"
+                        loading="eager"
+                        priority
                         className="w-20 h-auto object-contain mb-12 dark:hidden block"
                     />
                 </motion.div>
