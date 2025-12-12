@@ -322,11 +322,11 @@ const DashboardCustom: React.FC = () => {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
-                      className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-4 shadow-xl"
+                      className="fixed sm:absolute left-1/2 sm:left-auto sm:right-0 top-1/2 sm:top-full -translate-x-1/2 sm:translate-x-0 -translate-y-1/2 sm:translate-y-0 sm:mt-2 z-50 bg-card border border-border rounded-xl p-4 shadow-xl max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-auto"
                     >
                       <div className="flex flex-col sm:flex-row gap-4">
                         {/* Left Calendar */}
-                        <div className="min-w-[220px]">
+                        <div className="min-w-[200px] sm:min-w-[220px]">
                           <div className="flex items-center justify-between mb-3">
                             <button
                               onClick={() => handlePrevMonth('left')}
@@ -350,7 +350,7 @@ const DashboardCustom: React.FC = () => {
                         <div className="hidden sm:block w-px bg-border" />
 
                         {/* Right Calendar */}
-                        <div className="min-w-[220px]">
+                        <div className="min-w-[200px] sm:min-w-[220px]">
                           <div className="flex items-center justify-between mb-3">
                             <button
                               onClick={() => handlePrevMonth('right')}

@@ -277,7 +277,7 @@ const DashboardWeek: React.FC = () => {
                 </button>
 
                 {isDropdownVisible && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 p-4 w-64">
+                  <div className="fixed sm:absolute left-1/2 top-1/2 sm:top-full -translate-x-1/2 -translate-y-1/2 sm:translate-y-0 sm:mt-2 bg-card border border-border rounded-xl shadow-xl z-[100] p-4 w-64 max-w-[calc(100vw-2rem)]">
                     <div className="flex items-center justify-center mb-3">
                       <button
                         onClick={() => setShowYearView(!showYearView)}
