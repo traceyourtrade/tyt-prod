@@ -212,7 +212,7 @@ const DashboardDay: React.FC = () => {
         {/* Left Column - Date Picker + Trade History + Insight Tiles */}
         <div className="xl:col-span-2 space-y-4">
           {/* Date Navigation Header */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4">
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 overflow-visible">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -251,7 +251,7 @@ const DashboardDay: React.FC = () => {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className="absolute right-0 top-full mt-2 z-50 bg-card border border-border rounded-xl p-4 shadow-xl min-w-[280px]"
+                        className="absolute right-0 top-full mt-2 z-[200] bg-card border border-border rounded-xl p-4 shadow-2xl min-w-[280px]"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <button
