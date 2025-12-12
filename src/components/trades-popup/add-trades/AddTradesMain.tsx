@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileUp, RefreshCw, PenLine, Briefcase, TrendingUp } from "lucide-react";
+import { X, FileUp, RefreshCw, PenLine, Briefcase, TrendingUp, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import calendarPopUp from "@/store/calendarPopUp";
 import useAccountDetails from "@/store/accountdetails";
@@ -23,9 +23,26 @@ const AddtradesMain = () => {
   const [selectedAccount, setSelectedAccount] = useState(
     selectedAccounts.length > 0 ? selectedAccounts[0].accountName : ""
   );
+  
+  // Submit state for Manual Trade form
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tradesCount, setTradesCount] = useState(1);
+  const [canSubmit, setCanSubmit] = useState(false);
+  const [submitTrigger, setSubmitTrigger] = useState(0);
+
+  const handleSubmitStateChange = (submitting: boolean, count: number, valid: boolean) => {
+    setIsSubmitting(submitting);
+    setTradesCount(count);
+    setCanSubmit(valid);
+  };
+
+  const triggerSubmit = () => {
+    setSubmitTrigger(prev => prev + 1);
+  };
 
   const handleClose = () => {
     setAddTrades();
+    setSubmitTrigger(0); // Reset submit trigger when closing modal
     document.body.classList.remove("no-scroll");
   };
 
@@ -130,6 +147,8 @@ const AddtradesMain = () => {
                   <ManualTradeForm 
                     selectedAccount={selectedAccount} 
                     onClose={handleClose}
+                    onSubmitStateChange={handleSubmitStateChange}
+                    submitTrigger={submitTrigger}
                   />
                 )}
                 {selectedTab === 2 && <FileUpload />}
@@ -137,6 +156,36 @@ const AddtradesMain = () => {
               </motion.div>
             </AnimatePresence>
           </div>
+
+          {/* Sticky Footer - Submit Button (only for Manual tab) */}
+          {selectedTab === 1 && (
+            <div className="flex-shrink-0 px-6 py-4 border-t border-border/50 bg-card">
+              <motion.button
+                onClick={triggerSubmit}
+                disabled={isSubmitting}
+                whileHover={!isSubmitting ? { scale: 1.01 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.99 } : {}}
+                className={cn(
+                  "w-full py-4 rounded-xl text-sm font-semibold transition-all relative overflow-hidden",
+                  isSubmitting
+                    ? "bg-muted text-muted-foreground cursor-wait"
+                    : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-lg hover:shadow-primary/25"
+                )}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    {tradesCount > 1 ? `Add ${tradesCount} Trades` : "Add Trade"}
+                  </span>
+                )}
+              </motion.button>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, 
@@ -54,6 +54,8 @@ interface TradeEntry {
 interface ManualTradeFormProps {
   selectedAccount: string;
   onClose: () => void;
+  onSubmitStateChange?: (isSubmitting: boolean, tradesCount: number, canSubmit: boolean) => void;
+  submitTrigger?: number;
 }
 
 const markets = [
@@ -77,7 +79,7 @@ const formatDateForDisplay = (dateString: string) => {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-export default function ManualTradeForm({ selectedAccount, onClose }: ManualTradeFormProps) {
+export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStateChange, submitTrigger }: ManualTradeFormProps) {
   const { selectedAccounts, setAccounts } = useAccountDetails();
   
   const [marketOpen, setMarketOpen] = useState(false);
@@ -112,6 +114,7 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
   const symbolInputRef = useRef<HTMLInputElement>(null);
   const marketRef = useRef<HTMLDivElement>(null);
   const symbolDropdownRef = useRef<HTMLDivElement>(null);
+  const prevSubmitTriggerRef = useRef(submitTrigger || 0);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -126,6 +129,22 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Notify parent of submit state changes
+  useEffect(() => {
+    if (onSubmitStateChange) {
+      const canSubmit = validateForm() === null;
+      onSubmitStateChange(isSubmitting, trades.length, canSubmit);
+    }
+  }, [isSubmitting, trades, onSubmitStateChange]);
+
+  // Handle submit trigger from parent - only fire on actual changes
+  useEffect(() => {
+    if (submitTrigger && submitTrigger > prevSubmitTriggerRef.current) {
+      prevSubmitTriggerRef.current = submitTrigger;
+      handleSubmit();
+    }
+  }, [submitTrigger]);
 
   const activeTrade = trades.find(t => t.id === activeTradeId) || trades[0];
   const market = activeTrade.market;
@@ -807,32 +826,6 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
           Add another trade
         </button>
       )}
-
-      {/* Submit Button */}
-      <motion.button
-        onClick={handleSubmit}
-        disabled={isSubmitting}
-        whileHover={!isSubmitting ? { scale: 1.01 } : {}}
-        whileTap={!isSubmitting ? { scale: 0.99 } : {}}
-        className={cn(
-          "w-full py-4 rounded-xl text-sm font-semibold transition-all relative overflow-hidden",
-          isSubmitting
-            ? "bg-muted text-muted-foreground cursor-wait"
-            : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-lg hover:shadow-primary/25"
-        )}
-      >
-        {isSubmitting ? (
-          <span className="flex items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Saving...
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            <Plus className="w-4 h-4" />
-            {trades.length > 1 ? `Add ${trades.length} Trades` : "Add Trade"}
-          </span>
-        )}
-      </motion.button>
 
       {/* Date Pickers */}
       <CustomDateTimePicker
