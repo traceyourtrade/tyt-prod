@@ -83,18 +83,21 @@ const DashboardDay: React.FC = () => {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       const calendarWidth = Math.min(280, viewportWidth - padding * 2);
+      const calendarHeight = 350;
+      
+      const desiredTop = rect.bottom + 8;
+      const safeTop = Math.max(padding, Math.min(desiredTop, viewportHeight - calendarHeight - padding));
       
       if (isMobile) {
         const centeredLeft = (viewportWidth - calendarWidth) / 2;
         
         setDropdownPosition({
-          top: padding,
+          top: safeTop,
           left: Math.max(padding, centeredLeft),
         });
       } else {
         const desiredLeft = rect.right - calendarWidth;
         const safeLeft = Math.max(padding, Math.min(desiredLeft, viewportWidth - calendarWidth - padding));
-        const safeTop = Math.max(padding, Math.min(rect.bottom + 8, viewportHeight - 380));
         
         setDropdownPosition({
           top: safeTop,
