@@ -183,18 +183,18 @@ export default function RootLayout({
             <>
               <Image 
                 src="/images/logo-dark.png" 
-                width={140} 
-                height={32} 
+                width={160} 
+                height={40} 
                 alt="ProJournX" 
-                className="h-7 w-auto object-contain hidden dark:block"
+                className="h-9 w-auto object-contain hidden dark:block"
                 unoptimized
               />
               <Image 
                 src="/images/logo-light.png" 
-                width={140} 
-                height={32} 
+                width={160} 
+                height={40} 
                 alt="ProJournX" 
-                className="h-7 w-auto object-contain dark:hidden"
+                className="h-9 w-auto object-contain dark:hidden"
                 unoptimized
               />
             </>
