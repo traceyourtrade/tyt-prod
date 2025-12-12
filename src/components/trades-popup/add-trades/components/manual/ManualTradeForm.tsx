@@ -16,7 +16,9 @@ import {
   Clock,
   Check,
   Loader2,
-  Receipt
+  Receipt,
+  AlertCircle,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
@@ -78,6 +80,7 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
   const [marketOpen, setMarketOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [trades, setTrades] = useState<TradeEntry[]>([{
     id: generateId(),
@@ -245,8 +248,13 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to save trade");
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Failed to save trade");
+      }
 
+      setErrorMessage(null);
       setShowSuccess(true);
       await setAccounts();
       
@@ -255,8 +263,9 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
         onClose();
       }, 1500);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving trade:", error);
+      setErrorMessage(error.message || "Failed to save trade. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -285,6 +294,30 @@ export default function ManualTradeForm({ selectedAccount, onClose }: ManualTrad
               <p className="text-lg font-semibold text-foreground">Trade Added!</p>
               <p className="text-sm text-muted-foreground">Your trade has been recorded</p>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error Message */}
+      <AnimatePresence>
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-loss/10 border border-loss/30 rounded-xl p-3 flex items-start gap-3"
+          >
+            <AlertCircle className="w-5 h-5 text-loss shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-loss">Error</p>
+              <p className="text-xs text-loss/80">{errorMessage}</p>
+            </div>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-loss/60 hover:text-loss transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
