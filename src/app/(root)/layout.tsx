@@ -167,32 +167,44 @@ export default function RootLayout({
         "flex items-center h-14 px-4 border-b border-border",
         collapsed && !mobileOpen ? "justify-center" : "justify-between"
       )}>
-        <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden group" onClick={() => setMobileOpen(false)}>
-          {(collapsed && !mobileOpen) && (
+        <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden group" onClick={() => setMobileOpen(false)}>
+          {(collapsed && !mobileOpen) ? (
             <div className="w-8 h-8 flex items-center justify-center">
-              <Image 
-                src="/images/lightning-icon.png" 
-                width={28} 
-                height={28} 
-                alt="ProJournX" 
-                className="w-7 h-7 object-contain"
-                unoptimized
-              />
-            </div>
-          )}
-          {(!collapsed || mobileOpen) && (
-            <>
               <Image 
                 src="/images/logo-dark.png" 
                 width={32} 
                 height={32} 
                 alt="ProJournX" 
-                className="h-8 w-8 object-contain"
+                className="h-7 w-auto object-contain hidden dark:block"
                 unoptimized
               />
-              <span className="font-semibold text-foreground text-sm tracking-tight">
-                ProJournX
-              </span>
+              <Image 
+                src="/images/logo-light.png" 
+                width={32} 
+                height={32} 
+                alt="ProJournX" 
+                className="h-7 w-auto object-contain dark:hidden"
+                unoptimized
+              />
+            </div>
+          ) : (
+            <>
+              <Image 
+                src="/images/logo-dark.png" 
+                width={140} 
+                height={32} 
+                alt="ProJournX" 
+                className="h-7 w-auto object-contain hidden dark:block"
+                unoptimized
+              />
+              <Image 
+                src="/images/logo-light.png" 
+                width={140} 
+                height={32} 
+                alt="ProJournX" 
+                className="h-7 w-auto object-contain dark:hidden"
+                unoptimized
+              />
             </>
           )}
         </Link>
