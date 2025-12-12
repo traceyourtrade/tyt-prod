@@ -64,65 +64,69 @@
 }
 
 /* =====================================================
-   LIGHT THEME - Clean White & Neutral Grays
-   Better contrast for visibility
+   LIGHT THEME - Premium Warm & Vibrant
+   Modern gradient backgrounds with depth
    ===================================================== */
 :root {
   --radius: 0.75rem;
   
-  --background: #f0f1f3;
-  --foreground: #1a1a1a;
+  --background: #f8f9fc;
+  --background-gradient-from: #f8f9fc;
+  --background-gradient-to: #eef1f8;
+  --foreground: #0f172a;
   
   --card: #ffffff;
-  --card-foreground: #1a1a1a;
+  --card-foreground: #0f172a;
   
   --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
+  --popover-foreground: #0f172a;
   
   --primary: #2563EB;
   --primary-dark: #1D4ED8;
   --primary-light: #60A5FA;
-  --primary-soft: #e8f0fe;
+  --primary-soft: #dbeafe;
   --primary-foreground: #ffffff;
   
-  --secondary: #e8eaed;
-  --secondary-foreground: #3c4043;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
   
-  --muted: #e8eaed;
-  --muted-foreground: #5f6368;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
   
-  --accent: #e8eaed;
-  --accent-foreground: #1a1a1a;
+  --accent: #eff6ff;
+  --accent-foreground: #1e40af;
   
   --destructive: #EF4444;
-  --warning: #FACC15;
+  --warning: #F59E0B;
   
-  --border: #d1d5db;
-  --input: #d1d5db;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
   --ring: #2563EB;
   
-  --profit: #4EBF94;
-  --loss: #dc2626;
-  --breakeven: #6b7280;
+  --profit: #10b981;
+  --loss: #ef4444;
+  --breakeven: #64748b;
   
   --chart-1: #2563EB;
-  --chart-2: #4EBF94;
-  --chart-3: #ca8a04;
-  --chart-4: #dc2626;
-  --chart-5: #60A5FA;
-  --chart-text: #4b5563;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
+  --chart-text: #475569;
   
-  --sidebar: #ffffff;
-  --sidebar-foreground: #3c4043;
+  --sidebar: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --sidebar-bg: #ffffff;
+  --sidebar-foreground: #1e293b;
   --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8eaed;
-  --sidebar-accent-foreground: #1a1a1a;
-  --sidebar-border: #d1d5db;
+  --sidebar-accent: #eff6ff;
+  --sidebar-accent-foreground: #1e40af;
+  --sidebar-border: #e2e8f0;
   --sidebar-ring: #2563EB;
   
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-card-hover: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --shadow-elevated: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 /* =====================================================
@@ -191,8 +195,15 @@
   }
   
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background: linear-gradient(135deg, var(--background-gradient-from, var(--background)) 0%, var(--background-gradient-to, var(--background)) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  
+  .dark body {
+    background: var(--background);
   }
   
   html {
@@ -252,11 +263,14 @@
 }
 
 :root .card {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05), 0 0 0 1px rgb(0 0 0 / 0.02);
+  background: linear-gradient(180deg, #ffffff 0%, #fefefe 100%);
 }
 
 :root .card:hover {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
 }
 
 .card-header {
@@ -289,6 +303,18 @@
   border: 1px solid var(--border);
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+:root .stat-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+:root .stat-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  border-color: rgba(37, 99, 235, 0.15);
 }
 
 .stat-card-value {
@@ -404,25 +430,27 @@
 /* =====================================================
    GLASSMORPHISM EFFECTS
    ===================================================== */
-/* Light mode (default) */
+/* Light mode (default) - Premium glassmorphism */
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.85) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(0, 0, 0, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
 /* Dark mode */

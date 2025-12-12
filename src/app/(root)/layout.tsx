@@ -413,6 +413,9 @@ export default function RootLayout({
         className={cn(
           "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out",
           "bg-card border-r border-border",
+          "dark:bg-card",
+          "[background:linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] dark:[background:none]",
+          "shadow-[1px_0_3px_rgba(0,0,0,0.03)] dark:shadow-none",
           collapsed ? "w-[68px]" : "w-[240px]"
         )}
       >
@@ -424,6 +427,9 @@ export default function RootLayout({
         className={cn(
           "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[240px] flex-col transition-transform duration-300 ease-out",
           "bg-card border-r border-border",
+          "dark:bg-card",
+          "[background:linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] dark:[background:none]",
+          "shadow-[2px_0_8px_rgba(0,0,0,0.05)] dark:shadow-none",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
