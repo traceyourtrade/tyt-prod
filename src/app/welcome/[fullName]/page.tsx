@@ -43,10 +43,10 @@ export default function WelcomePage() {
     if (!mounted) return null;
 
     return (
-        <div className="relative flex flex-col items-center justify-center min-h-screen w-full bg-background overflow-hidden">
+        <div className="relative flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0a0a] overflow-hidden">
             {/* Animated gradient background */}
             <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--muted)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--muted)/0.3)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
                 
                 <motion.div 
                     className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-[120px]"
@@ -87,7 +87,7 @@ export default function WelcomePage() {
 
             {/* Content */}
             <div className="relative z-10 flex flex-col items-center">
-                {/* Logo */}
+                {/* Logo - Always show dark version (white text) */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -95,33 +95,24 @@ export default function WelcomePage() {
                 >
                     <Image
                         src="/images/logo-dark.png"
-                        width={80}
-                        height={80}
-                        alt="Logo"
+                        width={180}
+                        height={50}
+                        alt="ProJournX"
                         loading="eager"
                         priority
-                        className="w-20 h-auto object-contain mb-12 dark:block hidden"
-                    />
-                    <Image
-                        src="/images/logo-light.png"
-                        width={80}
-                        height={80}
-                        alt="Logo"
-                        loading="eager"
-                        priority
-                        className="w-20 h-auto object-contain mb-12 dark:hidden block"
+                        className="h-12 w-auto object-contain mb-12"
                     />
                 </motion.div>
 
-                {/* Glassmorphic Card */}
+                {/* Glassmorphic Card - Dark themed */}
                 <motion.div
                     initial={{ opacity: 0, y: 30, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className={cn(
                         "relative overflow-hidden rounded-3xl p-8 sm:p-12 text-center",
-                        "bg-card/80 backdrop-blur-xl border border-border",
-                        "shadow-2xl shadow-black/10 dark:shadow-black/30"
+                        "bg-white/5 backdrop-blur-xl border border-white/10",
+                        "shadow-2xl shadow-black/30"
                     )}
                 >
                     {/* Subtle gradient overlay */}
@@ -133,7 +124,7 @@ export default function WelcomePage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.5 }}
-                            className="flex items-center justify-center gap-2 text-muted-foreground text-sm"
+                            className="flex items-center justify-center gap-2 text-gray-400 text-sm"
                         >
                             <Calendar className="w-4 h-4" />
                             <span>{getFormattedDate()}</span>
@@ -144,7 +135,7 @@ export default function WelcomePage() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.6, duration: 0.6 }}
-                            className="text-3xl sm:text-4xl md:text-5xl font-semibold text-foreground"
+                            className="text-3xl sm:text-4xl md:text-5xl font-semibold text-white"
                         >
                             {getTimeBasedGreeting()},{" "}
                             <span className="bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">
@@ -157,7 +148,7 @@ export default function WelcomePage() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.8, duration: 0.6 }}
-                            className="text-lg sm:text-xl text-muted-foreground flex items-center justify-center gap-2"
+                            className="text-lg sm:text-xl text-gray-400 flex items-center justify-center gap-2"
                         >
                             <Sparkles className="w-5 h-5 text-amber-500" />
                             How are you doing today?
@@ -189,7 +180,7 @@ export default function WelcomePage() {
                             />
                         ))}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-400">
                         Taking you to your dashboard...
                     </p>
                 </motion.div>
