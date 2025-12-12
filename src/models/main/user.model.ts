@@ -40,6 +40,8 @@ export interface IUserNotification {
 export interface IUser extends Document {
   uniqueId: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone: number;
   countryCode: string;
@@ -86,6 +88,8 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>({
   uniqueId: { type: String, required: true },
   fullName: { type: String, required: true },
+  firstName: { type: String },
+  lastName: { type: String },
   email: { type: String, required: true },
   phone: { type: Number, required: true },
   countryCode: { type: String, required: true },

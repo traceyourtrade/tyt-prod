@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCamera, faPen, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCamera, faPen, faCheck, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import calendarPopUp from "@/store/calendarPopUp";
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -13,6 +14,7 @@ const Profile = () => {
   const [country, setCountry] = useState("");
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setProImg, setProUrl } = calendarPopUp();
 
@@ -40,7 +42,37 @@ const Profile = () => {
   }, []);
 
   const handleSave = async () => {
-    setIsEditing(false);
+    setIsSaving(true);
+    setSaveMessage(null);
+    
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          country,
+          phone,
+          bio,
+        }),
+      });
+      
+      if (res.ok) {
+        setSaveMessage({ type: 'success', text: 'Profile saved successfully!' });
+        setIsEditing(false);
+        setTimeout(() => setSaveMessage(null), 3000);
+      } else {
+        const data = await res.json();
+        setSaveMessage({ type: 'error', text: data.error || 'Failed to save profile' });
+      }
+    } catch (error) {
+      console.error("Save profile error:", error);
+      setSaveMessage({ type: 'error', text: 'Failed to save profile. Please try again.' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,17 +90,28 @@ const Profile = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Profile</h2>
-        <button
-          onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            isEditing 
-              ? "bg-emerald-500 text-white hover:bg-emerald-600" 
-              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
-          }`}
-        >
-          <FontAwesomeIcon icon={isEditing ? faCheck : faPen} className="w-3" />
-          {isEditing ? "Save" : "Edit"}
-        </button>
+        <div className="flex items-center gap-3">
+          {saveMessage && (
+            <span className={`text-sm ${saveMessage.type === 'success' ? 'text-emerald-500' : 'text-red-500'}`}>
+              {saveMessage.text}
+            </span>
+          )}
+          <button
+            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+            disabled={isSaving}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              isEditing 
+                ? "bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50" 
+                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
+            }`}
+          >
+            <FontAwesomeIcon 
+              icon={isSaving ? faSpinner : (isEditing ? faCheck : faPen)} 
+              className={`w-3 ${isSaving ? 'animate-spin' : ''}`} 
+            />
+            {isSaving ? "Saving..." : (isEditing ? "Save" : "Edit")}
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
