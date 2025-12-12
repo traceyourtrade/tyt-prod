@@ -624,6 +624,35 @@
   background: linear-gradient(135deg, var(--background) 0%, var(--muted) 100%);
 }
 
+/* Light mode specific enhancements */
+:root .bg-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fdfdfe 100%);
+}
+
+:root .border-border {
+  border-color: rgba(226, 232, 240, 0.9);
+}
+
+/* Premium light mode input styling */
+:root input,
+:root textarea,
+:root select {
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+  border-color: rgba(226, 232, 240, 0.9);
+}
+
+:root input:focus,
+:root textarea:focus,
+:root select:focus {
+  border-color: rgba(37, 99, 235, 0.5);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Light mode button hover enhancement */
+:root button:hover {
+  transition: all 0.15s ease;
+}
+
 .text-gradient-primary {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-chart-2;
 }
