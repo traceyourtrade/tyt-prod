@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import React from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Calendar, TrendingUp, TrendingDown, Clock, Target, Flame, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -59,17 +60,30 @@ const DashboardDay: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
 
   const calendarRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const today = formatDate(new Date());
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node) && 
+          buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
         setShowCalendar(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (showCalendar && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.right - 280 + window.scrollX,
+      });
+    }
+  }, [showCalendar]);
 
   const changeDate = (days: number) => {
     const newDate = new Date(selectedDate);
@@ -236,8 +250,9 @@ const DashboardDay: React.FC = () => {
                   <ChevronLeft className="w-4 h-4 text-foreground" />
                 </button>
 
-                <div className="relative" ref={calendarRef}>
+                <div className="relative">
                   <button
+                    ref={buttonRef}
                     onClick={() => setShowCalendar(!showCalendar)}
                     className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-medium text-sm hover:bg-primary/15 transition-colors flex items-center gap-1"
                   >
@@ -245,13 +260,20 @@ const DashboardDay: React.FC = () => {
                     <ChevronRight className={`w-4 h-4 transition-transform ${showCalendar ? "rotate-90" : ""}`} />
                   </button>
 
-                  <AnimatePresence>
-                    {showCalendar && (
+                  {showCalendar && typeof document !== 'undefined' && createPortal(
+                    <AnimatePresence>
                       <motion.div
+                        ref={calendarRef}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className="absolute right-0 top-full mt-2 z-[200] bg-card border border-border rounded-xl p-4 shadow-2xl min-w-[280px]"
+                        style={{
+                          position: 'fixed',
+                          top: dropdownPosition.top,
+                          left: dropdownPosition.left,
+                          zIndex: 9999,
+                        }}
+                        className="bg-card border border-border rounded-xl p-4 shadow-2xl min-w-[280px]"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <button
@@ -294,8 +316,9 @@ const DashboardDay: React.FC = () => {
                           </div>
                         </div>
                       </motion.div>
-                    )}
-                  </AnimatePresence>
+                    </AnimatePresence>,
+                    document.body
+                  )}
                 </div>
 
                 <button
