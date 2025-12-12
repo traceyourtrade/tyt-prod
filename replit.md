@@ -62,6 +62,11 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
   - Rank change indicators showing movement since last update
   - Top 3 positions feature special badges (gold, silver, bronze)
   - User can view their own ranking across all categories
+- **Broker Auto-Sync:** Automatic trade import feature in Add Trade modal:
+  - Available brokers: MetaTrader 5, Binance, Angel One, Upstox (shown as "Available")
+  - Coming soon brokers: MetaTrader 4, TradingView, Zerodha, Interactive Brokers
+  - Premium glassmorphic card design with gradient broker logos
+  - Features: Auto-sync, Secure API, Real-time status indicators
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for app routes, components, utilities (`lib`, `utils`), database models, state management (`store`), and type definitions.
