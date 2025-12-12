@@ -128,14 +128,13 @@ const DashboardMain = () => {
       {/* Personalized Greeting Header */}
       <div className={cn(
         "relative overflow-hidden rounded-2xl border p-6 sm:p-8",
-        "bg-gradient-to-br from-blue-50/80 via-white to-emerald-50/50",
+        "bg-gradient-to-br from-primary/5 via-card to-card",
         "dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800",
-        "border-blue-100/50 dark:border-white/[0.08]",
-        "shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none"
+        "border-border dark:border-white/[0.08]"
       )}>
         {/* Subtle gradient orbs */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/15 dark:bg-blue-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/15 dark:bg-emerald-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 dark:bg-blue-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2" />
         
         <div className="relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
