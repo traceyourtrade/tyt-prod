@@ -1,13 +1,15 @@
-"use client"
+// changes 12-13-25
 
-import { useState, useEffect, Suspense } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import axios from "axios"
-import "../globals.css"
-import PageLoading from "@/components/ui/page-loading"
+"use client";
 
-import { cn } from "@/lib/utils"
+import { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import axios from "axios";
+import "../globals.css";
+import PageLoading from "@/components/ui/page-loading";
+
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   BookOpen,
@@ -34,41 +36,68 @@ import {
   GraduationCap,
   BrainCircuit,
   Trophy,
-} from "lucide-react"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
+  Activity,
+  TrendingUp,
+} from "lucide-react";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
-import DeleteAccPopup from "@/components/dashboard-components/popups/DeleteAccPopup"
-import EditAccPopup from "@/components/dashboard-components/popups/EditAccPopup"
-import AddAccPopup from "@/components/dashboard-components/popups/AddAccPopup"
-import AddtradesMain from "@/components/trades-popup/add-trades/AddTradesMain"
-import EditTradePopUp from "@/components/trades-popup/edit-trades/EditTradePopUp"
-import CalendarPopup from "@/components/dashboard-components/popups/CalendarPopUp"
-import AlertBox from "@/components/dashboard-components/popups/AlertBox"
-import DjImgPopup from "@/components/dashboard-components/popups/DjImgPopup"
-import AccountsDropdown from "@/components/dashboard-components/AccountsDropdown"
-import CurrencyDropdown from "@/components/dashboard-components/CurrencyDropdown"
+import DeleteAccPopup from "@/components/dashboard-components/popups/DeleteAccPopup";
+import EditAccPopup from "@/components/dashboard-components/popups/EditAccPopup";
+import AddAccPopup from "@/components/dashboard-components/popups/AddAccPopup";
+import AddtradesMain from "@/components/trades-popup/add-trades/AddTradesMain";
+import EditTradePopUp from "@/components/trades-popup/edit-trades/EditTradePopUp";
+import CalendarPopup from "@/components/dashboard-components/popups/CalendarPopUp";
+import AlertBox from "@/components/dashboard-components/popups/AlertBox";
+import DjImgPopup from "@/components/dashboard-components/popups/DjImgPopup";
+import AccountsDropdown from "@/components/dashboard-components/AccountsDropdown";
+import CurrencyDropdown from "@/components/dashboard-components/CurrencyDropdown";
 
-import useAccountDetails from "@/store/accountdetails"
-import calendarPopUp from "@/store/calendarPopUp"
+import useAccountDetails from "@/store/accountdetails";
+import calendarPopUp from "@/store/calendarPopUp";
 
 const mainNavItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "#6B8ACD" },
-  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, color: "#9B8AC4" },
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    color: "#6B8ACD",
+  },
+  {
+    name: "Daily Journal",
+    href: "/daily-journal",
+    icon: BookOpen,
+    color: "#9B8AC4",
+  },
   { name: "Notebook", href: "/notebook", icon: FileText, color: "#C9A86C" },
   { name: "Reports", href: "/reports", icon: BarChart3, color: "#7CB89E" },
   { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A" },
   { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B" },
-  { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, color: "#8B5CF6" },
+  {
+    name: "AI Analysis",
+    href: "/ai-analysis",
+    icon: BrainCircuit,
+    color: "#8B5CF6",
+  },
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "#F59E0B" },
-  { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8" },
-  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4" },
-]
+  {
+    name: "Resources",
+    href: "/resources",
+    icon: GraduationCap,
+    color: "#5EAAA8",
+  },
+  {
+    name: "Lot Calculator",
+    href: "/lot-calculator",
+    icon: Calculator,
+    color: "#6BB8C4",
+  },
+];
 
 const bottomNavItems = [
   { name: "Support", href: "/support", icon: HelpCircle, color: "#8B8B8B" },
   { name: "Settings", href: "/settings", icon: Settings, color: "#8B8B8B" },
-]
+];
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -88,112 +117,125 @@ const pageTitles: Record<string, string> = {
   "/playbook": "Playbook",
   "/ai-analysis": "AI Analysis",
   "/leaderboard": "Leaderboard",
+  "/backtesting": "Backtesting",
+  "/backtesting/dashboard": "Backtesting Dashboard",
+  "/backtesting/reports": "Backtesting Reports",
+  "/backtesting/sessions": "Backtesting Sessions",
   "/lot-calculator": "Lot Calculator",
   "/settings": "Settings",
   "/support": "Support",
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState<boolean>(true)
-  const [mobileOpen, setMobileOpen] = useState<boolean>(false)
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(true)
-  
-  const { profileData, setAccounts } = useAccountDetails()
-  const { setAddTrades, setAddAcc } = calendarPopUp()
-  
-  useEffect(() => {
-    setAccounts()
-  }, [])
-  
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [isDarkMode])
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState<boolean>(true);
+  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [backtestingOpen, setBacktestingOpen] = useState<boolean>(false);
+
+  const { profileData, setAccounts } = useAccountDetails();
+  const { setAddTrades, setAddAcc } = calendarPopUp();
 
   useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
+    setAccounts();
+  }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
-      return pathname === "/dashboard" || pathname === "/"
+      return pathname === "/dashboard" || pathname === "/";
     }
-    return pathname.startsWith(href)
-  }
+    return pathname.startsWith(href);
+  };
 
   const getPageTitle = () => {
-    const exactMatch = pageTitles[pathname]
-    if (exactMatch) return exactMatch
-    const matchingKey = Object.keys(pageTitles).find(key => pathname.startsWith(key))
-    return matchingKey ? pageTitles[matchingKey] : "Dashboard"
-  }
+    const exactMatch = pageTitles[pathname];
+    if (exactMatch) return exactMatch;
+    const matchingKey = Object.keys(pageTitles).find((key) =>
+      pathname.startsWith(key),
+    );
+    return matchingKey ? pageTitles[matchingKey] : "Dashboard";
+  };
 
   const handleLogout = async () => {
     try {
-      const response = await axios.post('/api/logout')
+      const response = await axios.post("/api/logout");
       if (response.data.success) {
-        window.location.href = "/login"
+        window.location.href = "/login";
       }
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error("Logout error:", error);
     }
-  }
+  };
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-    document.documentElement.classList.toggle('dark')
-  }
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle("dark");
+  };
 
-  const userInitials = profileData.fullName 
+  const userInitials = profileData.fullName
     ? `${profileData.fullName.charAt(0)}${profileData.fullName.split(" ")[1]?.charAt(0) || ""}`
-    : "U"
+    : "U";
 
-  const maskedEmail = profileData.email 
+  const maskedEmail = profileData.email
     ? profileData.email.replace(/^(.{4}).*(@.*)$/, (_, a, b) => `${a}*****${b}`)
-    : ""
+    : "";
 
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* Sidebar Header with Logo */}
-      <div className={cn(
-        "flex items-center h-14 px-4 border-b border-border",
-        collapsed && !mobileOpen ? "justify-center" : "justify-between"
-      )}>
-        <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden group" onClick={() => setMobileOpen(false)}>
-          {(collapsed && !mobileOpen) ? (
+      <div
+        className={cn(
+          "flex items-center h-14 px-4 border-b border-border",
+          collapsed && !mobileOpen ? "justify-center" : "justify-between",
+        )}
+      >
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 overflow-hidden group"
+          onClick={() => setMobileOpen(false)}
+        >
+          {collapsed && !mobileOpen ? (
             <div className="w-8 h-8 flex items-center justify-center">
-              <Image 
-                src="/images/logo-icon.png" 
-                width={32} 
-                height={32} 
-                alt="ProJournX" 
+              <Image
+                src="/images/logo-icon.png"
+                width={32}
+                height={32}
+                alt="ProJournX"
                 className="w-7 h-7 object-contain"
                 unoptimized
               />
             </div>
           ) : (
             <>
-              <Image 
-                src="/images/logo-dark.png" 
-                width={160} 
-                height={40} 
-                alt="ProJournX" 
+              <Image
+                src="/images/logo-dark.png"
+                width={160}
+                height={40}
+                alt="ProJournX"
                 className="h-9 w-auto object-contain hidden dark:block"
                 unoptimized
               />
-              <Image 
-                src="/images/logo-light.png" 
-                width={160} 
-                height={40} 
-                alt="ProJournX" 
+              <Image
+                src="/images/logo-light.png"
+                width={160}
+                height={40}
+                alt="ProJournX"
                 className="h-9 w-auto object-contain dark:hidden"
                 unoptimized
               />
@@ -203,9 +245,15 @@ export default function RootLayout({
         {(!collapsed || mobileOpen) && (
           <button
             className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            onClick={() => mobileOpen ? setMobileOpen(false) : setCollapsed(true)}
+            onClick={() =>
+              mobileOpen ? setMobileOpen(false) : setCollapsed(true)
+            }
           >
-            {mobileOpen ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {mobileOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </button>
         )}
       </div>
@@ -231,17 +279,15 @@ export default function RootLayout({
             "hover:bg-[#2563EB]",
             "active:bg-[#1D4ED8]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-            collapsed && !mobileOpen ? "px-0 w-10 h-10 mx-auto" : "px-4"
+            collapsed && !mobileOpen ? "px-0 w-10 h-10 mx-auto" : "px-4",
           )}
           onClick={() => {
-            setAddTrades()
-            setMobileOpen(false)
+            setAddTrades();
+            setMobileOpen(false);
           }}
         >
           <Plus className="h-4 w-4" />
-          {(!collapsed || mobileOpen) && (
-            <span>Add Trade</span>
-          )}
+          {(!collapsed || mobileOpen) && <span>Add Trade</span>}
         </button>
       </div>
 
@@ -249,8 +295,8 @@ export default function RootLayout({
       <nav className="flex-1 overflow-y-auto py-5 px-2 scrollbar-hide">
         <ul className="space-y-1">
           {mainNavItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.href)
+            const Icon = item.icon;
+            const active = isActive(item.href);
             return (
               <li key={item.name}>
                 <Link
@@ -259,24 +305,24 @@ export default function RootLayout({
                   className={cn(
                     "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
                     "rounded-md",
-                    active 
-                      ? "bg-muted text-foreground" 
+                    active
+                      ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                     collapsed && !mobileOpen && "justify-center px-2",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
                   )}
                 >
                   {active && (
-                    <div 
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" 
+                    <div
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
                       style={{ backgroundColor: item.color }}
                     />
                   )}
-                  <Icon 
+                  <Icon
                     className={cn(
                       "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
-                      "group-hover:scale-110"
-                    )} 
+                      "group-hover:scale-110",
+                    )}
                     style={{ color: item.color }}
                   />
                   {(!collapsed || mobileOpen) && (
@@ -284,8 +330,93 @@ export default function RootLayout({
                   )}
                 </Link>
               </li>
-            )
+            );
           })}
+
+          {/* Backtesting Dropdown */}
+          <li>
+            <button
+              onClick={() => setBacktestingOpen(!backtestingOpen)}
+              className={cn(
+                "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out w-full",
+                "rounded-md",
+                pathname.startsWith("/backtesting")
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                collapsed && !mobileOpen && "justify-center px-2",
+                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
+              )}
+            >
+              {pathname.startsWith("/backtesting") && (
+                <div
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                  style={{ backgroundColor: "#E879F9" }}
+                />
+              )}
+              <TrendingUp
+                className={cn(
+                  "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
+                  "group-hover:scale-110",
+                )}
+                style={{ color: "#E879F9" }}
+              />
+              {(!collapsed || mobileOpen) && (
+                <>
+                  <span className="truncate flex-1 text-left">Backtesting</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-200",
+                      backtestingOpen && "rotate-180",
+                    )}
+                  />
+                </>
+              )}
+            </button>
+
+            {/* Dropdown Items */}
+            {backtestingOpen && (!collapsed || mobileOpen) && (
+              <ul className="mt-1 ml-6 space-y-1">
+                <li>
+                  <Link
+                    href="/backtesting/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "group flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
+                      "rounded-md",
+                      pathname === "/backtesting/dashboard"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    )}
+                  >
+                    <LayoutDashboard
+                      className="h-[16px] w-[16px] flex-shrink-0"
+                      style={{ color: "#6B8ACD" }}
+                    />
+                    <span className="truncate">Dashboard</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/backtesting/sessions"
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "group flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
+                      "rounded-md",
+                      pathname === "/backtesting/sessions"
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    )}
+                  >
+                    <Activity
+                      className="h-[16px] w-[16px] flex-shrink-0"
+                      style={{ color: "#E879F9" }}
+                    />
+                    <span className="truncate">Sessions</span>
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
         </ul>
       </nav>
 
@@ -293,8 +424,8 @@ export default function RootLayout({
       <div className="py-2 px-2 border-t border-border">
         <ul className="space-y-1">
           {bottomNavItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.href)
+            const Icon = item.icon;
+            const active = isActive(item.href);
             return (
               <li key={item.name}>
                 <Link
@@ -303,24 +434,24 @@ export default function RootLayout({
                   className={cn(
                     "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
                     "rounded-md",
-                    active 
-                      ? "bg-muted text-foreground" 
+                    active
+                      ? "bg-muted text-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                     collapsed && !mobileOpen && "justify-center px-2",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
                   )}
                 >
                   {active && (
-                    <div 
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" 
+                    <div
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
                       style={{ backgroundColor: item.color }}
                     />
                   )}
-                  <Icon 
+                  <Icon
                     className={cn(
                       "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
-                      "group-hover:scale-110"
-                    )} 
+                      "group-hover:scale-110",
+                    )}
                     style={{ color: item.color }}
                   />
                   {(!collapsed || mobileOpen) && (
@@ -328,7 +459,7 @@ export default function RootLayout({
                   )}
                 </Link>
               </li>
-            )
+            );
           })}
         </ul>
       </div>
@@ -336,14 +467,14 @@ export default function RootLayout({
       {/* User Section */}
       <div className="p-2 border-t border-border">
         {profileData.fullName && (
-          <Link 
+          <Link
             href="/settings"
             onClick={() => setMobileOpen(false)}
             className={cn(
               "flex items-center gap-2.5 rounded-md p-2 mb-1 transition-all duration-200 ease-out",
               "hover:bg-muted/50",
               collapsed && !mobileOpen && "justify-center",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50"
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
             )}
           >
             <div className="relative flex-shrink-0">
@@ -366,13 +497,13 @@ export default function RootLayout({
             )}
           </Link>
         )}
-        
+
         <button
           className={cn(
             "group w-full flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
             "text-muted-foreground hover:text-red-400 hover:bg-red-500/10",
             collapsed && !mobileOpen && "justify-center px-2",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500/50"
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500/50",
           )}
           onClick={handleLogout}
         >
@@ -381,7 +512,7 @@ export default function RootLayout({
         </button>
       </div>
     </div>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -402,40 +533,42 @@ export default function RootLayout({
 
       {/* Mobile Overlay */}
       {mobileOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar - Desktop */}
-      <aside 
+      <aside
         className={cn(
           "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out",
           "bg-card border-r border-border",
-          collapsed ? "w-[68px]" : "w-[240px]"
+          collapsed ? "w-[68px]" : "w-[240px]",
         )}
       >
         <SidebarContent />
       </aside>
 
       {/* Sidebar - Mobile */}
-      <aside 
+      <aside
         className={cn(
           "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[240px] flex-col transition-transform duration-300 ease-out",
           "bg-card border-r border-border",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <SidebarContent />
       </aside>
 
       {/* Main Content Area */}
-      <div className={cn(
-        "min-h-screen transition-all duration-300",
-        "lg:ml-[68px]",
-        !collapsed && "lg:ml-[240px]"
-      )}>
+      <div
+        className={cn(
+          "min-h-screen transition-all duration-300",
+          "lg:ml-[68px]",
+          !collapsed && "lg:ml-[240px]",
+        )}
+      >
         {/* Top Bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-6">
           {/* Left side */}
@@ -474,7 +607,11 @@ export default function RootLayout({
             </div>
 
             {/* Date Range */}
-            <Button variant="outline" size="sm" className="hidden md:flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden md:flex gap-2"
+            >
               <Calendar className="h-4 w-4" />
               <span>Last 30 days</span>
             </Button>
@@ -485,7 +622,12 @@ export default function RootLayout({
             </Button>
 
             {/* Theme Toggle */}
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleTheme}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={toggleTheme}
+            >
               {isDarkMode ? (
                 <Sun className="h-5 w-5" />
               ) : (
@@ -496,10 +638,8 @@ export default function RootLayout({
         </header>
 
         {/* Page Content */}
-        <main className="p-4 lg:p-6">
-          {children}
-        </main>
+        <main className="p-4 lg:p-6">{children}</main>
       </div>
     </div>
-  )
+  );
 }

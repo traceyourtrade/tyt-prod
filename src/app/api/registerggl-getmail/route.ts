@@ -1,29 +1,27 @@
-// app/api/registerggl-getmail/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { OAuth2Client } from 'google-auth-library';
+// app/api/registerggl-getmail/route.ts // changed
+import { NextRequest, NextResponse } from "next/server";
+import { OAuth2Client } from "google-auth-library";
 
 import { getUserModel } from "@/models/main/user.model";
-import { GoogleTokenRequest, GooglePayload } from '@/types/auth';
+import { GoogleTokenRequest, GooglePayload } from "@/types/auth";
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID!,
   process.env.GOOGLE_CLIENT_SECRET!,
-  'https://app.projournx.com/auth/google/callback'
+  "https://app.projournx.com/auth/google/callback",
 );
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-
   try {
-    
     const User = await getUserModel();
     const body: GoogleTokenRequest = await request.json();
     const { code } = body;
-    
-    console.log('Received code:', code);
+
+    console.log("Received code:", code);
 
     // Exchange code for tokens
     const { tokens } = await oauth2Client.getToken(code);
-    console.log('Received tokens:', tokens);
+    console.log("Received tokens:", tokens);
 
     // Verify the ID token
     const ticket = await oauth2Client.verifyIdToken({
@@ -37,7 +35,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!payload?.email) {
       return NextResponse.json(
         { error: "Invalid Google payload" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +46,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         msg: "unregistered user",
         email: payload.email,
         name: payload.name,
-        picture: payload.picture
+        picture: payload.picture,
       });
     } else {
       const token = await isUser.generateAuthToken();
@@ -57,35 +55,36 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         msg: "registered user",
         message: token,
         id: isUser.uniqueId,
-        name: (isUser.fullName).split(" ")[0]
+        name: isUser.fullName.split(" ")[0],
       });
 
       // Set cookie in response
+      const fiveDays = 5 * 24 * 60 * 60;
       response.cookies.set("authToken", token, {
-        expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict'
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: fiveDays,
+        path: "/",
       });
-       response.cookies.set({
-      name: "userId",
-      value: isUser.uniqueId,
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge:  5 * 24 * 60 * 60,
-      path: "/",
-    });
+      response.cookies.set({
+        name: "userId",
+        value: isUser.uniqueId,
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: fiveDays,
+        path: "/",
+      });
 
       console.log("Google login successful");
       return response;
     }
-
   } catch (error) {
-    console.error('Error exchanging code:', error);
+    console.error("Error exchanging code:", error);
     return NextResponse.json(
-      { error: 'Authentication failed' },
-      { status: 401 }
+      { error: "Authentication failed" },
+      { status: 401 },
     );
   }
 }

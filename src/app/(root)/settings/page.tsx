@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
-  faUser, faShield, faCrown, faWallet, faPercent, faGear
+  faUser, faShield, faCrown, faWallet, faPercent, faGear, faTriangleExclamation
 } from "@fortawesome/free-solid-svg-icons";
 
 import Profile from "@/components/settings/Profile";
@@ -11,6 +11,7 @@ import Security from "@/components/settings/Security";
 import Account from "@/components/settings/Account";
 import CommissionNfees from "@/components/settings/CommisionNFees";
 import GlobalSettings from "@/components/settings/GlobalSettings";
+import DangerZone from "@/components/settings/DangerZone";
 import useAccountDetails from "@/store/accountdetails";
 
 type NavItem = { name: string; icon: any; id: string };
@@ -29,6 +30,7 @@ const Settings = () => {
     { name: "Accounts", icon: faWallet, id: "accounts" },
     { name: "Fees", icon: faPercent, id: "fees" },
     { name: "Settings", icon: faGear, id: "global" },
+    { name: "Danger Zone", icon: faTriangleExclamation, id: "danger" },
   ];
 
   const handleTabClick = (id: string, index: number) => {
@@ -100,6 +102,7 @@ const Settings = () => {
           {active === "accounts" && <Account />}
           {active === "fees" && <CommissionNfees />}
           {active === "global" && <GlobalSettings />}
+          {active === "danger" && <DangerZone />}
         </div>
       </div>
     </div>

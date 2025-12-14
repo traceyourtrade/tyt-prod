@@ -1,41 +1,61 @@
-// app/api/registerggl/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+// app/api/registerggl/route.ts // changes
+import { NextRequest, NextResponse } from "next/server";
 
 import { getUserModel } from "@/models/main/user.model";
 import { getNoteModel } from "@/models/main/notes.model";
-import { GoogleAuthRequest, UserData, NotesData } from '@/types/auth'
-
+import { GoogleAuthRequest, UserData, NotesData } from "@/types/auth";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-
   try {
-    
-        const User = await getUserModel();
-        const Notes = await getNoteModel();
+    const User = await getUserModel();
+    const Notes = await getNoteModel();
     const body: GoogleAuthRequest = await request.json();
-    const { email, fullName, phone, password, cpassword, countryCode, country } = body;
+    const {
+      email,
+      fullName,
+      phone,
+      password,
+      cpassword,
+      countryCode,
+      country,
+    } = body;
 
-    console.log('Registration data:', { email, fullName, phone, countryCode, country });
+    console.log("Registration data:", {
+      email,
+      fullName,
+      phone,
+      countryCode,
+      country,
+    });
 
-    if (!email || !fullName || !phone || !password || !cpassword || !countryCode || !country) {
+    if (
+      !email ||
+      !fullName ||
+      !phone ||
+      !password ||
+      !cpassword ||
+      !countryCode ||
+      !country
+    ) {
       return NextResponse.json(
         { error: "Enter all the details" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (password !== cpassword) {
       return NextResponse.json(
         { error: "Passwords don't match" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const isUser = await User.findOne({ email });
 
     if (!isUser) {
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
       const generateRandomCode = (): string => {
         let uniqueId = "";
         for (let i = 0; i < 12; i++) {
@@ -68,12 +88,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         password,
         cpassword,
         countryCode,
-        country
+        country,
       };
 
       const notesData: NotesData = {
         uniqueId,
-        email
+        email,
       };
 
       const user = new User(userData);
@@ -91,44 +111,46 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           msg: "registered user",
           message: token,
           id: isRegistered.uniqueId,
-          name: (isRegistered.fullName).split(" ")[0]
+          name: isRegistered.fullName.split(" ")[0],
         });
 
         // Set cookie in response
-        response.cookies.set("authTOken", token, {
-          expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        const fiveDays = 5 * 24 * 60 * 60;
+        response.cookies.set("authToken", token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict'
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: fiveDays,
+          path: "/",
         });
-         response.cookies.set({
-      name: "userId",
-      value: user.uniqueId,
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge:  5 * 24 * 60 * 60,
-      path: "/",
-    });
+        response.cookies.set({
+          name: "userId",
+          value: user.uniqueId,
+          httpOnly: false,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: fiveDays,
+          path: "/",
+        });
 
         return response;
       } else {
         return NextResponse.json(
           { error: "Registration failed" },
-          { status: 500 }
+          { status: 500 },
         );
       }
     } else {
       return NextResponse.json(
         { error: "email already registered" },
-        { status: 400 }
+        { status: 400 },
       );
     }
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
