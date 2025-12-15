@@ -1,25 +1,6 @@
 // lib/store/testingStore.ts
 import { create } from "zustand";
 
-const apiCall = async (
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<any> => {
-  try {
-    const res = await fetch(`/api/testing/${options.method?.toLowerCase()}/${endpoint}`, {
-      headers: { "Content-Type": "application/json" },
-      ...options,
-    });
-
-    if (!res.ok) throw new Error("API failed");
-
-    return await res.json();
-  } catch (err) {
-    console.warn("API Error (non-api version fallback active):", err);
-    return { success: false };
-  }
-};
-
 interface FilterState {
   type: string[];
   assets: string[];
@@ -138,136 +119,109 @@ export const useTestingStore = create<TestingState>((set, get) => ({
 
   setFilters: async (newFilters) => {
     const updated = { ...get().filters, ...newFilters };
-
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateFilters",
-        filters: updated,
-      }),
-    });
-
     set({ filters: updated });
   },
 
   setAppliedFilters: async (filters) => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateAppliedFilters",
-        appliedFilters: filters,
-      }),
-    });
-
     set({ appliedFilters: filters });
   },
   loadUserSessions: async () => {
-  try {
-    set({ isLoading: true, error: null });
-    
-    const response = await apiCall('?apiName=getBacktestSessions', {
-      method: 'GET'
-    });
+    try {
+      set({ isLoading: true, error: null });
+      
+      const res = await fetch('/api/backtest-sessions', {
+        headers: { "Content-Type": "application/json" },
+      });
 
-    if (response.success) {
-      // Transform the data to match your frontend interface
-      const sessions = response.data.map((dbSession: any) => ({
-        id: dbSession.sessionId,
-        name: dbSession.sessionInfo.name,
-        symbol: dbSession.sessionInfo.symbol,
-        currentBalance: dbSession.sessionInfo.currentBalance,
-        startDate: dbSession.sessionInfo.startDate,
-        endDate: dbSession.sessionInfo.endDate,
-        daysRemaining: dbSession.sessionInfo.daysRemaining,
-        totalPnl: dbSession.sessionInfo.totalPnl,
-        winRate: dbSession.sessionInfo.winRate,
-        riskReward: dbSession.sessionInfo.riskReward,
-        monthGainLoss: dbSession.sessionInfo.monthGainLoss,
-        weekGainLoss: dbSession.sessionInfo.weekGainLoss,
-        dailyGainLoss: dbSession.sessionInfo.dailyGainLoss
-      }));
+      if (!res.ok) {
+        set({ isLoading: false });
+        return;
+      }
 
+      const response = await res.json();
+
+      if (response.success && response.data) {
+        const sessions = response.data.map((dbSession: any) => ({
+          id: dbSession.sessionId,
+          name: dbSession.sessionInfo?.name || 'Unnamed',
+          symbol: dbSession.sessionInfo?.symbol || 'N/A',
+          currentBalance: dbSession.sessionInfo?.currentBalance || '$0',
+          startDate: dbSession.sessionInfo?.startDate || '',
+          endDate: dbSession.sessionInfo?.endDate || '',
+          daysRemaining: dbSession.sessionInfo?.daysRemaining || 0,
+          totalPnl: dbSession.sessionInfo?.totalPnl || 0,
+          winRate: dbSession.sessionInfo?.winRate || 0,
+          riskReward: dbSession.sessionInfo?.riskReward || 0,
+          monthGainLoss: dbSession.sessionInfo?.monthGainLoss || 0,
+          weekGainLoss: dbSession.sessionInfo?.weekGainLoss || 0,
+          dailyGainLoss: dbSession.sessionInfo?.dailyGainLoss || 0
+        }));
+
+        set({ 
+          sessions,
+          isLoading: false 
+        });
+      } else {
+        set({ isLoading: false });
+      }
+    } catch (error: any) {
       set({ 
-        sessions,
+        error: error.message,
         isLoading: false 
       });
     }
-  } catch (error: any) {
-    set({ 
-      error: error.message,
-      isLoading: false 
-    });
-  }
-},
+  },
 
-// Also add this to load a specific session
-loadSessionData: async (sessionId: number) => {
-  try {
-    set({ isLoading: true, error: null });
-    
-    const response = await apiCall(`/testing/get/?apiName=getBacktestSessions&sessionId=${sessionId}`, {
-      method: 'GET'
-    });
+  loadSessionData: async (sessionId: number) => {
+    try {
+      set({ isLoading: true, error: null });
+      
+      const res = await fetch(`/api/backtest-sessions?sessionId=${sessionId}`, {
+        headers: { "Content-Type": "application/json" },
+      });
 
-    if (response.success) {
-      const session = response.data;
-      set({
-        currentSessionId: sessionId,
-        filters: session.filters || get().filters,
-        appliedFilters: session.appliedFilters || [],
-        trades: session.trades || [],
-        activeTab: session.activeTab || 'Dashboard',
-        rowsPerPage: session.rowsPerPage || 10,
-        currentPage: session.currentPage || 1,
-        activeSession: session.sessionInfo?.name || '',
-        isLoading: false
+      if (!res.ok) {
+        set({ isLoading: false });
+        return;
+      }
+
+      const response = await res.json();
+
+      if (response.success && response.data) {
+        const session = response.data;
+        set({
+          currentSessionId: sessionId,
+          filters: session.filters || get().filters,
+          appliedFilters: session.appliedFilters || [],
+          trades: session.trades || [],
+          activeTab: session.activeTab || 'Dashboard',
+          rowsPerPage: session.rowsPerPage || 10,
+          currentPage: session.currentPage || 1,
+          activeSession: session.sessionInfo?.name || '',
+          isLoading: false
+        });
+      } else {
+        set({ isLoading: false });
+      }
+    } catch (error: any) {
+      set({ 
+        error: error.message,
+        isLoading: false 
       });
     }
-  } catch (error: any) {
-    set({ 
-      error: error.message,
-      isLoading: false 
-    });
-  }
-},
+  },
   addAppliedFilter: async (filter) => {
     const updated = [...get().appliedFilters, filter];
-
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateAppliedFilters",
-        appliedFilters: updated,
-      }),
-    });
-
     set({ appliedFilters: updated });
   },
 
   removeAppliedFilter: async (index) => {
     const updated = [...get().appliedFilters];
     updated.splice(index, 1);
-
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateAppliedFilters",
-        appliedFilters: updated,
-      }),
-    });
-
     set({ appliedFilters: updated });
   },
 
   clearAllFilters: async () => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateAppliedFilters",
-        appliedFilters: [],
-      }),
-    });
-
     set({ appliedFilters: [] });
   },
 
@@ -278,27 +232,10 @@ loadSessionData: async (sessionId: number) => {
   */
 
   addSession: async (session) => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "createBacktestSession",
-        sessionInfo: session,
-      }),
-    });
-
     set({ sessions: [...get().sessions, session] });
   },
 
   updateSession: async (id, updates) => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateBacktestSession",
-        sessionId: id,
-        sessionInfo: updates,
-      }),
-    });
-
     set({
       sessions: get().sessions.map((s) =>
         s.id === id ? { ...s, ...updates } : s
@@ -313,14 +250,6 @@ loadSessionData: async (sessionId: number) => {
   */
 
   addTrade: async (trade) => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "addTrade",
-        trade,
-      }),
-    });
-
     set({ trades: [...get().trades, trade] });
   },
 
@@ -331,38 +260,14 @@ loadSessionData: async (sessionId: number) => {
   */
 
   setActiveTab: async (tab) => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateUISettings",
-        activeTab: tab,
-      }),
-    });
-
     set({ activeTab: tab });
   },
 
   setRowsPerPage: async (rows) => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateUISettings",
-        rowsPerPage: rows,
-      }),
-    });
-
     set({ rowsPerPage: rows });
   },
 
   setCurrentPage: async (page) => {
-    await apiCall("", {
-      method: "POST",
-      body: JSON.stringify({
-        apiName: "updateUISettings",
-        currentPage: page,
-      }),
-    });
-
     set({ currentPage: page });
   },
 }));

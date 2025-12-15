@@ -1,5 +1,5 @@
 // models/backtest/backtestSessions.model.ts
-import { connectBacktestDB } from '@/lib/db/connect';
+import { connectAccountsDB } from '@/lib/db/connect';
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBacktestSession extends Document {
@@ -112,7 +112,7 @@ BacktestSessionSchema.index({ uniqueId: 1, sessionId: 1 }, { unique: true });
 
 export const getBacktestSessionsModel = async () => {
   try {
-    const backtestConnection = await connectBacktestDB();
+    const backtestConnection = await connectAccountsDB();
     if (backtestConnection.models.BacktestSession) {
       return backtestConnection.models.BacktestSession;
     }

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
-import { connectBacktestDB } from '@/lib/db/connect';
-import { getUserFromToken } from '@/lib/api-handlers/testingHandler';
+import { connectAccountsDB } from '@/lib/db/connect';
+import { getUserModel } from '@/models/main/user.model';
+
+async function getUserFromToken(token: string) {
+  const User = await getUserModel();
+  return await User.findOne({ "tokens.token": token });
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,7 +24,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    await connectBacktestDB();
+    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
     
     const searchParams = req.nextUrl.searchParams;

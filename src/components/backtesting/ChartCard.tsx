@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 
 interface ChartCardProps {
   title: string;
+  subtitle?: string;
   children: ReactNode;
   tooltip?: string;
   className?: string;
@@ -12,21 +13,29 @@ interface ChartCardProps {
 
 export default function ChartCard({
   title,
+  subtitle,
   children,
   className = '',
   headerRight,
 }: ChartCardProps) {
   return (
-    <div className={`chart-card ${className}`}>
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-sm font-medium text-[var(--foreground)]">{title}</h3>
+    <div className={`rounded-xl border border-border bg-card p-6 ${className}`}>
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h3 className="text-base font-medium text-foreground">{title}</h3>
+          {subtitle && (
+            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+          )}
+        </div>
         {headerRight && (
-          <div className="flex items-center gap-2">
+          <div className="flex-shrink-0">
             {headerRight}
           </div>
         )}
       </div>
-      {children}
+      <div className="w-full">
+        {children}
+      </div>
     </div>
   );
 }

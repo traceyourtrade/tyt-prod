@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faClock,
   faHistory,
@@ -12,7 +11,7 @@ import {
   faArrowTrendDown,
   faBullseye,
 } from '@fortawesome/free-solid-svg-icons';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { MetricCard, ChartCard, Skeleton } from '@/components/backtesting';
 
 interface StatsData {
@@ -36,11 +35,11 @@ interface StatsData {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[var(--background-elevated)] border border-[var(--border)] rounded-lg px-3 py-2 shadow-lg">
-        <p className="text-xs text-[var(--foreground-muted)] mb-1">{label}</p>
+      <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-lg">
+        <p className="text-xs text-muted-foreground mb-1">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
-            {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+            {entry.name}: {typeof entry.value === 'number' ? `$${entry.value.toLocaleString()}` : entry.value}
           </p>
         ))}
       </div>
@@ -91,21 +90,15 @@ export default function PerformanceSection() {
 
   if (loading) {
     return (
-      <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-[var(--foreground)]">Performance Overview</h2>
-            <p className="text-xs text-[var(--foreground-muted)] mt-0.5">Loading your backtesting data...</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <section className="space-y-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
       </section>
@@ -115,8 +108,8 @@ export default function PerformanceSection() {
   if (error) {
     return (
       <section className="space-y-4">
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-          <p className="text-red-400">Error loading stats: {error}</p>
+        <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+          <p className="text-destructive">Error loading stats: {error}</p>
         </div>
       </section>
     );
@@ -137,19 +130,8 @@ export default function PerformanceSection() {
   };
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-[var(--foreground)]">Performance Overview</h2>
-          <p className="text-xs text-[var(--foreground-muted)] mt-0.5">Track your backtesting progress and key metrics</p>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button className="btn-secondary text-xs py-1.5 px-3">Backtesting</button>
-          <button className="btn-ghost text-xs py-1.5 px-3">Lifetime</button>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <section className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Sessions"
           value={metrics.totalSessions}
@@ -185,7 +167,7 @@ export default function PerformanceSection() {
         />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Avg Risk:Reward"
           value={`${metrics.avgRR.toFixed(2)}R`}
@@ -219,27 +201,27 @@ export default function PerformanceSection() {
         />
       </div>
       
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-        <ChartCard title="Equity Curve" className="xl:col-span-2">
-          <div className="h-44 w-full">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <ChartCard title="Equity Curve" subtitle="Balance over time" className="xl:col-span-2">
+          <div className="h-52 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={equityCurveData}>
                 <defs>
                   <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis 
                   dataKey="date" 
-                  stroke="var(--foreground-muted)" 
+                  stroke="hsl(var(--muted-foreground))" 
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis 
-                  stroke="var(--foreground-muted)" 
+                  stroke="hsl(var(--muted-foreground))" 
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
@@ -250,7 +232,7 @@ export default function PerformanceSection() {
                   type="monotone" 
                   dataKey="balance" 
                   name="Balance"
-                  stroke="#3b82f6" 
+                  stroke="hsl(var(--primary))" 
                   strokeWidth={2}
                   fill="url(#colorBalance)"
                 />
@@ -259,50 +241,47 @@ export default function PerformanceSection() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Session Summary">
-          <div className="h-44 w-full flex flex-col items-center justify-center text-center p-4">
-            <p className="text-3xl font-bold text-[var(--foreground)]">{metrics.totalSessions}</p>
-            <p className="text-sm text-[var(--foreground-muted)] mt-1">Total Sessions</p>
-            <p className="text-xl font-semibold text-[var(--primary)] mt-3">{metrics.tradesTaken.total}</p>
-            <p className="text-xs text-[var(--foreground-muted)]">Trades Recorded</p>
+        <ChartCard title="Session Summary" subtitle="Overall statistics">
+          <div className="h-52 w-full flex flex-col items-center justify-center text-center">
+            <p className="text-4xl font-bold text-foreground">{metrics.totalSessions}</p>
+            <p className="text-sm text-muted-foreground mt-1">Total Sessions</p>
+            <div className="w-12 h-px bg-border my-4" />
+            <p className="text-2xl font-semibold text-primary">{metrics.tradesTaken.total}</p>
+            <p className="text-xs text-muted-foreground">Trades Recorded</p>
           </div>
         </ChartCard>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <ChartCard title="Performance Stats">
-          <div className="h-40 w-full grid grid-cols-2 gap-4 p-4">
-            <div className="flex flex-col items-center justify-center">
-              <p className="text-2xl font-bold text-[var(--profit)]">{stats?.winningTrades || 0}</p>
-              <p className="text-xs text-[var(--foreground-muted)]">Winning Trades</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ChartCard title="Performance Stats" subtitle="Win/loss breakdown">
+          <div className="grid grid-cols-2 gap-6 py-4">
+            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-profit/5">
+              <p className="text-3xl font-bold text-profit">{stats?.winningTrades || 0}</p>
+              <p className="text-sm text-muted-foreground mt-1">Winning Trades</p>
+              <p className="text-lg font-semibold text-profit mt-2">${(stats?.totalProfit || 0).toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Total Profit</p>
             </div>
-            <div className="flex flex-col items-center justify-center">
-              <p className="text-2xl font-bold text-[var(--loss)]">{stats?.losingTrades || 0}</p>
-              <p className="text-xs text-[var(--foreground-muted)]">Losing Trades</p>
-            </div>
-            <div className="flex flex-col items-center justify-center">
-              <p className="text-xl font-semibold text-[var(--profit)]">${(stats?.totalProfit || 0).toFixed(2)}</p>
-              <p className="text-xs text-[var(--foreground-muted)]">Total Profit</p>
-            </div>
-            <div className="flex flex-col items-center justify-center">
-              <p className="text-xl font-semibold text-[var(--loss)]">${Math.abs(stats?.totalLoss || 0).toFixed(2)}</p>
-              <p className="text-xs text-[var(--foreground-muted)]">Total Loss</p>
+            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-loss/5">
+              <p className="text-3xl font-bold text-loss">{stats?.losingTrades || 0}</p>
+              <p className="text-sm text-muted-foreground mt-1">Losing Trades</p>
+              <p className="text-lg font-semibold text-loss mt-2">${Math.abs(stats?.totalLoss || 0).toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Total Loss</p>
             </div>
           </div>
         </ChartCard>
         
-        <ChartCard title="Account Summary">
-          <div className="h-40 w-full flex flex-col items-center justify-center p-4">
-            <p className="text-xs text-[var(--foreground-muted)] mb-1">Current Balance</p>
-            <p className="text-3xl font-bold text-[var(--foreground)]">${(stats?.currentBalance || 5000).toFixed(2)}</p>
-            <div className="mt-4 flex items-center gap-4">
+        <ChartCard title="Account Summary" subtitle="Balance overview">
+          <div className="flex flex-col items-center justify-center py-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Current Balance</p>
+            <p className="text-4xl font-bold text-foreground mt-2">${(stats?.currentBalance || 5000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <div className="mt-6 flex items-center gap-8">
               <div className="text-center">
-                <p className="text-sm font-medium text-[var(--foreground-muted)]">Initial</p>
-                <p className="text-base font-semibold">${(stats?.initialBalance || 5000).toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Initial</p>
+                <p className="text-lg font-semibold text-foreground mt-1">${(stats?.initialBalance || 5000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-[var(--foreground-muted)]">Change</p>
-                <p className={`text-base font-semibold ${metrics.totalPnl >= 0 ? 'text-[var(--profit)]' : 'text-[var(--loss)]'}`}>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Change</p>
+                <p className={`text-lg font-semibold mt-1 ${metrics.totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
                   {metrics.totalPnl >= 0 ? '+' : ''}${metrics.totalPnl.toFixed(2)}
                 </p>
               </div>
