@@ -742,13 +742,27 @@ export default function FullscreenBacktesting({
       pnl = (trade.entry - exitPrice) * lotSize * 100000;
     }
     
+    // Calculate R:R ratio - signed based on direction
+    const slDistance = Math.abs(trade.entry - trade.stopLoss);
+    let signedRR = 0;
+    if (slDistance > 0) {
+      // For long: positive move = (exit - entry), for short: positive move = (entry - exit)
+      const signedMove = trade.type === "long" 
+        ? (exitPrice - trade.entry) 
+        : (trade.entry - exitPrice);
+      signedRR = signedMove / slDistance;
+    }
+    
     const tradeData = {
-      id: Date.now(),
+      id: trade.dbId || Date.now(),
       type: trade.type,
       entry: trade.entry,
       exit: exitPrice,
+      sl: trade.stopLoss,
+      tp: trade.target,
       lotSize: lotSize,
       pnl: pnl,
+      rr: parseFloat(signedRR.toFixed(2)),
       reason: reason,
       timestamp: allBars[currentBarIndexRef.current]?.time || Date.now(),
     };
@@ -758,26 +772,24 @@ export default function FullscreenBacktesting({
     dispatch({ type: "SET_UNREALISED_PL", payload: 0 });
     dispatch({ type: "SET_ACTIVE_TRADE", payload: null });
     
-    // Save trade to database
+    // Update trade in database (close it)
     const parsedSessionId = parseInt(sessionId);
-    if (!isNaN(parsedSessionId)) {
+    if (!isNaN(parsedSessionId) && trade.dbId) {
       try {
         await fetch("/api/trades", {
-          method: "POST",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId: parsedSessionId,
-            type: trade.type,
-            entry: trade.entry,
-            exit: exitPrice,
-            lotSize: lotSize,
+            tradeId: trade.dbId,
+            exitPrice: exitPrice,
+            closedAt: tradeData.timestamp,
             pnl: pnl,
-            reason: reason,
-            timestamp: tradeData.timestamp,
+            rr: parseFloat(signedRR.toFixed(2)),
           }),
         });
       } catch (error) {
-        console.error("Failed to save trade:", error);
+        console.error("Failed to close trade:", error);
       }
     }
   }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId]);
@@ -960,6 +972,7 @@ export default function FullscreenBacktesting({
       const currentBar = allBars[currentBarIndex];
       const currentHigh = currentBar.high;
       const currentLow = currentBar.low;
+      const openedAt = currentBar.time || Date.now();
       
       for (const order of tradingState.limitOrders) {
         let triggered = false;
@@ -976,33 +989,80 @@ export default function FullscreenBacktesting({
             entry: order.entryPrice,
             target: order.target,
             stopLoss: order.stopLoss,
+            dbId: null as string | null,
           };
-          dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
           drawTradeLines(trade);
           dispatch({ type: "REMOVE_LIMIT_ORDER", payload: order.id });
           setShowPanel(true);
+          
+          // Save to DB asynchronously
+          const parsedSessionId = parseInt(sessionId);
+          if (!isNaN(parsedSessionId)) {
+            fetch("/api/trades", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sessionId: parsedSessionId,
+                side: order.type === 'long' ? 'buy' : 'sell',
+                entryPrice: order.entryPrice,
+                sl: order.stopLoss,
+                tp: order.target,
+                size: order.lotSize || lotSize,
+                openedAt: openedAt,
+              }),
+            })
+            .then(res => res.json())
+            .then(result => {
+              if (result.success && result.trade?.id) {
+                dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId: result.trade.id } });
+              } else {
+                dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
+              }
+            })
+            .catch(() => {
+              dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
+            });
+          } else {
+            dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
+          }
           break;
         }
       }
     }
-  }, [currentBarIndex, allBars, tradingState.limitOrders, tradingState.activeTrades, drawTradeLines]);
+  }, [currentBarIndex, allBars, tradingState.limitOrders, tradingState.activeTrades, drawTradeLines, sessionId, lotSize]);
 
   const handlePlaybackSpeedChange = (speed: number) => {
     setPlaybackSpeed(500 / speed);
   };
 
-  const handlePlaceTrade = (type: string) => {
+  const handlePlaceTrade = async (type: string) => {
     if (!allBars[currentBarIndex]) return;
     const currentPrice = allBars[currentBarIndex].close;
+    const openedAt = allBars[currentBarIndex]?.time || Date.now();
+    const tp = currentPrice + (type === "long" ? 0.0100 : -0.0100);
+    const sl = currentPrice - (type === "long" ? 0.0050 : -0.0050);
+    
     const trade = {
       type: type,
       entry: currentPrice,
-      target: currentPrice + (type === "long" ? 0.0100 : -0.0100),
-      stopLoss: currentPrice - (type === "long" ? 0.0050 : -0.0050),
+      target: tp,
+      stopLoss: sl,
+      dbId: null as string | null,
     };
-    dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
     drawTradeLines(trade);
     setShowPanel(true);
+    
+    // Save to DB and update with dbId
+    const dbId = await saveTradeToDb({
+      side: type === 'long' ? 'buy' : 'sell',
+      entryPrice: currentPrice,
+      sl: sl,
+      tp: tp,
+      size: lotSize,
+      openedAt: openedAt,
+    });
+    
+    dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
   };
 
   const handlePlaceOrderFromDrawing = () => {
@@ -1011,21 +1071,34 @@ export default function FullscreenBacktesting({
     }
   };
 
-  const handleMarketOrder = () => {
+  const handleMarketOrder = async () => {
     if (!tradingState.potentialTrade || !allBars[currentBarIndex]) return;
     const currentPrice = allBars[currentBarIndex].close;
+    const openedAt = allBars[currentBarIndex]?.time || Date.now();
     const trade = {
       type: tradingState.potentialTrade.type,
       entry: currentPrice,
       target: tradingState.potentialTrade.target,
       stopLoss: tradingState.potentialTrade.stopLoss,
+      dbId: null as string | null,
     };
     // Draw lines FIRST before any state updates to ensure immediate visibility
     drawTradeLines(trade);
     setShowOrderDialog(false);
-    dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
     dispatch({ type: "SET_POTENTIAL_TRADE", payload: null });
     setShowPanel(true);
+    
+    // Save to DB and update with dbId
+    const dbId = await saveTradeToDb({
+      side: tradingState.potentialTrade.type === 'long' ? 'buy' : 'sell',
+      entryPrice: currentPrice,
+      sl: tradingState.potentialTrade.stopLoss,
+      tp: tradingState.potentialTrade.target,
+      size: lotSize,
+      openedAt: openedAt,
+    });
+    
+    dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
   };
 
   const handleLimitOrder = () => {
@@ -1126,7 +1199,37 @@ export default function FullscreenBacktesting({
     return riskAmount / (slDistance * 100000);
   };
 
-  const handleOrderFormSubmit = (action: 'save' | 'save_journal') => {
+  const saveTradeToDb = async (tradeData: {
+    side: string;
+    entryPrice: number;
+    sl: number;
+    tp: number;
+    size: number;
+    openedAt: number;
+  }): Promise<string | null> => {
+    const parsedSessionId = parseInt(sessionId);
+    if (isNaN(parsedSessionId)) return null;
+    
+    try {
+      const res = await fetch("/api/trades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: parsedSessionId,
+          ...tradeData,
+        }),
+      });
+      const result = await res.json();
+      if (result.success && result.trade?.id) {
+        return result.trade.id;
+      }
+    } catch (error) {
+      console.error("Failed to save trade to DB:", error);
+    }
+    return null;
+  };
+
+  const handleOrderFormSubmit = async (action: 'save' | 'save_journal') => {
     if (!allBars[currentBarIndex]) return;
     
     const entry = orderFormData.orderType === 'market' 
@@ -1137,6 +1240,7 @@ export default function FullscreenBacktesting({
     const posSize = parseFloat(orderFormData.positionSize) || calculatePositionSize();
     
     const tradeType = orderFormData.side === 'buy' ? 'long' : 'short';
+    const openedAt = allBars[currentBarIndex]?.time || Date.now();
     
     if (orderFormData.orderType === 'market') {
       const trade = {
@@ -1144,12 +1248,24 @@ export default function FullscreenBacktesting({
         entry: entry,
         target: tp,
         stopLoss: sl,
+        dbId: null as string | null,
       };
       drawTradeLines(trade);
       setShowOrderDialog(false);
-      dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
       setLotSize(posSize);
       setShowPanel(true);
+      
+      // Save to DB and update with dbId
+      const dbId = await saveTradeToDb({
+        side: orderFormData.side,
+        entryPrice: entry,
+        sl: sl,
+        tp: tp,
+        size: posSize,
+        openedAt: openedAt,
+      });
+      
+      dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
     } else {
       const limitOrder = {
         id: Date.now(),
