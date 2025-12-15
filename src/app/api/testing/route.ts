@@ -1,4 +1,4 @@
-import {connectBacktestDB} from '@/lib/db/connect';
+import {connectAccountsDB} from '@/lib/db/connect';
 import { NextResponse } from 'next/server';
 
 // Models will be defined here
@@ -122,7 +122,7 @@ let rowsPerPageData = 10;
 let currentPageData = 1;
 
 export async function GET(request) {
-  await connectBacktestDB();
+  await connectAccountsDB();
   
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');
@@ -166,7 +166,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  await connectBacktestDB();
+  await connectAccountsDB();
   
   try {
     const body = await request.json();
