@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
-import { connectAccountsDB } from '@/lib/db/connect';
 import { getUserModel } from '@/models/main/user.model';
 
 async function getUserFromToken(token: string) {
@@ -24,7 +23,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
     
     const searchParams = req.nextUrl.searchParams;
@@ -80,7 +78,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name, symbol, and date range are required" }, { status: 400 });
     }
 
-    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
 
     const lastSession = await BacktestSession.findOne({ uniqueId: userId })
@@ -146,7 +143,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
     }
 
-    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
 
     const session = await BacktestSession.findOneAndUpdate(
@@ -192,7 +188,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
     }
 
-    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
 
     const result = await BacktestSession.deleteOne({

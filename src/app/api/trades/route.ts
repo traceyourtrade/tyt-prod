@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
-import { connectAccountsDB } from '@/lib/db/connect';
 import { getUserModel } from '@/models/main/user.model';
 
 async function getUserFromToken(token: string) {
@@ -31,7 +30,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Session ID, side, and entry price are required" }, { status: 400 });
     }
 
-    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
 
     const trade = {
@@ -88,7 +86,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Session ID and trade ID are required" }, { status: 400 });
     }
 
-    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
 
     const updateFields: Record<string, any> = {};
@@ -150,7 +147,6 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const sessionId = searchParams.get('sessionId');
 
-    await connectAccountsDB();
     const BacktestSession = await getBacktestSessionsModel();
 
     if (sessionId) {

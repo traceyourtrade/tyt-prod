@@ -8,6 +8,7 @@ const options = {
 const connections: {
   main?: mongoose.Connection;
   accounts?: mongoose.Connection;
+  backtest?: mongoose.Connection;
 } = {};
 console.log("🌐 DB Connect Module Loaded");
 export const connectMainDB = async (): Promise<mongoose.Connection> => {
@@ -49,5 +50,26 @@ export const connectAccountsDB = async (): Promise<mongoose.Connection> => {
   conn.on("disconnected", () => console.warn("⚠️ Accounts DB: Disconnected"));
 
   connections.accounts = conn;
+  return conn;
+};
+
+export const connectBacktestDB = async (): Promise<mongoose.Connection> => {
+  if (connections.backtest) {
+    console.log("ℹ️ Using existing Backtest DB connection");
+    return connections.backtest;
+  }
+
+  const uri = process.env.DATABASE3 as string;
+  if (!uri) throw new Error("❌ Missing DATABASE3 environment variable");
+
+  console.log("🔌 Connecting to Backtest DB...");
+
+  const conn = await mongoose.createConnection(uri, options);
+
+  conn.on("connected", () => console.log("✅ Backtest DB: Connection Successful"));
+  conn.on("error", (err) => console.error("❌ Backtest DB: Connection Error", err));
+  conn.on("disconnected", () => console.warn("⚠️ Backtest DB: Disconnected"));
+
+  connections.backtest = conn;
   return conn;
 };
