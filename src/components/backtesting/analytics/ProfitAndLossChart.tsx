@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart,
@@ -34,9 +34,22 @@ export default function ProfitAndLossChart({
 }: Props) {
   const [timeRange, setTimeRange] = useState<'all' | 'day'>('all');
 
-  const filteredData = timeRange === 'day' && data.length > 10 
-    ? data.slice(-10) 
-    : data;
+  const filteredData = useMemo(() => {
+    if (timeRange === 'all' || data.length === 0) {
+      return data;
+    }
+    
+    const now = Date.now();
+    const oneDayAgo = now - (24 * 60 * 60 * 1000);
+    
+    const dayData = data.filter(point => point.timestamp >= oneDayAgo);
+    
+    if (dayData.length === 0 && data.length > 0) {
+      return data.slice(-1);
+    }
+    
+    return dayData;
+  }, [data, timeRange]);
 
   const gainPercent = initialBalance > 0 ? ((totalPnl / initialBalance) * 100).toFixed(2) : '0';
 

@@ -81,6 +81,19 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
   - **Color Psychology:** Deep Charcoal (#08090b to #181b23) for reduced eye strain, Electric Blue (#3b82f6) for trust/focus, Teal (#14b8a6) for growth indicators
   - **Session Features:** Symbol/date range configuration, balance tracking, Twelve Data API for historical candles
   - **Database:** Uses DATABASE3 secret for MongoDB backtesting data storage
+  - **Session Analytics:** Comprehensive analytics suite at `/backtesting/sessions` with 10 visualization modules:
+    - **Profit and Loss Chart:** Cumulative equity curve area chart with All/Day time toggle, stats row (Total PnL, Account Balance, Win Rate, Total Trades, Breakeven Trades, Threshold input)
+    - **R:R Metrics Cards:** Average RR, Max RR, Ideal Average RR, Max Ideal RR, Could have profit/BE count with mini sparkline charts
+    - **Winners & Losers:** Side-by-side cards showing total, best/worst %, average %, duration, max/avg consecutive streaks
+    - **Performance by Side:** Dual donut charts for Total Trades and Win Rate by Buy/Sell side
+    - **Performance by Session:** 4 radar/spider charts for Win Rate, Total Trades, Avg RR, Profit by trading session (Asia/London/New York based on UTC hours)
+    - **Performance by Time:** Bar chart by hour with metric dropdown (P&L, Win Rate, Trades, R:R)
+    - **Performance by Day:** Horizontal bar chart by weekday with win rate badges
+    - **Performance by Month:** Monthly grid with accumulated/overall gain toggles, initial/current balance modes, YTD and total calculations
+    - **Performance Calendar:** Full calendar view with P&L and trade count per day, month/year navigation, dollar/percent display modes
+    - **Trade Frequency:** 3 bar charts for trades/day, trades/week, trades/month with average reference lines
+    - **Data Layer:** `useBacktestAnalytics` hook (`src/hooks/backtesting/useBacktestAnalytics.ts`) computes all statistics from session trades
+    - **Components:** All in `src/components/backtesting/analytics/` using AstraFlow design tokens
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for app routes, components, utilities (`lib`, `utils`), database models, state management (`store`), and type definitions.

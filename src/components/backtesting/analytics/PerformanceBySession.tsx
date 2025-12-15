@@ -17,21 +17,25 @@ const METRICS = [
 
 export default function PerformanceBySession({ data }: Props) {
   const maxTrades = Math.max(...data.map(d => d.totalTrades), 1);
-  const maxProfit = Math.max(...data.map(d => Math.abs(d.profit)), 1);
-  const maxRR = Math.max(...data.map(d => d.avgRR), 1);
+  const maxRR = Math.max(...data.map(d => Math.abs(d.avgRR)), 1);
+  
+  const profits = data.map(d => d.profit);
+  const minProfit = Math.min(...profits);
+  const maxProfit = Math.max(...profits);
+  const profitRange = Math.max(Math.abs(minProfit), Math.abs(maxProfit), 1);
 
   const normalizeValue = (value: number, metric: string): number => {
     switch (metric) {
       case 'winRate':
-        return value;
+        return Math.max(0, Math.min(100, value));
       case 'totalTrades':
-        return (value / maxTrades) * 100;
+        return Math.max(0, (value / maxTrades) * 100);
       case 'avgRR':
-        return (value / maxRR) * 100;
+        return Math.max(0, (Math.abs(value) / maxRR) * 100);
       case 'profit':
-        return (value / maxProfit) * 100;
+        return Math.max(0, ((value + profitRange) / (2 * profitRange)) * 100);
       default:
-        return value;
+        return Math.max(0, value);
     }
   };
 
