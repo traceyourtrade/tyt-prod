@@ -37,15 +37,13 @@ export interface IBacktestSession extends Document {
   }>;
   trades: Array<{
     id: number;
-    name: string;
-    date: string;
-    symbol: string;
-    position: string;
-    roi: number;
-    entryPrice: number;
-    stopPrice: number;
-    maxRR: number;
-    status: string;
+    type: string;
+    entry: number;
+    exit: number;
+    lotSize: number;
+    pnl: number;
+    reason: string;
+    timestamp: number;
   }>;
   activeTab: string;
   rowsPerPage: number;
@@ -91,15 +89,13 @@ const BacktestSessionSchema = new Schema<IBacktestSession>(
     }],
     trades: [{
       id: { type: Number },
-      name: { type: String },
-      date: { type: String },
-      symbol: { type: String },
-      position: { type: String },
-      roi: { type: Number },
-      entryPrice: { type: Number },
-      stopPrice: { type: Number },
-      maxRR: { type: Number },
-      status: { type: String }
+      type: { type: String },
+      entry: { type: Number },
+      exit: { type: Number },
+      lotSize: { type: Number },
+      pnl: { type: Number },
+      reason: { type: String },
+      timestamp: { type: Number }
     }],
     activeTab: { type: String, default: 'Dashboard' },
     rowsPerPage: { type: Number, default: 10 },
