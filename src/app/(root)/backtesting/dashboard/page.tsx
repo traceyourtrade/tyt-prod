@@ -3,6 +3,24 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { 
+  BarChart3, 
+  Clock, 
+  Calendar, 
+  TrendingUp, 
+  Star, 
+  DollarSign,
+  Plus,
+  Search,
+  MoreVertical,
+  FileText,
+  Pencil,
+  Trash2,
+  X,
+  ArrowUpRight,
+  ArrowDownRight
+} from "lucide-react";
 
 interface Trade {
   id: string;
@@ -227,261 +245,315 @@ export default function BacktestingDashboard() {
   };
 
   return (
-    <div className="min-h-screen af-bg-gradient" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-deep, #08090b), var(--af-bg-base, #0c0d10), var(--af-bg-elevated, #12141a))' }}>
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
+    <div className="min-h-screen p-4 sm:p-6 bg-background">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+          className={cn(
+            "relative overflow-hidden rounded-2xl border p-6",
+            "bg-gradient-to-br from-primary/5 via-card to-card",
+            "dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800",
+            "border-border dark:border-white/[0.08]"
+          )}
         >
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ 
-                    background: 'linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(20, 184, 166, 0.2))',
-                    border: '1px solid rgba(59, 130, 246, 0.2)'
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#headerGradient)" strokeWidth="2">
-                    <defs>
-                      <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{ stopColor: 'var(--af-accent-blue, #3b82f6)' }} />
-                        <stop offset="100%" style={{ stopColor: 'var(--af-accent-teal, #14b8a6)' }} />
-                      </linearGradient>
-                    </defs>
-                    <path d="M3 3v18h18" />
-                    <path d="M18 9l-5 5-2-2-4 4" />
-                  </svg>
-                </div>
-                <h1 
-                  className="text-3xl font-bold bg-clip-text text-transparent"
-                  style={{ backgroundImage: 'linear-gradient(to right, var(--af-text-primary, #f4f4f5), var(--af-text-muted, #a1a1aa))' }}
-                >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                "bg-gradient-to-br from-primary/20 to-emerald-500/20",
+                "border border-primary/20"
+              )}>
+                <BarChart3 className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
                   Backtesting Lab
                 </h1>
+                <p className="text-sm text-muted-foreground">
+                  Master your strategies with historical market simulation
+                </p>
               </div>
-              <p className="af-text-muted text-sm ml-[52px]">
-                Master your strategies with historical market simulation
-              </p>
             </div>
             
             <motion.button
               onClick={() => setShowCreateModal(true)}
-              whileHover={{ scale: 1.02, y: -1 }}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm overflow-hidden"
-              style={{ color: 'var(--af-text-primary, #f4f4f5)' }}
+              className={cn(
+                "px-5 py-2.5 rounded-xl font-semibold text-sm inline-flex items-center justify-center gap-2",
+                "bg-primary text-primary-foreground hover:bg-primary/90"
+              )}
             >
-              <div 
-                className="absolute inset-0 transition-all duration-300"
-                style={{ background: 'linear-gradient(to right, var(--af-accent-blue, #3b82f6), #2563eb)' }}
-              />
-              <div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"
-                style={{ background: 'linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(20, 184, 166, 0.2))' }}
-              />
-              <span className="relative flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                New Session
-              </span>
+              <Plus className="w-4 h-4" />
+              New Session
             </motion.button>
           </div>
+        </motion.div>
 
+        {/* Stats Grid */}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"
+        >
+          {/* Time Invested */}
           <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8"
+            variants={itemVariants} 
+            className={cn(
+              "relative overflow-hidden rounded-2xl p-4 sm:p-5",
+              "bg-card border border-border",
+              "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+            )}
           >
-            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
-              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }} />
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-accent-blue, #3b82f6)" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Time Invested</span>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full blur-2xl" />
+            <div className="flex items-center gap-2 mb-3">
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center",
+                "bg-primary/10"
+              )}>
+                <Clock className="w-4 h-4 text-primary" />
               </div>
-              <div className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>{formatTime(globalStats.timeInvested)}</div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
-              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(20, 184, 166, 0.05)' }} />
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(20, 184, 166, 0.1)' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-accent-teal, #14b8a6)" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Historical Days</span>
-              </div>
-              <div className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>{globalStats.historicalDays}</div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
-              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)' }} />
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-purple, #8b5cf6)" strokeWidth="2">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                  </svg>
-                </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Total Trades</span>
-              </div>
-              <div className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
-                {globalStats.totalTrades}
-                <span className="text-xs font-medium ml-2" style={{ color: 'var(--af-text-disabled, #52525b)' }}>
-                  {globalStats.longTrades}L / {globalStats.shortTrades}S
-                </span>
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
-              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)' }} />
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-warning, #f59e0b)" strokeWidth="2">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Win Rate</span>
-              </div>
-              <div className="flex items-end gap-2">
-                <span className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>{globalStats.winRate.toFixed(1)}%</span>
-                <div className="flex-1 h-1.5 rounded-full overflow-hidden mb-1.5" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)' }}>
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${globalStats.winRate}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full rounded-full"
-                    style={{ background: 'linear-gradient(to right, #f59e0b, #fbbf24)' }}
-                  />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
-              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: globalStats.totalPnl >= 0 ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)' }} />
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: globalStats.totalPnl >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={globalStats.totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)'} strokeWidth="2">
-                    <line x1="12" y1="1" x2="12" y2="23" />
-                    <path d={globalStats.totalPnl >= 0 ? "M17 5l-5-4-5 4" : "M17 19l-5 4-5-4"} />
-                  </svg>
-                </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Total P&L</span>
-              </div>
-              <div className="text-2xl font-bold tracking-tight" style={{ color: globalStats.totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)' }}>
-                {globalStats.totalPnl >= 0 ? '+' : ''}${globalStats.totalPnl.toFixed(2)}
-              </div>
-            </motion.div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Time Invested
+              </span>
+            </div>
+            <div className="text-2xl font-bold tracking-tight text-foreground">
+              {formatTime(globalStats.timeInvested)}
+            </div>
           </motion.div>
 
+          {/* Historical Days */}
           <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-2xl af-card p-5"
-            style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}
+            variants={itemVariants} 
+            className={cn(
+              "relative overflow-hidden rounded-2xl p-4 sm:p-5",
+              "bg-card border border-border",
+              "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+            )}
           >
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                <h2 className="text-lg font-semibold af-text-primary shrink-0">Sessions</h2>
-                <div className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto" style={{ backgroundColor: 'var(--af-bg-base, #0c0d10)' }}>
-                  {(['all', 'active', 'completed'] as const).map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => setActiveFilter(filter)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
-                        activeFilter === filter 
-                          ? 'bg-blue-500/20 af-text-blue border border-blue-500/30' 
-                          : 'af-text-muted hover:af-text-primary'
-                      }`}
-                    >
-                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                      <span className="ml-1.5 text-[10px] opacity-60">
-                        {filter === 'all' ? sessions.length : sessions.filter(s => s.status === filter).length}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+            <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl" />
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-500/10">
+                <Calendar className="w-4 h-4 text-emerald-500" />
               </div>
-              
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div className="relative flex-1 sm:flex-none">
-                  <input
-                    type="text"
-                    placeholder="Search sessions..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2.5 w-full sm:w-56 rounded-xl border text-sm focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all af-text-primary"
-                    style={{ backgroundColor: 'var(--af-bg-base, #0c0d10)', borderColor: 'var(--af-border-default, rgba(255, 255, 255, 0.08))' }}
-                  />
-                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 af-text-disabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="M21 21l-4.35-4.35"/>
-                  </svg>
-                </div>
-                
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-10 af-text-primary"
-                  style={{ backgroundColor: 'var(--af-bg-base)', borderColor: 'var(--af-border-default)', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-                >
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="pnl">Highest P&L</option>
-                  <option value="name">Name A-Z</option>
-                </select>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Historical Days
+              </span>
+            </div>
+            <div className="text-2xl font-bold tracking-tight text-foreground">
+              {globalStats.historicalDays}
+            </div>
+          </motion.div>
+
+          {/* Total Trades */}
+          <motion.div 
+            variants={itemVariants} 
+            className={cn(
+              "relative overflow-hidden rounded-2xl p-4 sm:p-5",
+              "bg-card border border-border",
+              "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+            )}
+          >
+            <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/5 rounded-full blur-2xl" />
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-500/10">
+                <TrendingUp className="w-4 h-4 text-violet-500" />
               </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Total Trades
+              </span>
+            </div>
+            <div className="text-2xl font-bold tracking-tight text-foreground">
+              {globalStats.totalTrades}
+              <span className="text-xs font-medium ml-2 text-muted-foreground">
+                {globalStats.longTrades}L / {globalStats.shortTrades}S
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Win Rate */}
+          <motion.div 
+            variants={itemVariants} 
+            className={cn(
+              "relative overflow-hidden rounded-2xl p-4 sm:p-5",
+              "bg-card border border-border",
+              "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+            )}
+          >
+            <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/5 rounded-full blur-2xl" />
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500/10">
+                <Star className="w-4 h-4 text-amber-500" />
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Win Rate
+              </span>
+            </div>
+            <div className="flex items-end gap-2">
+              <span className="text-2xl font-bold tracking-tight text-foreground">
+                {globalStats.winRate.toFixed(1)}%
+              </span>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden mb-1.5 bg-muted">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${globalStats.winRate}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Total P&L */}
+          <motion.div 
+            variants={itemVariants} 
+            className={cn(
+              "relative overflow-hidden rounded-2xl p-4 sm:p-5",
+              "bg-card border border-border",
+              "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+            )}
+          >
+            <div className={cn(
+              "absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl",
+              globalStats.totalPnl >= 0 ? "bg-emerald-500/5" : "bg-red-500/5"
+            )} />
+            <div className="flex items-center gap-2 mb-3">
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center",
+                globalStats.totalPnl >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"
+              )}>
+                {globalStats.totalPnl >= 0 ? (
+                  <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                ) : (
+                  <ArrowDownRight className="w-4 h-4 text-red-500" />
+                )}
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Total P&L
+              </span>
+            </div>
+            <div className={cn(
+              "text-2xl font-bold tracking-tight",
+              globalStats.totalPnl >= 0 ? "text-emerald-500" : "text-red-500"
+            )}>
+              {globalStats.totalPnl >= 0 ? '+' : ''}${globalStats.totalPnl.toFixed(2)}
             </div>
           </motion.div>
         </motion.div>
 
+        {/* Sessions Toolbar */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className={cn(
+            "rounded-2xl p-4 sm:p-5",
+            "bg-card border border-border",
+            "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+          )}
+        >
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <h2 className="text-lg font-semibold text-foreground shrink-0">Sessions</h2>
+              <div className={cn(
+                "flex items-center gap-1 p-1 rounded-xl overflow-x-auto",
+                "bg-muted"
+              )}>
+                {(['all', 'active', 'completed'] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setActiveFilter(filter)}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap",
+                      activeFilter === filter 
+                        ? "bg-primary/20 text-primary border border-primary/30" 
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    <span className="ml-1.5 text-[10px] opacity-60">
+                      {filter === 'all' ? sessions.length : sessions.filter(s => s.status === filter).length}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative flex-1 sm:flex-none">
+                <input
+                  type="text"
+                  placeholder="Search sessions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={cn(
+                    "pl-10 pr-4 py-2.5 w-full sm:w-56 rounded-xl text-sm transition-all",
+                    "bg-background border border-border text-foreground",
+                    "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                  )}
+                />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              </div>
+              
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-sm cursor-pointer appearance-none pr-10",
+                  "bg-background border border-border text-foreground",
+                  "focus:outline-none focus:border-primary/50"
+                )}
+                style={{ 
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, 
+                  backgroundRepeat: 'no-repeat', 
+                  backgroundPosition: 'right 12px center' 
+                }}
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="pnl">Highest P&L</option>
+                <option value="name">Name A-Z</option>
+              </select>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Sessions List */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="relative">
-              <div className="w-12 h-12 border-2 border-blue-500/20 rounded-full" />
-              <div className="absolute inset-0 w-12 h-12 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--af-accent-blue)', borderTopColor: 'transparent' }} />
-            </div>
-            <span className="af-text-disabled text-sm">Loading sessions...</span>
+            <div className="w-10 h-10 rounded-full animate-spin border-2 border-border border-t-primary" />
+            <span className="text-muted-foreground text-sm">Loading sessions...</span>
           </div>
         ) : filteredSessions.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative overflow-hidden rounded-2xl af-card p-16 text-center"
-            style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated), var(--af-bg-base))' }}
+            className={cn(
+              "relative overflow-hidden rounded-2xl p-12 sm:p-16 text-center",
+              "bg-card border border-border",
+              "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+            )}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-teal-500/5" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-emerald-500/5" />
             <div className="relative">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-teal-500/10 flex items-center justify-center border border-white/[0.06]">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="url(#emptyStateGradient)" strokeWidth="1.5">
-                  <defs>
-                    <linearGradient id="emptyStateGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#3b82f6" />
-                      <stop offset="100%" stopColor="#14b8a6" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M3 3v18h18" />
-                  <path d="M18 9l-5 5-2-2-4 4" />
-                </svg>
+              <div className={cn(
+                "w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center",
+                "bg-gradient-to-br from-primary/10 to-emerald-500/10",
+                "border border-primary/20"
+              )}>
+                <BarChart3 className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 {searchQuery ? "No sessions found" : "Start Your Backtesting Journey"}
               </h3>
-              <p className="text-[#71717a] mb-6 max-w-md mx-auto">
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 {searchQuery 
                   ? "Try a different search term or filter" 
                   : "Create your first session to practice trading strategies on historical data without risking real money"}
@@ -491,11 +563,12 @@ export default function BacktestingDashboard() {
                   onClick={() => setShowCreateModal(true)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
+                  className={cn(
+                    "inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm",
+                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                  )}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
+                  <Plus className="w-4 h-4" />
                   Create Your First Session
                 </motion.button>
               )}
@@ -508,7 +581,7 @@ export default function BacktestingDashboard() {
             animate="visible"
             className="space-y-3"
           >
-            {filteredSessions.map((session, index) => {
+            {filteredSessions.map((session) => {
               const progress = getProgress(session);
               const pnl = session.currentBalance - session.initialBalance;
               const closedTrades = (session.trades || []).filter(t => t.status === 'closed');
@@ -521,37 +594,50 @@ export default function BacktestingDashboard() {
                   key={session.sessionId}
                   variants={itemVariants}
                   whileHover={{ y: -2 }}
-                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#12141a] to-[#0c0d10] border border-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
+                  className={cn(
+                    "group relative overflow-hidden rounded-2xl transition-all duration-300",
+                    "bg-card border border-border hover:border-primary/20",
+                    "dark:bg-zinc-900/50 dark:border-white/[0.04] dark:hover:border-white/[0.08]"
+                  )}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-500/[0.02] group-hover:via-transparent group-hover:to-teal-500/[0.02] transition-all duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-transparent to-emerald-500/0 group-hover:from-primary/[0.02] group-hover:to-emerald-500/[0.02] transition-all duration-500" />
                   
                   <div className="relative p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                         <div className="relative shrink-0">
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#1e222d] to-[#181b23] flex items-center justify-center border border-white/[0.06] group-hover:border-blue-500/20 transition-colors">
+                          <div className={cn(
+                            "w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center",
+                            "bg-muted border border-border group-hover:border-primary/20 transition-colors"
+                          )}>
                             <span className="text-lg sm:text-xl">{getSymbolIcon(session.symbol)}</span>
                           </div>
-                          <div className={`absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-[#0c0d10] ${session.status === 'active' ? 'bg-emerald-500' : 'bg-[#52525b]'}`} />
+                          <div className={cn(
+                            "absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-card",
+                            session.status === 'active' ? 'bg-emerald-500' : 'bg-muted-foreground'
+                          )} />
                         </div>
                         
                         <div className="flex-1 min-w-0 overflow-hidden">
                           <div className="flex items-center gap-2 sm:gap-3 mb-1">
-                            <h3 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors text-sm sm:text-base">
+                            <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors text-sm sm:text-base">
                               {session.name || 'Untitled Session'}
                             </h3>
-                            <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-semibold rounded-lg uppercase tracking-wide shrink-0 ${
+                            <span className={cn(
+                              "px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-semibold rounded-lg uppercase tracking-wide shrink-0",
                               session.status === 'active' 
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                                : 'bg-[#1e222d] text-[#71717a] border border-white/[0.06]'
-                            }`}>
+                                ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                                : 'bg-muted text-muted-foreground border border-border'
+                            )}>
                               {session.status}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs sm:text-sm text-[#71717a] overflow-hidden">
-                            <span className="font-medium text-[#a1a1aa] shrink-0">{session.symbol || 'N/A'}</span>
-                            <span className="text-[#3f3f46] shrink-0">•</span>
-                            <span className="truncate">{new Date(session.fromDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} → {new Date(session.toDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground overflow-hidden">
+                            <span className="font-medium text-foreground/70 shrink-0">{session.symbol || 'N/A'}</span>
+                            <span className="shrink-0">•</span>
+                            <span className="truncate">
+                              {new Date(session.fromDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} → {new Date(session.toDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -559,16 +645,19 @@ export default function BacktestingDashboard() {
                       <div className="flex items-center gap-3 sm:gap-8 justify-between sm:justify-end">
                         <div className="flex items-center gap-4 sm:gap-8">
                           <div className="hidden sm:block text-center">
-                            <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">Trades</div>
-                            <div className="text-lg font-bold text-white tabular-nums">{closedTrades.length}</div>
+                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Trades</div>
+                            <div className="text-lg font-bold text-foreground tabular-nums">{closedTrades.length}</div>
                           </div>
                           <div className="hidden sm:block text-center">
-                            <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">Win Rate</div>
-                            <div className="text-lg font-bold text-white tabular-nums">{winRate.toFixed(0)}%</div>
+                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Win Rate</div>
+                            <div className="text-lg font-bold text-foreground tabular-nums">{winRate.toFixed(0)}%</div>
                           </div>
                           <div className="text-center min-w-[80px] sm:min-w-[100px]">
-                            <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">P&L</div>
-                            <div className={`text-base sm:text-lg font-bold tabular-nums ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">P&L</div>
+                            <div className={cn(
+                              "text-base sm:text-lg font-bold tabular-nums",
+                              pnl >= 0 ? 'text-emerald-500' : 'text-red-500'
+                            )}>
                               {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
                             </div>
                           </div>
@@ -576,15 +665,15 @@ export default function BacktestingDashboard() {
                         
                         <div className="hidden lg:block w-36">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider">Progress</span>
-                            <span className="text-xs font-medium text-[#a1a1aa] tabular-nums">{progress.toFixed(0)}%</span>
+                            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Progress</span>
+                            <span className="text-xs font-medium text-foreground/70 tabular-nums">{progress.toFixed(0)}%</span>
                           </div>
-                          <div className="h-2 bg-[#1e222d] rounded-full overflow-hidden">
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${progress}%` }}
                               transition={{ duration: 0.8, ease: "easeOut" }}
-                              className="h-full bg-gradient-to-r from-blue-500 to-teal-500 rounded-full"
+                              className="h-full bg-gradient-to-r from-primary to-emerald-500 rounded-full"
                             />
                           </div>
                         </div>
@@ -594,7 +683,10 @@ export default function BacktestingDashboard() {
                             onClick={() => router.push(`/backtesting/${session.sessionId}`)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-shadow whitespace-nowrap"
+                            className={cn(
+                              "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl whitespace-nowrap",
+                              "bg-primary text-primary-foreground hover:bg-primary/90"
+                            )}
                           >
                             Continue
                           </motion.button>
@@ -602,13 +694,12 @@ export default function BacktestingDashboard() {
                           <div className="relative">
                             <button
                               onClick={() => setMenuOpen(menuOpen === session.sessionId ? null : session.sessionId)}
-                              className="p-2 rounded-xl hover:bg-white/[0.04] text-[#71717a] hover:text-white transition-colors"
+                              className={cn(
+                                "p-2 rounded-xl transition-colors",
+                                "text-muted-foreground hover:text-foreground hover:bg-muted"
+                              )}
                             >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="1"/>
-                                <circle cx="12" cy="5" r="1"/>
-                                <circle cx="12" cy="19" r="1"/>
-                              </svg>
+                              <MoreVertical className="w-4 h-4" />
                             </button>
                             
                             <AnimatePresence>
@@ -617,41 +708,34 @@ export default function BacktestingDashboard() {
                                   initial={{ opacity: 0, scale: 0.95, y: -5 }}
                                   animate={{ opacity: 1, scale: 1, y: 0 }}
                                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                                  className="absolute right-0 top-full mt-2 w-44 bg-[#1a1d24] rounded-xl border border-white/[0.08] shadow-xl shadow-black/40 overflow-hidden z-20"
+                                  className={cn(
+                                    "absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden z-20",
+                                    "bg-card border border-border shadow-xl"
+                                  )}
                                 >
                                   <button
                                     onClick={() => {
                                       router.push(`/backtesting/sessions?id=${session.sessionId}`);
                                       setMenuOpen(null);
                                     }}
-                                    className="w-full px-4 py-2.5 text-left text-sm text-[#a1a1aa] hover:bg-white/[0.04] hover:text-white flex items-center gap-3 transition-colors"
+                                    className="w-full px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-3 transition-colors"
                                   >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                      <polyline points="14 2 14 8 20 8" />
-                                      <line x1="16" y1="13" x2="8" y2="13" />
-                                      <line x1="16" y1="17" x2="8" y2="17" />
-                                    </svg>
+                                    <FileText className="w-4 h-4" />
                                     View Summary
                                   </button>
                                   <button
                                     onClick={() => setMenuOpen(null)}
-                                    className="w-full px-4 py-2.5 text-left text-sm text-[#a1a1aa] hover:bg-white/[0.04] hover:text-white flex items-center gap-3 transition-colors"
+                                    className="w-full px-4 py-2.5 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-3 transition-colors"
                                   >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                    </svg>
+                                    <Pencil className="w-4 h-4" />
                                     Rename
                                   </button>
-                                  <div className="h-px bg-white/[0.06] my-1" />
+                                  <div className="h-px bg-border my-1" />
                                   <button
                                     onClick={() => deleteSession(session.sessionId)}
-                                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition-colors"
+                                    className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors"
                                   >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <polyline points="3 6 5 6 21 6" />
-                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                    </svg>
+                                    <Trash2 className="w-4 h-4" />
                                     Delete
                                   </button>
                                 </motion.div>
@@ -669,6 +753,7 @@ export default function BacktestingDashboard() {
         )}
       </div>
 
+      {/* Create Session Modal */}
       <AnimatePresence>
         {showCreateModal && (
           <motion.div
@@ -682,34 +767,35 @@ export default function BacktestingDashboard() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl rounded-2xl bg-gradient-to-br from-[#12141a] to-[#0c0d10] border border-white/[0.08] shadow-2xl overflow-hidden"
+              className={cn(
+                "relative w-full max-w-xl rounded-2xl overflow-hidden",
+                "bg-card border border-border shadow-2xl"
+              )}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-teal-500 to-blue-500" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-emerald-500 to-primary" />
               
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-xl font-bold text-white">
+                    <h2 className="text-xl font-bold text-foreground">
                       Create New Session
                     </h2>
-                    <p className="text-sm text-[#71717a] mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Set up a backtesting session with historical data
                     </p>
                   </div>
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="p-2 rounded-xl hover:bg-white/[0.04] text-[#71717a] hover:text-white transition-colors"
+                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
                 
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                    <label className="block text-sm font-medium text-foreground/70 mb-2">
                       Session Name
                     </label>
                     <input
@@ -717,12 +803,16 @@ export default function BacktestingDashboard() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g., EUR/USD Breakout Strategy"
-                      className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white placeholder:text-[#52525b] focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl text-foreground placeholder:text-muted-foreground",
+                        "bg-background border border-border",
+                        "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                      )}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                    <label className="block text-sm font-medium text-foreground/70 mb-2">
                       Trading Pair
                     </label>
                     <div className="grid grid-cols-3 gap-2">
@@ -730,11 +820,12 @@ export default function BacktestingDashboard() {
                         <button
                           key={s.value}
                           onClick={() => setFormData({ ...formData, symbol: s.value })}
-                          className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                          className={cn(
+                            "p-3 rounded-xl border text-sm font-medium transition-all",
                             formData.symbol === s.value
-                              ? 'bg-blue-500/10 border-blue-500/40 text-blue-400'
-                              : 'bg-[#0c0d10] border-white/[0.06] text-[#a1a1aa] hover:border-white/[0.12] hover:text-white'
-                          }`}
+                              ? "bg-primary/10 border-primary/40 text-primary"
+                              : "bg-background border-border text-muted-foreground hover:border-primary/20 hover:text-foreground"
+                          )}
                         >
                           <span className="mr-2">{s.icon}</span>
                           {s.label}
@@ -745,47 +836,59 @@ export default function BacktestingDashboard() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                      <label className="block text-sm font-medium text-foreground/70 mb-2">
                         Start Date
                       </label>
                       <input
                         type="date"
                         value={formData.fromDate}
                         onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className={cn(
+                          "w-full px-4 py-3 rounded-xl text-foreground",
+                          "bg-background border border-border",
+                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        )}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                      <label className="block text-sm font-medium text-foreground/70 mb-2">
                         End Date
                       </label>
                       <input
                         type="date"
                         value={formData.toDate}
                         onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className={cn(
+                          "w-full px-4 py-3 rounded-xl text-foreground",
+                          "bg-background border border-border",
+                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        )}
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                      <label className="block text-sm font-medium text-foreground/70 mb-2">
                         Starting Balance
                       </label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#52525b]">$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                         <input
                           type="number"
                           value={formData.initialBalance}
                           onChange={(e) => setFormData({ ...formData, initialBalance: e.target.value })}
                           placeholder="10000"
-                          className="w-full pl-8 pr-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className={cn(
+                            "w-full pl-8 pr-4 py-3 rounded-xl text-foreground",
+                            "bg-background border border-border",
+                            "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                          )}
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                      <label className="block text-sm font-medium text-foreground/70 mb-2">
                         Risk per Trade
                       </label>
                       <div className="relative">
@@ -795,15 +898,19 @@ export default function BacktestingDashboard() {
                           onChange={(e) => setFormData({ ...formData, riskPerTrade: e.target.value })}
                           placeholder="1"
                           step="0.5"
-                          className="w-full pl-4 pr-8 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className={cn(
+                            "w-full pl-4 pr-8 py-3 rounded-xl text-foreground",
+                            "bg-background border border-border",
+                            "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                          )}
                         />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#52525b]">%</span>
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                    <label className="block text-sm font-medium text-foreground/70 mb-2">
                       Notes (optional)
                     </label>
                     <textarea
@@ -811,7 +918,11 @@ export default function BacktestingDashboard() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Strategy rules, goals, or any notes..."
                       rows={2}
-                      className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white placeholder:text-[#52525b] focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl text-foreground placeholder:text-muted-foreground resize-none",
+                        "bg-background border border-border",
+                        "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                      )}
                     />
                   </div>
                 </div>
@@ -819,7 +930,10 @@ export default function BacktestingDashboard() {
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setShowCreateModal(false)}
-                    className="flex-1 px-4 py-3 rounded-xl border border-white/[0.08] text-[#a1a1aa] hover:bg-white/[0.04] hover:text-white transition-colors font-medium"
+                    className={cn(
+                      "flex-1 px-4 py-3 rounded-xl font-medium transition-colors",
+                      "border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
                   >
                     Cancel
                   </button>
@@ -828,7 +942,11 @@ export default function BacktestingDashboard() {
                     disabled={!formData.name || !formData.fromDate || !formData.toDate}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none transition-all"
+                    className={cn(
+                      "flex-1 px-4 py-3 rounded-xl font-semibold transition-all",
+                      "bg-primary text-primary-foreground hover:bg-primary/90",
+                      "disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
                   >
                     Create Session
                   </motion.button>
