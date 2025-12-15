@@ -59,7 +59,7 @@ export default function ProfitAndLossChart({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-5 min-w-0 overflow-hidden",
+        "rounded-2xl border p-4 sm:p-5 min-w-0 overflow-hidden",
         "bg-card border-border",
         "dark:bg-zinc-900/50 dark:border-white/[0.08]"
       )}
@@ -97,15 +97,15 @@ export default function ProfitAndLossChart({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total PnL</p>
-          <div className="flex items-baseline gap-2">
-            <span className={cn("text-xl font-bold", totalPnl >= 0 ? "text-profit" : "text-loss")}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Total PnL</p>
+          <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
+            <span className={cn("text-base sm:text-xl font-bold", totalPnl >= 0 ? "text-profit" : "text-loss")}>
               ${totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span className={cn(
-              "text-xs px-1.5 py-0.5 rounded",
+              "text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded",
               totalPnl >= 0 ? "bg-profit/15 text-profit" : "bg-loss/15 text-loss"
             )}>
               {totalPnl >= 0 ? '+' : ''}{gainPercent}%
@@ -113,14 +113,14 @@ export default function ProfitAndLossChart({
           </div>
         </div>
 
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Balance</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold text-foreground">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Balance</p>
+          <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
+            <span className="text-base sm:text-xl font-bold text-foreground truncate">
               ${accountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span className={cn(
-              "text-xs px-1.5 py-0.5 rounded",
+              "text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded hidden sm:inline",
               totalPnl >= 0 ? "bg-profit/15 text-profit" : "bg-loss/15 text-loss"
             )}>
               {totalPnl >= 0 ? '+' : ''}{gainPercent}%
@@ -128,40 +128,40 @@ export default function ProfitAndLossChart({
           </div>
         </div>
 
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Win Rate</p>
-          <span className="text-xl font-bold text-foreground">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Win Rate</p>
+          <span className="text-base sm:text-xl font-bold text-foreground">
             {winRate.toFixed(2)}%
           </span>
         </div>
 
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Trades</p>
-          <span className="text-xl font-bold text-foreground">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Trades</p>
+          <span className="text-base sm:text-xl font-bold text-foreground">
             {totalTrades}
           </span>
         </div>
 
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Breakeven Trades</p>
-          <span className="text-xl font-bold text-foreground">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">Breakeven Trades</p>
+          <span className="text-base sm:text-xl font-bold text-foreground">
             {breakEvenTrades}
           </span>
         </div>
 
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">BE Threshold</p>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1">BE Threshold</p>
+          <div className="flex items-center gap-1 sm:gap-2">
             <input 
               type="number"
               defaultValue={0}
               className={cn(
-                "w-16 px-2 py-1 text-sm rounded",
+                "w-12 sm:w-16 px-1 sm:px-2 py-1 text-xs sm:text-sm rounded",
                 "bg-background border border-border text-foreground",
                 "dark:bg-zinc-900 dark:border-white/[0.08]"
               )}
             />
-            <button className="px-2 py-1 text-xs rounded bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <button className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs rounded bg-muted text-muted-foreground hover:text-foreground transition-colors">
               Submit
             </button>
           </div>

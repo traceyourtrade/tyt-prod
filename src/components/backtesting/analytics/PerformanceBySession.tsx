@@ -54,7 +54,7 @@ export default function PerformanceBySession({ data }: Props) {
         Performance by session
       </h3>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {METRICS.map((metric, i) => (
           <motion.div
             key={metric.key}
@@ -62,14 +62,14 @@ export default function PerformanceBySession({ data }: Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.05 }}
             className={cn(
-              "rounded-2xl border p-4 min-w-0 overflow-hidden",
+              "rounded-2xl border p-3 sm:p-4 min-w-0 overflow-hidden",
               "bg-card border-border",
               "dark:bg-zinc-900/50 dark:border-white/[0.08]"
             )}
           >
-            <h4 className="text-sm font-medium text-foreground mb-2">{metric.label}</h4>
+            <h4 className="text-xs sm:text-sm font-medium text-foreground mb-2">{metric.label}</h4>
             
-            <div className="h-[160px] min-w-0">
+            <div className="h-[140px] sm:h-[160px] min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart 
                   data={createRadarData(metric.key as keyof SessionPerformance)}

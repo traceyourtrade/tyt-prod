@@ -79,16 +79,16 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-5 min-w-0 overflow-hidden",
+        "rounded-2xl border p-3 sm:p-5 min-w-0 overflow-hidden",
         "bg-card border-border",
         "dark:bg-zinc-900/50 dark:border-white/[0.08]"
       )}
     >
-      <h3 className="text-lg font-semibold text-foreground mb-4">
+      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">
         Performance calendar
       </h3>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
         <select
           value={displayMode}
           onChange={(e) => setDisplayMode(e.target.value as 'dollar' | 'percent')}
@@ -141,7 +141,7 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-3">
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input 
               type="radio" 
@@ -168,7 +168,7 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
           <button
             onClick={() => setViewMode('month')}
             className={cn(
-              "px-3 py-1.5 text-xs font-medium transition-colors",
+              "px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium transition-colors",
               viewMode === 'month' 
                 ? "bg-muted text-foreground" 
                 : "bg-transparent text-muted-foreground hover:text-foreground"
@@ -179,7 +179,7 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
           <button
             onClick={() => setViewMode('year')}
             className={cn(
-              "px-3 py-1.5 text-xs font-medium transition-colors",
+              "px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium transition-colors",
               viewMode === 'year' 
                 ? "bg-muted text-foreground" 
                 : "bg-transparent text-muted-foreground hover:text-foreground"
@@ -190,29 +190,30 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
         {WEEKDAYS.map(day => (
           <div 
             key={day} 
-            className="text-center text-xs font-medium text-muted-foreground py-2"
+            className="text-center text-[10px] sm:text-xs font-medium text-muted-foreground py-1 sm:py-2"
           >
-            {day}
+            <span className="hidden sm:inline">{day}</span>
+            <span className="sm:hidden">{day.charAt(0)}</span>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
         {calendarData.map((day, i) => {
           const hasData = day.trades > 0;
           const displayValue = displayMode === 'dollar' 
-            ? `$${Math.abs(day.pnl).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-            : `${((day.pnl / initialBalance) * 100).toFixed(2)}%`;
+            ? `$${Math.abs(day.pnl).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+            : `${((day.pnl / initialBalance) * 100).toFixed(1)}%`;
 
           return (
             <div
               key={i}
               className={cn(
-                "min-h-[80px] rounded-lg p-2 transition-colors",
+                "min-h-[48px] sm:min-h-[80px] rounded-md sm:rounded-lg p-1 sm:p-2 transition-colors",
                 hasData 
                   ? day.pnl >= 0 
                     ? "bg-profit/15"
@@ -221,18 +222,18 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
                 !day.isCurrentMonth && "opacity-40"
               )}
             >
-              <div className="text-xs font-medium text-muted-foreground mb-1">
+              <div className="text-[9px] sm:text-xs font-medium text-muted-foreground mb-0.5 sm:mb-1">
                 {day.day}
               </div>
               {hasData && (
                 <>
                   <div className={cn(
-                    "text-sm font-semibold",
+                    "text-[10px] sm:text-sm font-semibold truncate",
                     day.pnl >= 0 ? "text-profit" : "text-loss"
                   )}>
                     {day.pnl >= 0 ? '' : '-'}{displayValue}
                   </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                  <div className="text-[8px] sm:text-[10px] text-muted-foreground mt-0.5 hidden sm:block">
                     {day.trades} trade{day.trades !== 1 ? 's' : ''}
                   </div>
                 </>

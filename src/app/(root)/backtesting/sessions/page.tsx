@@ -117,8 +117,8 @@ export default function BacktestingSessionsPage() {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-background">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen p-4 sm:p-6 bg-background">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -152,12 +152,12 @@ export default function BacktestingSessionsPage() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
               <select
                 value={selectedSessionId || ''}
                 onChange={(e) => handleSessionChange(parseInt(e.target.value))}
                 className={cn(
-                  "px-4 py-2.5 rounded-xl text-sm focus:outline-none min-w-[200px] cursor-pointer",
+                  "px-4 py-2.5 rounded-xl text-sm focus:outline-none w-full sm:min-w-[200px] cursor-pointer",
                   "bg-card border border-border text-foreground",
                   "focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
                 )}
@@ -169,30 +169,32 @@ export default function BacktestingSessionsPage() {
                 ))}
               </select>
               
-              <button
-                onClick={() => router.push('/backtesting/dashboard')}
-                className={cn(
-                  "px-4 py-2.5 text-sm rounded-xl font-medium transition-colors",
-                  "border border-border text-muted-foreground hover:bg-muted"
-                )}
-              >
-                Back to Dashboard
-              </button>
-              
-              {selectedSession && (
-                <motion.button
-                  onClick={() => router.push(`/backtesting/${selectedSession.sessionId}`)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => router.push('/backtesting/dashboard')}
                   className={cn(
-                    "px-4 py-2.5 text-sm rounded-xl font-semibold inline-flex items-center gap-2",
-                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                    "px-4 py-2.5 text-sm rounded-xl font-medium transition-colors flex-1 sm:flex-none",
+                    "border border-border text-muted-foreground hover:bg-muted"
                   )}
                 >
-                  Open Chart
-                  <ExternalLink className="w-4 h-4" />
-                </motion.button>
-              )}
+                  Back to Dashboard
+                </button>
+                
+                {selectedSession && (
+                  <motion.button
+                    onClick={() => router.push(`/backtesting/${selectedSession.sessionId}`)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={cn(
+                      "px-4 py-2.5 text-sm rounded-xl font-semibold inline-flex items-center justify-center gap-2 flex-1 sm:flex-none",
+                      "bg-primary text-primary-foreground hover:bg-primary/90"
+                    )}
+                  >
+                    Open Chart
+                    <ExternalLink className="w-4 h-4" />
+                  </motion.button>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>

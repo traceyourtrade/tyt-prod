@@ -228,15 +228,15 @@ export default function BacktestingDashboard() {
 
   return (
     <div className="min-h-screen af-bg-gradient" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-deep, #08090b), var(--af-bg-base, #0c0d10), var(--af-bg-elevated, #12141a))' }}>
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8">
         
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <div className="flex items-start justify-between mb-8">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
+            <div className="min-w-0">
               <div className="flex items-center gap-3 mb-2">
                 <div 
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -296,7 +296,7 @@ export default function BacktestingDashboard() {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8"
           >
             <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
               <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }} />
@@ -394,15 +394,15 @@ export default function BacktestingDashboard() {
             className="rounded-2xl af-card p-5"
             style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}
           >
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-4">
-                <h2 className="text-lg font-semibold af-text-primary">Sessions</h2>
-                <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: 'var(--af-bg-base, #0c0d10)' }}>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <h2 className="text-lg font-semibold af-text-primary shrink-0">Sessions</h2>
+                <div className="flex items-center gap-1 p-1 rounded-xl overflow-x-auto" style={{ backgroundColor: 'var(--af-bg-base, #0c0d10)' }}>
                   {(['all', 'active', 'completed'] as const).map((filter) => (
                     <button
                       key={filter}
                       onClick={() => setActiveFilter(filter)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
                         activeFilter === filter 
                           ? 'bg-blue-500/20 af-text-blue border border-blue-500/30' 
                           : 'af-text-muted hover:af-text-primary'
@@ -417,14 +417,14 @@ export default function BacktestingDashboard() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="relative flex-1 sm:flex-none">
                   <input
                     type="text"
                     placeholder="Search sessions..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2.5 w-56 rounded-xl border text-sm focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all af-text-primary"
+                    className="pl-10 pr-4 py-2.5 w-full sm:w-56 rounded-xl border text-sm focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all af-text-primary"
                     style={{ backgroundColor: 'var(--af-bg-base, #0c0d10)', borderColor: 'var(--af-border-default, rgba(255, 255, 255, 0.08))' }}
                   />
                   <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 af-text-disabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -525,22 +525,22 @@ export default function BacktestingDashboard() {
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-500/[0.02] group-hover:via-transparent group-hover:to-teal-500/[0.02] transition-all duration-500" />
                   
-                  <div className="relative p-5">
-                    <div className="flex items-center justify-between gap-6">
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className="relative">
-                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1e222d] to-[#181b23] flex items-center justify-center border border-white/[0.06] group-hover:border-blue-500/20 transition-colors">
-                            <span className="text-xl">{getSymbolIcon(session.symbol)}</span>
+                  <div className="relative p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <div className="relative shrink-0">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#1e222d] to-[#181b23] flex items-center justify-center border border-white/[0.06] group-hover:border-blue-500/20 transition-colors">
+                            <span className="text-lg sm:text-xl">{getSymbolIcon(session.symbol)}</span>
                           </div>
-                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0c0d10] ${session.status === 'active' ? 'bg-emerald-500' : 'bg-[#52525b]'}`} />
+                          <div className={`absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-[#0c0d10] ${session.status === 'active' ? 'bg-emerald-500' : 'bg-[#52525b]'}`} />
                         </div>
                         
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-1">
-                            <h3 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                            <h3 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors text-sm sm:text-base">
                               {session.name || 'Untitled Session'}
                             </h3>
-                            <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg uppercase tracking-wide ${
+                            <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-semibold rounded-lg uppercase tracking-wide shrink-0 ${
                               session.status === 'active' 
                                 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                                 : 'bg-[#1e222d] text-[#71717a] border border-white/[0.06]'
@@ -548,30 +548,29 @@ export default function BacktestingDashboard() {
                               {session.status}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-[#71717a]">
-                            <span className="font-medium text-[#a1a1aa]">{session.symbol || 'N/A'}</span>
-                            <span className="text-[#3f3f46]">•</span>
-                            <span>{new Date(session.fromDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} → {new Date(session.toDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          <div className="flex items-center gap-2 text-xs sm:text-sm text-[#71717a] overflow-hidden">
+                            <span className="font-medium text-[#a1a1aa] shrink-0">{session.symbol || 'N/A'}</span>
+                            <span className="text-[#3f3f46] shrink-0">•</span>
+                            <span className="truncate">{new Date(session.fromDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} → {new Date(session.toDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-8">
-                        <div className="hidden md:flex items-center gap-8">
-                          <div className="text-center">
+                      <div className="flex items-center gap-3 sm:gap-8 justify-between sm:justify-end">
+                        <div className="flex items-center gap-4 sm:gap-8">
+                          <div className="hidden sm:block text-center">
                             <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">Trades</div>
                             <div className="text-lg font-bold text-white tabular-nums">{closedTrades.length}</div>
                           </div>
-                          <div className="text-center">
+                          <div className="hidden sm:block text-center">
                             <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">Win Rate</div>
                             <div className="text-lg font-bold text-white tabular-nums">{winRate.toFixed(0)}%</div>
                           </div>
-                        </div>
-                        
-                        <div className="text-center min-w-[100px]">
-                          <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">P&L</div>
-                          <div className={`text-lg font-bold tabular-nums ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                            {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
+                          <div className="text-center min-w-[80px] sm:min-w-[100px]">
+                            <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">P&L</div>
+                            <div className={`text-base sm:text-lg font-bold tabular-nums ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
+                            </div>
                           </div>
                         </div>
                         
@@ -590,12 +589,12 @@ export default function BacktestingDashboard() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <motion.button
                             onClick={() => router.push(`/backtesting/${session.sessionId}`)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-shadow whitespace-nowrap"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-shadow whitespace-nowrap"
                           >
                             Continue
                           </motion.button>

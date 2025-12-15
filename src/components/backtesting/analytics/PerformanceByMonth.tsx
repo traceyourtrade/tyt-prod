@@ -39,16 +39,16 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-5 min-w-0 overflow-hidden",
+        "rounded-2xl border p-4 sm:p-5 min-w-0 overflow-hidden",
         "bg-card border-border",
         "dark:bg-zinc-900/50 dark:border-white/[0.08]"
       )}
     >
-      <h3 className="text-lg font-semibold text-foreground mb-4">
+      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">
         Performance by month
       </h3>
 
-      <div className="flex flex-wrap items-center gap-4 mb-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input 
@@ -95,13 +95,13 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr>
-              <th className="p-2 text-left text-xs font-medium text-muted-foreground"></th>
+              <th className="p-1 sm:p-2 text-left text-[10px] sm:text-xs font-medium text-muted-foreground"></th>
               {MONTHS.slice(1).map(month => (
-                <th key={month} className="p-2 text-center text-xs font-medium text-muted-foreground">
+                <th key={month} className="p-1 sm:p-2 text-center text-[10px] sm:text-xs font-medium text-muted-foreground">
                   {month}
                 </th>
               ))}

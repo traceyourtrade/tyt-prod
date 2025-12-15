@@ -25,16 +25,16 @@ export default function PerformanceByDay({ data }: Props) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-5 min-w-0 overflow-hidden",
+        "rounded-2xl border p-4 sm:p-5 min-w-0 overflow-hidden",
         "bg-card border-border",
         "dark:bg-zinc-900/50 dark:border-white/[0.08]"
       )}
     >
-      <h3 className="text-lg font-semibold text-foreground mb-4">
+      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4">
         Performance by day
       </h3>
 
-      <div className="h-[256px] min-w-0">
+      <div className="h-[200px] sm:h-[256px] min-w-0 overflow-x-auto">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} layout="vertical" barCategoryGap="20%">
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" horizontal={false} />

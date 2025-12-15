@@ -28,20 +28,20 @@ function FrequencyCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-4 min-w-0 overflow-hidden",
+        "rounded-2xl border p-3 sm:p-4 min-w-0 overflow-hidden",
         "bg-card border-border",
         "dark:bg-zinc-900/50 dark:border-white/[0.08]"
       )}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-medium text-foreground">{title}</h4>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Avg</span>
-          <span className="font-semibold text-blue-500">{avg.toFixed(2)}</span>
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h4 className="font-medium text-foreground text-sm sm:text-base">{title}</h4>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <span className="text-[10px] sm:text-xs text-muted-foreground">Avg</span>
+          <span className="font-semibold text-blue-500 text-sm sm:text-base">{avg.toFixed(2)}</span>
         </div>
       </div>
 
-      <div className="h-[128px] min-w-0">
+      <div className="h-[100px] sm:h-[128px] min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barCategoryGap="20%">
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" horizontal vertical={false} />
@@ -97,7 +97,7 @@ export default function TradeFrequencyCharts({
         Average trade frequency
       </h3>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <FrequencyCard title="Trades / day" data={daily} avg={avgDaily} />
         <FrequencyCard title="Trades / week" data={weekly} avg={avgWeekly} />
         <FrequencyCard title="Trades / month" data={monthly} avg={avgMonthly} />

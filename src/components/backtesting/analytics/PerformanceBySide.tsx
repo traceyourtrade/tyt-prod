@@ -40,20 +40,20 @@ export default function PerformanceBySide({ data }: Props) {
         Performance by side
       </h3>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className={cn(
-            "rounded-2xl border p-4 min-w-0 overflow-hidden",
+            "rounded-2xl border p-3 sm:p-4 min-w-0 overflow-hidden",
             "bg-card border-border",
             "dark:bg-zinc-900/50 dark:border-white/[0.08]"
           )}
         >
-          <h4 className="font-medium text-foreground mb-2">Total Trades</h4>
+          <h4 className="font-medium text-foreground mb-2 text-sm sm:text-base">Total Trades</h4>
           
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-blue-500" />
               <span className="text-xs text-muted-foreground">Buy</span>
@@ -64,7 +64,7 @@ export default function PerformanceBySide({ data }: Props) {
             </div>
           </div>
 
-          <div className="h-[180px] relative">
+          <div className="h-[140px] sm:h-[180px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -104,14 +104,14 @@ export default function PerformanceBySide({ data }: Props) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           className={cn(
-            "rounded-2xl border p-4 min-w-0 overflow-hidden",
+            "rounded-2xl border p-3 sm:p-4 min-w-0 overflow-hidden",
             "bg-card border-border",
             "dark:bg-zinc-900/50 dark:border-white/[0.08]"
           )}
         >
-          <h4 className="font-medium text-foreground mb-2">Win Rate</h4>
+          <h4 className="font-medium text-foreground mb-2 text-sm sm:text-base">Win Rate</h4>
           
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-blue-500" />
               <span className="text-xs text-muted-foreground">Buy</span>
@@ -122,7 +122,7 @@ export default function PerformanceBySide({ data }: Props) {
             </div>
           </div>
 
-          <div className="h-[180px] relative">
+          <div className="h-[140px] sm:h-[180px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

@@ -46,13 +46,13 @@ export default function PerformanceByTime({ data }: Props) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-5 min-w-0 overflow-hidden",
+        "rounded-2xl border p-4 sm:p-5 min-w-0 overflow-hidden",
         "bg-card border-border",
         "dark:bg-zinc-900/50 dark:border-white/[0.08]"
       )}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-4">
+        <h3 className="text-base sm:text-lg font-semibold text-foreground">
           Performance by time
         </h3>
         <select
@@ -71,7 +71,7 @@ export default function PerformanceByTime({ data }: Props) {
         </select>
       </div>
 
-      <div className="h-[256px] min-w-0">
+      <div className="h-[200px] sm:h-[256px] min-w-0 overflow-x-auto">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} barCategoryGap="20%">
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" vertical={false} />
