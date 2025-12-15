@@ -603,25 +603,6 @@ export default function FullscreenBacktesting({
     };
   }, [allBars, symbol, decimalPlaces]);
 
-  // Restore open trade after chart loads
-  useEffect(() => {
-    if (!tvWidgetRef.current || allBars.length === 0 || isLoading) return;
-    
-    const openTrade = pendingOpenTradeRef.current;
-    if (openTrade) {
-      // Clear ref to prevent re-restore on re-render
-      pendingOpenTradeRef.current = null;
-      
-      // Wait for chart to be fully ready before drawing lines
-      setTimeout(() => {
-        dispatch({ type: "SET_ACTIVE_TRADE", payload: openTrade });
-        drawTradeLines(openTrade);
-        setShowPanel(true);
-        console.log("Restored open trade:", openTrade);
-      }, 500);
-    }
-  }, [allBars.length, isLoading, drawTradeLines]);
-
   const handleDrawingTool = (id: any, type: string, properties: any, point: number, toolname: string) => {
     if (!point || !properties) return;
     
@@ -779,6 +760,25 @@ export default function FullscreenBacktesting({
       console.error("Error drawing trade lines:", e);
     }
   }, [removeTradeLines]);
+
+  // Restore open trade after chart loads
+  useEffect(() => {
+    if (!tvWidgetRef.current || allBars.length === 0 || isLoading) return;
+    
+    const openTrade = pendingOpenTradeRef.current;
+    if (openTrade) {
+      // Clear ref to prevent re-restore on re-render
+      pendingOpenTradeRef.current = null;
+      
+      // Wait for chart to be fully ready before drawing lines
+      setTimeout(() => {
+        dispatch({ type: "SET_ACTIVE_TRADE", payload: openTrade });
+        drawTradeLines(openTrade);
+        setShowPanel(true);
+        console.log("Restored open trade:", openTrade);
+      }, 500);
+    }
+  }, [allBars.length, isLoading, drawTradeLines]);
 
   useEffect(() => {
     // Only handle removal here - drawing is done directly in placement functions
