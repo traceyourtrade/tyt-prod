@@ -80,6 +80,16 @@
   gap: 8px;
 }
 
+.bt-session-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bt-pair {
   font-size: 14px;
   font-weight: 600;

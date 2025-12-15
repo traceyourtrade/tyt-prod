@@ -12,6 +12,37 @@ import "./backtesting.css";
 import { widget as TradingViewWidget } from "../../../../../public/charting_library";
 import { makeApiRequest, parseFullSymbol } from "@/lib/custom-datafeed/helpers";
 
+interface SessionData {
+  sessionId: number;
+  name: string;
+  symbol: string;
+  fromDate: string;
+  toDate: string;
+  initialBalance: number;
+  currentBalance: number;
+  progressPointer: number;
+  status: 'active' | 'completed';
+  trades: any[];
+  timeInvested: number;
+}
+
+const symbolToChartFormat = (symbol: string): string => {
+  const mapping: Record<string, string> = {
+    'EURUSD': 'FXCM:EUR/USD',
+    'GBPUSD': 'FXCM:GBP/USD',
+    'USDJPY': 'FXCM:USD/JPY',
+    'AUDUSD': 'FXCM:AUD/USD',
+    'USDCAD': 'FXCM:USD/CAD',
+    'USDCHF': 'FXCM:USD/CHF',
+    'NZDUSD': 'FXCM:NZD/USD',
+    'XAUUSD': 'OANDA:XAU/USD',
+    'XAGUSD': 'OANDA:XAG/USD',
+    'BTCUSD': 'COINBASE:BTC/USD',
+    'ETHUSD': 'COINBASE:ETH/USD',
+  };
+  return mapping[symbol] || `FXCM:${symbol.slice(0,3)}/${symbol.slice(3)}`;
+};
+
 const tradingReducer = (state, action) => {
   switch (action.type) {
     case "SET_ACTIVE_TRADE":
@@ -62,9 +93,6 @@ export default function FullscreenBacktesting({
 }) {
   const { sessionId } = use(params);
   const router = useRouter();
-  const symbol = "FXCM:EUR/USD";
-  const fromDate = "2021-04-20";
-  const toDate = "2021-05-20";
   const initialInterval = "60";
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -72,7 +100,13 @@ export default function FullscreenBacktesting({
   const onRealtimeCallbackRef = useRef<any>(null);
   const autoPlayIntervalRef = useRef<any>(null);
   const currentBarIndexRef = useRef(5);
+  const autoSaveIntervalRef = useRef<any>(null);
+  const sessionStartTimeRef = useRef<number>(Date.now());
+  const totalBalanceRef = useRef<number>(10000);
+  const sessionDataRef = useRef<SessionData | null>(null);
 
+  const [sessionData, setSessionData] = useState<SessionData | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
   const [allBars, setAllBars] = useState<any[]>([]);
   const [currentBarIndex, setCurrentBarIndexState] = useState(5);
   const tradeLinesRef = useRef<{ entry: any; tp: any; sl: any }>({ entry: null, tp: null, sl: null });
@@ -89,8 +123,12 @@ export default function FullscreenBacktesting({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(500);
   const [lotSize, setLotSize] = useState(1);
-  const [initialBalance] = useState(5000);
   const [showPanel, setShowPanel] = useState(false);
+
+  const symbol = sessionData ? symbolToChartFormat(sessionData.symbol) : '';
+  const fromDate = sessionData?.fromDate || '';
+  const toDate = sessionData?.toDate || '';
+  const initialBalance = sessionData?.initialBalance || 10000;
   const [showModifyTradePopup, setShowModifyTradePopup] = useState(false);
   const [modifyTradeData, setModifyTradeData] = useState({ newTP: "", newSL: "" });
   const [showOrderDialog, setShowOrderDialog] = useState(false);
@@ -186,7 +224,119 @@ export default function FullscreenBacktesting({
   const winRate = tradingState.tradeHistory.length > 0
     ? (winTrades.length / tradingState.tradeHistory.length) * 100 : 0;
 
+  // Keep refs in sync with state for use in interval callbacks
   useEffect(() => {
+    totalBalanceRef.current = totalBalance;
+  }, [totalBalance]);
+
+  useEffect(() => {
+    sessionDataRef.current = sessionData;
+  }, [sessionData]);
+
+  // Fetch session data on mount
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        setSessionLoading(true);
+        const res = await fetch(`/api/backtest-sessions?sessionId=${sessionId}`);
+        const result = await res.json();
+        if (result.success && result.data) {
+          setSessionData(result.data);
+          // Set initial realized P&L from existing trades
+          if (result.data.trades && result.data.trades.length > 0) {
+            const totalPnl = result.data.trades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0);
+            dispatch({ type: "SET_REALISED_PL", payload: totalPnl });
+          }
+        } else {
+          console.error("Session not found");
+          router.push('/backtesting/dashboard');
+        }
+      } catch (error) {
+        console.error("Failed to fetch session:", error);
+        router.push('/backtesting/dashboard');
+      } finally {
+        setSessionLoading(false);
+      }
+    };
+    fetchSession();
+    sessionStartTimeRef.current = Date.now();
+  }, [sessionId, router]);
+
+  // Auto-save progress every 30 seconds - use refs to avoid restarting interval on state changes
+  useEffect(() => {
+    if (!sessionData || allBars.length === 0) return;
+
+    const saveProgress = async () => {
+      const currentSession = sessionDataRef.current;
+      const currentBalance = totalBalanceRef.current;
+      const currentBar = allBars[currentBarIndexRef.current];
+      if (!currentBar || !currentSession) return;
+      
+      const elapsedMinutes = Math.floor((Date.now() - sessionStartTimeRef.current) / 60000);
+      const newTimeInvested = (currentSession.timeInvested || 0) + elapsedMinutes;
+      sessionStartTimeRef.current = Date.now(); // Reset for next interval
+      
+      try {
+        await fetch('/api/backtest-sessions', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: parseInt(sessionId),
+            progressPointer: currentBar.time,
+            currentBalance: currentBalance,
+            timeInvested: newTimeInvested,
+          }),
+        });
+        // Update local session data via ref (avoid state update that would trigger effect)
+        sessionDataRef.current = { ...currentSession, timeInvested: newTimeInvested, progressPointer: currentBar.time };
+      } catch (error) {
+        console.error("Failed to save progress:", error);
+      }
+    };
+
+    autoSaveIntervalRef.current = setInterval(saveProgress, 30000);
+    
+    return () => {
+      if (autoSaveIntervalRef.current) {
+        clearInterval(autoSaveIntervalRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionData?.sessionId, sessionId, allBars.length]);
+
+  // Save progress when leaving page - use refs for current values
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const currentSession = sessionDataRef.current;
+      const currentBalance = totalBalanceRef.current;
+      if (!currentSession || allBars.length === 0) return;
+      const currentBar = allBars[currentBarIndexRef.current];
+      if (!currentBar) return;
+      
+      const elapsedMinutes = Math.floor((Date.now() - sessionStartTimeRef.current) / 60000);
+      
+      // Use fetch with keepalive for PATCH requests (sendBeacon only supports POST)
+      fetch('/api/backtest-sessions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: parseInt(sessionId),
+          progressPointer: currentBar.time,
+          currentBalance: currentBalance,
+          timeInvested: (currentSession.timeInvested || 0) + elapsedMinutes,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, allBars.length]);
+
+  useEffect(() => {
+    if (!sessionData || !fromDate || !toDate || !symbol) return;
+    
     const fetchAllHistory = async () => {
       const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
       const toTs = Math.floor(new Date(toDate).getTime() / 1000);
@@ -225,7 +375,15 @@ export default function FullscreenBacktesting({
           });
           setDecimalPlaces(maxDecimalPlaces);
           setAllBars(bars);
-          const newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+          
+          // Resume from progressPointer if available
+          let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+          if (sessionData?.progressPointer) {
+            const pointerIndex = bars.findIndex((bar: any) => bar.time >= sessionData.progressPointer);
+            if (pointerIndex >= 0) {
+              newIndex = pointerIndex;
+            }
+          }
           setCurrentBarIndex(newIndex);
           setIsPlaying(false);
         } else {
@@ -241,6 +399,7 @@ export default function FullscreenBacktesting({
       }
     };
     fetchAllHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, fromDate, toDate, currentInterval]);
 
   useEffect(() => {
@@ -1124,6 +1283,17 @@ export default function FullscreenBacktesting({
       })
     : "...";
 
+  if (sessionLoading) {
+    return (
+      <div className="bt-container">
+        <div className="bt-loading">
+          <div className="bt-spinner"></div>
+          <span>Loading session...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bt-container">
       {isLoading && (
@@ -1141,7 +1311,8 @@ export default function FullscreenBacktesting({
             </svg>
           </button>
           <div className="bt-session-info">
-            <span className="bt-pair">EUR/USD</span>
+            <span className="bt-session-name">{sessionData?.name || 'Session'}</span>
+            <span className="bt-pair">{sessionData?.symbol || 'Loading...'}</span>
             <span className="bt-timeframe">{currentInterval === "60" ? "1H" : currentInterval}</span>
           </div>
           <div className="bt-divider"></div>
