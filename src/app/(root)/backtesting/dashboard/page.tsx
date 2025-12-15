@@ -92,9 +92,11 @@ export default function BacktestingDashboard() {
     const totalTimeInvested = sessions.reduce((sum, s) => sum + (s.timeInvested || 0), 0);
     
     const historicalDays = sessions.reduce((sum, s) => {
+      if (!s.fromDate || !s.toDate) return sum;
       const from = new Date(s.fromDate);
       const to = new Date(s.toDate);
-      return sum + Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+      const days = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+      return sum + (isNaN(days) ? 0 : days);
     }, 0);
 
     return {
