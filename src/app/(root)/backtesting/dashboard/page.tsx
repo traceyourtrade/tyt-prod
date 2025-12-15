@@ -112,8 +112,8 @@ export default function BacktestingDashboard() {
 
   const filteredSessions = useMemo(() => {
     let result = sessions.filter(s => 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+      (s.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.symbol || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     switch (sortBy) {
@@ -127,7 +127,7 @@ export default function BacktestingDashboard() {
         result.sort((a, b) => (b.currentBalance - b.initialBalance) - (a.currentBalance - a.initialBalance));
         break;
       case 'name':
-        result.sort((a, b) => a.name.localeCompare(b.name));
+        result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         break;
     }
 
