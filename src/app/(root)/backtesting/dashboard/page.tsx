@@ -238,19 +238,28 @@ export default function BacktestingDashboard() {
           <div className="flex items-start justify-between mb-8">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-teal-500/20 flex items-center justify-center border border-blue-500/20">
+                <div 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ 
+                    background: 'linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(20, 184, 166, 0.2))',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                  }}
+                >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#headerGradient)" strokeWidth="2">
                     <defs>
                       <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#3b82f6" />
-                        <stop offset="100%" stopColor="#14b8a6" />
+                        <stop offset="0%" style={{ stopColor: 'var(--af-accent-blue, #3b82f6)' }} />
+                        <stop offset="100%" style={{ stopColor: 'var(--af-accent-teal, #14b8a6)' }} />
                       </linearGradient>
                     </defs>
                     <path d="M3 3v18h18" />
                     <path d="M18 9l-5 5-2-2-4 4" />
                   </svg>
                 </div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                <h1 
+                  className="text-3xl font-bold bg-clip-text text-transparent"
+                  style={{ backgroundImage: 'linear-gradient(to right, var(--af-text-primary, #f4f4f5), var(--af-text-muted, #a1a1aa))' }}
+                >
                   Backtesting Lab
                 </h1>
               </div>
@@ -263,10 +272,17 @@ export default function BacktestingDashboard() {
               onClick={() => setShowCreateModal(true)}
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
-              className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm text-white overflow-hidden"
+              className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm overflow-hidden"
+              style={{ color: 'var(--af-text-primary, #f4f4f5)' }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-300 group-hover:from-blue-500 group-hover:to-teal-500" />
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-blue-400/20 to-teal-400/20 blur-xl" />
+              <div 
+                className="absolute inset-0 transition-all duration-300"
+                style={{ background: 'linear-gradient(to right, var(--af-accent-blue, #3b82f6), #2563eb)' }}
+              />
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"
+                style={{ background: 'linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(20, 184, 166, 0.2))' }}
+              />
               <span className="relative flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M12 5v14M5 12h14" />
