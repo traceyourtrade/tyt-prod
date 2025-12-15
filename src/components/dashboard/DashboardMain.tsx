@@ -26,6 +26,8 @@ const timeRangeOptions = [
 const DashboardMain = () => {
   const [selected, setSelected] = useState("Monthly");
   const [isOpen, setIsOpen] = useState(false);
+  const [greeting, setGreeting] = useState("");
+  const [formattedDate, setFormattedDate] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { setAccounts, profileData, selectedAccounts, loading } = useAccountDetails();
   const { hrBarTxt, hrBarType } = notifications();
@@ -37,6 +39,20 @@ const DashboardMain = () => {
   }, [setAccounts]);
 
   useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good morning");
+    else if (hour < 17) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
+    
+    setFormattedDate(new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    }));
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -45,22 +61,6 @@ const DashboardMain = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const getTimeBasedGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
-
-  const getFormattedDate = () => {
-    return new Date().toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      month: 'long', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
   const firstName = useMemo(() => {
     if (profileData?.fullName) {
@@ -144,11 +144,11 @@ const DashboardMain = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Calendar className="w-4 h-4" />
-                <span>{getFormattedDate()}</span>
+                <span>{formattedDate}</span>
               </div>
               
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
-                {getTimeBasedGreeting()},{" "}
+                {greeting}{greeting ? "," : ""}{" "}
                 {loading ? (
                   <span className="inline-block w-24 h-8 bg-muted/50 rounded-lg animate-pulse align-middle" />
                 ) : (

@@ -107,6 +107,7 @@ export default function FullscreenBacktesting({
   const totalBalanceRef = useRef<number>(10000);
   const sessionDataRef = useRef<SessionData | null>(null);
   const pendingOpenTradeRef = useRef<any>(null);
+  const targetTimestampRef = useRef<number | null>(null);
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -207,6 +208,10 @@ export default function FullscreenBacktesting({
   };
 
   const handleTimeframeChange = (tf: string) => {
+    const currentBar = allBars[currentBarIndexRef.current];
+    if (currentBar) {
+      targetTimestampRef.current = currentBar.time;
+    }
     setCurrentInterval(tf);
     setShowTimeframeDropdown(false);
   };
@@ -381,6 +386,9 @@ export default function FullscreenBacktesting({
     if (!sessionData || !fromDate || !toDate || !symbol) return;
     
     const fetchAllHistory = async () => {
+      const savedTimestamp = targetTimestampRef.current;
+      targetTimestampRef.current = null;
+      
       const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
       const toTs = Math.floor(new Date(toDate).getTime() / 1000);
       const parsedSymbol = parseFullSymbol(`${symbol}`);
@@ -419,12 +427,15 @@ export default function FullscreenBacktesting({
           setDecimalPlaces(maxDecimalPlaces);
           setAllBars(bars);
           
-          // Resume from progressPointer if available
+          // Resume from stored timestamp (TF switch) or progressPointer (session load)
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
-          if (sessionData?.progressPointer) {
-            const pointerIndex = bars.findIndex((bar: any) => bar.time >= sessionData.progressPointer);
+          const targetTs = savedTimestamp || sessionData?.progressPointer;
+          if (targetTs) {
+            const pointerIndex = bars.findIndex((bar: any) => bar.time >= targetTs);
             if (pointerIndex >= 0) {
               newIndex = pointerIndex;
+            } else if (bars.length > 0) {
+              newIndex = bars.length - 1;
             }
           }
           setCurrentBarIndex(newIndex);
@@ -535,6 +546,10 @@ export default function FullscreenBacktesting({
       chart.setChartType(1);
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
+        const currentBar = allBars[currentBarIndexRef.current];
+        if (currentBar) {
+          targetTimestampRef.current = currentBar.time;
+        }
         setCurrentInterval(newInterval);
       });
 
