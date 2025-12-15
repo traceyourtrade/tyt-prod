@@ -71,6 +71,8 @@ const tradingReducer = (state, action) => {
         ...state,
         tradeHistory: [...state.tradeHistory, action.payload],
       };
+    case "SET_TRADE_HISTORY":
+      return { ...state, tradeHistory: action.payload };
     case "RESET_SESSION":
       return {
         ...state,
@@ -104,6 +106,7 @@ export default function FullscreenBacktesting({
   const sessionStartTimeRef = useRef<number>(Date.now());
   const totalBalanceRef = useRef<number>(10000);
   const sessionDataRef = useRef<SessionData | null>(null);
+  const pendingOpenTradeRef = useRef<any>(null);
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -242,10 +245,50 @@ export default function FullscreenBacktesting({
         const result = await res.json();
         if (result.success && result.data) {
           setSessionData(result.data);
-          // Set initial realized P&L from existing trades
+          
+          // Load existing trades from session
           if (result.data.trades && result.data.trades.length > 0) {
-            const totalPnl = result.data.trades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0);
+            let totalPnl = 0;
+            const closedTrades: any[] = [];
+            let openTrade: any = null;
+            
+            for (const t of result.data.trades) {
+              if (t.status === 'closed') {
+                totalPnl += t.pnl || 0;
+                closedTrades.push({
+                  id: t.id,
+                  type: t.side === 'buy' ? 'long' : 'short',
+                  entry: t.entryPrice,
+                  exit: t.exitPrice,
+                  sl: t.sl,
+                  tp: t.tp,
+                  lotSize: t.size,
+                  pnl: t.pnl || 0,
+                  rr: t.rr || 0,
+                  reason: t.notes || 'Closed',
+                  status: 'closed',
+                  timestamp: t.closedAt || t.openedAt,
+                });
+              } else if (t.status === 'open' && !openTrade) {
+                openTrade = {
+                  type: t.side === 'buy' ? 'long' : 'short',
+                  entry: t.entryPrice,
+                  target: t.tp,
+                  stopLoss: t.sl,
+                  dbId: t.id,
+                };
+                setLotSize(t.size || 1);
+              }
+            }
+            
+            // Bulk set trade history (avoids duplicates on refetch)
+            dispatch({ type: "SET_TRADE_HISTORY", payload: closedTrades });
             dispatch({ type: "SET_REALISED_PL", payload: totalPnl });
+            
+            // Store open trade in ref for restoration after chart loads
+            if (openTrade) {
+              pendingOpenTradeRef.current = openTrade;
+            }
           }
         } else {
           console.error("Session not found");
@@ -559,6 +602,25 @@ export default function FullscreenBacktesting({
       }
     };
   }, [allBars, symbol, decimalPlaces]);
+
+  // Restore open trade after chart loads
+  useEffect(() => {
+    if (!tvWidgetRef.current || allBars.length === 0 || isLoading) return;
+    
+    const openTrade = pendingOpenTradeRef.current;
+    if (openTrade) {
+      // Clear ref to prevent re-restore on re-render
+      pendingOpenTradeRef.current = null;
+      
+      // Wait for chart to be fully ready before drawing lines
+      setTimeout(() => {
+        dispatch({ type: "SET_ACTIVE_TRADE", payload: openTrade });
+        drawTradeLines(openTrade);
+        setShowPanel(true);
+        console.log("Restored open trade:", openTrade);
+      }, 500);
+    }
+  }, [allBars.length, isLoading, drawTradeLines]);
 
   const handleDrawingTool = (id: any, type: string, properties: any, point: number, toolname: string) => {
     if (!point || !properties) return;
