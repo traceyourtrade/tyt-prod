@@ -1135,7 +1135,7 @@ export default function FullscreenBacktesting({
 
       <header className="bt-header">
         <div className="bt-header-left">
-          <button className="bt-back" onClick={() => router.push("/testing/sessions")}>
+          <button className="bt-back" onClick={() => router.push("/backtesting/dashboard")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
@@ -1385,7 +1385,7 @@ export default function FullscreenBacktesting({
               )}
             </svg>
           </button>
-          <button className="bt-status-icon" onClick={() => router.push("/testing/sessions")} title="Exit to Sessions">
+          <button className="bt-status-icon" onClick={() => router.push("/backtesting/dashboard")} title="Exit to Dashboard">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14"/>
             </svg>
