@@ -1,0 +1,174 @@
+I need you to fix the following issues and implement improvements in the FX Replay / Backtesting module built with Next.js + TradingView Advanced Charting Library.
+
+Please read everything carefully and do not change existing working logic unless mentioned. Fix glitches and implement exactly what’s described.
+
+1️⃣ Separate Database for Backtesting (IMPORTANT)
+Currently, the replay/backtesting feature is using my existing journaling database.
+This must be changed.
+
+Requirements:
+Create a new database connection using:
+
+process.env.DATABASE3
+This database should store:
+
+Replay sessions
+
+Trades placed during backtesting
+
+Order history
+
+Replay state (current candle index, timestamp, timeframe, speed, etc.)
+
+Any other backtesting-related activity
+
+Do NOT touch or reuse existing journaling collections.
+
+I will provide the MongoDB URI when you ask for it.
+
+2️⃣ Timeframe Switching Should NOT Restart Replay
+Currently, when I change the timeframe, the replay restarts from the beginning.
+This is wrong behavior.
+
+Correct Behavior:
+The replay must continue from the same timestamp, regardless of timeframe change.
+
+Scenarios (VERY IMPORTANT):
+Scenario A
+Current TF: 15 min
+
+Current time: XX-XX-XXXX 10:45
+
+Switch to 1 min TF
+
+✅ Result:
+
+Chart should load 1 min candles starting exactly at 10:45
+
+NOT from the beginning
+
+Scenario B
+Current TF: 1 min
+
+Current time: 10:40
+
+Switch to 15 min TF
+
+✅ Result:
+
+Chart should load 15 min candle containing 10:40
+
+OHLC of that candle must be calculated correctly
+
+Replay continues from 10:40, not from start
+
+Scenario C (No Next Click)
+At 1 min TF, time = 10:40
+
+Switch to 15 min TF
+
+Switch back to 1 min TF
+
+WITHOUT clicking “Next”
+
+✅ Result:
+
+Time must still be 10:40
+
+Scenario D (After Advancing)
+At 1 min TF, time = 10:40
+
+Click Next candles → reach 11:15
+
+Switch TF (any)
+
+Switch back to 1 min TF
+
+✅ Result:
+
+Time must remain 11:15
+
+Implementation Rule:
+Maintain a single source of truth timestamp
+
+Timeframe change must only re-map candles, never reset replay state
+
+3️⃣ Speed Control ≠ Timeframe Control (Major Bug)
+Currently, changing speed is changing the chart timeframe, which is incorrect.
+
+Correct Logic:
+Timeframe stays fixed
+
+Speed controls how many sub-candles are processed per step
+
+Examples:
+Example A
+TF: 1 min
+
+Speed: 15 min
+
+✅ On clicking “Next”:
+
+Advance 15 x 1-min candles
+
+Example B
+TF: 15 min
+
+Speed: 1 min
+
+✅ Behavior:
+
+Candle opens at 15-min open
+
+High / Low / Close update progressively using 1-min data
+
+Candle closes only after full 15-min data is consumed
+
+Simplified Rule:
+Timeframe = candle container
+
+Speed = data resolution used to build the candle
+
+Do NOT change timeframe when speed changes
+
+4️⃣ Remove Lot Size Input from Top Right Panel
+Remove the lot size input near the top-right floating panel
+
+Lot size should be selectable ONLY inside the order placement modal/window
+
+No duplicate lot-size state should exist
+
+5️⃣ SL / TP Bug When Turned OFF
+Current Issue:
+Even when SL and TP are turned OFF, random SL/TP values are being placed.
+
+This likely happens due to risk percentage logic.
+
+Fix Required:
+If SL toggle = OFF, do NOT attach Stop Loss
+
+If TP toggle = OFF, do NOT attach Take Profit
+
+Risk % must be ignored when SL/TP is OFF
+
+Orders without SL/TP must be placed cleanly
+
+6️⃣ Keyboard Shortcut
+Add the following shortcut:
+
+Ctrl + Space → Go to Next Candle
+
+Must work in fullscreen replay mode
+
+Should not conflict with TradingView default shortcuts
+
+✅ Final Notes
+Fix existing glitches instead of adding hacks
+
+Maintain clean, predictable replay state
+
+No breaking changes to unrelated parts
+
+Ask if anything is unclear before implementing
+
+Deliver a stable, polished replay experience.
