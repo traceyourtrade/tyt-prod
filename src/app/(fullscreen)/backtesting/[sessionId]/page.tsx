@@ -682,7 +682,7 @@ export default function FullscreenBacktesting({
       
       console.log("Drawing trade lines for:", trade);
       
-      // Create all horizontal lines using Promise.all for parallel execution
+      // Create entry line
       const entryPromise = chart.createShape(
         { price: trade.entry },
         {
@@ -702,7 +702,8 @@ export default function FullscreenBacktesting({
         }
       );
       
-      const tpPromise = chart.createShape(
+      // Only create TP line if target is defined
+      const tpPromise = trade.target !== undefined ? chart.createShape(
         { price: trade.target },
         {
           shape: "horizontal_line",
@@ -719,9 +720,10 @@ export default function FullscreenBacktesting({
             textcolor: "rgba(16, 185, 129, 1)",
           },
         }
-      );
+      ) : Promise.resolve(null);
       
-      const slPromise = chart.createShape(
+      // Only create SL line if stopLoss is defined
+      const slPromise = trade.stopLoss !== undefined ? chart.createShape(
         { price: trade.stopLoss },
         {
           shape: "horizontal_line",
@@ -738,11 +740,11 @@ export default function FullscreenBacktesting({
             textcolor: "rgba(239, 68, 68, 1)",
           },
         }
-      );
+      ) : Promise.resolve(null);
       
       // Wait for all shapes to be created, then force chart refresh
       Promise.all([entryPromise, tpPromise, slPromise]).then(([entryId, tpId, slId]) => {
-        console.log("All lines created:", { entryId, tpId, slId });
+        console.log("Lines created:", { entryId, tpId, slId });
         tradeLinesRef.current = { entry: entryId, tp: tpId, sl: slId };
         
         // Force chart to refresh by getting visible range and resetting it
@@ -946,8 +948,8 @@ export default function FullscreenBacktesting({
       const precision = decimalPlaces || 5;
       const updatedTrade = { ...currentTrade };
       
-      // Check TP line position
-      if (storedLines.tp) {
+      // Check TP line position (only if TP is defined)
+      if (storedLines.tp && currentTrade.target !== undefined) {
         try {
           const tpShape = chart.getShapeById(storedLines.tp);
           console.log("TP shape lookup:", { id: storedLines.tp, found: !!tpShape });
@@ -966,8 +968,8 @@ export default function FullscreenBacktesting({
         }
       }
       
-      // Check SL line position
-      if (storedLines.sl) {
+      // Check SL line position (only if SL is defined)
+      if (storedLines.sl && currentTrade.stopLoss !== undefined) {
         try {
           const slShape = chart.getShapeById(storedLines.sl);
           console.log("SL shape lookup:", { id: storedLines.sl, found: !!slShape });
@@ -1011,17 +1013,17 @@ export default function FullscreenBacktesting({
       if (trade.type === "long") {
         pnl = (currentClose - trade.entry) * lotSize * 100000;
         // Check if wick touched TP (high >= target) or SL (low <= stopLoss)
-        if (currentHigh >= trade.target) {
+        if (trade.target !== undefined && currentHigh >= trade.target) {
           closeTrade(trade.target, "TP Hit", trade);
-        } else if (currentLow <= trade.stopLoss) {
+        } else if (trade.stopLoss !== undefined && currentLow <= trade.stopLoss) {
           closeTrade(trade.stopLoss, "SL Hit", trade);
         }
       } else {
         pnl = (trade.entry - currentClose) * lotSize * 100000;
         // Check if wick touched TP (low <= target) or SL (high >= stopLoss)
-        if (currentLow <= trade.target) {
+        if (trade.target !== undefined && currentLow <= trade.target) {
           closeTrade(trade.target, "TP Hit", trade);
-        } else if (currentHigh >= trade.stopLoss) {
+        } else if (trade.stopLoss !== undefined && currentHigh >= trade.stopLoss) {
           closeTrade(trade.stopLoss, "SL Hit", trade);
         }
       }
@@ -1297,8 +1299,12 @@ export default function FullscreenBacktesting({
     const entry = orderFormData.orderType === 'market' 
       ? allBars[currentBarIndex].close 
       : parseFloat(orderFormData.entryPrice);
-    const tp = parseFloat(orderFormData.takeProfit) || entry + (orderFormData.side === 'buy' ? 0.01 : -0.01);
-    const sl = parseFloat(orderFormData.stopLoss) || entry - (orderFormData.side === 'buy' ? 0.005 : -0.005);
+    const tp = orderFormData.takeProfitEnabled 
+      ? (parseFloat(orderFormData.takeProfit) || entry + (orderFormData.side === 'buy' ? 0.01 : -0.01))
+      : undefined;
+    const sl = orderFormData.stopLossEnabled 
+      ? (parseFloat(orderFormData.stopLoss) || entry - (orderFormData.side === 'buy' ? 0.005 : -0.005))
+      : undefined;
     const posSize = parseFloat(orderFormData.positionSize) || calculatePositionSize();
     
     const tradeType = orderFormData.side === 'buy' ? 'long' : 'short';
@@ -1407,6 +1413,14 @@ export default function FullscreenBacktesting({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
+      
+      // Ctrl + Space = advance one candle
+      if (e.ctrlKey && e.code === "Space") {
+        e.preventDefault();
+        if (!isEndReached) handleNext();
+        return;
+      }
+      
       switch (e.code) {
         case "Space":
           e.preventDefault();
@@ -1522,17 +1536,6 @@ export default function FullscreenBacktesting({
         </div>
 
         <div className="bt-header-right">
-          <div className="bt-lot-control">
-            <span className="bt-lot-label">Lot</span>
-            <input
-              type="number"
-              value={lotSize}
-              onChange={(e) => setLotSize(parseFloat(e.target.value) || 0.01)}
-              min="0.01"
-              step="0.01"
-              className="bt-lot-input"
-            />
-          </div>
           <button 
             className={`bt-panel-btn ${showPanel ? 'active' : ''}`} 
             onClick={() => setShowPanel(!showPanel)}
@@ -1786,14 +1789,18 @@ export default function FullscreenBacktesting({
                   <span className="bt-detail-label">Lot Size</span>
                   <span className="bt-detail-value">{lotSize}</span>
                 </div>
-                <div className="bt-detail">
-                  <span className="bt-detail-label">Take Profit</span>
-                  <span className="bt-detail-value profit">{tradingState.activeTrades.target.toFixed(5)}</span>
-                </div>
-                <div className="bt-detail">
-                  <span className="bt-detail-label">Stop Loss</span>
-                  <span className="bt-detail-value loss">{tradingState.activeTrades.stopLoss.toFixed(5)}</span>
-                </div>
+                {tradingState.activeTrades.target !== undefined && (
+                  <div className="bt-detail">
+                    <span className="bt-detail-label">Take Profit</span>
+                    <span className="bt-detail-value profit">{tradingState.activeTrades.target.toFixed(5)}</span>
+                  </div>
+                )}
+                {tradingState.activeTrades.stopLoss !== undefined && (
+                  <div className="bt-detail">
+                    <span className="bt-detail-label">Stop Loss</span>
+                    <span className="bt-detail-value loss">{tradingState.activeTrades.stopLoss.toFixed(5)}</span>
+                  </div>
+                )}
               </div>
               <div className="bt-position-actions">
                 <button onClick={handleManualClose} className="bt-action-btn close">Close Trade</button>
