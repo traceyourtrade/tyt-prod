@@ -13,7 +13,7 @@ import {
   faBullseye,
 } from '@fortawesome/free-solid-svg-icons';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
-import { MetricCard, ChartCard, Skeleton } from '@/components/ui';
+import { MetricCard, ChartCard, Skeleton } from '@/components/backtesting';
 
 interface StatsData {
   totalTrades: number;

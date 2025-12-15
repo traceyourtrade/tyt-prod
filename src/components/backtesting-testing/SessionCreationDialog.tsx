@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTestingStore } from '@/lib/store/testingStore';
+import { useTestingStore } from '@/store/backtestingStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faInfoCircle, faChevronDown, faChartLine, faCrown } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';

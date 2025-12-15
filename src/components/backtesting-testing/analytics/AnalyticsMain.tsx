@@ -12,7 +12,7 @@ import {
   faChartLine,
 } from '@fortawesome/free-solid-svg-icons';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, BarChart, Bar } from 'recharts';
-import { MetricCard, ChartCard, Skeleton } from '@/components/ui';
+import { MetricCard, ChartCard, Skeleton } from '@/components/backtesting';
 
 interface StatsData {
   totalTrades: number;

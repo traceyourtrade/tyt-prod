@@ -17,7 +17,7 @@ import {
   faArrowDown,
 } from '@fortawesome/free-solid-svg-icons';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { MetricCard, ChartCard, Skeleton } from '@/components/ui';
+import { MetricCard, ChartCard, Skeleton } from '@/components/backtesting';
 
 interface SessionInfo {
   name: string;

@@ -12,7 +12,7 @@ import {
   faArrowDown,
   faPlus,
 } from '@fortawesome/free-solid-svg-icons';
-import { ChartCard, FilterButton, Skeleton } from '@/components/ui';
+import { ChartCard, FilterButton, Skeleton } from '@/components/backtesting';
 
 interface Trade {
   id: number;

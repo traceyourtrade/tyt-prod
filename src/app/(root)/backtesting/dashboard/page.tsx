@@ -1,5 +1,7 @@
-const Dashboard = () => {
-  return <></>;
-};
+'use client';
 
-export default Dashboard;
+import TestingMain from '@/components/backtesting-testing/TestingMain';
+
+export default function BacktestingDashboardPage() {
+  return <TestingMain />;
+}

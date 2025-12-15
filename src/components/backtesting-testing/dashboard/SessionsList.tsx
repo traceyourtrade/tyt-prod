@@ -1,6 +1,6 @@
 'use client';
 
-import { useTestingStore } from '@/lib/store/testingStore';
+import { useTestingStore } from '@/store/backtestingStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlay,
@@ -9,13 +9,17 @@ import {
   faClock,
   faChartLine,
 } from '@fortawesome/free-solid-svg-icons';
-import { ChartCard } from '@/components/ui';
+import { ChartCard } from '@/components/backtesting';
 import { useRouter } from 'next/navigation';
 
-export default function SessionsList({handleNewSessionClick}) {
+interface SessionsListProps {
+  handleNewSessionClick: () => void;
+}
+
+export default function SessionsList({ handleNewSessionClick }: SessionsListProps) {
   const { sessions } = useTestingStore();
-  const router=useRouter()
-  const handleResume=(sessionId)=>{
+  const router = useRouter();
+  const handleResume = (sessionId: number) => {
     router.push(`/backtesting/${sessionId}`)
   }
   return (

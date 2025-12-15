@@ -3,7 +3,11 @@
 import PerformanceSection from './PerformanceSection';
 import SessionsList from './SessionsList';
 
-export default function DashboardMain({handleNewSessionClick}) {
+interface DashboardMainProps {
+  handleNewSessionClick: () => void;
+}
+
+export default function DashboardMain({ handleNewSessionClick }: DashboardMainProps) {
   return (
     <div className="space-y-8">
       <PerformanceSection />
