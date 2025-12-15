@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -37,13 +37,26 @@ interface Session {
 }
 
 const SYMBOLS = [
-  { value: "EURUSD", label: "EUR/USD" },
-  { value: "GBPUSD", label: "GBP/USD" },
-  { value: "USDJPY", label: "USD/JPY" },
-  { value: "XAUUSD", label: "XAU/USD (Gold)" },
-  { value: "BTCUSD", label: "BTC/USD" },
-  { value: "ETHUSD", label: "ETH/USD" },
+  { value: "EURUSD", label: "EUR/USD", icon: "💶" },
+  { value: "GBPUSD", label: "GBP/USD", icon: "💷" },
+  { value: "USDJPY", label: "USD/JPY", icon: "💴" },
+  { value: "XAUUSD", label: "XAU/USD", icon: "🥇" },
+  { value: "BTCUSD", label: "BTC/USD", icon: "₿" },
+  { value: "ETHUSD", label: "ETH/USD", icon: "⟠" },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
 
 export default function BacktestingDashboard() {
   const router = useRouter();
@@ -53,6 +66,7 @@ export default function BacktestingDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'pnl' | 'name'>('newest');
   const [menuOpen, setMenuOpen] = useState<number | null>(null);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   const [formData, setFormData] = useState({
     name: "",
@@ -118,6 +132,10 @@ export default function BacktestingDashboard() {
       (s.symbol || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    if (activeFilter !== 'all') {
+      result = result.filter(s => s.status === activeFilter);
+    }
+
     switch (sortBy) {
       case 'newest':
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -134,7 +152,7 @@ export default function BacktestingDashboard() {
     }
 
     return result;
-  }, [sessions, searchQuery, sortBy]);
+  }, [sessions, searchQuery, sortBy, activeFilter]);
 
   const createSession = async () => {
     if (!formData.name.trim() || !formData.fromDate || !formData.toDate) return;
@@ -188,87 +206,201 @@ export default function BacktestingDashboard() {
     setMenuOpen(null);
   };
 
-  const getProgress = (session: Session) => {
+  const getProgress = useCallback((session: Session) => {
     const from = new Date(session.fromDate).getTime();
     const to = new Date(session.toDate).getTime();
     const current = session.progressPointer;
     if (to === from) return 0;
     return Math.min(100, Math.max(0, ((current - from) / (to - from)) * 100));
-  };
+  }, []);
 
   const formatTime = (minutes: number) => {
     if (minutes < 60) return `${minutes}m`;
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
+  const getSymbolIcon = (symbol: string) => {
+    const found = SYMBOLS.find(s => s.value === symbol);
+    return found?.icon || "📊";
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen af-bg-gradient" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-deep, #08090b), var(--af-bg-base, #0c0d10), var(--af-bg-elevated, #12141a))' }}>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-10"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-start justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-[var(--foreground)]">
-                Backtesting Dashboard
-              </h1>
-              <p className="text-[var(--muted-foreground)] mt-1">
-                Practice and refine your trading strategies with historical data
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-teal-500/20 flex items-center justify-center border border-blue-500/20">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#headerGradient)" strokeWidth="2">
+                    <defs>
+                      <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#14b8a6" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M3 3v18h18" />
+                    <path d="M18 9l-5 5-2-2-4 4" />
+                  </svg>
+                </div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                  Backtesting Lab
+                </h1>
+              </div>
+              <p className="af-text-muted text-sm ml-[52px]">
+                Master your strategies with historical market simulation
               </p>
             </div>
-            <button
+            
+            <motion.button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              className="group relative px-5 py-2.5 rounded-xl font-semibold text-sm text-white overflow-hidden"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              New Session
-            </button>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-300 group-hover:from-blue-500 group-hover:to-teal-500" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-blue-400/20 to-teal-400/20 blur-xl" />
+              <span className="relative flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                New Session
+              </span>
+            </motion.button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
-            <div className="glass-card rounded-xl p-4">
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Time Invested</div>
-              <div className="text-xl font-bold text-[var(--foreground)]">{formatTime(globalStats.timeInvested)}</div>
-            </div>
-            <div className="glass-card rounded-xl p-4">
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Historical Days</div>
-              <div className="text-xl font-bold text-[var(--foreground)]">{globalStats.historicalDays}</div>
-            </div>
-            <div className="glass-card rounded-xl p-4">
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Total Trades</div>
-              <div className="text-xl font-bold text-[var(--foreground)]">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8"
+          >
+            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
+              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }} />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-accent-blue, #3b82f6)" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Time Invested</span>
+              </div>
+              <div className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>{formatTime(globalStats.timeInvested)}</div>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
+              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(20, 184, 166, 0.05)' }} />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(20, 184, 166, 0.1)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-accent-teal, #14b8a6)" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Historical Days</span>
+              </div>
+              <div className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>{globalStats.historicalDays}</div>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
+              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(139, 92, 246, 0.05)' }} />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-purple, #8b5cf6)" strokeWidth="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Total Trades</span>
+              </div>
+              <div className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
                 {globalStats.totalTrades}
-                <span className="text-xs font-normal text-[var(--muted-foreground)] ml-2">
-                  ({globalStats.longTrades}L / {globalStats.shortTrades}S)
+                <span className="text-xs font-medium ml-2" style={{ color: 'var(--af-text-disabled, #52525b)' }}>
+                  {globalStats.longTrades}L / {globalStats.shortTrades}S
                 </span>
               </div>
-            </div>
-            <div className="glass-card rounded-xl p-4">
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Win Rate</div>
-              <div className="text-xl font-bold text-[var(--foreground)]">{globalStats.winRate.toFixed(1)}%</div>
-            </div>
-            <div className="glass-card rounded-xl p-4">
-              <div className="text-xs text-[var(--muted-foreground)] mb-1">Overall P&L</div>
-              <div className={`text-xl font-bold ${globalStats.totalPnl >= 0 ? "text-[#4EBF94]" : "text-red-500"}`}>
-                {globalStats.totalPnl >= 0 ? "+" : ""}${globalStats.totalPnl.toFixed(2)}
-              </div>
-            </div>
-          </div>
+            </motion.div>
 
-          <div className="glass-card rounded-xl p-4 mb-6">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold text-[var(--foreground)]">Sessions</h2>
-                <span className="px-2 py-0.5 text-xs bg-[var(--muted)] rounded-full text-[var(--muted-foreground)]">
-                  {sessions.length} total
-                </span>
+            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
+              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)' }} />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--af-warning, #f59e0b)" strokeWidth="2">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Win Rate</span>
               </div>
+              <div className="flex items-end gap-2">
+                <span className="text-2xl font-bold tracking-tight" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>{globalStats.winRate.toFixed(1)}%</span>
+                <div className="flex-1 h-1.5 rounded-full overflow-hidden mb-1.5" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)' }}>
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${globalStats.winRate}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full rounded-full"
+                    style={{ background: 'linear-gradient(to right, #f59e0b, #fbbf24)' }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="group relative overflow-hidden rounded-2xl af-card p-5 transition-all duration-300" style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}>
+              <div className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl transition-colors" style={{ backgroundColor: globalStats.totalPnl >= 0 ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)' }} />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: globalStats.totalPnl >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={globalStats.totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)'} strokeWidth="2">
+                    <line x1="12" y1="1" x2="12" y2="23" />
+                    <path d={globalStats.totalPnl >= 0 ? "M17 5l-5-4-5 4" : "M17 19l-5 4-5-4"} />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Total P&L</span>
+              </div>
+              <div className="text-2xl font-bold tracking-tight" style={{ color: globalStats.totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)' }}>
+                {globalStats.totalPnl >= 0 ? '+' : ''}${globalStats.totalPnl.toFixed(2)}
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl af-card p-5"
+            style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))' }}
+          >
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4">
+                <h2 className="text-lg font-semibold af-text-primary">Sessions</h2>
+                <div className="flex items-center gap-1 p-1 rounded-xl" style={{ backgroundColor: 'var(--af-bg-base, #0c0d10)' }}>
+                  {(['all', 'active', 'completed'] as const).map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setActiveFilter(filter)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                        activeFilter === filter 
+                          ? 'bg-blue-500/20 af-text-blue border border-blue-500/30' 
+                          : 'af-text-muted hover:af-text-primary'
+                      }`}
+                    >
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                      <span className="ml-1.5 text-[10px] opacity-60">
+                        {filter === 'all' ? sessions.length : sessions.filter(s => s.status === filter).length}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <input
@@ -276,17 +408,20 @@ export default function BacktestingDashboard() {
                     placeholder="Search sessions..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] w-48"
+                    className="pl-10 pr-4 py-2.5 w-56 rounded-xl border text-sm focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all af-text-primary"
+                    style={{ backgroundColor: 'var(--af-bg-base, #0c0d10)', borderColor: 'var(--af-border-default, rgba(255, 255, 255, 0.08))' }}
                   />
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 af-text-disabled" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="11" cy="11" r="8"/>
                     <path d="M21 21l-4.35-4.35"/>
                   </svg>
                 </div>
+                
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] text-sm focus:outline-none"
+                  className="px-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-10 af-text-primary"
+                  style={{ backgroundColor: 'var(--af-bg-base)', borderColor: 'var(--af-border-default)', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
                 >
                   <option value="newest">Newest first</option>
                   <option value="oldest">Oldest first</option>
@@ -295,42 +430,68 @@ export default function BacktestingDashboard() {
                 </select>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="relative">
+              <div className="w-12 h-12 border-2 border-blue-500/20 rounded-full" />
+              <div className="absolute inset-0 w-12 h-12 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--af-accent-blue)', borderTopColor: 'transparent' }} />
+            </div>
+            <span className="af-text-disabled text-sm">Loading sessions...</span>
           </div>
         ) : filteredSessions.length === 0 ? (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="glass-card rounded-xl p-12 text-center"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative overflow-hidden rounded-2xl af-card p-16 text-center"
+            style={{ background: 'linear-gradient(to bottom right, var(--af-bg-elevated), var(--af-bg-base))' }}
           >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--primary)]/10 flex items-center justify-center">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2">
-                <path d="M3 3v18h18" />
-                <path d="M18 9l-5 5-2-2-4 4" />
-              </svg>
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-teal-500/5" />
+            <div className="relative">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-teal-500/10 flex items-center justify-center border border-white/[0.06]">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="url(#emptyStateGradient)" strokeWidth="1.5">
+                  <defs>
+                    <linearGradient id="emptyStateGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#14b8a6" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M3 3v18h18" />
+                  <path d="M18 9l-5 5-2-2-4 4" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                {searchQuery ? "No sessions found" : "Start Your Backtesting Journey"}
+              </h3>
+              <p className="text-[#71717a] mb-6 max-w-md mx-auto">
+                {searchQuery 
+                  ? "Try a different search term or filter" 
+                  : "Create your first session to practice trading strategies on historical data without risking real money"}
+              </p>
+              {!searchQuery && (
+                <motion.button
+                  onClick={() => setShowCreateModal(true)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-shadow"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Create Your First Session
+                </motion.button>
+              )}
             </div>
-            <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
-              {searchQuery ? "No sessions found" : "No sessions yet"}
-            </h3>
-            <p className="text-[var(--muted-foreground)] mb-4">
-              {searchQuery ? "Try a different search term" : "Create your first backtesting session to start practicing"}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:opacity-90"
-              >
-                Create Session
-              </button>
-            )}
           </motion.div>
         ) : (
-          <div className="space-y-3">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-3"
+          >
             {filteredSessions.map((session, index) => {
               const progress = getProgress(session);
               const pnl = session.currentBalance - session.initialBalance;
@@ -342,81 +503,91 @@ export default function BacktestingDashboard() {
               return (
                 <motion.div
                   key={session.sessionId}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="glass-card rounded-xl overflow-hidden"
+                  variants={itemVariants}
+                  whileHover={{ y: -2 }}
+                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#12141a] to-[#0c0d10] border border-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
                 >
-                  <div className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-bold text-[var(--primary)]">
-                            {(session.symbol || '').slice(0, 3)}
-                          </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/0 to-blue-500/0 group-hover:from-blue-500/[0.02] group-hover:via-transparent group-hover:to-teal-500/[0.02] transition-all duration-500" />
+                  
+                  <div className="relative p-5">
+                    <div className="flex items-center justify-between gap-6">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <div className="relative">
+                          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1e222d] to-[#181b23] flex items-center justify-center border border-white/[0.06] group-hover:border-blue-500/20 transition-colors">
+                            <span className="text-xl">{getSymbolIcon(session.symbol)}</span>
+                          </div>
+                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0c0d10] ${session.status === 'active' ? 'bg-emerald-500' : 'bg-[#52525b]'}`} />
                         </div>
+                        
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-[var(--foreground)] truncate">
-                              {session.name || 'Untitled'}
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                              {session.name || 'Untitled Session'}
                             </h3>
-                            <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                            <span className={`px-2.5 py-1 text-[10px] font-semibold rounded-lg uppercase tracking-wide ${
                               session.status === 'active' 
-                                ? 'bg-[#4EBF94]/10 text-[#4EBF94]' 
-                                : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                : 'bg-[#1e222d] text-[#71717a] border border-white/[0.06]'
                             }`}>
                               {session.status}
                             </span>
                           </div>
-                          <p className="text-sm text-[var(--muted-foreground)]">
-                            {session.symbol || 'N/A'} • {new Date(session.fromDate).toLocaleDateString()} → {new Date(session.toDate).toLocaleDateString()}
-                          </p>
+                          <div className="flex items-center gap-2 text-sm text-[#71717a]">
+                            <span className="font-medium text-[#a1a1aa]">{session.symbol || 'N/A'}</span>
+                            <span className="text-[#3f3f46]">•</span>
+                            <span>{new Date(session.fromDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} → {new Date(session.toDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-6">
-                        <div className="hidden md:block text-center px-4">
-                          <div className="text-xs text-[var(--muted-foreground)]">Trades</div>
-                          <div className="font-semibold text-[var(--foreground)]">{closedTrades.length}</div>
+                      <div className="flex items-center gap-8">
+                        <div className="hidden md:flex items-center gap-8">
+                          <div className="text-center">
+                            <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">Trades</div>
+                            <div className="text-lg font-bold text-white tabular-nums">{closedTrades.length}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">Win Rate</div>
+                            <div className="text-lg font-bold text-white tabular-nums">{winRate.toFixed(0)}%</div>
+                          </div>
                         </div>
-                        <div className="hidden md:block text-center px-4">
-                          <div className="text-xs text-[var(--muted-foreground)]">Win Rate</div>
-                          <div className="font-semibold text-[var(--foreground)]">{winRate.toFixed(1)}%</div>
-                        </div>
-                        <div className="text-center px-4">
-                          <div className="text-xs text-[var(--muted-foreground)]">P&L</div>
-                          <div className={`font-semibold ${pnl >= 0 ? 'text-[#4EBF94]' : 'text-red-500'}`}>
+                        
+                        <div className="text-center min-w-[100px]">
+                          <div className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider mb-1">P&L</div>
+                          <div className={`text-lg font-bold tabular-nums ${pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                             {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
                           </div>
                         </div>
-                        <div className="hidden lg:block w-32">
-                          <div className="text-xs text-[var(--muted-foreground)] mb-1">Progress</div>
-                          <div className="h-2 bg-[var(--muted)] rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-[var(--primary)] rounded-full transition-all"
-                              style={{ width: `${progress}%` }}
+                        
+                        <div className="hidden lg:block w-36">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-semibold text-[#52525b] uppercase tracking-wider">Progress</span>
+                            <span className="text-xs font-medium text-[#a1a1aa] tabular-nums">{progress.toFixed(0)}%</span>
+                          </div>
+                          <div className="h-2 bg-[#1e222d] rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progress}%` }}
+                              transition={{ duration: 0.8, ease: "easeOut" }}
+                              className="h-full bg-gradient-to-r from-blue-500 to-teal-500 rounded-full"
                             />
                           </div>
-                          <div className="text-xs text-[var(--muted-foreground)] mt-1">{progress.toFixed(0)}%</div>
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <button
+                          <motion.button
                             onClick={() => router.push(`/backtesting/${session.sessionId}`)}
-                            className="px-3 py-1.5 text-sm bg-[var(--primary)] text-white rounded-lg hover:opacity-90 whitespace-nowrap"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-shadow whitespace-nowrap"
                           >
-                            Go to Chart
-                          </button>
-                          <button
-                            onClick={() => router.push(`/backtesting/sessions?id=${session.sessionId}`)}
-                            className="px-3 py-1.5 text-sm border border-[var(--border)] text-[var(--foreground)] rounded-lg hover:bg-[var(--muted)] whitespace-nowrap"
-                          >
-                            Summary
-                          </button>
+                            Continue
+                          </motion.button>
+                          
                           <div className="relative">
                             <button
                               onClick={() => setMenuOpen(menuOpen === session.sessionId ? null : session.sessionId)}
-                              className="p-1.5 rounded-lg hover:bg-[var(--muted)] text-[var(--muted-foreground)]"
+                              className="p-2 rounded-xl hover:bg-white/[0.04] text-[#71717a] hover:text-white transition-colors"
                             >
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <circle cx="12" cy="12" r="1"/>
@@ -424,34 +595,48 @@ export default function BacktestingDashboard() {
                                 <circle cx="12" cy="19" r="1"/>
                               </svg>
                             </button>
+                            
                             <AnimatePresence>
                               {menuOpen === session.sessionId && (
                                 <motion.div
-                                  initial={{ opacity: 0, scale: 0.95 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.95 }}
-                                  className="absolute right-0 top-full mt-1 w-40 glass-card rounded-lg shadow-lg overflow-hidden z-10"
+                                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                                  className="absolute right-0 top-full mt-2 w-44 bg-[#1a1d24] rounded-xl border border-white/[0.08] shadow-xl shadow-black/40 overflow-hidden z-20"
                                 >
                                   <button
                                     onClick={() => {
+                                      router.push(`/backtesting/sessions?id=${session.sessionId}`);
                                       setMenuOpen(null);
                                     }}
-                                    className="w-full px-3 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--muted)]"
+                                    className="w-full px-4 py-2.5 text-left text-sm text-[#a1a1aa] hover:bg-white/[0.04] hover:text-white flex items-center gap-3 transition-colors"
                                   >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                      <polyline points="14 2 14 8 20 8" />
+                                      <line x1="16" y1="13" x2="8" y2="13" />
+                                      <line x1="16" y1="17" x2="8" y2="17" />
+                                    </svg>
+                                    View Summary
+                                  </button>
+                                  <button
+                                    onClick={() => setMenuOpen(null)}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-[#a1a1aa] hover:bg-white/[0.04] hover:text-white flex items-center gap-3 transition-colors"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                    </svg>
                                     Rename
                                   </button>
-                                  <button
-                                    onClick={() => {
-                                      setMenuOpen(null);
-                                    }}
-                                    className="w-full px-3 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--muted)]"
-                                  >
-                                    Duplicate
-                                  </button>
+                                  <div className="h-px bg-white/[0.06] my-1" />
                                   <button
                                     onClick={() => deleteSession(session.sessionId)}
-                                    className="w-full px-3 py-2 text-left text-sm text-red-500 hover:bg-[var(--muted)]"
+                                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition-colors"
                                   >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
                                     Delete
                                   </button>
                                 </motion.div>
@@ -465,7 +650,7 @@ export default function BacktestingDashboard() {
                 </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -475,133 +660,164 @@ export default function BacktestingDashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="glass-card rounded-xl p-6 w-full max-w-lg"
+              className="relative w-full max-w-xl rounded-2xl bg-gradient-to-br from-[#12141a] to-[#0c0d10] border border-white/[0.08] shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-bold text-[var(--foreground)] mb-1">
-                Create New Session
-              </h2>
-              <p className="text-sm text-[var(--muted-foreground)] mb-6">
-                Set up a new backtesting session with historical data
-              </p>
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-teal-500 to-blue-500" />
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                    Session Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., EUR/USD Trend Strategy"
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                    Symbol *
-                  </label>
-                  <select
-                    value={formData.symbol}
-                    onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">
+                      Create New Session
+                    </h2>
+                    <p className="text-sm text-[#71717a] mt-1">
+                      Set up a backtesting session with historical data
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="p-2 rounded-xl hover:bg-white/[0.04] text-[#71717a] hover:text-white transition-colors"
                   >
-                    {SYMBOLS.map(s => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                
+                <div className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                      From Date *
+                    <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                      Session Name
                     </label>
                     <input
-                      type="date"
-                      value={formData.fromDate}
-                      onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g., EUR/USD Breakout Strategy"
+                      className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white placeholder:text-[#52525b] focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                      To Date *
+                    <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                      Trading Pair
                     </label>
-                    <input
-                      type="date"
-                      value={formData.toDate}
-                      onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                    <div className="grid grid-cols-3 gap-2">
+                      {SYMBOLS.map(s => (
+                        <button
+                          key={s.value}
+                          onClick={() => setFormData({ ...formData, symbol: s.value })}
+                          className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                            formData.symbol === s.value
+                              ? 'bg-blue-500/10 border-blue-500/40 text-blue-400'
+                              : 'bg-[#0c0d10] border-white/[0.06] text-[#a1a1aa] hover:border-white/[0.12] hover:text-white'
+                          }`}
+                        >
+                          <span className="mr-2">{s.icon}</span>
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.fromDate}
+                        onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.toDate}
+                        onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                        Starting Balance
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#52525b]">$</span>
+                        <input
+                          type="number"
+                          value={formData.initialBalance}
+                          onChange={(e) => setFormData({ ...formData, initialBalance: e.target.value })}
+                          placeholder="10000"
+                          className="w-full pl-8 pr-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                        Risk per Trade
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={formData.riskPerTrade}
+                          onChange={(e) => setFormData({ ...formData, riskPerTrade: e.target.value })}
+                          placeholder="1"
+                          step="0.5"
+                          className="w-full pl-4 pr-8 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#52525b]">%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                      Notes (optional)
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Strategy rules, goals, or any notes..."
+                      rows={2}
+                      className="w-full px-4 py-3 rounded-xl bg-[#0c0d10] border border-white/[0.06] text-white placeholder:text-[#52525b] focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                      Initial Balance
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.initialBalance}
-                      onChange={(e) => setFormData({ ...formData, initialBalance: e.target.value })}
-                      placeholder="10000"
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                      Risk per Trade (%)
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.riskPerTrade}
-                      onChange={(e) => setFormData({ ...formData, riskPerTrade: e.target.value })}
-                      placeholder="1"
-                      step="0.5"
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                    />
-                  </div>
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="flex-1 px-4 py-3 rounded-xl border border-white/[0.08] text-[#a1a1aa] hover:bg-white/[0.04] hover:text-white transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <motion.button
+                    onClick={createSession}
+                    disabled={!formData.name || !formData.fromDate || !formData.toDate}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold hover:shadow-lg hover:shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none transition-all"
+                  >
+                    Create Session
+                  </motion.button>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                    Description (optional)
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Strategy notes, goals, etc."
-                    rows={2}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={createSession}
-                  disabled={!formData.name || !formData.fromDate || !formData.toDate}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-[var(--primary)] text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Create Session
-                </button>
               </div>
             </motion.div>
           </motion.div>

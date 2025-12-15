@@ -180,6 +180,46 @@
   --sidebar-accent-foreground: #e5e5e5;
   --sidebar-border: #262626;
   --sidebar-ring: #2563EB;
+  
+  /* AstraFlow Design System - Backtesting Module */
+  --af-bg-deep: #08090b;
+  --af-bg-base: #0c0d10;
+  --af-bg-elevated: #12141a;
+  --af-bg-surface: #181b23;
+  --af-bg-hover: #1e222d;
+  
+  --af-border-subtle: rgba(255, 255, 255, 0.04);
+  --af-border-default: rgba(255, 255, 255, 0.08);
+  --af-border-strong: rgba(255, 255, 255, 0.12);
+  
+  --af-text-primary: #f4f4f5;
+  --af-text-secondary: #a1a1aa;
+  --af-text-muted: #71717a;
+  --af-text-disabled: #52525b;
+  
+  --af-accent-blue: #3b82f6;
+  --af-accent-blue-hover: #2563eb;
+  --af-accent-blue-glow: rgba(59, 130, 246, 0.25);
+  
+  --af-accent-teal: #14b8a6;
+  --af-accent-teal-glow: rgba(20, 184, 166, 0.2);
+  
+  --af-profit: #10b981;
+  --af-profit-bg: rgba(16, 185, 129, 0.12);
+  --af-profit-border: rgba(16, 185, 129, 0.25);
+  --af-profit-glow: rgba(16, 185, 129, 0.3);
+  
+  --af-loss: #ef4444;
+  --af-loss-bg: rgba(239, 68, 68, 0.12);
+  --af-loss-border: rgba(239, 68, 68, 0.25);
+  --af-loss-glow: rgba(239, 68, 68, 0.3);
+  
+  --af-warning: #f59e0b;
+  --af-warning-bg: rgba(245, 158, 11, 0.12);
+  
+  --af-purple: #8b5cf6;
+  --af-purple-bg: rgba(139, 92, 246, 0.12);
+  --af-purple-border: rgba(139, 92, 246, 0.25);
 }
 
 /* =====================================================
@@ -760,4 +800,76 @@
 .dark .prose-invert h3,
 .dark .prose-invert h4 {
   color: var(--foreground);
+}
+
+/* =====================================================
+   ASTRAFLOW UTILITY CLASSES
+   Shared classes for Backtesting module consistency
+   ===================================================== */
+
+/* Background Utilities */
+.af-bg-deep { background-color: var(--af-bg-deep); }
+.af-bg-base { background-color: var(--af-bg-base); }
+.af-bg-elevated { background-color: var(--af-bg-elevated); }
+.af-bg-surface { background-color: var(--af-bg-surface); }
+.af-bg-hover { background-color: var(--af-bg-hover); }
+
+/* Gradient Backgrounds */
+.af-bg-gradient {
+  background: linear-gradient(to bottom right, var(--af-bg-deep), var(--af-bg-base), var(--af-bg-elevated));
+}
+
+.af-bg-card {
+  background: linear-gradient(to bottom right, var(--af-bg-elevated), var(--af-bg-base));
+}
+
+/* Border Utilities */
+.af-border-subtle { border-color: var(--af-border-subtle); }
+.af-border-default { border-color: var(--af-border-default); }
+.af-border-strong { border-color: var(--af-border-strong); }
+
+/* Text Utilities */
+.af-text-primary { color: var(--af-text-primary); }
+.af-text-secondary { color: var(--af-text-secondary); }
+.af-text-muted { color: var(--af-text-muted); }
+.af-text-disabled { color: var(--af-text-disabled); }
+
+/* Accent Colors */
+.af-text-blue { color: var(--af-accent-blue); }
+.af-text-teal { color: var(--af-accent-teal); }
+.af-text-profit { color: var(--af-profit); }
+.af-text-loss { color: var(--af-loss); }
+
+/* Glassmorphic Card */
+.af-card {
+  background: linear-gradient(135deg, var(--af-bg-elevated) 0%, var(--af-bg-base) 100%);
+  border: 1px solid var(--af-border-subtle);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  transition: border-color 0.3s ease, transform 0.2s ease;
+}
+
+.af-card:hover {
+  border-color: var(--af-border-default);
+}
+
+/* Glow Effects */
+.af-glow-blue { box-shadow: 0 0 20px var(--af-accent-blue-glow); }
+.af-glow-teal { box-shadow: 0 0 20px var(--af-accent-teal-glow); }
+.af-glow-profit { box-shadow: 0 0 20px var(--af-profit-glow); }
+.af-glow-loss { box-shadow: 0 0 20px var(--af-loss-glow); }
+
+/* Button Styles */
+.af-btn-primary {
+  background: linear-gradient(135deg, var(--af-accent-blue) 0%, var(--af-accent-blue-hover) 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.af-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--af-accent-blue-glow);
 }

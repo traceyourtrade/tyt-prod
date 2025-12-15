@@ -74,6 +74,13 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
   - FAQ section with tab-based categories and expandable accordion
   - Contact Form with email submission to support team (sends confirmation to user)
   - API endpoint at `/api/support/contact` for form processing
+- **Backtesting Module:** Comprehensive backtesting system at `/backtesting/dashboard` with historical market simulation:
+  - **Dashboard:** Premium UI with hero stat cards (Time Invested, Historical Days, Total Trades, Win Rate, Total P&L), session management with filter tabs (All/Active/Completed), search, and sorting
+  - **Chart Workspace:** Full-screen TradingView-powered chart at `/backtesting/[sessionId]` with replay controls, trade placement, and real-time P&L tracking
+  - **AstraFlow Design System:** Shared design tokens in `globals.css` under `.dark` with `--af-*` prefix. Dashboard uses `.af-*` utility classes and CSS variable references; chart workspace uses `.bt-*` classes (aliased to shared tokens) in `backtesting.css`
+  - **Color Psychology:** Deep Charcoal (#08090b to #181b23) for reduced eye strain, Electric Blue (#3b82f6) for trust/focus, Teal (#14b8a6) for growth indicators
+  - **Session Features:** Symbol/date range configuration, balance tracking, Twelve Data API for historical candles
+  - **Database:** Uses DATABASE3 secret for MongoDB backtesting data storage
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for app routes, components, utilities (`lib`, `utils`), database models, state management (`store`), and type definitions.
