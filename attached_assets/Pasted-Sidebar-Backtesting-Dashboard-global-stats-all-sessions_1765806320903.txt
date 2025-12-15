@@ -1,0 +1,409 @@
+Sidebar → Backtesting
+
+Dashboard: global stats + all sessions list + “Go to chart”.
+
+Sessions: per‑session analytics (select a session, see its reports + trades, “Go to chart”).
+
+Underlying entities:
+
+Session
+
+id, userId
+
+name
+
+symbol (single pair)
+
+fromDate, toDate
+
+initialBalance, currentBalance
+
+progressPointer (timestamp / bar index within date range)
+
+status (active / completed)
+
+description
+
+createdAt, updatedAt
+
+Trade
+
+id, sessionId
+
+side (long / short)
+
+size
+
+entryPrice, exitPrice, sl, tp
+
+openedAt, closedAt
+
+pnl, rr
+
+notes, tags
+
+(Replay settings like speed can be kept in a separate ReplayState or directly on the session if you prefer.)
+
+2. Session creation flow
+Entry points
+
+Button: New session on Backtesting → Dashboard.
+
+Optional: New session button on Backtesting → Sessions.
+
+Form fields
+
+Session name.
+
+Symbol (pair) – single select only.
+
+Date range:
+
+From date (start of historical segment).
+
+To date (end of historical segment).
+
+Initial balance.
+
+Optional: risk per trade, tags, description.
+
+On submit
+
+Create Session:
+
+symbol from the form.
+
+fromDate, toDate from the picker.
+
+initialBalance and currentBalance = initialBalance.
+
+progressPointer = fromDate (or first bar in that range).
+
+status = "active".
+
+Redirect back to Dashboard (or show small toast “Session created” with actions: Go to chart / Stay here).
+
+3. Backtesting → Dashboard flow
+User chooses Backtesting → Dashboard in sidebar.
+
+3.1 Global performance area (top)
+High‑level cards aggregating all sessions:
+
+Time invested (sum of replay time).
+
+Historical time replayed (sum of date‑range coverage).
+
+Trades taken (+ long/short split).
+
+Overall win rate.
+
+Charts (global, all sessions):
+
+Time invested by month.
+
+Trades by symbol.
+
+Optional global equity curve.
+
+3.2 Sessions list (bottom)
+A list/table similar to your first screenshot.
+
+Each row shows:
+
+Session name.
+
+Symbol (pair).
+
+Date range (from → to).
+
+Current balance and/or net PnL.
+
+Progress bar based on progressPointer relative to [fromDate, toDate] (e.g., 35% replayed).
+
+Status (active / completed) as a small badge.
+
+Row actions:
+
+Go to chart
+
+Opens the full‑screen chart window for that session (see section 5).
+
+Summary
+
+Either:
+
+Opens a small summary modal, or
+
+Navigates to Backtesting → Sessions with that session preselected.
+
+More (…)
+
+Rename session.
+
+Duplicate session.
+
+Delete session.
+
+Filters:
+
+Search input: filter by session name or symbol.
+
+Sort dropdown: newest, oldest, highest PnL, etc.
+
+4. Backtesting → Sessions (per‑session report) flow
+User chooses Backtesting → Sessions in sidebar or comes via Summary from Dashboard.
+
+4.1 Session selection header
+Top‑left:
+
+Session selector dropdown:
+
+Each item: session name, symbol, current balance, date range.
+
+Search box inside dropdown to quickly find a session.
+
+Top center / left:
+
+Big symbol label (e.g., “EURUSD”) at the top of the page.
+
+Below it: session name + date range.
+
+Current balance and total PnL for this session.
+
+Description box with edit icon.
+
+Top right:
+
+Button: Go to chart (opens full‑screen chart window for current session).
+
+Button: Session settings (edit name, dates, description).
+
+Button: Delete session.
+
+Because the symbol is prominent at the top, all charts and tables below omit symbol unless strictly necessary.
+
+4.2 Analytics grid (middle)
+Per‑session, read‑only analytics (no replay here):
+
+Equity curve for this session across time.
+
+Monthly performance (P/L grouped by month).
+
+Daily performance (P/L by weekday or by calendar day).
+
+KPI cards:
+
+Total PnL.
+
+Win rate.
+
+Average R:R.
+
+Best / worst trade.
+
+Month gain/loss.
+
+Week gain/loss.
+
+Daily gain/loss.
+
+All of these use Trades belonging to the selected Session.
+
+4.3 Trades table (bottom)
+Paginated table, scoped to this session:
+
+Columns:
+
+Trade label/ID.
+
+Date & time (opened or closed).
+
+Direction (Long/Short).
+
+Size.
+
+Entry price.
+
+Exit price.
+
+PnL.
+
+R:R.
+
+No symbol column (it’s always the session’s symbol).
+
+Row click:
+
+Opens trade detail + your existing journal UI for notes, tags, screenshots, etc.
+
+5. Full‑screen chart window (replay workspace)
+This is where the backtesting actually happens. It opens from:
+
+Dashboard → Go to chart (session row).
+
+Sessions → Go to chart (top right button).
+
+Assume route like /backtesting/chart?sessionId=..., rendered full‑screen.
+
+5.1 Initialization
+On load:
+
+Fetch Session and its Trades using sessionId.
+
+Configure TradingView Advanced Chart:
+
+Set symbol from session.
+
+Allow all built‑in timeframes (1m/5m/15m/1h/4h/1D, etc.) – no need to store timeframe on session.
+
+Constrain visible historical data to [fromDate, toDate].
+
+Activate replay mode starting at progressPointer.
+
+Re‑draw all existing trades:
+
+Plot entry/exit markers and SL/TP lines based on stored trades.
+
+Optionally color code winners/losers.
+
+5.2 Layout inside chart window
+Top bar
+
+Left:
+
+Symbol (big label).
+
+Session name.
+
+Date range.
+
+Center:
+
+Current balance and cumulative PnL.
+
+Right:
+
+Replay controls: Play / Pause, Step forward, Speed selector.
+
+Button: End session (marks it completed and optionally jumps pointer to toDate).
+
+Button: Back (returns to previous view / route).
+
+Main area
+
+TradingView Advanced Chart in replay mode, using all standard toolbar/timeframe controls.
+
+Your custom buttons overlay:
+
+“New Long” and “New Short” to create trades.
+
+Optional “Close all” or “Close selected trade”.
+
+Side panel (optional)
+
+List of open trades with quick close button.
+
+List of recently closed trades.
+
+Small live equity mini‑chart.
+
+Journal textarea for this session or current trade.
+
+5.3 Replay + trades behaviour
+Replay progress
+
+When user plays or steps the chart:
+
+The chart moves bar by bar inside [fromDate, toDate].
+
+After each bar (or at intervals), update progressPointer with the current bar’s timestamp/index.
+
+Do a light auto‑save so if the window is closed or crashes, progressPointer is up to date.
+
+Placing trades
+
+User clicks “New Long” or “New Short”.
+
+Interaction options (choose what fits TradingView API best):
+
+Click on the chart to set entry, then drag for SL/TP, or
+
+Pop a small modal for numeric entry and draw objects afterward.
+
+On confirmation:
+
+Create Trade:
+
+sessionId, side, size, entryPrice, sl, tp, openedAt = current bar time.
+
+Draw trade markers on chart.
+
+Save trade immediately.
+
+Closing trades
+
+Automatic close:
+
+If price hits SL or TP during replay:
+
+Set exitPrice, closedAt, pnl, rr.
+
+Update currentBalance for Session.
+
+Mark trade as closed and update chart markers.
+
+Manual close:
+
+User selects an open trade in side panel or via marker and chooses “Close”.
+
+Close at current bar price/time, compute PnL, update Session.currentBalance.
+
+All trade and balance updates are persisted right away.
+
+5.4 Closing and resuming
+User closes chart window
+
+Before leaving:
+
+Save progressPointer (latest bar).
+
+Ensure all trades and currentBalance are persisted.
+
+Session status:
+
+Remains "active" unless user explicitly hits End session.
+
+End session sets status = "completed" and (if you want) sets progressPointer = toDate.
+
+User reopens chart window later
+
+From Dashboard or Sessions → Go to chart:
+
+Reload session, trades, progressPointer.
+
+TradingView:
+
+Same symbol.
+
+Same [fromDate, toDate].
+
+Replay starts exactly at saved progressPointer.
+
+All trades redrawn, balance and PnL in the header reflect last state.
+
+User can continue replaying forward, adding trades, etc., until the full date range is exhausted or session is ended.
+
+6. How everything ties together
+Create: User defines a single‑pair session with a date range and balance.
+
+Trade: User opens the full‑screen chart, replays the data, takes trades; everything (progress, trades, PnL) is persisted.
+
+Review:
+
+Dashboard: global stats + list of all sessions with direct “Go to chart”.
+
+Sessions: pick one session, see analytics + trades; also has “Go to chart”.
+
+Resume: Any time “Go to chart” is clicked for a session, the chart resumes exactly from where replay stopped, using stored progressPointer and trades.
+
+This is the full, coherent flow as discussed. Review this structure, and then you can refine specific UI details or naming as you start implementing.
