@@ -33,14 +33,12 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
     const startDate = new Date(firstDayOfMonth);
     startDate.setDate(startDate.getDate() - startDay);
 
-    const closedTrades = trades.filter(t => t.status === 'closed');
-
     for (let i = 0; i < 42; i++) {
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const dayTrades = closedTrades.filter(t => {
+      const dayTrades = trades.filter(t => {
         const tradeDate = new Date(t.closedAt || t.openedAt);
         return tradeDate.toISOString().split('T')[0] === dateStr;
       });
