@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { CalendarDay } from '@/hooks/backtesting/useBacktestAnalytics';
 import type { Trade } from '@/hooks/backtesting/useBacktestAnalytics';
 
@@ -23,7 +25,6 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
     const month = currentDate.getMonth();
     
     const firstDayOfMonth = new Date(year, month, 1);
-    const lastDayOfMonth = new Date(year, month + 1, 0);
     
     let startDay = firstDayOfMonth.getDay() - 1;
     if (startDay < 0) startDay = 6;
@@ -79,96 +80,79 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl p-5 overflow-hidden"
-      style={{ 
-        background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-        border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-      }}
+      className={cn(
+        "rounded-2xl border p-5 min-w-0 overflow-hidden",
+        "bg-card border-border",
+        "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+      )}
     >
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-lg font-semibold" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
-          Performance calendar
-        </h3>
-        <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-      </div>
+      <h3 className="text-lg font-semibold text-foreground mb-4">
+        Performance calendar
+      </h3>
 
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <select
-            value={displayMode}
-            onChange={(e) => setDisplayMode(e.target.value as 'dollar' | 'percent')}
-            className="px-3 py-1.5 text-sm rounded-lg cursor-pointer"
-            style={{ 
-              backgroundColor: 'var(--af-bg-base, #0c0d10)',
-              border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
-              color: 'var(--af-text-primary, #f4f4f5)'
-            }}
-          >
-            <option value="dollar">Dollar Profit</option>
-            <option value="percent">Percent Gain</option>
-          </select>
-        </div>
+        <select
+          value={displayMode}
+          onChange={(e) => setDisplayMode(e.target.value as 'dollar' | 'percent')}
+          className={cn(
+            "px-3 py-1.5 text-sm rounded-lg cursor-pointer",
+            "bg-background border border-border text-foreground",
+            "dark:bg-zinc-900 dark:border-white/[0.08]",
+            "focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          )}
+        >
+          <option value="dollar">Dollar Profit</option>
+          <option value="percent">Percent Gain</option>
+        </select>
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
             <button
               onClick={prevMonth}
-              className="p-1 rounded hover:bg-[var(--af-bg-hover,#1e222d)] transition-colors"
-              style={{ color: 'var(--af-text-muted, #a1a1aa)' }}
+              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
+              <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-medium min-w-[100px] text-center" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+            <span className="text-sm font-medium text-foreground min-w-[100px] text-center">
               {monthName}
             </span>
             <button
               onClick={nextMonth}
-              className="p-1 rounded hover:bg-[var(--af-bg-hover,#1e222d)] transition-colors"
-              style={{ color: 'var(--af-text-muted, #a1a1aa)' }}
+              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           <div className="flex items-center gap-1">
             <button
               onClick={prevYear}
-              className="p-1 rounded hover:bg-[var(--af-bg-hover,#1e222d)] transition-colors"
-              style={{ color: 'var(--af-text-muted, #a1a1aa)' }}
+              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
+              <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-medium min-w-[50px] text-center" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+            <span className="text-sm font-medium text-foreground min-w-[50px] text-center">
               {year}
             </span>
             <button
               onClick={nextYear}
-              className="p-1 rounded hover:bg-[var(--af-bg-hover,#1e222d)] transition-colors"
-              style={{ color: 'var(--af-text-muted, #a1a1aa)' }}
+              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input 
               type="radio" 
               name="balanceMode" 
               checked={balanceMode === 'initial'}
               onChange={() => setBalanceMode('initial')}
-              className="w-3 h-3 accent-[#3b82f6]"
+              className="w-3 h-3 accent-blue-500"
             />
-            <span className="text-xs" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>Initial Balance</span>
+            <span className="text-xs text-muted-foreground">Initial Balance</span>
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer">
             <input 
@@ -176,33 +160,32 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
               name="balanceMode" 
               checked={balanceMode === 'current'}
               onChange={() => setBalanceMode('current')}
-              className="w-3 h-3 accent-[#3b82f6]"
+              className="w-3 h-3 accent-blue-500"
             />
-            <span className="text-xs" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>Current Balance</span>
+            <span className="text-xs text-muted-foreground">Current Balance</span>
           </label>
         </div>
 
-        <div 
-          className="flex rounded-lg overflow-hidden"
-          style={{ border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))' }}
-        >
+        <div className="flex rounded-lg overflow-hidden border border-border dark:border-white/[0.08]">
           <button
             onClick={() => setViewMode('month')}
-            className="px-3 py-1.5 text-xs font-medium transition-colors"
-            style={{ 
-              backgroundColor: viewMode === 'month' ? 'var(--af-bg-hover, #1e222d)' : 'transparent',
-              color: viewMode === 'month' ? 'var(--af-text-primary, #f4f4f5)' : 'var(--af-text-disabled, #52525b)'
-            }}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium transition-colors",
+              viewMode === 'month' 
+                ? "bg-muted text-foreground" 
+                : "bg-transparent text-muted-foreground hover:text-foreground"
+            )}
           >
             Month
           </button>
           <button
             onClick={() => setViewMode('year')}
-            className="px-3 py-1.5 text-xs font-medium transition-colors"
-            style={{ 
-              backgroundColor: viewMode === 'year' ? 'var(--af-bg-hover, #1e222d)' : 'transparent',
-              color: viewMode === 'year' ? 'var(--af-text-primary, #f4f4f5)' : 'var(--af-text-disabled, #52525b)'
-            }}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium transition-colors",
+              viewMode === 'year' 
+                ? "bg-muted text-foreground" 
+                : "bg-transparent text-muted-foreground hover:text-foreground"
+            )}
           >
             Year
           </button>
@@ -213,8 +196,7 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
         {WEEKDAYS.map(day => (
           <div 
             key={day} 
-            className="text-center text-xs font-medium py-2"
-            style={{ color: 'var(--af-text-disabled, #52525b)' }}
+            className="text-center text-xs font-medium text-muted-foreground py-2"
           >
             {day}
           </div>
@@ -231,34 +213,28 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
           return (
             <div
               key={i}
-              className="min-h-[80px] rounded-lg p-2 transition-colors"
-              style={{ 
-                backgroundColor: hasData 
+              className={cn(
+                "min-h-[80px] rounded-lg p-2 transition-colors",
+                hasData 
                   ? day.pnl >= 0 
-                    ? 'rgba(16, 185, 129, 0.15)'
-                    : 'rgba(239, 68, 68, 0.15)'
-                  : 'var(--af-bg-hover, #1e222d)',
-                opacity: day.isCurrentMonth ? 1 : 0.4
-              }}
+                    ? "bg-profit/15"
+                    : "bg-loss/15"
+                  : "bg-muted",
+                !day.isCurrentMonth && "opacity-40"
+              )}
             >
-              <div 
-                className="text-xs font-medium mb-1"
-                style={{ color: 'var(--af-text-disabled, #52525b)' }}
-              >
+              <div className="text-xs font-medium text-muted-foreground mb-1">
                 {day.day}
               </div>
               {hasData && (
                 <>
-                  <div 
-                    className="text-sm font-semibold"
-                    style={{ color: day.pnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)' }}
-                  >
+                  <div className={cn(
+                    "text-sm font-semibold",
+                    day.pnl >= 0 ? "text-profit" : "text-loss"
+                  )}>
                     {day.pnl >= 0 ? '' : '-'}{displayValue}
                   </div>
-                  <div 
-                    className="text-[10px] mt-0.5"
-                    style={{ color: 'var(--af-text-muted, #a1a1aa)' }}
-                  >
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
                     {day.trades} trade{day.trades !== 1 ? 's' : ''}
                   </div>
                 </>

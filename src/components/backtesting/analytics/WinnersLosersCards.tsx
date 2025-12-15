@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import type { WinLossStats } from '@/hooks/backtesting/useBacktestAnalytics';
 
 interface Props {
@@ -15,7 +16,7 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}m`;
 }
 
-function StatRow({ label, value, isPercent = false, color }: { label: string; value: number | string; isPercent?: boolean; color?: string }) {
+function StatRow({ label, value, isPercent = false, colorClass }: { label: string; value: number | string; isPercent?: boolean; colorClass?: string }) {
   const displayValue = typeof value === 'number' 
     ? isPercent 
       ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
@@ -23,12 +24,9 @@ function StatRow({ label, value, isPercent = false, color }: { label: string; va
     : value;
 
   return (
-    <div className="flex justify-between items-center py-1.5" style={{ borderBottom: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.05))' }}>
-      <div className="flex items-center gap-1">
-        <span className="text-xs" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>{label}</span>
-        <span className="w-3 h-3 rounded-full flex items-center justify-center text-[8px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-      </div>
-      <span className="text-sm font-medium" style={{ color: color || 'var(--af-text-primary, #f4f4f5)' }}>
+    <div className="flex justify-between items-center py-1.5 border-b border-border/50 dark:border-white/[0.05]">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className={cn("text-sm font-medium", colorClass || "text-foreground")}>
         {displayValue}
       </span>
     </div>
@@ -37,8 +35,8 @@ function StatRow({ label, value, isPercent = false, color }: { label: string; va
 
 export default function WinnersLosersCards({ winners, losers }: Props) {
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+    <div className="min-w-0 overflow-hidden">
+      <h3 className="text-lg font-semibold text-foreground mb-4">
         Winners and Losers
       </h3>
       <div className="grid md:grid-cols-2 gap-4">
@@ -46,16 +44,16 @@ export default function WinnersLosersCards({ winners, losers }: Props) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl p-4 overflow-hidden"
-          style={{ 
-            background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-            border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-          }}
+          className={cn(
+            "rounded-2xl border p-4 min-w-0 overflow-hidden",
+            "bg-card border-border",
+            "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+          )}
         >
-          <h4 className="font-semibold mb-3" style={{ color: 'var(--af-profit, #10b981)' }}>Winners</h4>
+          <h4 className="font-semibold text-profit mb-3">Winners</h4>
           <StatRow label="Total winners" value={winners.total} />
-          <StatRow label="Best win" value={winners.bestPercent} isPercent color="var(--af-profit, #10b981)" />
-          <StatRow label="Average win" value={winners.averagePercent} isPercent color="var(--af-profit, #10b981)" />
+          <StatRow label="Best win" value={winners.bestPercent} isPercent colorClass="text-profit" />
+          <StatRow label="Average win" value={winners.averagePercent} isPercent colorClass="text-profit" />
           <StatRow label="Average duration" value={formatDuration(winners.averageDuration)} />
           <StatRow label="Max consecutive wins" value={winners.maxConsecutive} />
           <StatRow label="Avg consecutive wins" value={winners.avgConsecutive} />
@@ -65,16 +63,16 @@ export default function WinnersLosersCards({ winners, losers }: Props) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-2xl p-4 overflow-hidden"
-          style={{ 
-            background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-            border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-          }}
+          className={cn(
+            "rounded-2xl border p-4 min-w-0 overflow-hidden",
+            "bg-card border-border",
+            "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+          )}
         >
-          <h4 className="font-semibold mb-3" style={{ color: 'var(--af-loss, #ef4444)' }}>Losers</h4>
+          <h4 className="font-semibold text-loss mb-3">Losers</h4>
           <StatRow label="Total losers" value={losers.total} />
-          <StatRow label="Worst loss" value={losers.bestPercent} isPercent color="var(--af-loss, #ef4444)" />
-          <StatRow label="Average loss" value={losers.averagePercent} isPercent color="var(--af-loss, #ef4444)" />
+          <StatRow label="Worst loss" value={losers.bestPercent} isPercent colorClass="text-loss" />
+          <StatRow label="Average loss" value={losers.averagePercent} isPercent colorClass="text-loss" />
           <StatRow label="Average duration" value={formatDuration(losers.averageDuration)} />
           <StatRow label="Max consecutive losses" value={losers.maxConsecutive} />
           <StatRow label="Avg consecutive losses" value={losers.avgConsecutive} />

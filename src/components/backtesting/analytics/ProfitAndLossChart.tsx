@@ -11,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { cn } from '@/lib/utils';
 import type { EquityPoint } from '@/hooks/backtesting/useBacktestAnalytics';
 
 interface Props {
@@ -57,40 +58,39 @@ export default function ProfitAndLossChart({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl p-5 overflow-hidden"
-      style={{ 
-        background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-        border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-      }}
+      className={cn(
+        "rounded-2xl border p-5 min-w-0 overflow-hidden",
+        "bg-card border-border",
+        "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+      )}
     >
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+          <h3 className="text-lg font-semibold text-foreground">
             Profit and Loss
           </h3>
-          <p className="text-xs" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Over time</p>
+          <p className="text-xs text-muted-foreground">Over time</p>
         </div>
-        <div 
-          className="flex rounded-lg overflow-hidden"
-          style={{ border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))' }}
-        >
+        <div className="flex rounded-lg overflow-hidden border border-border dark:border-white/[0.08]">
           <button
             onClick={() => setTimeRange('all')}
-            className="px-3 py-1.5 text-xs font-medium transition-colors"
-            style={{ 
-              backgroundColor: timeRange === 'all' ? 'var(--af-bg-hover, #1e222d)' : 'transparent',
-              color: timeRange === 'all' ? 'var(--af-text-primary, #f4f4f5)' : 'var(--af-text-disabled, #52525b)'
-            }}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium transition-colors",
+              timeRange === 'all' 
+                ? "bg-muted text-foreground" 
+                : "bg-transparent text-muted-foreground hover:text-foreground"
+            )}
           >
             All
           </button>
           <button
             onClick={() => setTimeRange('day')}
-            className="px-3 py-1.5 text-xs font-medium transition-colors"
-            style={{ 
-              backgroundColor: timeRange === 'day' ? 'var(--af-bg-hover, #1e222d)' : 'transparent',
-              color: timeRange === 'day' ? 'var(--af-text-primary, #f4f4f5)' : 'var(--af-text-disabled, #52525b)'
-            }}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium transition-colors",
+              timeRange === 'day' 
+                ? "bg-muted text-foreground" 
+                : "bg-transparent text-muted-foreground hover:text-foreground"
+            )}
           >
             Day
           </button>
@@ -99,107 +99,76 @@ export default function ProfitAndLossChart({
 
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
         <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Total PnL</span>
-            <span className="w-3 h-3 rounded-full flex items-center justify-center text-[8px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total PnL</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold" style={{ color: totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)' }}>
+            <span className={cn("text-xl font-bold", totalPnl >= 0 ? "text-profit" : "text-loss")}>
               ${totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span 
-              className="text-xs px-1.5 py-0.5 rounded"
-              style={{ 
-                backgroundColor: totalPnl >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                color: totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)'
-              }}
-            >
+            <span className={cn(
+              "text-xs px-1.5 py-0.5 rounded",
+              totalPnl >= 0 ? "bg-profit/15 text-profit" : "bg-loss/15 text-loss"
+            )}>
               {totalPnl >= 0 ? '+' : ''}{gainPercent}%
             </span>
           </div>
         </div>
 
         <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Account Balance</span>
-            <span className="w-3 h-3 rounded-full flex items-center justify-center text-[8px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Account Balance</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-bold" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+            <span className="text-xl font-bold text-foreground">
               ${accountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span 
-              className="text-xs px-1.5 py-0.5 rounded"
-              style={{ 
-                backgroundColor: totalPnl >= 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                color: totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)'
-              }}
-            >
+            <span className={cn(
+              "text-xs px-1.5 py-0.5 rounded",
+              totalPnl >= 0 ? "bg-profit/15 text-profit" : "bg-loss/15 text-loss"
+            )}>
               {totalPnl >= 0 ? '+' : ''}{gainPercent}%
             </span>
           </div>
         </div>
 
         <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Win Rate</span>
-            <span className="w-3 h-3 rounded-full flex items-center justify-center text-[8px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
-          <span className="text-xl font-bold" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Win Rate</p>
+          <span className="text-xl font-bold text-foreground">
             {winRate.toFixed(2)}%
           </span>
         </div>
 
         <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Total Trades</span>
-            <span className="w-3 h-3 rounded-full flex items-center justify-center text-[8px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
-          <span className="text-xl font-bold" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Trades</p>
+          <span className="text-xl font-bold text-foreground">
             {totalTrades}
           </span>
         </div>
 
         <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Breakeven Trades</span>
-            <span className="w-3 h-3 rounded-full flex items-center justify-center text-[8px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
-          <span className="text-xl font-bold" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Breakeven Trades</p>
+          <span className="text-xl font-bold text-foreground">
             {breakEvenTrades}
           </span>
         </div>
 
         <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--af-text-disabled, #52525b)' }}>Breakeven Threshold</span>
-            <span className="w-3 h-3 rounded-full flex items-center justify-center text-[8px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">BE Threshold</p>
           <div className="flex items-center gap-2">
             <input 
               type="number"
               defaultValue={0}
-              className="w-16 px-2 py-1 text-sm rounded"
-              style={{ 
-                backgroundColor: 'var(--af-bg-base, #0c0d10)',
-                border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
-                color: 'var(--af-text-primary, #f4f4f5)'
-              }}
+              className={cn(
+                "w-16 px-2 py-1 text-sm rounded",
+                "bg-background border border-border text-foreground",
+                "dark:bg-zinc-900 dark:border-white/[0.08]"
+              )}
             />
-            <button 
-              className="px-2 py-1 text-xs rounded"
-              style={{ 
-                backgroundColor: 'var(--af-bg-hover, #1e222d)',
-                color: 'var(--af-text-muted, #a1a1aa)'
-              }}
-            >
+            <button className="px-2 py-1 text-xs rounded bg-muted text-muted-foreground hover:text-foreground transition-colors">
               Submit
             </button>
           </div>
         </div>
       </div>
 
-      <div className="h-64">
+      <div className="h-[256px] min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={filteredData}>
             <defs>
@@ -211,29 +180,29 @@ export default function ProfitAndLossChart({
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" />
             <XAxis 
               dataKey="date" 
-              stroke="var(--af-text-disabled, #52525b)"
-              tick={{ fill: 'var(--af-text-disabled, #52525b)', fontSize: 10 }}
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
               axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
             />
             <YAxis 
-              stroke="var(--af-text-disabled, #52525b)"
-              tick={{ fill: 'var(--af-text-disabled, #52525b)', fontSize: 10 }}
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
               tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`}
               axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'var(--af-bg-elevated, #12141a)',
-                border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '8px',
-                color: 'var(--af-text-primary, #f4f4f5)'
+                color: 'hsl(var(--foreground))'
               }}
               formatter={(value: number) => [`$${value.toLocaleString()}`, 'Balance']}
             />
             <Area
               type="monotone"
               dataKey="balance"
-              stroke={totalPnl >= 0 ? 'var(--af-profit, #10b981)' : 'var(--af-loss, #ef4444)'}
+              stroke={totalPnl >= 0 ? '#10b981' : '#ef4444'}
               strokeWidth={2}
               fill="url(#pnlGradient)"
             />

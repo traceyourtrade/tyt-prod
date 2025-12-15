@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { cn } from '@/lib/utils';
 import type { SidePerformance } from '@/hooks/backtesting/useBacktestAnalytics';
 
 interface Props {
@@ -34,42 +35,36 @@ export default function PerformanceBySide({ data }: Props) {
   const shortWinRate = data.find(d => d.side === 'short')?.winRate || 0;
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-lg font-semibold" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>
-          Performance by side
-        </h3>
-        <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-      </div>
+    <div className="min-w-0 overflow-hidden">
+      <h3 className="text-lg font-semibold text-foreground mb-4">
+        Performance by side
+      </h3>
 
       <div className="grid md:grid-cols-2 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl p-4 overflow-hidden"
-          style={{ 
-            background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-            border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-          }}
+          className={cn(
+            "rounded-2xl border p-4 min-w-0 overflow-hidden",
+            "bg-card border-border",
+            "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+          )}
         >
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>Total Trades</h4>
-            <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
+          <h4 className="font-medium text-foreground mb-2">Total Trades</h4>
           
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.long }} />
-              <span className="text-xs" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>Buy</span>
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-xs text-muted-foreground">Buy</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.short }} />
-              <span className="text-xs" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>Sell</span>
+              <div className="w-2 h-2 rounded-full bg-teal-500" />
+              <span className="text-xs text-muted-foreground">Sell</span>
             </div>
           </div>
 
-          <div className="h-48 relative">
+          <div className="h-[180px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -87,18 +82,18 @@ export default function PerformanceBySide({ data }: Props) {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'var(--af-bg-elevated, #12141a)',
-                    border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
-                    color: 'var(--af-text-primary, #f4f4f5)'
+                    color: 'hsl(var(--foreground))'
                   }}
                 />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <div className="text-center">
-                <div className="text-xs mb-0.5" style={{ color: COLORS.short }}>{shortPercent.toFixed(1)}%</div>
-                <div className="text-xs" style={{ color: COLORS.long }}>{longPercent.toFixed(1)}%</div>
+                <div className="text-xs text-teal-500">{shortPercent.toFixed(1)}%</div>
+                <div className="text-xs text-blue-500">{longPercent.toFixed(1)}%</div>
               </div>
             </div>
           </div>
@@ -108,29 +103,26 @@ export default function PerformanceBySide({ data }: Props) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-2xl p-4 overflow-hidden"
-          style={{ 
-            background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-            border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-          }}
+          className={cn(
+            "rounded-2xl border p-4 min-w-0 overflow-hidden",
+            "bg-card border-border",
+            "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+          )}
         >
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>Win Rate</h4>
-            <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" style={{ backgroundColor: 'var(--af-bg-hover, #1e222d)', color: 'var(--af-text-disabled, #52525b)' }}>?</span>
-          </div>
+          <h4 className="font-medium text-foreground mb-2">Win Rate</h4>
           
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.long }} />
-              <span className="text-xs" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>Buy</span>
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-xs text-muted-foreground">Buy</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.short }} />
-              <span className="text-xs" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>Sell</span>
+              <div className="w-2 h-2 rounded-full bg-teal-500" />
+              <span className="text-xs text-muted-foreground">Sell</span>
             </div>
           </div>
 
-          <div className="h-48 relative">
+          <div className="h-[180px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -148,10 +140,10 @@ export default function PerformanceBySide({ data }: Props) {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'var(--af-bg-elevated, #12141a)',
-                    border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
-                    color: 'var(--af-text-primary, #f4f4f5)'
+                    color: 'hsl(var(--foreground))'
                   }}
                   formatter={(value: number) => [`${value.toFixed(1)}%`, 'Win Rate']}
                 />
@@ -159,8 +151,8 @@ export default function PerformanceBySide({ data }: Props) {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <div className="text-center">
-                <div className="text-xs mb-0.5" style={{ color: COLORS.short }}>{shortWinRate.toFixed(0)}%</div>
-                <div className="text-xs" style={{ color: COLORS.long }}>{longWinRate.toFixed(0)}%</div>
+                <div className="text-xs text-teal-500">{shortWinRate.toFixed(0)}%</div>
+                <div className="text-xs text-blue-500">{longWinRate.toFixed(0)}%</div>
               </div>
             </div>
           </div>

@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { BarChart3, ChevronDown, ExternalLink } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useBacktestAnalytics, type Session, type Trade } from '@/hooks/backtesting/useBacktestAnalytics';
 import {
   ProfitAndLossChart,
@@ -66,77 +68,44 @@ export default function BacktestingSessionsPage() {
     router.push(`/backtesting/sessions?id=${sessionId}`, { scroll: false });
   };
 
-  const formatTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
-
   if (isLoading) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(to bottom right, var(--af-bg-deep, #08090b), var(--af-bg-base, #0c0d10), var(--af-bg-elevated, #12141a))' }}
-      >
-        <div 
-          className="w-10 h-10 rounded-full animate-spin"
-          style={{ 
-            border: '2px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
-            borderTopColor: 'var(--af-accent-blue, #3b82f6)'
-          }}
-        />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-10 h-10 rounded-full animate-spin border-2 border-border border-t-primary" />
       </div>
     );
   }
 
   if (sessions.length === 0) {
     return (
-      <div 
-        className="min-h-screen p-6"
-        style={{ background: 'linear-gradient(to bottom right, var(--af-bg-deep, #08090b), var(--af-bg-base, #0c0d10), var(--af-bg-elevated, #12141a))' }}
-      >
+      <div className="min-h-screen p-6 bg-background">
         <div className="max-w-7xl mx-auto">
-          <div 
-            className="relative rounded-2xl p-12 text-center overflow-hidden"
-            style={{ 
-              background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-              border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-            }}
-          >
-            <div className="absolute inset-0 opacity-50" style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), transparent, rgba(20, 184, 166, 0.05))' }} />
+          <div className={cn(
+            "relative rounded-2xl p-12 text-center overflow-hidden",
+            "bg-card border border-border",
+            "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+          )}>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-emerald-500/5" />
             <div className="relative">
-              <div 
-                className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center"
-                style={{ 
-                  background: 'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(20, 184, 166, 0.1))',
-                  border: '1px solid rgba(59, 130, 246, 0.2)'
-                }}
-              >
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#emptyGradient)" strokeWidth="2">
-                  <defs>
-                    <linearGradient id="emptyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: 'var(--af-accent-blue, #3b82f6)' }} />
-                      <stop offset="100%" style={{ stopColor: 'var(--af-accent-teal, #14b8a6)' }} />
-                    </linearGradient>
-                  </defs>
-                  <path d="M3 3v18h18" />
-                  <path d="M18 9l-5 5-2-2-4 4" />
-                </svg>
+              <div className={cn(
+                "w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center",
+                "bg-gradient-to-br from-primary/10 to-emerald-500/10",
+                "border border-primary/20"
+              )}>
+                <BarChart3 className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--af-text-primary, #f4f4f5)' }}>No Sessions Yet</h3>
-              <p className="mb-6" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">No Sessions Yet</h3>
+              <p className="mb-6 text-muted-foreground">
                 Create a backtesting session to view analytics
               </p>
               <motion.button
                 onClick={() => router.push('/backtesting/dashboard')}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-6 py-3 rounded-xl font-semibold text-sm"
-                style={{ 
-                  background: 'linear-gradient(to right, var(--af-accent-blue, #3b82f6), #2563eb)',
-                  color: 'var(--af-text-primary, #f4f4f5)'
-                }}
+                className={cn(
+                  "px-6 py-3 rounded-xl font-semibold text-sm",
+                  "bg-primary text-primary-foreground hover:bg-primary/90"
+                )}
               >
                 Go to Dashboard
               </motion.button>
@@ -148,58 +117,50 @@ export default function BacktestingSessionsPage() {
   }
 
   return (
-    <div 
-      className="min-h-screen p-6"
-      style={{ background: 'linear-gradient(to bottom right, var(--af-bg-deep, #08090b), var(--af-bg-base, #0c0d10), var(--af-bg-elevated, #12141a))' }}
-    >
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen p-6 bg-background">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className={cn(
+            "relative overflow-hidden rounded-2xl border p-6",
+            "bg-gradient-to-br from-primary/5 via-card to-card",
+            "dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800",
+            "border-border dark:border-white/[0.08]"
+          )}
         >
-          <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ 
-                  background: 'linear-gradient(to bottom right, rgba(59, 130, 246, 0.2), rgba(20, 184, 166, 0.2))',
-                  border: '1px solid rgba(59, 130, 246, 0.2)'
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#headerGrad)" strokeWidth="2">
-                  <defs>
-                    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: 'var(--af-accent-blue, #3b82f6)' }} />
-                      <stop offset="100%" style={{ stopColor: 'var(--af-accent-teal, #14b8a6)' }} />
-                    </linearGradient>
-                  </defs>
-                  <path d="M3 3v18h18" />
-                  <path d="M18 9l-5 5-2-2-4 4" />
-                </svg>
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center",
+                "bg-gradient-to-br from-primary/20 to-emerald-500/20",
+                "border border-primary/20"
+              )}>
+                <BarChart3 className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h1 
-                  className="text-2xl font-bold bg-clip-text text-transparent"
-                  style={{ backgroundImage: 'linear-gradient(to right, var(--af-text-primary, #f4f4f5), var(--af-text-muted, #a1a1aa))' }}
-                >
+                <h1 className="text-2xl font-semibold text-foreground">
                   Session Analytics
                 </h1>
-                <p className="text-sm" style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>
+                <p className="text-sm text-muted-foreground">
                   Comprehensive performance analysis
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            
+            <div className="flex items-center gap-3 flex-wrap">
               <select
                 value={selectedSessionId || ''}
                 onChange={(e) => handleSessionChange(parseInt(e.target.value))}
-                className="px-4 py-2.5 rounded-xl text-sm focus:outline-none min-w-[200px] cursor-pointer"
-                style={{ 
-                  backgroundColor: 'var(--af-bg-base, #0c0d10)',
-                  border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
-                  color: 'var(--af-text-primary, #f4f4f5)'
-                }}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl text-sm focus:outline-none min-w-[200px] cursor-pointer",
+                  "bg-card border border-border text-foreground",
+                  "focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                )}
               >
                 {sessions.map(session => (
                   <option key={session.sessionId} value={session.sessionId}>
@@ -207,36 +168,39 @@ export default function BacktestingSessionsPage() {
                   </option>
                 ))}
               </select>
+              
               <button
                 onClick={() => router.push('/backtesting/dashboard')}
-                className="px-4 py-2.5 text-sm rounded-xl font-medium transition-colors hover:opacity-80"
-                style={{ 
-                  border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))',
-                  color: 'var(--af-text-muted, #a1a1aa)'
-                }}
+                className={cn(
+                  "px-4 py-2.5 text-sm rounded-xl font-medium transition-colors",
+                  "border border-border text-muted-foreground hover:bg-muted"
+                )}
               >
                 Back to Dashboard
               </button>
+              
               {selectedSession && (
                 <motion.button
                   onClick={() => router.push(`/backtesting/${selectedSession.sessionId}`)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-4 py-2.5 text-sm rounded-xl font-semibold"
-                  style={{ 
-                    background: 'linear-gradient(to right, var(--af-accent-blue, #3b82f6), #2563eb)',
-                    color: 'var(--af-text-primary, #f4f4f5)'
-                  }}
+                  className={cn(
+                    "px-4 py-2.5 text-sm rounded-xl font-semibold inline-flex items-center gap-2",
+                    "bg-primary text-primary-foreground hover:bg-primary/90"
+                  )}
                 >
                   Open Chart
+                  <ExternalLink className="w-4 h-4" />
                 </motion.button>
               )}
             </div>
           </div>
         </motion.div>
 
+        {/* Analytics Content */}
         {selectedSession && analytics && (
           <div className="space-y-6">
+            {/* P&L Chart - Full Width */}
             <ProfitAndLossChart
               data={analytics.equityCurve}
               totalPnl={analytics.totalPnl}
@@ -247,51 +211,59 @@ export default function BacktestingSessionsPage() {
               initialBalance={selectedSession.initialBalance}
             />
 
+            {/* R:R Metrics */}
             <RrMetricsCards metrics={analytics.rrMetrics} />
 
-            <WinnersLosersCards 
-              winners={analytics.winners} 
-              losers={analytics.losers} 
-            />
+            {/* Winners/Losers + Performance by Side - 2 Column Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <WinnersLosersCards 
+                winners={analytics.winners} 
+                losers={analytics.losers} 
+              />
+              <PerformanceBySide data={analytics.sidePerformance} />
+            </div>
 
-            <PerformanceBySide data={analytics.sidePerformance} />
-
+            {/* Performance by Session - Full Width */}
             <PerformanceBySession data={analytics.sessionPerformance} />
 
-            <PerformanceByTime data={analytics.timePerformance} />
+            {/* Performance by Time + Day - 2 Column Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PerformanceByTime data={analytics.timePerformance} />
+              <PerformanceByDay data={analytics.dayPerformance} />
+            </div>
 
-            <PerformanceByDay data={analytics.dayPerformance} />
-
+            {/* Performance by Month - Full Width */}
             <PerformanceByMonth 
               data={analytics.monthPerformance} 
               initialBalance={selectedSession.initialBalance}
             />
 
-            <PerformanceCalendar 
-              trades={selectedSession.trades || []} 
-              initialBalance={selectedSession.initialBalance}
-            />
-
-            <TradeFrequencyCharts
-              daily={analytics.tradeFrequency.daily}
-              weekly={analytics.tradeFrequency.weekly}
-              monthly={analytics.tradeFrequency.monthly}
-              avgDaily={analytics.tradeFrequency.avgDaily}
-              avgWeekly={analytics.tradeFrequency.avgWeekly}
-              avgMonthly={analytics.tradeFrequency.avgMonthly}
-            />
+            {/* Calendar + Trade Frequency - 2 Column Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PerformanceCalendar 
+                trades={selectedSession.trades || []} 
+                initialBalance={selectedSession.initialBalance}
+              />
+              <TradeFrequencyCharts
+                daily={analytics.tradeFrequency.daily}
+                weekly={analytics.tradeFrequency.weekly}
+                monthly={analytics.tradeFrequency.monthly}
+                avgDaily={analytics.tradeFrequency.avgDaily}
+                avgWeekly={analytics.tradeFrequency.avgWeekly}
+                avgMonthly={analytics.tradeFrequency.avgMonthly}
+              />
+            </div>
           </div>
         )}
 
+        {/* No Trades State */}
         {selectedSession && !analytics && (
-          <div 
-            className="rounded-2xl p-12 text-center"
-            style={{ 
-              background: 'linear-gradient(to bottom right, var(--af-bg-elevated, #12141a), var(--af-bg-base, #0c0d10))',
-              border: '1px solid var(--af-border-default, rgba(255, 255, 255, 0.08))'
-            }}
-          >
-            <p style={{ color: 'var(--af-text-muted, #a1a1aa)' }}>
+          <div className={cn(
+            "rounded-2xl p-12 text-center",
+            "bg-card border border-border",
+            "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+          )}>
+            <p className="text-muted-foreground">
               No trade data available for analytics. Start trading to see your performance.
             </p>
           </div>
