@@ -350,13 +350,13 @@ export default function BacktestingDashboard() {
                       <div className="flex items-center gap-4 flex-1">
                         <div className="w-12 h-12 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-bold text-[var(--primary)]">
-                            {session.symbol.slice(0, 3)}
+                            {(session.symbol || '').slice(0, 3)}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-[var(--foreground)] truncate">
-                              {session.name}
+                              {session.name || 'Untitled'}
                             </h3>
                             <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
                               session.status === 'active' 
@@ -367,7 +367,7 @@ export default function BacktestingDashboard() {
                             </span>
                           </div>
                           <p className="text-sm text-[var(--muted-foreground)]">
-                            {session.symbol} • {new Date(session.fromDate).toLocaleDateString()} → {new Date(session.toDate).toLocaleDateString()}
+                            {session.symbol || 'N/A'} • {new Date(session.fromDate).toLocaleDateString()} → {new Date(session.toDate).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
