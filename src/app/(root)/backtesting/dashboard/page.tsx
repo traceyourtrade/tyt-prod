@@ -41,6 +41,7 @@ export default function BacktestingDashboard() {
   const [newSessionName, setNewSessionName] = useState("");
   const [newSessionSymbol, setNewSessionSymbol] = useState("EURUSD");
   const [newSessionBalance, setNewSessionBalance] = useState("10000");
+  const [expandedSession, setExpandedSession] = useState<number | null>(null);
 
   useEffect(() => {
     fetchSessions();
@@ -183,61 +184,138 @@ export default function BacktestingDashboard() {
             </button>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-4">
             {sessions.map((session, index) => (
               <motion.div
                 key={session.sessionId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                onClick={() => router.push(`/backtesting/${session.sessionId}`)}
-                className="glass-card rounded-xl p-5 cursor-pointer hover:border-[var(--primary)]/30 transition-all group"
+                className="glass-card rounded-xl overflow-hidden"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors">
-                      {session.sessionInfo?.name || `Session ${session.sessionId}`}
-                    </h3>
-                    <p className="text-sm text-[var(--muted-foreground)]">
-                      {session.sessionInfo?.symbol || "EUR/USD"}
-                    </p>
-                  </div>
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    (session.sessionInfo?.totalPnl || 0) >= 0 
-                      ? "bg-[#4EBF94]/10 text-[#4EBF94]" 
-                      : "bg-red-500/10 text-red-500"
-                  }`}>
-                    {(session.sessionInfo?.totalPnl || 0) >= 0 ? "+" : ""}
-                    ${(session.sessionInfo?.totalPnl || 0).toFixed(2)}
+                <div 
+                  className="p-5 cursor-pointer hover:bg-[var(--muted)]/30 transition-all"
+                  onClick={() => setExpandedSession(expandedSession === session.sessionId ? null : session.sessionId)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2">
+                          <path d="M3 3v18h18" />
+                          <path d="M18 9l-5 5-2-2-4 4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[var(--foreground)]">
+                          {session.sessionInfo?.name || `Session ${session.sessionId}`}
+                        </h3>
+                        <p className="text-sm text-[var(--muted-foreground)]">
+                          {session.sessionInfo?.symbol || "EUR/USD"} • {session.trades?.length || 0} trades
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${
+                          (session.sessionInfo?.totalPnl || 0) >= 0 ? "text-[#4EBF94]" : "text-red-500"
+                        }`}>
+                          {(session.sessionInfo?.totalPnl || 0) >= 0 ? "+" : ""}${(session.sessionInfo?.totalPnl || 0).toFixed(2)}
+                        </div>
+                        <div className="text-xs text-[var(--muted-foreground)]">
+                          {(session.sessionInfo?.winRate || 0).toFixed(1)}% win rate
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/backtesting/${session.sessionId}`);
+                        }}
+                        className="px-3 py-1.5 text-sm bg-[var(--primary)] text-white rounded-lg hover:opacity-90"
+                      >
+                        Open Chart
+                      </button>
+                      <svg 
+                        width="20" height="20" viewBox="0 0 24 24" fill="none" 
+                        stroke="currentColor" strokeWidth="2"
+                        className={`text-[var(--muted-foreground)] transition-transform ${expandedSession === session.sessionId ? "rotate-180" : ""}`}
+                      >
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <div className="text-xs text-[var(--muted-foreground)]">Trades</div>
-                    <div className="font-semibold text-[var(--foreground)]">
-                      {session.trades?.length || 0}
+                {expandedSession === session.sessionId && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="border-t border-[var(--border)]"
+                  >
+                    <div className="p-5">
+                      <h4 className="text-sm font-medium text-[var(--foreground)] mb-3">Trade History</h4>
+                      {session.trades && session.trades.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-[var(--muted-foreground)] border-b border-[var(--border)]">
+                                <th className="pb-2 font-medium">Type</th>
+                                <th className="pb-2 font-medium">Entry</th>
+                                <th className="pb-2 font-medium">Exit</th>
+                                <th className="pb-2 font-medium">Lot Size</th>
+                                <th className="pb-2 font-medium">P&L</th>
+                                <th className="pb-2 font-medium">Reason</th>
+                                <th className="pb-2 font-medium">Time</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {session.trades.map((trade, idx) => {
+                                const entryVal = typeof trade.entry === "number" ? trade.entry.toFixed(5) : trade.entry ?? "-";
+                                const exitVal = typeof trade.exit === "number" ? trade.exit.toFixed(5) : trade.exit ?? "-";
+                                const pnlVal = typeof trade.pnl === "number" ? trade.pnl : parseFloat(String(trade.pnl)) || 0;
+                                const lotVal = trade.lotSize ?? "-";
+                                return (
+                                  <tr key={trade.id || idx} className="border-b border-[var(--border)]/50">
+                                    <td className="py-2">
+                                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        trade.type === "long" 
+                                          ? "bg-[#4EBF94]/10 text-[#4EBF94]" 
+                                          : "bg-red-500/10 text-red-500"
+                                      }`}>
+                                        {trade.type?.toUpperCase() || "-"}
+                                      </span>
+                                    </td>
+                                    <td className="py-2 text-[var(--foreground)]">{entryVal}</td>
+                                    <td className="py-2 text-[var(--foreground)]">{exitVal}</td>
+                                    <td className="py-2 text-[var(--foreground)]">{lotVal}</td>
+                                    <td className={`py-2 font-medium ${pnlVal >= 0 ? "text-[#4EBF94]" : "text-red-500"}`}>
+                                      {pnlVal >= 0 ? "+" : ""}${pnlVal.toFixed(2)}
+                                    </td>
+                                    <td className="py-2 text-[var(--muted-foreground)]">{trade.reason || "-"}</td>
+                                    <td className="py-2 text-[var(--muted-foreground)]">
+                                      {trade.timestamp ? new Date(trade.timestamp).toLocaleString() : "-"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-[var(--muted-foreground)]">
+                          <p>No trades recorded yet</p>
+                          <button
+                            onClick={() => router.push(`/backtesting/${session.sessionId}`)}
+                            className="mt-2 text-[var(--primary)] hover:underline text-sm"
+                          >
+                            Start trading in this session
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-[var(--muted-foreground)]">Win Rate</div>
-                    <div className="font-semibold text-[var(--foreground)]">
-                      {(session.sessionInfo?.winRate || 0).toFixed(1)}%
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-[var(--muted-foreground)]">Balance</div>
-                    <div className="font-semibold text-[var(--foreground)]">
-                      ${session.sessionInfo?.currentBalance || "10,000"}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                  <div className="text-xs text-[var(--muted-foreground)]">
-                    Created {new Date(session.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
+                  </motion.div>
+                )}
               </motion.div>
             ))}
           </div>
