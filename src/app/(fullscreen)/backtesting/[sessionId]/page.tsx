@@ -26,6 +26,75 @@ interface SessionData {
   timeInvested: number;
 }
 
+const saveChartLayout = async (sessionId: number, layoutData: any) => {
+  try {
+    const response = await fetch('/api/backtest-sessions/chart-layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        type: 'chart',
+        ...layoutData
+      })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to save chart layout:', error);
+    return { success: false };
+  }
+};
+
+const loadChartLayouts = async (sessionId: number) => {
+  try {
+    const response = await fetch(`/api/backtest-sessions/chart-layout?sessionId=${sessionId}`);
+    const result = await response.json();
+    return result.success ? result.data : { chartLayouts: [], studyTemplates: {}, drawingTemplates: {} };
+  } catch (error) {
+    console.error('Failed to load chart layouts:', error);
+    return { chartLayouts: [], studyTemplates: {}, drawingTemplates: {} };
+  }
+};
+
+const deleteChartLayout = async (sessionId: number, layoutId: string) => {
+  try {
+    const response = await fetch(`/api/backtest-sessions/chart-layout?sessionId=${sessionId}&type=chart&layoutId=${layoutId}`, {
+      method: 'DELETE'
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to delete chart layout:', error);
+    return { success: false };
+  }
+};
+
+const saveStudyTemplate = async (sessionId: number, name: string, content: string) => {
+  try {
+    const response = await fetch('/api/backtest-sessions/chart-layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, type: 'studyTemplate', name, content })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to save study template:', error);
+    return { success: false };
+  }
+};
+
+const saveDrawingTemplate = async (sessionId: number, toolName: string, content: string) => {
+  try {
+    const response = await fetch('/api/backtest-sessions/chart-layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, type: 'drawingTemplate', name: toolName, content })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to save drawing template:', error);
+    return { success: false };
+  }
+};
+
 const symbolToChartFormat = (symbol: string): string => {
   const mapping: Record<string, string> = {
     'EURUSD': 'FXCM:EUR/USD',
@@ -564,6 +633,70 @@ export default function FullscreenBacktesting({
       },
     };
 
+    const save_load_adapter = {
+      getAllCharts: async () => {
+        const data = await loadChartLayouts(sessionId);
+        return data.chartLayouts.map((layout: any) => ({
+          id: layout.id,
+          name: layout.name,
+          symbol: layout.symbol,
+          resolution: layout.resolution,
+          timestamp: layout.timestamp
+        }));
+      },
+      removeChart: async (chartId: string) => {
+        await deleteChartLayout(sessionId, chartId);
+      },
+      saveChart: async (chartData: any) => {
+        const result = await saveChartLayout(sessionId, {
+          id: chartData.id || `chart_${Date.now()}`,
+          name: chartData.name || 'Default Layout',
+          symbol: chartData.symbol,
+          resolution: chartData.resolution,
+          content: chartData.content
+        });
+        return result.data?.id || chartData.id;
+      },
+      getChartContent: async (chartId: string) => {
+        const data = await loadChartLayouts(sessionId);
+        const layout = data.chartLayouts.find((l: any) => l.id === chartId);
+        return layout?.content || '';
+      },
+      getAllStudyTemplates: async () => {
+        const data = await loadChartLayouts(sessionId);
+        return Object.keys(data.studyTemplates || {}).map(name => ({ name }));
+      },
+      removeStudyTemplate: async (studyTemplateInfo: { name: string }) => {
+        await fetch(`/api/backtest-sessions/chart-layout?sessionId=${sessionId}&type=studyTemplate&name=${studyTemplateInfo.name}`, {
+          method: 'DELETE'
+        });
+      },
+      saveStudyTemplate: async (studyTemplateData: { name: string; content: string }) => {
+        await saveStudyTemplate(sessionId, studyTemplateData.name, studyTemplateData.content);
+      },
+      getStudyTemplateContent: async (studyTemplateInfo: { name: string }) => {
+        const data = await loadChartLayouts(sessionId);
+        return data.studyTemplates?.[studyTemplateInfo.name] || '';
+      },
+      getDrawingTemplates: async (toolName: string) => {
+        const data = await loadChartLayouts(sessionId);
+        const templates = data.drawingTemplates || {};
+        return Object.keys(templates).filter(k => k.startsWith(toolName));
+      },
+      loadDrawingTemplate: async (toolName: string, templateName: string) => {
+        const data = await loadChartLayouts(sessionId);
+        return data.drawingTemplates?.[`${toolName}_${templateName}`] || '';
+      },
+      removeDrawingTemplate: async (toolName: string, templateName: string) => {
+        await fetch(`/api/backtest-sessions/chart-layout?sessionId=${sessionId}&type=drawingTemplate&name=${toolName}_${templateName}`, {
+          method: 'DELETE'
+        });
+      },
+      saveDrawingTemplate: async (toolName: string, templateName: string, content: string) => {
+        await saveDrawingTemplate(sessionId, `${toolName}_${templateName}`, content);
+      }
+    };
+
     const widgetOptions: any = {
       symbol: symbol,
       interval: currentInterval,
@@ -586,6 +719,8 @@ export default function FullscreenBacktesting({
         "paneProperties.backgroundType": "solid",
         "scalesProperties.backgroundColor": "#0a0a0b",
       },
+      save_load_adapter: save_load_adapter,
+      auto_save_delay: 5,
     };
 
     const tvWidget = new TradingViewWidget(widgetOptions);
@@ -595,12 +730,61 @@ export default function FullscreenBacktesting({
       const chart = tvWidget.activeChart();
       chart.setChartType(1);
       
+      const loadSavedLayout = async () => {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const data = await loadChartLayouts(sessionId);
+          if (data.chartLayouts && data.chartLayouts.length > 0) {
+            const latestLayout = data.chartLayouts.sort((a: any, b: any) => b.timestamp - a.timestamp)[0];
+            if (latestLayout?.content) {
+              const savedState = JSON.parse(latestLayout.content);
+              tvWidget.load(savedState);
+              console.log('Loaded saved chart layout:', latestLayout.name, 'with', Object.keys(savedState).length, 'properties');
+            }
+          } else {
+            console.log('No saved chart layouts found for session', sessionId);
+          }
+        } catch (error) {
+          console.error('Error loading saved layout:', error);
+        }
+      };
+      loadSavedLayout();
+
+      const autoSaveChart = async () => {
+        try {
+          tvWidget.save((state: any) => {
+            const layoutData = {
+              id: `session_${sessionId}_default`,
+              name: 'Auto-saved Layout',
+              symbol: symbol,
+              resolution: currentInterval,
+              content: JSON.stringify(state)
+            };
+            saveChartLayout(sessionId, layoutData);
+            console.log('Chart auto-saved');
+          });
+        } catch (error) {
+          console.error('Error auto-saving chart:', error);
+        }
+      };
+
+      let saveTimeout: NodeJS.Timeout | null = null;
+      const debouncedSave = () => {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(autoSaveChart, 2000);
+      };
+
+      tvWidget.subscribe('onAutoSaveNeeded', debouncedSave);
+      tvWidget.subscribe('drawing_event', debouncedSave);
+      tvWidget.subscribe('study_event', debouncedSave);
+      
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
         const currentBar = allBars[currentBarIndexRef.current];
         if (currentBar) {
           targetTimestampRef.current = currentBar.time;
         }
         setCurrentInterval(newInterval);
+        debouncedSave();
       });
 
       tvWidget.subscribe("drawing_event", (id: any, type: string) => {
@@ -662,6 +846,21 @@ export default function FullscreenBacktesting({
 
     return () => {
       if (tvWidgetRef.current) {
+        try {
+          tvWidgetRef.current.save((state: any) => {
+            const layoutData = {
+              id: `session_${sessionId}_default`,
+              name: 'Auto-saved Layout',
+              symbol: symbol,
+              resolution: currentInterval,
+              content: JSON.stringify(state)
+            };
+            saveChartLayout(sessionId, layoutData);
+            console.log('Chart saved before unmount');
+          });
+        } catch (error) {
+          console.error('Error saving chart before unmount:', error);
+        }
         tvWidgetRef.current.remove();
         tvWidgetRef.current = null;
       }

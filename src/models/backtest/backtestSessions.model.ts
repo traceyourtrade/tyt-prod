@@ -18,6 +18,15 @@ export interface IBacktestTrade {
   status: 'open' | 'closed';
 }
 
+export interface IChartLayout {
+  id: string;
+  name: string;
+  symbol: string;
+  resolution: string;
+  content: string;
+  timestamp: number;
+}
+
 export interface IBacktestSession extends Document {
   uniqueId: string;
   sessionId: number;
@@ -33,6 +42,9 @@ export interface IBacktestSession extends Document {
   riskPerTrade?: number;
   trades: IBacktestTrade[];
   timeInvested: number;
+  chartLayouts: IChartLayout[];
+  studyTemplates: Record<string, string>;
+  drawingTemplates: Record<string, string>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +66,15 @@ const BacktestTradeSchema = new Schema({
   status: { type: String, enum: ['open', 'closed'], default: 'open' }
 }, { _id: false });
 
+const ChartLayoutSchema = new Schema({
+  id: { type: String, required: true },
+  name: { type: String, required: true },
+  symbol: { type: String },
+  resolution: { type: String },
+  content: { type: String, required: true },
+  timestamp: { type: Number, required: true }
+}, { _id: false });
+
 const BacktestSessionSchema = new Schema<IBacktestSession>(
   {
     uniqueId: { type: String, required: true, index: true },
@@ -69,7 +90,10 @@ const BacktestSessionSchema = new Schema<IBacktestSession>(
     description: { type: String, default: '' },
     riskPerTrade: { type: Number },
     trades: [BacktestTradeSchema],
-    timeInvested: { type: Number, default: 0 }
+    timeInvested: { type: Number, default: 0 },
+    chartLayouts: { type: [ChartLayoutSchema], default: [] },
+    studyTemplates: { type: Map, of: String, default: {} },
+    drawingTemplates: { type: Map, of: String, default: {} }
   },
   { timestamps: true }
 );
