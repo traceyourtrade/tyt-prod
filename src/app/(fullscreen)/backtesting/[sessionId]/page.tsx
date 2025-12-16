@@ -1893,24 +1893,24 @@ export default function FullscreenBacktesting({
             </div>
 
             <div className="bt-order-balance-toggle">
-              <label className={`bt-radio-option ${orderFormData.balanceType === 'initial' ? 'active' : ''}`}>
-                <input 
-                  type="radio" 
-                  checked={orderFormData.balanceType === 'initial'}
-                  onChange={() => setOrderFormData(prev => ({ ...prev, balanceType: 'initial' }))}
-                />
-                <span className="bt-radio-dot"></span>
-                Initial Balance
-              </label>
-              <label className={`bt-radio-option ${orderFormData.balanceType === 'current' ? 'active' : ''}`}>
-                <input 
-                  type="radio" 
-                  checked={orderFormData.balanceType === 'current'}
-                  onChange={() => setOrderFormData(prev => ({ ...prev, balanceType: 'current' }))}
-                />
-                <span className="bt-radio-dot"></span>
-                Current Balance
-              </label>
+              <div className="bt-order-balance-toggle-inner">
+                <label className={`bt-radio-option ${orderFormData.balanceType === 'initial' ? 'active' : ''}`}>
+                  <input 
+                    type="radio" 
+                    checked={orderFormData.balanceType === 'initial'}
+                    onChange={() => setOrderFormData(prev => ({ ...prev, balanceType: 'initial' }))}
+                  />
+                  Initial Balance
+                </label>
+                <label className={`bt-radio-option ${orderFormData.balanceType === 'current' ? 'active' : ''}`}>
+                  <input 
+                    type="radio" 
+                    checked={orderFormData.balanceType === 'current'}
+                    onChange={() => setOrderFormData(prev => ({ ...prev, balanceType: 'current' }))}
+                  />
+                  Current Balance
+                </label>
+              </div>
             </div>
 
             <div className="bt-order-estimates">
