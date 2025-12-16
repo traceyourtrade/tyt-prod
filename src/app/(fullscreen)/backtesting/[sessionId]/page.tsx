@@ -732,14 +732,64 @@ export default function FullscreenBacktesting({
       
       const loadSavedLayout = async () => {
         try {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 800));
           const data = await loadChartLayouts(sessionId);
           if (data.chartLayouts && data.chartLayouts.length > 0) {
             const latestLayout = data.chartLayouts.sort((a: any, b: any) => b.timestamp - a.timestamp)[0];
             if (latestLayout?.content) {
-              const savedState = JSON.parse(latestLayout.content);
-              tvWidget.load(savedState);
-              console.log('Loaded saved chart layout:', latestLayout.name, 'with', Object.keys(savedState).length, 'properties');
+              const savedData = JSON.parse(latestLayout.content);
+              console.log('Restoring chart layout:', latestLayout.name, 'Data keys:', Object.keys(savedData));
+              
+              // Check if this is new format (has drawings array) or old format
+              if (savedData.drawings && Array.isArray(savedData.drawings)) {
+                // New format - restore drawings manually
+                console.log('Using new format - restoring', savedData.drawings.length, 'drawings');
+                let restoredCount = 0;
+                for (const drawing of savedData.drawings) {
+                  try {
+                    if (drawing.name && drawing.points && drawing.points.length > 0) {
+                      const shapeOptions: any = {
+                        shape: drawing.name,
+                        overrides: drawing.overrides || {},
+                        lock: drawing.lock || false,
+                        disableSelection: false,
+                        disableSave: false,
+                        disableUndo: false,
+                      };
+                      chart.createMultipointShape(drawing.points, shapeOptions);
+                      restoredCount++;
+                    }
+                  } catch (drawingError) {
+                    console.warn('Could not restore drawing:', drawing.name, drawingError);
+                  }
+                }
+                console.log('Restored', restoredCount, 'of', savedData.drawings.length, 'drawings');
+                
+                // Restore studies/indicators
+                if (savedData.studies && Array.isArray(savedData.studies)) {
+                  console.log('Restoring', savedData.studies.length, 'studies');
+                  for (const study of savedData.studies) {
+                    try {
+                      if (study.name) {
+                        chart.createStudy(study.name, study.forceOverlay || false, study.lock || false, study.inputs || [], study.overrides || {});
+                      }
+                    } catch (studyError) {
+                      console.warn('Could not restore study:', study.name, studyError);
+                    }
+                  }
+                }
+              } else {
+                // Old format - try tvWidget.load() as fallback
+                console.log('Using old format - attempting tvWidget.load()');
+                try {
+                  tvWidget.load(savedData);
+                  console.log('Loaded chart via tvWidget.load()');
+                } catch (loadError) {
+                  console.warn('tvWidget.load() failed:', loadError);
+                }
+              }
+              
+              console.log('Chart layout restore complete');
             }
           } else {
             console.log('No saved chart layouts found for session', sessionId);
@@ -752,17 +802,67 @@ export default function FullscreenBacktesting({
 
       const autoSaveChart = async () => {
         try {
-          tvWidget.save((state: any) => {
-            const layoutData = {
-              id: `session_${sessionId}_default`,
-              name: 'Auto-saved Layout',
-              symbol: symbol,
-              resolution: currentInterval,
-              content: JSON.stringify(state)
-            };
-            saveChartLayout(sessionId, layoutData);
-            console.log('Chart auto-saved');
-          });
+          // Get all shapes (drawings) on the chart
+          const allShapes = chart.getAllShapes();
+          const drawings: any[] = [];
+          
+          for (const shape of allShapes) {
+            try {
+              const shapeObj = chart.getShapeById(shape.id);
+              if (shapeObj) {
+                const points = shapeObj.getPoints();
+                const properties = shapeObj.getProperties();
+                drawings.push({
+                  name: shape.name,
+                  points: points,
+                  overrides: properties,
+                  lock: false
+                });
+              }
+            } catch (e) {
+              // Skip shapes that can't be serialized
+            }
+          }
+          
+          // Get all studies (indicators) on the chart
+          const allStudies = chart.getAllStudies();
+          const studies: any[] = [];
+          
+          for (const study of allStudies) {
+            try {
+              const studyObj = chart.getStudyById(study.id);
+              if (studyObj) {
+                const inputs = studyObj.getInputValues();
+                studies.push({
+                  name: study.name,
+                  inputs: inputs,
+                  forceOverlay: false,
+                  lock: false,
+                  overrides: {}
+                });
+              }
+            } catch (e) {
+              // Skip studies that can't be serialized
+            }
+          }
+          
+          const savedData = {
+            drawings,
+            studies,
+            interval: currentInterval,
+            timestamp: Date.now()
+          };
+          
+          const layoutData = {
+            id: `session_${sessionId}_default`,
+            name: 'Auto-saved Layout',
+            symbol: symbol,
+            resolution: currentInterval,
+            content: JSON.stringify(savedData)
+          };
+          
+          saveChartLayout(sessionId, layoutData);
+          console.log('Chart auto-saved:', drawings.length, 'drawings,', studies.length, 'studies');
         } catch (error) {
           console.error('Error auto-saving chart:', error);
         }
