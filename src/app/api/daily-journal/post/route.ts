@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
                 return await changeSelectQualityHandler(body, userId, token);
             
             case "uploadJournalData":
+            case "updateJournal":
                 return await uploadJournalDataHandler(body, userId, token);
             
             case "addOtherData":
