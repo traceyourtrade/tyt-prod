@@ -80,6 +80,7 @@ The UI features a complete redesign inspired by Notion, Linear, and Stripe, adop
   - **AstraFlow Design System:** Shared design tokens in `globals.css` under `.dark` with `--af-*` prefix. Dashboard uses `.af-*` utility classes and CSS variable references; chart workspace uses `.bt-*` classes (aliased to shared tokens) in `backtesting.css`
   - **Color Psychology:** Deep Charcoal (#08090b to #181b23) for reduced eye strain, Electric Blue (#3b82f6) for trust/focus, Teal (#14b8a6) for growth indicators
   - **Session Features:** Symbol/date range configuration, balance tracking, Twelve Data API for historical candles
+  - **Chart Persistence:** Auto-saves and restores TradingView drawings, indicators, and chart state per session. Uses MongoDB to store chart layouts, study templates, and drawing templates. Auto-save triggers on drawing events, indicator changes, and interval changes. Saves before leaving and restores when returning to a session.
   - **Database:** Uses DATABASE3 secret for MongoDB backtesting data storage
   - **Session Analytics:** Comprehensive analytics suite at `/backtesting/sessions` with 10 visualization modules:
     - **Profit and Loss Chart:** Cumulative equity curve area chart with All/Day time toggle, stats row (Total PnL, Account Balance, Win Rate, Total Trades, Breakeven Trades, Threshold input)
