@@ -128,6 +128,11 @@ export default function FullscreenBacktesting({
   const [playbackSpeed, setPlaybackSpeed] = useState(500);
   const [lotSize, setLotSize] = useState(1);
   const [showPanel, setShowPanel] = useState(false);
+  const [drawerHeight, setDrawerHeight] = useState(250);
+  const [isDrawerResizing, setIsDrawerResizing] = useState(false);
+  const [activeDrawerTab, setActiveDrawerTab] = useState<'open' | 'pending' | 'closed'>('open');
+  const drawerMinHeight = 150;
+  const drawerMaxHeight = 500;
 
   const symbol = sessionData ? symbolToChartFormat(sessionData.symbol) : '';
   const fromDate = sessionData?.fromDate || '';
@@ -181,6 +186,32 @@ export default function FullscreenBacktesting({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging]);
+
+  useEffect(() => {
+    if (!isDrawerResizing) return;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const newHeight = window.innerHeight - e.clientY;
+      setDrawerHeight(Math.min(Math.max(newHeight, drawerMinHeight), drawerMaxHeight));
+    };
+    
+    const handleMouseUp = () => {
+      setIsDrawerResizing(false);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDrawerResizing]);
+
+  const handleDrawerResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDrawerResizing(true);
+  };
 
   const handleBarDragStart = (e: React.MouseEvent) => {
     const bar = e.currentTarget.parentElement as HTMLElement;
@@ -1552,15 +1583,15 @@ export default function FullscreenBacktesting({
 
         <div className="bt-header-right">
           <button 
-            className={`bt-panel-btn ${showPanel ? 'active' : ''}`} 
-            onClick={() => setShowPanel(!showPanel)}
+            className="bt-panel-btn" 
+            onClick={() => router.push('/backtesting/sessions')}
           >
-            Panel
+            Analytics
           </button>
         </div>
       </header>
 
-      <main className="bt-chart-area">
+      <main className="bt-chart-area" style={{ marginBottom: drawerHeight }}>
         {/* Floating Replay Control Bar */}
         <div 
           className={`bt-floating-bar ${isDragging ? 'dragging' : ''}`}
@@ -1740,21 +1771,11 @@ export default function FullscreenBacktesting({
         </div>
         
         <div className="bt-status-right">
-          <button className="bt-status-icon" onClick={() => setShowPanel(!showPanel)} title="Toggle Panel">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              {showPanel ? (
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 100 6 3 3 0 000-6z"/>
-              ) : (
-                <>
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </>
-              )}
-            </svg>
-          </button>
           <button className="bt-status-icon" onClick={() => router.push("/backtesting/dashboard")} title="Exit to Dashboard">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14"/>
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
           </button>
           <button 
@@ -1775,77 +1796,271 @@ export default function FullscreenBacktesting({
         </div>
       </footer>
 
-      <div className={`bt-slide-panel ${showPanel ? 'open' : ''}`}>
-        <div className="bt-panel-header">
-          <h3>Trade Panel</h3>
-          <button onClick={() => setShowPanel(false)} className="bt-panel-close">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
+      {/* Bottom Drawer Panel */}
+      <div 
+        className="bt-bottom-drawer" 
+        style={{ height: drawerHeight }}
+      >
+        <div 
+          className="bt-drawer-resize-handle" 
+          onMouseDown={handleDrawerResizeStart}
+        />
+        <div className="bt-drawer-header">
+          <div className="bt-drawer-tabs">
+            <button 
+              className={`bt-drawer-tab ${activeDrawerTab === 'open' ? 'active' : ''}`}
+              onClick={() => setActiveDrawerTab('open')}
+            >
+              Open Positions
+              <span className="bt-drawer-tab-count">
+                {tradingState.activeTrades ? 1 : 0}
+              </span>
+            </button>
+            <button 
+              className={`bt-drawer-tab ${activeDrawerTab === 'pending' ? 'active' : ''}`}
+              onClick={() => setActiveDrawerTab('pending')}
+            >
+              Pending Orders
+              <span className="bt-drawer-tab-count">
+                {tradingState.limitOrders?.length || 0}
+              </span>
+            </button>
+            <button 
+              className={`bt-drawer-tab ${activeDrawerTab === 'closed' ? 'active' : ''}`}
+              onClick={() => setActiveDrawerTab('closed')}
+            >
+              Closed Positions
+              <span className="bt-drawer-tab-count">
+                {tradingState.tradeHistory.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="bt-drawer-stats">
+            <div className="bt-drawer-stat">
+              <span className="bt-drawer-stat-label">Account Balance:</span>
+              <span className="bt-drawer-stat-value">${totalBalance.toFixed(2)}</span>
+            </div>
+            <div className="bt-drawer-stat">
+              <span className="bt-drawer-stat-label">Realized PnL:</span>
+              <span className={`bt-drawer-stat-value ${tradingState.realisedPL >= 0 ? 'profit' : 'loss'}`}>
+                ${tradingState.realisedPL.toFixed(2)}
+              </span>
+            </div>
+            <div className="bt-drawer-stat">
+              <span className="bt-drawer-stat-label">Unrealized PnL:</span>
+              <span className={`bt-drawer-stat-value ${tradingState.unrealisedPL >= 0 ? 'profit' : 'loss'}`}>
+                ${tradingState.unrealisedPL.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          <div className="bt-drawer-actions">
+            <button className="bt-drawer-icon-btn" title="Settings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="bt-panel-content">
-          {tradingState.activeTrades ? (
-            <div className="bt-position-card">
-              <div className="bt-position-header">
-                <span className={`bt-position-type ${tradingState.activeTrades.type}`}>
-                  {tradingState.activeTrades.type === 'long' ? 'LONG' : 'SHORT'}
-                </span>
-                <span className={`bt-position-pnl ${tradingState.unrealisedPL >= 0 ? 'profit' : 'loss'}`}>
-                  {tradingState.unrealisedPL >= 0 ? '+' : ''}${tradingState.unrealisedPL.toFixed(2)}
-                </span>
-              </div>
-              <div className="bt-position-details">
-                <div className="bt-detail">
-                  <span className="bt-detail-label">Entry</span>
-                  <span className="bt-detail-value">{tradingState.activeTrades.entry.toFixed(5)}</span>
-                </div>
-                <div className="bt-detail">
-                  <span className="bt-detail-label">Lot Size</span>
-                  <span className="bt-detail-value">{lotSize}</span>
-                </div>
-                {tradingState.activeTrades.target !== undefined && (
-                  <div className="bt-detail">
-                    <span className="bt-detail-label">Take Profit</span>
-                    <span className="bt-detail-value profit">{tradingState.activeTrades.target.toFixed(5)}</span>
+
+        <div className="bt-drawer-content">
+          {activeDrawerTab === 'open' && (
+            <>
+              {tradingState.activeTrades ? (
+                <table className="bt-trade-table">
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Side</th>
+                      <th>Size</th>
+                      <th>Entry</th>
+                      <th>Take Profit</th>
+                      <th>Stop Loss</th>
+                      <th>Unrealized</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="bt-table-symbol">{sessionData?.symbol || 'N/A'}</td>
+                      <td>
+                        <span className={`bt-table-side ${tradingState.activeTrades.type}`}>
+                          {tradingState.activeTrades.type === 'long' ? 'BUY' : 'SELL'}
+                        </span>
+                      </td>
+                      <td className="bt-table-value">{lotSize}</td>
+                      <td className="bt-table-value">{tradingState.activeTrades.entry.toFixed(decimalPlaces || 5)}</td>
+                      <td className="bt-table-value profit">
+                        {tradingState.activeTrades.target !== undefined 
+                          ? tradingState.activeTrades.target.toFixed(decimalPlaces || 5) 
+                          : '-'}
+                      </td>
+                      <td className="bt-table-value loss">
+                        {tradingState.activeTrades.stopLoss !== undefined 
+                          ? tradingState.activeTrades.stopLoss.toFixed(decimalPlaces || 5) 
+                          : '-'}
+                      </td>
+                      <td className={`bt-table-value ${tradingState.unrealisedPL >= 0 ? 'profit' : 'loss'}`}>
+                        {tradingState.unrealisedPL >= 0 ? '+' : ''}${tradingState.unrealisedPL.toFixed(2)}
+                      </td>
+                      <td>
+                        <div className="bt-table-actions">
+                          <button 
+                            className="bt-table-action-btn edit" 
+                            onClick={handleModifyTrade}
+                            title="Modify"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                          </button>
+                          <button 
+                            className="bt-table-action-btn close" 
+                            onClick={handleManualClose}
+                            title="Close"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : (
+                <div className="bt-table-empty">
+                  <div className="bt-table-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M12 2v20M2 12h20"/>
+                    </svg>
                   </div>
-                )}
-                {tradingState.activeTrades.stopLoss !== undefined && (
-                  <div className="bt-detail">
-                    <span className="bt-detail-label">Stop Loss</span>
-                    <span className="bt-detail-value loss">{tradingState.activeTrades.stopLoss.toFixed(5)}</span>
-                  </div>
-                )}
-              </div>
-              <div className="bt-position-actions">
-                <button onClick={handleManualClose} className="bt-action-btn close">Close Trade</button>
-                <button onClick={handleModifyTrade} className="bt-action-btn modify">Modify</button>
-              </div>
-            </div>
-          ) : (
-            <div className="bt-empty-state">
-              <p>No active position</p>
-              <p className="bt-hint">Press B to buy or S to sell</p>
-            </div>
+                  <p>No open positions</p>
+                  <span className="bt-hint">Press B to buy or S to sell</span>
+                </div>
+              )}
+            </>
           )}
 
-          {tradingState.tradeHistory.length > 0 && (
-            <div className="bt-history-section">
-              <h4>Trade History</h4>
-              {tradingState.tradeHistory.map((trade) => (
-                <div key={trade.id} className="bt-history-item">
-                  <div className="bt-history-info">
-                    <span className={`bt-history-type ${trade.type}`}>
-                      {trade.type === 'long' ? 'LONG' : 'SHORT'}
-                    </span>
-                    <span className="bt-history-reason">{trade.reason}</span>
+          {activeDrawerTab === 'pending' && (
+            <>
+              {tradingState.limitOrders && tradingState.limitOrders.length > 0 ? (
+                <table className="bt-trade-table">
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Side</th>
+                      <th>Size</th>
+                      <th>Entry Price</th>
+                      <th>Take Profit</th>
+                      <th>Stop Loss</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tradingState.limitOrders.map((order: any) => (
+                      <tr key={order.id}>
+                        <td className="bt-table-symbol">{sessionData?.symbol || 'N/A'}</td>
+                        <td>
+                          <span className={`bt-table-side ${order.type}`}>
+                            {order.type === 'long' ? 'BUY LIMIT' : 'SELL LIMIT'}
+                          </span>
+                        </td>
+                        <td className="bt-table-value">{order.size || lotSize}</td>
+                        <td className="bt-table-value">{order.entry?.toFixed(decimalPlaces || 5) || '-'}</td>
+                        <td className="bt-table-value profit">
+                          {order.target !== undefined ? order.target.toFixed(decimalPlaces || 5) : '-'}
+                        </td>
+                        <td className="bt-table-value loss">
+                          {order.stopLoss !== undefined ? order.stopLoss.toFixed(decimalPlaces || 5) : '-'}
+                        </td>
+                        <td className="bt-table-value muted">Pending</td>
+                        <td>
+                          <div className="bt-table-actions">
+                            <button 
+                              className="bt-table-action-btn close" 
+                              onClick={() => dispatch({ type: 'REMOVE_LIMIT_ORDER', payload: order.id })}
+                              title="Cancel Order"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="bt-table-empty">
+                  <div className="bt-table-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <path d="M9 12h6"/>
+                    </svg>
                   </div>
-                  <span className={`bt-history-pnl ${trade.pnl >= 0 ? 'profit' : 'loss'}`}>
-                    {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}
-                  </span>
+                  <p>No pending orders</p>
+                  <span className="bt-hint">Use Place Order to create limit orders</span>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
+          )}
+
+          {activeDrawerTab === 'closed' && (
+            <>
+              {tradingState.tradeHistory.length > 0 ? (
+                <table className="bt-trade-table">
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Side</th>
+                      <th>Size</th>
+                      <th>Entry</th>
+                      <th>Exit</th>
+                      <th>Exit Reason</th>
+                      <th>Realized</th>
+                      <th>Commission</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tradingState.tradeHistory.map((trade: any) => (
+                      <tr key={trade.id}>
+                        <td className="bt-table-symbol">{sessionData?.symbol || 'N/A'}</td>
+                        <td>
+                          <span className={`bt-table-side ${trade.type}`}>
+                            {trade.type === 'long' ? 'BUY' : 'SELL'}
+                          </span>
+                        </td>
+                        <td className="bt-table-value">{trade.size || lotSize}</td>
+                        <td className="bt-table-value">{trade.entry?.toFixed(decimalPlaces || 5) || '-'}</td>
+                        <td className="bt-table-value">{trade.exit?.toFixed(decimalPlaces || 5) || '-'}</td>
+                        <td className="bt-table-value muted">{trade.reason || 'Manual'}</td>
+                        <td className={`bt-table-value ${trade.pnl >= 0 ? 'profit' : 'loss'}`}>
+                          {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}
+                        </td>
+                        <td className="bt-table-value muted">$0.00</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="bt-table-empty">
+                  <div className="bt-table-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                      <path d="M22 4L12 14.01l-3-3"/>
+                    </svg>
+                  </div>
+                  <p>No closed positions</p>
+                  <span className="bt-hint">Completed trades will appear here</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
