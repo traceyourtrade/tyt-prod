@@ -730,11 +730,21 @@ export default function FullscreenBacktesting({
       const chart = tvWidget.activeChart();
       chart.setChartType(1);
       
+      // Track if we've finished initial restore to avoid overwriting saved data with empty state
+      // Declared before loadSavedLayout to avoid temporal dead zone issues
+      let initialRestoreComplete = false;
+      let lastSavedDrawingsCount = 0;
+      let userDeletedAllDrawings = false; // Track if user explicitly deleted all drawings
+      
+      // Track if a layout existed to restore (prevents accidental overwrites on error)
+      let hadSavedLayout = false;
+      
       const loadSavedLayout = async () => {
         try {
           await new Promise(resolve => setTimeout(resolve, 800));
           const data = await loadChartLayouts(sessionId);
           if (data.chartLayouts && data.chartLayouts.length > 0) {
+            hadSavedLayout = true; // Mark that we found prior content
             const latestLayout = data.chartLayouts.sort((a: any, b: any) => b.timestamp - a.timestamp)[0];
             if (latestLayout?.content) {
               const savedData = JSON.parse(latestLayout.content);
@@ -790,17 +800,64 @@ export default function FullscreenBacktesting({
               }
               
               console.log('Chart layout restore complete');
+              
+              // Initialize lastSavedDrawingsCount from stored payload immediately
+              // This provides a fallback if chart.getAllShapes() is slow or returns empty
+              const storedDrawingCount = savedData.drawings?.length || 0;
+              lastSavedDrawingsCount = storedDrawingCount;
+              console.log('Stored drawing count (from payload):', storedDrawingCount);
+              
+              // Delay to allow shapes to fully render
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              
+              // Poll actual shape count from the chart to verify restore success
+              const actualShapes = chart.getAllShapes();
+              const actualCount = actualShapes.length;
+              console.log('Actual restored shape count:', actualCount);
+              
+              // Use the higher of stored vs actual count for safety
+              if (actualCount > lastSavedDrawingsCount) {
+                lastSavedDrawingsCount = actualCount;
+              }
+              
+              // Only enable auto-saves if shapes were actually restored
+              // If we had a saved layout but no shapes appeared, keep autosave disabled
+              if (lastSavedDrawingsCount > 0) {
+                initialRestoreComplete = true;
+                console.log('Initial restore complete, auto-saves now enabled');
+              } else {
+                console.log('WARNING: Restore found 0 shapes despite saved layout - keeping autosave disabled to prevent data loss');
+                // Keep initialRestoreComplete = false to block all autosaves
+              }
             }
           } else {
             console.log('No saved chart layouts found for session', sessionId);
+            // Small delay before allowing saves on new sessions
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            initialRestoreComplete = true; // No saved data, allow new saves
           }
         } catch (error) {
           console.error('Error loading saved layout:', error);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Only enable autosave if no prior layout existed (prevents accidental overwrites)
+          if (!hadSavedLayout) {
+            initialRestoreComplete = true;
+            console.log('No prior layout found - autosave enabled');
+          } else {
+            console.log('ERROR: Restore failed with prior layout - autosave DISABLED to prevent data loss');
+          }
         }
       };
+      
       loadSavedLayout();
-
+      
       const autoSaveChart = async () => {
+        // Block all auto-saves until initial restore is complete
+        if (!initialRestoreComplete) {
+          console.log('Skipping auto-save: initial restore not complete');
+          return;
+        }
+        
         try {
           // Get all shapes (drawings) on the chart
           const allShapes = chart.getAllShapes();
@@ -846,6 +903,20 @@ export default function FullscreenBacktesting({
             }
           }
           
+          // Prevent overwriting saved drawings with empty state
+          // Only allow empty save if user explicitly deleted all drawings
+          if (drawings.length === 0 && lastSavedDrawingsCount > 0 && !userDeletedAllDrawings) {
+            console.log('Skipping auto-save: would overwrite', lastSavedDrawingsCount, 'drawings with empty state');
+            return;
+          }
+          
+          // Update the count and reset delete flag after successful save
+          lastSavedDrawingsCount = drawings.length;
+          if (drawings.length === 0 && userDeletedAllDrawings) {
+            userDeletedAllDrawings = false; // Reset after saving the empty state
+            console.log('Saved empty state after user deletion');
+          }
+          
           const savedData = {
             drawings,
             studies,
@@ -870,12 +941,38 @@ export default function FullscreenBacktesting({
 
       let saveTimeout: NodeJS.Timeout | null = null;
       const debouncedSave = () => {
+        // Cancel any pending save if autosave is disabled
+        if (!initialRestoreComplete) {
+          if (saveTimeout) {
+            clearTimeout(saveTimeout);
+            saveTimeout = null;
+          }
+          return;
+        }
         if (saveTimeout) clearTimeout(saveTimeout);
         saveTimeout = setTimeout(autoSaveChart, 2000);
       };
 
       tvWidget.subscribe('onAutoSaveNeeded', debouncedSave);
-      tvWidget.subscribe('drawing_event', debouncedSave);
+      tvWidget.subscribe('drawing_event', (id: any, type: string) => {
+        // Track explicit delete events to allow intentional zero-length saves
+        if (type === 'remove') {
+          const remainingShapes = chart.getAllShapes();
+          if (remainingShapes.length === 0 && lastSavedDrawingsCount > 0) {
+            console.log('User deleted all drawings, allowing empty save');
+            userDeletedAllDrawings = true;
+          }
+        } else if (type === 'create') {
+          // Reset the delete flag
+          userDeletedAllDrawings = false;
+          // Re-enable autosave if user creates new drawings (even if restore failed)
+          if (!initialRestoreComplete) {
+            console.log('User created new drawing - enabling autosave');
+            initialRestoreComplete = true;
+          }
+        }
+        debouncedSave();
+      });
       tvWidget.subscribe('study_event', debouncedSave);
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
@@ -947,21 +1044,83 @@ export default function FullscreenBacktesting({
     return () => {
       if (tvWidgetRef.current) {
         try {
-          tvWidgetRef.current.save((state: any) => {
-            const layoutData = {
-              id: `session_${sessionId}_default`,
-              name: 'Auto-saved Layout',
-              symbol: symbol,
-              resolution: currentInterval,
-              content: JSON.stringify(state)
-            };
-            saveChartLayout(sessionId, layoutData);
-            console.log('Chart saved before unmount');
-          });
+          const widget = tvWidgetRef.current;
+          // Check if widget is still valid before saving
+          if (widget && typeof widget.activeChart === 'function') {
+            const chartInstance = widget.activeChart();
+            if (chartInstance) {
+              // Use new format - extract drawings and studies
+              const allShapes = chartInstance.getAllShapes();
+              const drawings: any[] = [];
+              
+              for (const shape of allShapes) {
+                try {
+                  const shapeObj = chartInstance.getShapeById(shape.id);
+                  if (shapeObj) {
+                    const points = shapeObj.getPoints();
+                    const properties = shapeObj.getProperties();
+                    drawings.push({
+                      name: shape.name,
+                      points: points,
+                      overrides: properties,
+                      lock: false
+                    });
+                  }
+                } catch (e) {
+                  // Skip shapes that can't be serialized
+                }
+              }
+              
+              const allStudies = chartInstance.getAllStudies();
+              const studies: any[] = [];
+              
+              for (const study of allStudies) {
+                try {
+                  const studyObj = chartInstance.getStudyById(study.id);
+                  if (studyObj) {
+                    const inputs = studyObj.getInputValues();
+                    studies.push({
+                      name: study.name,
+                      inputs: inputs,
+                      forceOverlay: false,
+                      lock: false,
+                      overrides: {}
+                    });
+                  }
+                } catch (e) {
+                  // Skip studies that can't be serialized
+                }
+              }
+              
+              if (drawings.length > 0 || studies.length > 0) {
+                const savedData = {
+                  drawings,
+                  studies,
+                  interval: currentInterval,
+                  timestamp: Date.now()
+                };
+                
+                const layoutData = {
+                  id: `session_${sessionId}_default`,
+                  name: 'Auto-saved Layout',
+                  symbol: symbol,
+                  resolution: currentInterval,
+                  content: JSON.stringify(savedData)
+                };
+                
+                saveChartLayout(sessionId, layoutData);
+                console.log('Chart saved before unmount:', drawings.length, 'drawings,', studies.length, 'studies');
+              }
+            }
+          }
         } catch (error) {
           console.error('Error saving chart before unmount:', error);
         }
-        tvWidgetRef.current.remove();
+        try {
+          tvWidgetRef.current.remove();
+        } catch (e) {
+          // Widget might already be removed
+        }
         tvWidgetRef.current = null;
       }
     };
