@@ -752,6 +752,22 @@ export default function FullscreenBacktesting({
               
               // Check if this is new format (has drawings array) or old format
               if (savedData.drawings && Array.isArray(savedData.drawings)) {
+                // Clear all existing studies/indicators (including default Volume)
+                // This ensures user's deletion of indicators is respected
+                try {
+                  const existingStudies = chart.getAllStudies();
+                  console.log('Clearing', existingStudies.length, 'existing studies before restore');
+                  for (const study of existingStudies) {
+                    try {
+                      chart.removeEntity(study.id);
+                    } catch (e) {
+                      // Some studies may not be removable
+                    }
+                  }
+                } catch (e) {
+                  console.warn('Could not clear existing studies:', e);
+                }
+                
                 // New format - restore drawings manually
                 console.log('Using new format - restoring', savedData.drawings.length, 'drawings');
                 let restoredCount = 0;
@@ -820,15 +836,11 @@ export default function FullscreenBacktesting({
                 lastSavedDrawingsCount = actualCount;
               }
               
-              // Only enable auto-saves if shapes were actually restored
-              // If we had a saved layout but no shapes appeared, keep autosave disabled
-              if (lastSavedDrawingsCount > 0) {
-                initialRestoreComplete = true;
-                console.log('Initial restore complete, auto-saves now enabled');
-              } else {
-                console.log('WARNING: Restore found 0 shapes despite saved layout - keeping autosave disabled to prevent data loss');
-                // Keep initialRestoreComplete = false to block all autosaves
-              }
+              // Enable auto-saves now that restore is complete
+              // We cleared existing studies and restored saved state, so enable autosave
+              // This allows users to save layouts with deleted indicators (empty studies array)
+              initialRestoreComplete = true;
+              console.log('Initial restore complete, auto-saves now enabled');
             }
           } else {
             console.log('No saved chart layouts found for session', sessionId);
