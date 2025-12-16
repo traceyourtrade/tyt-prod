@@ -526,7 +526,7 @@ export default function FullscreenBacktesting({
           type: "forex",
           session: "24x7",
           timezone: "Etc/UTC",
-          exchange: "bigbull",
+          exchange: "ProJournX",
           minmov: 1,
           pricescale: Math.pow(10, decimalPlaces || 5),
           has_intraday: true,
