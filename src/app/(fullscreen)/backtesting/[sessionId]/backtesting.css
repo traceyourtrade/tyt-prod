@@ -2225,15 +2225,16 @@
 
 .bt-drawer-resize-handle {
   position: absolute;
-  top: -4px;
+  top: -8px;
   left: 0;
   right: 0;
-  height: 12px;
+  height: 16px;
   cursor: ns-resize;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: 100;
+  touch-action: none;
 }
 
 .bt-drawer-resize-handle::after {
@@ -2243,15 +2244,22 @@
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   transition: all 0.15s ease;
+  pointer-events: none;
 }
 
 .bt-drawer-resize-handle:hover::after {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.4);
   width: 64px;
 }
 
-.bt-drawer-resize-handle:active::after {
+.bt-drawer-resize-handle:active::after,
+.bt-bottom-drawer.resizing .bt-drawer-resize-handle::after {
   background: var(--bt-accent-blue);
+  width: 80px;
+}
+
+.bt-bottom-drawer.resizing {
+  transition: none;
 }
 
 .bt-drawer-header {

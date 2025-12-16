@@ -190,26 +190,43 @@ export default function FullscreenBacktesting({
   useEffect(() => {
     if (!isDrawerResizing) return;
     
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    
     const handleMouseMove = (e: MouseEvent) => {
+      e.preventDefault();
       const newHeight = window.innerHeight - e.clientY;
       setDrawerHeight(Math.min(Math.max(newHeight, drawerMinHeight), drawerMaxHeight));
     };
     
     const handleMouseUp = () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setIsDrawerResizing(false);
+    };
+    
+    const handleMouseLeave = () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       setIsDrawerResizing(false);
     };
     
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseleave', handleMouseLeave);
     
     return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, [isDrawerResizing]);
 
   const handleDrawerResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDrawerResizing(true);
   };
 
@@ -1798,7 +1815,7 @@ export default function FullscreenBacktesting({
 
       {/* Bottom Drawer Panel */}
       <div 
-        className="bt-bottom-drawer" 
+        className={`bt-bottom-drawer ${isDrawerResizing ? 'resizing' : ''}`}
         style={{ height: drawerHeight }}
       >
         <div 
