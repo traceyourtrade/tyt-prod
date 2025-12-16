@@ -106,27 +106,23 @@ export async function POST(req: NextRequest) {
         timestamp: Date.now()
       };
 
-      const session = await BacktestSession.findOne({
+      const existingSession = await BacktestSession.findOne({
         uniqueId: userId,
-        sessionId: parseInt(sessionId)
-      });
+        sessionId: parseInt(sessionId),
+        'chartLayouts.id': id
+      }).lean();
 
-      if (!session) {
-        return NextResponse.json({ error: "Session not found" }, { status: 404 });
-      }
-
-      const existingIndex = (session as any).chartLayouts?.findIndex((l: any) => l.id === id);
-      
-      if (existingIndex >= 0) {
-        (session as any).chartLayouts[existingIndex] = newLayout;
+      if (existingSession) {
+        await BacktestSession.updateOne(
+          { uniqueId: userId, sessionId: parseInt(sessionId), 'chartLayouts.id': id },
+          { $set: { 'chartLayouts.$': newLayout } }
+        );
       } else {
-        if (!(session as any).chartLayouts) {
-          (session as any).chartLayouts = [];
-        }
-        (session as any).chartLayouts.push(newLayout);
+        await BacktestSession.updateOne(
+          { uniqueId: userId, sessionId: parseInt(sessionId) },
+          { $push: { chartLayouts: newLayout } }
+        );
       }
-
-      await session.save();
 
       return NextResponse.json({ success: true, data: { id } });
 
