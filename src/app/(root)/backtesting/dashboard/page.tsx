@@ -595,12 +595,12 @@ export default function BacktestingDashboard() {
                   variants={itemVariants}
                   whileHover={{ y: -2 }}
                   className={cn(
-                    "group relative overflow-hidden rounded-2xl transition-all duration-300",
+                    "group relative rounded-2xl transition-all duration-300",
                     "bg-card border border-border hover:border-primary/20",
                     "dark:bg-zinc-900/50 dark:border-white/[0.04] dark:hover:border-white/[0.08]"
                   )}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-transparent to-emerald-500/0 group-hover:from-primary/[0.02] group-hover:to-emerald-500/[0.02] transition-all duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-transparent to-emerald-500/0 group-hover:from-primary/[0.02] group-hover:to-emerald-500/[0.02] transition-all duration-500 rounded-2xl overflow-hidden pointer-events-none" />
                   
                   <div className="relative p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
