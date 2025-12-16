@@ -17,10 +17,9 @@ import {
   faTrophy,
   faChartLine,
   faPercent,
-  faArrowTrendUp,
-  faArrowTrendDown,
-  faClock,
-  faLayerGroup
+  faCoins,
+  faSkullCrossbones,
+  faScaleBalanced
 } from "@fortawesome/free-solid-svg-icons";
 
 import calendarPopUp from "@/store/calendarPopUp";
@@ -179,17 +178,17 @@ const CalendarPopup = () => {
               </linearGradient>
 
               <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.5} />
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
                 <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
               </linearGradient>
 
               <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#ef4444" stopOpacity={0.05} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid stroke="rgba(255,255,255,0.03)" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" vertical={false} />
             <XAxis 
               dataKey="time" 
               stroke="rgba(255, 255, 255, 0.2)" 
@@ -207,11 +206,11 @@ const CalendarPopup = () => {
 
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: "rgba(10, 10, 10, 0.95)", 
+                backgroundColor: "rgba(12, 12, 12, 0.95)", 
                 color: "white", 
                 border: "1px solid rgba(255,255,255,0.08)",
                 borderRadius: "12px",
-                backdropFilter: "blur(20px)",
+                backdropFilter: "blur(16px)",
                 padding: "10px 14px",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
               }}
@@ -223,7 +222,7 @@ const CalendarPopup = () => {
               type="monotone"
               dataKey="value"
               stroke={status === true ? "#10b981" : status === false ? "#ef4444" : "#8b5cf6"}
-              strokeWidth={2.5}
+              strokeWidth={2}
               fill={`url(#${getGradientId()})`}
               fillOpacity={1}
               isAnimationActive={true}
@@ -367,76 +366,70 @@ const CalendarPopup = () => {
     document.body.classList.remove("no-scroll");
   };
 
-  const StatPill = ({ icon, label, value, color = "gray" }: { 
+  const StatCard = ({ icon, label, value, valueColor = "text-white", iconBg = "bg-white/5" }: { 
     icon: any; 
     label: string; 
     value: string; 
-    color?: "green" | "red" | "amber" | "purple" | "blue" | "gray";
-  }) => {
-    const colorClasses = {
-      green: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-      red: "text-red-400 bg-red-500/10 border-red-500/20",
-      amber: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-      purple: "text-purple-400 bg-purple-500/10 border-purple-500/20",
-      blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-      gray: "text-gray-400 bg-white/5 border-white/10",
-    };
-
-    return (
-      <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${colorClasses[color]} backdrop-blur-sm`}>
-        <FontAwesomeIcon icon={icon} className="text-xs opacity-70" />
-        <div className="flex flex-col">
-          <span className="text-[9px] uppercase tracking-wider opacity-60">{label}</span>
-          <span className="text-sm font-bold">{value}</span>
+    valueColor?: string;
+    iconBg?: string;
+  }) => (
+    <div className="group relative bg-gradient-to-br from-white/[0.04] to-transparent rounded-xl p-3 border border-white/[0.06] hover:border-white/[0.12] hover:from-white/[0.06] transition-all duration-300">
+      <div className="flex items-center gap-2.5">
+        <div className={`w-8 h-8 ${iconBg} rounded-lg flex items-center justify-center flex-shrink-0 border border-white/[0.04]`}>
+          <FontAwesomeIcon icon={icon} className="text-white/60 text-xs" />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <span className="text-[9px] uppercase tracking-wider text-gray-500 font-medium truncate">{label}</span>
+          <span className={`text-base font-bold ${valueColor} truncate`}>{value}</span>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 ${showTr ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
       {dataToday.length === 0 ? (
         <div 
           ref={popupRef} 
-          className="w-full max-w-lg bg-gradient-to-b from-[#181818] to-[#0f0f0f] rounded-3xl flex flex-col items-center justify-center p-10 border border-white/[0.06] shadow-2xl min-h-[400px] relative overflow-hidden"
+          className="w-full max-w-2xl bg-gradient-to-b from-[#161616] to-[#0c0c0c] rounded-3xl flex flex-col items-center justify-center p-8 border border-white/[0.06] shadow-2xl min-h-[400px] relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
           
           <button
             onClick={closePopup}
-            className="absolute top-5 right-5 w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200 border border-white/5"
+            className="absolute top-4 right-4 w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
           >
-            <FontAwesomeIcon icon={faXmark} className="text-gray-400 hover:text-white text-sm" />
+            <FontAwesomeIcon icon={faXmark} className="text-gray-400 hover:text-white" />
           </button>
 
-          <div className="flex flex-row items-center gap-2 mb-6">
+          <div className="flex flex-row items-center gap-3 mb-4">
             <button
               onClick={subtractOneDay}
-              className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200"
+              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
             >
               <FontAwesomeIcon icon={faChevronLeft} className="text-gray-400 text-xs" />
             </button>
-            <span className="text-white/70 text-sm font-medium px-3">{formatDate(dataDate)}</span>
+            <span className="text-gray-400 text-sm font-medium">{formatDate(dataDate)}</span>
             <button
               onClick={addOneDay}
-              className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200"
+              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
             >
               <FontAwesomeIcon icon={faChevronRight} className="text-gray-400 text-xs" />
             </button>
           </div>
 
-          <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-5 border border-white/5">
-            <Image src={Logo} alt="logo" width={48} height={48} className="opacity-50" />
+          <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 border border-white/[0.04]">
+            <Image src={Logo} alt="logo" width={50} height={50} className="opacity-50" />
           </div>
           
-          <p className="text-gray-500 text-sm font-medium mb-8">No trades recorded for this day</p>
+          <p className="text-gray-500 text-sm font-medium mb-6">No trades recorded for this day</p>
           
           <button
             onClick={() => {
               closePopup();
               setTimeout(() => setAddTrades(), 300);
             }}
-            className="group flex items-center gap-2.5 px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/20"
+            className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/20"
           >
             <FontAwesomeIcon icon={faPlus} className="text-xs" />
             Add Trade
@@ -446,161 +439,187 @@ const CalendarPopup = () => {
         <div 
           ref={popupRef} 
           id="trade-details"
-          className="w-full max-w-4xl max-h-[90vh] bg-gradient-to-b from-[#141414] to-[#0a0a0a] rounded-2xl md:rounded-3xl flex flex-col border border-white/[0.06] shadow-2xl overflow-hidden"
+          className="w-full max-w-5xl max-h-[90vh] bg-gradient-to-b from-[#151515] to-[#0a0a0a] rounded-2xl md:rounded-3xl flex flex-col border border-white/[0.06] shadow-2xl overflow-hidden"
         >
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500/50 via-blue-500/50 to-purple-500/50" />
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
           
-          <div className="relative px-5 md:px-8 py-5 md:py-6 border-b border-white/[0.04]">
-            <div className="flex items-center justify-between gap-4 mb-5">
-              <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.04] gap-3">
+            <div className="flex items-center justify-between sm:justify-start gap-3 md:gap-4">
+              <h2 className="text-base md:text-lg font-bold text-white tracking-tight">Trade Details</h2>
+              <div className="flex items-center gap-1.5 md:gap-2">
                 <button
                   onClick={subtractOneDay}
-                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200"
+                  className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
                 >
-                  <FontAwesomeIcon icon={faChevronLeft} className="text-gray-400 text-xs" />
+                  <FontAwesomeIcon icon={faChevronLeft} className="text-gray-400 text-[10px]" />
                 </button>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500">Trading Day</span>
-                  <span className="text-white font-semibold text-sm">{formatDate(dataDate)}</span>
+                <div className="px-2 md:px-3 py-1 md:py-1.5 bg-white/[0.04] rounded-lg border border-white/[0.04]">
+                  <span className="text-gray-300 text-[10px] md:text-xs font-medium">{formatDate(dataDate)}</span>
                 </div>
                 <button
                   onClick={addOneDay}
-                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200"
+                  className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
                 >
-                  <FontAwesomeIcon icon={faChevronRight} className="text-gray-400 text-xs" />
+                  <FontAwesomeIcon icon={faChevronRight} className="text-gray-400 text-[10px]" />
                 </button>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleShare}
-                  className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200 border border-white/5"
-                >
-                  <FontAwesomeIcon icon={faShareNodes} className="text-gray-400 hover:text-white text-sm" />
-                </button>
-                <button
-                  onClick={closePopup}
-                  className="w-9 h-9 rounded-xl bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition-all duration-200 border border-white/5 group"
-                >
-                  <FontAwesomeIcon icon={faXmark} className="text-gray-400 group-hover:text-red-400 text-sm" />
-                </button>
-              </div>
+              <button
+                onClick={closePopup}
+                className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/20 flex items-center justify-center transition-all duration-200 group sm:hidden border border-white/[0.04]"
+              >
+                <FontAwesomeIcon icon={faXmark} className="text-gray-400 group-hover:text-red-400 text-xs" />
+              </button>
             </div>
 
-            <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
-              <div className="flex items-baseline gap-3">
-                <div className={`relative ${grossPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  <span className="text-4xl md:text-5xl font-bold tracking-tight">
-                    {grossPnL >= 0 ? '+' : '-'}${Math.abs(grossPnL).toFixed(2)}
-                  </span>
-                  <div className={`absolute -inset-4 rounded-2xl blur-2xl opacity-20 -z-10 ${grossPnL >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                </div>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/5">
-                  <FontAwesomeIcon icon={faLayerGroup} className="text-gray-500 text-[10px]" />
-                  <span className="text-gray-400 text-xs font-medium">{dataToday.length} trades</span>
-                </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className={`px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl ${grossPnL >= 0 ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+                <span className={`text-[11px] md:text-sm font-bold ${grossPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {grossPnL >= 0 ? '+' : ''}${Math.abs(grossPnL).toFixed(0)}
+                </span>
+              </div>
+              
+              <div className="px-2 md:px-3 py-1.5 md:py-2 bg-white/[0.04] rounded-xl border border-white/[0.04]">
+                <span className="text-gray-400 text-[10px] md:text-xs font-medium">{dataToday.length}</span>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                <StatPill 
-                  icon={faTrophy} 
-                  label="Win Rate" 
-                  value={`${winRate}%`}
-                  color={parseFloat(winRate) >= 50 ? "green" : "red"}
-                />
-                <StatPill 
-                  icon={faArrowTrendUp} 
-                  label="Winners" 
-                  value={wins.toString()}
-                  color="green"
-                />
-                <StatPill 
-                  icon={faArrowTrendDown} 
-                  label="Losers" 
-                  value={losses.toString()}
-                  color="red"
-                />
-                <StatPill 
-                  icon={faPercent} 
-                  label="Profit Factor" 
-                  value={profitFactor.toString()}
-                  color={parseFloat(profitFactor) >= 1 || profitFactor === "∞" ? "purple" : "gray"}
-                />
-              </div>
+              <button
+                onClick={handleShare}
+                className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
+              >
+                <FontAwesomeIcon icon={faShareNodes} className="text-gray-400 hover:text-white text-[10px] md:text-sm" />
+              </button>
+
+              <button
+                onClick={closePopup}
+                className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/[0.04] hover:bg-red-500/20 flex items-center justify-center transition-all duration-200 group hidden sm:flex border border-white/[0.04]"
+              >
+                <FontAwesomeIcon icon={faXmark} className="text-gray-400 group-hover:text-red-400 text-[10px] md:text-sm" />
+              </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-6">
-            <div className="bg-white/[0.02] rounded-2xl p-4 border border-white/[0.04] mb-5 h-48 md:h-56">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Cumulative P&L</span>
-                <div className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${grossPnL >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
-                  {grossPnL >= 0 ? '+' : ''}{grossPnL.toFixed(2)}
+          <div className="flex-1 overflow-y-auto p-3 md:p-6">
+            <div className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-5 mb-4 md:mb-6">
+              <div className="w-full md:col-span-5 bg-gradient-to-br from-white/[0.03] to-transparent rounded-xl md:rounded-2xl p-3 md:p-4 border border-white/[0.06] h-36 md:h-48">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-medium">Cumulative P&L</span>
+                  <div className={`px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg text-[9px] md:text-[10px] font-semibold ${grossPnL >= 0 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/15 text-red-400 border border-red-500/20'}`}>
+                    {grossPnL >= 0 ? '+' : ''}{grossPnL.toFixed(2)}
+                  </div>
+                </div>
+                <div className="h-24 md:h-36">
+                  <GraphComp />
                 </div>
               </div>
-              <div className="h-32 md:h-40">
-                <GraphComp />
+
+              <div className="w-full md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                <StatCard 
+                  icon={faChartLine} 
+                  label="Gross P&L" 
+                  value={`$${grossPnL.toFixed(2)}`}
+                  valueColor={grossPnL >= 0 ? "text-emerald-400" : "text-red-400"}
+                  iconBg={grossPnL >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
+                />
+                <StatCard 
+                  icon={faTrophy} 
+                  label="Winners" 
+                  value={wins.toString()}
+                  valueColor="text-emerald-400"
+                  iconBg="bg-emerald-500/10"
+                />
+                <StatCard 
+                  icon={faCoins} 
+                  label="Commissions" 
+                  value={`$${totalCommissions.toFixed(2)}`}
+                  valueColor="text-amber-400"
+                  iconBg="bg-amber-500/10"
+                />
+                <StatCard 
+                  icon={faPercent} 
+                  label="Win Rate" 
+                  value={`${winRate}%`}
+                  valueColor={parseFloat(winRate) >= 50 ? "text-emerald-400" : "text-red-400"}
+                  iconBg={parseFloat(winRate) >= 50 ? "bg-emerald-500/10" : "bg-red-500/10"}
+                />
+                <StatCard 
+                  icon={faSkullCrossbones} 
+                  label="Losers" 
+                  value={losses.toString()}
+                  valueColor="text-red-400"
+                  iconBg="bg-red-500/10"
+                />
+                <StatCard 
+                  icon={faScaleBalanced} 
+                  label="Profit Factor" 
+                  value={profitFactor.toString()}
+                  valueColor={parseFloat(profitFactor) >= 1 || profitFactor === "∞" ? "text-emerald-400" : "text-red-400"}
+                  iconBg="bg-purple-500/10"
+                />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1 mb-3">
-                <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Today's Trades</span>
-                <span className="text-[10px] text-gray-600">{dataToday.length} total</span>
-              </div>
+            <div className="bg-gradient-to-br from-white/[0.03] to-transparent rounded-xl md:rounded-2xl border border-white/[0.06] overflow-hidden">
+              <div className="overflow-x-auto scrollbar-thin">
+                <table className="w-full min-w-[500px]">
+                  <thead>
+                    <tr className="border-b border-white/[0.06]">
+                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Time</th>
+                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Symbol</th>
+                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Side</th>
+                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Net P&L</th>
+                      <th className="px-3 md:px-5 py-3 md:py-4 text-center text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Actions</th>
+                    </tr>
+                  </thead>
 
-              {dataToday.map((data, index) => (
-                <div 
-                  key={index}
-                  className={`group relative bg-white/[0.02] hover:bg-white/[0.04] rounded-xl border border-white/[0.04] hover:border-white/[0.08] p-4 transition-all duration-200 overflow-hidden`}
-                >
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${data.Profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                  
-                  <div className="flex items-center justify-between pl-3">
-                    <div className="flex items-center gap-4">
-                      <div className="flex flex-col">
-                        <span className="text-white font-semibold text-sm">{data.Item}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
+                  <tbody>
+                    {dataToday.map((data, index) => (
+                      <tr 
+                        key={index} 
+                        className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors duration-150 group"
+                      >
+                        <td className="px-3 md:px-5 py-3 md:py-4">
+                          <span className="text-gray-300 text-xs md:text-sm font-medium whitespace-nowrap">{data.OpenTime}</span>
+                        </td>
+                        <td className="px-3 md:px-5 py-3 md:py-4">
+                          <span className="inline-flex items-center px-2.5 md:px-3 py-1 md:py-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-[10px] md:text-xs font-semibold border border-emerald-500/20">
+                            {data.Item}
+                          </span>
+                        </td>
+                        <td className="px-3 md:px-5 py-3 md:py-4">
+                          <span className={`inline-flex items-center px-2 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-semibold border ${
                             data.Type?.toLowerCase() === 'buy' 
-                              ? 'bg-emerald-500/15 text-emerald-400' 
-                              : 'bg-red-500/15 text-red-400'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                              : 'bg-red-500/10 text-red-400 border-red-500/20'
                           }`}>
-                            {data.Type?.toLowerCase() === 'buy' ? 'LONG' : 'SHORT'}
+                            {data.Type?.toLowerCase() === 'buy' ? 'Long' : 'Short'}
                           </span>
-                          <span className="text-gray-500 text-[11px] flex items-center gap-1">
-                            <FontAwesomeIcon icon={faClock} className="text-[9px]" />
-                            {data.OpenTime}
+                        </td>
+                        <td className="px-3 md:px-5 py-3 md:py-4">
+                          <span className={`text-xs md:text-sm font-bold whitespace-nowrap ${data.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                            {data.Profit >= 0 ? '+' : ''}{data.Profit < 0 ? `-$${Math.abs(data.Profit).toFixed(2)}` : `$${data.Profit.toFixed(2)}`}
                           </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <span className={`text-lg font-bold ${data.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {data.Profit >= 0 ? '+' : ''}{data.Profit < 0 ? `-$${Math.abs(data.Profit).toFixed(2)}` : `$${data.Profit.toFixed(2)}`}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                        <button 
-                          onClick={() => handleEdit(data)}
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center transition-all duration-200"
-                        >
-                          <FontAwesomeIcon icon={faPenToSquare} className="text-gray-400 hover:text-emerald-400 text-xs" />
-                        </button>
-                        <button 
-                          onClick={() => confirmDelete(data.id)}
-                          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition-all duration-200"
-                        >
-                          <FontAwesomeIcon icon={faTrashCan} className="text-gray-400 hover:text-red-400 text-xs" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                        </td>
+                        <td className="px-3 md:px-5 py-3 md:py-4">
+                          <div className="flex items-center justify-center gap-1.5 md:gap-2">
+                            <button 
+                              onClick={() => handleEdit(data)}
+                              className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-emerald-500/30"
+                            >
+                              <FontAwesomeIcon icon={faPenToSquare} className="text-gray-400 hover:text-emerald-400 text-[10px] md:text-xs" />
+                            </button>
+                            <button 
+                              onClick={() => confirmDelete(data.id)}
+                              className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-white/[0.04] hover:bg-red-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-red-500/30"
+                            >
+                              <FontAwesomeIcon icon={faTrashCan} className="text-gray-400 hover:text-red-400 text-[10px] md:text-xs" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
