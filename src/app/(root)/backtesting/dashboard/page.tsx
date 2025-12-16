@@ -253,29 +253,29 @@ export default function BacktestingDashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className={cn(
-            "relative overflow-hidden rounded-2xl border p-6",
+            "relative overflow-hidden rounded-xl border px-4 py-3",
             "bg-gradient-to-br from-primary/5 via-card to-card",
             "dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800",
             "border-border dark:border-white/[0.08]"
           )}
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] translate-y-1/2 -translate-x-1/2" />
           
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2.5">
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center",
+                "w-8 h-8 rounded-lg flex items-center justify-center",
                 "bg-gradient-to-br from-primary/20 to-emerald-500/20",
                 "border border-primary/20"
               )}>
-                <BarChart3 className="w-5 h-5 text-primary" />
+                <BarChart3 className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-foreground">
+                <h1 className="text-lg font-semibold text-foreground">
                   Backtesting Lab
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Master your strategies with historical market simulation
                 </p>
               </div>
@@ -286,7 +286,7 @@ export default function BacktestingDashboard() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={cn(
-                "px-5 py-2.5 rounded-xl font-semibold text-sm inline-flex items-center justify-center gap-2",
+                "px-4 py-2 rounded-lg font-semibold text-sm inline-flex items-center justify-center gap-2",
                 "bg-primary text-primary-foreground hover:bg-primary/90"
               )}
             >
