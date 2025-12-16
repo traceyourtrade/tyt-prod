@@ -130,9 +130,11 @@ export default function FullscreenBacktesting({
   const [showPanel, setShowPanel] = useState(false);
   const [drawerHeight, setDrawerHeight] = useState(250);
   const [isDrawerResizing, setIsDrawerResizing] = useState(false);
+  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(true);
   const [activeDrawerTab, setActiveDrawerTab] = useState<'open' | 'pending' | 'closed'>('open');
   const drawerMinHeight = 150;
   const drawerMaxHeight = 500;
+  const drawerCollapsedHeight = 48;
 
   const symbol = sessionData ? symbolToChartFormat(sessionData.symbol) : '';
   const fromDate = sessionData?.fromDate || '';
@@ -1608,7 +1610,7 @@ export default function FullscreenBacktesting({
         </div>
       </header>
 
-      <main className="bt-chart-area" style={{ marginBottom: drawerHeight }}>
+      <main className="bt-chart-area" style={{ marginBottom: isDrawerCollapsed ? drawerCollapsedHeight : drawerHeight }}>
         {/* Floating Replay Control Bar */}
         <div 
           className={`bt-floating-bar ${isDragging ? 'dragging' : ''}`}
@@ -1815,18 +1817,20 @@ export default function FullscreenBacktesting({
 
       {/* Bottom Drawer Panel */}
       <div 
-        className={`bt-bottom-drawer ${isDrawerResizing ? 'resizing' : ''}`}
-        style={{ height: drawerHeight }}
+        className={`bt-bottom-drawer ${isDrawerResizing ? 'resizing' : ''} ${isDrawerCollapsed ? 'collapsed' : ''}`}
+        style={{ height: isDrawerCollapsed ? drawerCollapsedHeight : drawerHeight }}
       >
-        <div 
-          className="bt-drawer-resize-handle" 
-          onMouseDown={handleDrawerResizeStart}
-        />
+        {!isDrawerCollapsed && (
+          <div 
+            className="bt-drawer-resize-handle" 
+            onMouseDown={handleDrawerResizeStart}
+          />
+        )}
         <div className="bt-drawer-header">
           <div className="bt-drawer-tabs">
             <button 
               className={`bt-drawer-tab ${activeDrawerTab === 'open' ? 'active' : ''}`}
-              onClick={() => setActiveDrawerTab('open')}
+              onClick={() => { setActiveDrawerTab('open'); if (isDrawerCollapsed) setIsDrawerCollapsed(false); }}
             >
               Open Positions
               <span className="bt-drawer-tab-count">
@@ -1835,7 +1839,7 @@ export default function FullscreenBacktesting({
             </button>
             <button 
               className={`bt-drawer-tab ${activeDrawerTab === 'pending' ? 'active' : ''}`}
-              onClick={() => setActiveDrawerTab('pending')}
+              onClick={() => { setActiveDrawerTab('pending'); if (isDrawerCollapsed) setIsDrawerCollapsed(false); }}
             >
               Pending Orders
               <span className="bt-drawer-tab-count">
@@ -1844,7 +1848,7 @@ export default function FullscreenBacktesting({
             </button>
             <button 
               className={`bt-drawer-tab ${activeDrawerTab === 'closed' ? 'active' : ''}`}
-              onClick={() => setActiveDrawerTab('closed')}
+              onClick={() => { setActiveDrawerTab('closed'); if (isDrawerCollapsed) setIsDrawerCollapsed(false); }}
             >
               Closed Positions
               <span className="bt-drawer-tab-count">
@@ -1855,17 +1859,17 @@ export default function FullscreenBacktesting({
 
           <div className="bt-drawer-stats">
             <div className="bt-drawer-stat">
-              <span className="bt-drawer-stat-label">Account Balance:</span>
+              <span className="bt-drawer-stat-label">Balance:</span>
               <span className="bt-drawer-stat-value">${totalBalance.toFixed(2)}</span>
             </div>
             <div className="bt-drawer-stat">
-              <span className="bt-drawer-stat-label">Realized PnL:</span>
+              <span className="bt-drawer-stat-label">Realized:</span>
               <span className={`bt-drawer-stat-value ${tradingState.realisedPL >= 0 ? 'profit' : 'loss'}`}>
                 ${tradingState.realisedPL.toFixed(2)}
               </span>
             </div>
             <div className="bt-drawer-stat">
-              <span className="bt-drawer-stat-label">Unrealized PnL:</span>
+              <span className="bt-drawer-stat-label">Unrealized:</span>
               <span className={`bt-drawer-stat-value ${tradingState.unrealisedPL >= 0 ? 'profit' : 'loss'}`}>
                 ${tradingState.unrealisedPL.toFixed(2)}
               </span>
@@ -1873,10 +1877,17 @@ export default function FullscreenBacktesting({
           </div>
 
           <div className="bt-drawer-actions">
-            <button className="bt-drawer-icon-btn" title="Settings">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+            <button 
+              className="bt-drawer-toggle-btn" 
+              onClick={() => setIsDrawerCollapsed(!isDrawerCollapsed)}
+              title={isDrawerCollapsed ? "Expand panel" : "Collapse panel"}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                {isDrawerCollapsed ? (
+                  <path d="M18 15l-6-6-6 6"/>
+                ) : (
+                  <path d="M6 9l6 6 6-6"/>
+                )}
               </svg>
             </button>
           </div>

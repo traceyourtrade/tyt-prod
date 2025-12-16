@@ -2262,6 +2262,42 @@
   transition: none;
 }
 
+.bt-bottom-drawer.collapsed {
+  transition: height 0.2s ease;
+}
+
+.bt-bottom-drawer.collapsed .bt-drawer-content {
+  display: none;
+}
+
+.bt-bottom-drawer.collapsed .bt-drawer-header {
+  border-bottom: none;
+}
+
+.bt-drawer-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--bt-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bt-drawer-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--bt-text-primary);
+}
+
+.bt-drawer-toggle-btn:active {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(0.95);
+}
+
 .bt-drawer-header {
   display: flex;
   align-items: center;
