@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import JournalTemplate, { premadeTemplates } from '@/models/main/journalTemplate.model';
-import { connectMainDB } from '@/lib/db/connect';
+import { getJournalTemplateModel, premadeTemplates } from '@/models/main/journalTemplate.model';
 
 export async function getTemplates(req: NextRequest, uniqueId: string) {
   try {
-    await connectMainDB();
+    const JournalTemplate = await getJournalTemplateModel();
     
     let templates = await JournalTemplate.find({ uniqueId }).sort({ isPremade: -1, usageCount: -1 });
     
@@ -28,7 +27,7 @@ export async function getTemplates(req: NextRequest, uniqueId: string) {
 
 export async function createTemplate(req: NextRequest, uniqueId: string, body: any) {
   try {
-    await connectMainDB();
+    const JournalTemplate = await getJournalTemplateModel();
     
     const { name, description, icon, color, prompts } = body;
     
@@ -56,7 +55,7 @@ export async function createTemplate(req: NextRequest, uniqueId: string, body: a
 
 export async function updateTemplate(req: NextRequest, uniqueId: string, body: any) {
   try {
-    await connectMainDB();
+    const JournalTemplate = await getJournalTemplateModel();
     
     const { templateId, updates } = body;
     
@@ -83,7 +82,7 @@ export async function updateTemplate(req: NextRequest, uniqueId: string, body: a
 
 export async function deleteTemplate(req: NextRequest, uniqueId: string, body: any) {
   try {
-    await connectMainDB();
+    const JournalTemplate = await getJournalTemplateModel();
     
     const { templateId } = body;
     
@@ -112,7 +111,7 @@ export async function deleteTemplate(req: NextRequest, uniqueId: string, body: a
 
 export async function incrementUsage(req: NextRequest, uniqueId: string, body: any) {
   try {
-    await connectMainDB();
+    const JournalTemplate = await getJournalTemplateModel();
     
     const { templateId } = body;
     

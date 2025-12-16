@@ -4,7 +4,7 @@ import { getUserModel } from "@/models/main/user.model";
 import { getStrategyModel } from "@/models/main/strategy.model";
 import { getNoteModel } from "@/models/main/notes.model";
 import { getPlaybookModel } from "@/models/main/playbook.model";
-import JournalTemplate from "@/models/main/journalTemplate.model";
+import { getJournalTemplateModel } from "@/models/main/journalTemplate.model";
 import { getSharedTradeModel } from "@/models/main/sharedTrade.model";
 import { getLeaderboardEntryModel, getLeaderboardSettingsModel } from "@/models/main/leaderboard.model";
 import { getManualModel } from "@/models/accounts/manual.model";
@@ -47,6 +47,7 @@ export async function DELETE() {
       Strategy,
       Notes,
       Playbook,
+      JournalTemplate,
       SharedTrade,
       LeaderboardEntry,
       LeaderboardSettings,
@@ -60,6 +61,7 @@ export async function DELETE() {
       getStrategyModel(),
       getNoteModel(),
       getPlaybookModel(),
+      getJournalTemplateModel(),
       getSharedTradeModel(),
       getLeaderboardEntryModel(),
       getLeaderboardSettingsModel(),

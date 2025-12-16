@@ -1,13 +1,35 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Model } from 'mongoose';
+import { connectMainDB } from '@/lib/db/connect';
 
-const promptSchema = new mongoose.Schema({
+export interface IJournalPrompt {
+  id: string;
+  label: string;
+  placeholder: string;
+  type: 'text' | 'textarea' | 'rating' | 'tags';
+}
+
+export interface IJournalTemplate {
+  uniqueId: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  prompts: IJournalPrompt[];
+  isPremade: boolean;
+  isActive: boolean;
+  usageCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const promptSchema = new Schema({
   id: { type: String, required: true },
   label: { type: String, required: true },
   placeholder: { type: String, default: '' },
   type: { type: String, enum: ['text', 'textarea', 'rating', 'tags'], default: 'textarea' }
 }, { _id: false });
 
-const journalTemplateSchema = new mongoose.Schema({
+const journalTemplateSchema = new Schema<IJournalTemplate>({
   uniqueId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   description: { type: String, default: '' },
@@ -23,9 +45,10 @@ const journalTemplateSchema = new mongoose.Schema({
 
 journalTemplateSchema.index({ uniqueId: 1, name: 1 }, { unique: true });
 
-const JournalTemplate = mongoose.models.JournalTemplate || mongoose.model('JournalTemplate', journalTemplateSchema);
-
-export default JournalTemplate;
+export const getJournalTemplateModel = async (): Promise<Model<IJournalTemplate>> => {
+  const conn = await connectMainDB();
+  return conn.models.JournalTemplate || conn.model<IJournalTemplate>('JournalTemplate', journalTemplateSchema);
+};
 
 export const premadeTemplates = [
   {
