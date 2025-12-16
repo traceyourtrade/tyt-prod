@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Cookies from "js-cookie";
-import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faPenToSquare, 
@@ -27,7 +26,6 @@ import notifications from "@/store/notifications";
 import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import { useDataStore } from "@/store/store";
 
-import Logo from "@/images/Logo.png";
 
 interface Trade {
   id: string;
@@ -419,7 +417,7 @@ const CalendarPopup = () => {
           </div>
 
           <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 border border-white/[0.04]">
-            <Image src={Logo} alt="logo" width={50} height={50} className="opacity-50" />
+            <img src="/favicon.png" alt="logo" className="w-12 h-12 opacity-60" />
           </div>
           
           <p className="text-gray-500 text-sm font-medium mb-6">No trades recorded for this day</p>
