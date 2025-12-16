@@ -410,17 +410,17 @@
    ===================================================== */
 .bt-floating-bar {
   position: absolute;
-  top: 20px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0;
-  padding: 10px 20px;
+  padding: 6px 12px;
   background: linear-gradient(180deg, rgba(24, 27, 35, 0.98) 0%, rgba(18, 20, 26, 0.98) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--bt-radius-xl);
+  border-radius: var(--bt-radius-lg);
   border: 1px solid var(--bt-border-default);
   box-shadow: var(--bt-shadow-lg), 0 0 40px rgba(0, 0, 0, 0.4);
   z-index: 100;
@@ -447,11 +447,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 32px;
+  width: 18px;
+  height: 24px;
   color: var(--bt-text-disabled);
   cursor: grab;
-  margin-right: 8px;
+  margin-right: 6px;
   transition: color var(--bt-transition-fast);
 }
 
@@ -470,7 +470,7 @@
 }
 
 .bt-float-group.speed-group {
-  gap: 10px;
+  gap: 6px;
 }
 
 /* Playback Buttons */
@@ -478,11 +478,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   background: transparent;
   border: none;
-  border-radius: var(--bt-radius-md);
+  border-radius: var(--bt-radius-sm);
   color: var(--bt-text-secondary);
   cursor: pointer;
   transition: all var(--bt-transition-fast);
@@ -506,12 +506,12 @@
 
 /* Play Button - Premium Design */
 .bt-float-btn.play {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   background: linear-gradient(135deg, var(--bt-accent-blue) 0%, #1d4ed8 100%);
   color: white;
   border-radius: 50%;
-  margin: 0 8px;
+  margin: 0 6px;
   box-shadow: 0 4px 16px var(--bt-accent-blue-glow);
 }
 
@@ -536,9 +536,9 @@
 
 .bt-float-divider {
   width: 1px;
-  height: 28px;
+  height: 20px;
   background: linear-gradient(180deg, transparent 0%, var(--bt-border-strong) 50%, transparent 100%);
-  margin: 0 16px;
+  margin: 0 10px;
 }
 
 /* Speed Control */
@@ -551,8 +551,8 @@
 }
 
 .bt-float-range {
-  width: 100px;
-  height: 4px;
+  width: 70px;
+  height: 3px;
   -webkit-appearance: none;
   appearance: none;
   background: var(--bt-bg-hover);
@@ -563,8 +563,8 @@
 .bt-float-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   background: linear-gradient(135deg, var(--bt-accent-blue) 0%, var(--bt-accent-teal) 100%);
   border-radius: 50%;
   cursor: pointer;
@@ -573,13 +573,13 @@
 }
 
 .bt-float-range::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 16px var(--bt-accent-blue-glow);
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px var(--bt-accent-blue-glow);
 }
 
 .bt-float-range::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   background: linear-gradient(135deg, var(--bt-accent-blue) 0%, var(--bt-accent-teal) 100%);
   border: none;
   border-radius: 50%;
@@ -587,10 +587,10 @@
 }
 
 .bt-float-speed-value {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--bt-accent-teal);
-  min-width: 32px;
+  min-width: 24px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -603,13 +603,13 @@
 .bt-float-tf-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 4px;
+  padding: 5px 10px;
   background: var(--bt-bg-surface);
   border: 1px solid var(--bt-border-default);
-  border-radius: var(--bt-radius-md);
+  border-radius: var(--bt-radius-sm);
   color: var(--bt-text-primary);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--bt-transition-fast);
@@ -678,9 +678,9 @@
 }
 
 .bt-float-trade-btn {
-  padding: 8px 18px;
-  border-radius: var(--bt-radius-md);
-  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--bt-radius-sm);
+  font-size: 11px;
   font-weight: 700;
   border: none;
   cursor: pointer;
