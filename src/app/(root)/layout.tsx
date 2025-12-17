@@ -564,8 +564,8 @@ export default function RootLayout({
       {/* Sidebar - Desktop (Floating Design) */}
       <aside
         className={cn(
-          "fixed left-3 top-3 z-50 hidden lg:flex flex-col transition-all duration-300 ease-out",
-          "h-[calc(100vh-24px)]",
+          "fixed left-3 top-[25px] z-50 hidden lg:flex flex-col transition-all duration-300 ease-out",
+          "h-[calc(100vh-50px)]",
           collapsed ? "w-[68px]" : "w-[250px]",
         )}
       >
