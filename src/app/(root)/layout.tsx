@@ -564,7 +564,8 @@ export default function RootLayout({
       {/* Sidebar - Desktop (Floating Design) */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out p-1.5",
+          "fixed left-3 top-3 z-50 hidden lg:flex flex-col transition-all duration-300 ease-out",
+          "h-[calc(100vh-24px)]",
           collapsed ? "w-[68px]" : "w-[250px]",
         )}
       >
@@ -610,8 +611,8 @@ export default function RootLayout({
       <div
         className={cn(
           "min-h-screen transition-all duration-300",
-          "lg:ml-[68px]",
-          !collapsed && "lg:ml-[250px]",
+          "lg:ml-[80px]",
+          !collapsed && "lg:ml-[262px]",
         )}
       >
         {/* Top Bar */}
