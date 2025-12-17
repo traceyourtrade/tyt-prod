@@ -152,7 +152,7 @@ export default function BacktestingSessionsPage() {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto flex-shrink-0">
               <select
                 value={selectedSessionId || ''}
                 onChange={(e) => handleSessionChange(parseInt(e.target.value))}
@@ -169,11 +169,11 @@ export default function BacktestingSessionsPage() {
                 ))}
               </select>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-shrink-0">
                 <button
                   onClick={() => router.push('/backtesting/dashboard')}
                   className={cn(
-                    "px-4 py-2.5 text-sm rounded-xl font-medium transition-colors flex-1 sm:flex-none",
+                    "px-4 py-2.5 text-sm rounded-xl font-medium transition-colors whitespace-nowrap",
                     "border border-border text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -186,7 +186,7 @@ export default function BacktestingSessionsPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={cn(
-                      "px-4 py-2.5 text-sm rounded-xl font-semibold inline-flex items-center justify-center gap-2 flex-1 sm:flex-none",
+                      "px-4 py-2.5 text-sm rounded-xl font-semibold inline-flex items-center justify-center gap-2 whitespace-nowrap",
                       "bg-primary text-primary-foreground hover:bg-primary/90"
                     )}
                   >
