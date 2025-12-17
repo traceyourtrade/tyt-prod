@@ -336,34 +336,19 @@ export default function RootLayout({
       <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
         <motion.button
           className={cn(
-            "group relative w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-[13px] transition-all duration-300 overflow-hidden",
-            "bg-gradient-to-r from-[#4EBF94] via-[#45B08A] to-[#3AA07A]",
+            "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
+            "bg-[#4EBF94] hover:bg-[#45B08A]",
             "text-white",
-            "shadow-lg shadow-[#4EBF94]/20",
-            "hover:shadow-[0_8px_32px_rgba(78,191,148,0.35)]",
-            !isExpanded ? "px-0 w-9 h-9 mx-auto" : "px-4"
+            !isExpanded && "w-9 h-9 mx-auto p-0"
           )}
           onClick={() => {
             setAddTrades();
             setMobileOpen(false);
           }}
-          whileHover={{ y: -2, scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
-          
-          <motion.div
-            className="relative z-10"
-            whileHover={{ rotate: 90 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-          </motion.div>
-          
-          {isExpanded && (
-            <span className="relative z-10">Add Trade</span>
-          )}
+          <Plus className="h-4 w-4" strokeWidth={2} />
+          {isExpanded && <span>Add Trade</span>}
         </motion.button>
       </div>
 
