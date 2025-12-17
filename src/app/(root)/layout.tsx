@@ -203,7 +203,7 @@ export default function RootLayout({
         href={item.href}
         onClick={() => setMobileOpen(false)}
         className={cn(
-          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200",
           active 
             ? "bg-sidebar-accent text-sidebar-accent-foreground" 
             : "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
@@ -248,7 +248,7 @@ export default function RootLayout({
   const SectionLabel = ({ label }: { label: string }) => (
     <>
       {isExpanded && (
-        <div className="px-3 mb-2 mt-5 first:mt-0">
+        <div className="px-3 mb-1.5 mt-4 first:mt-0">
           <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
             {label}
           </span>
@@ -266,8 +266,8 @@ export default function RootLayout({
       
       {/* Logo Section */}
       <div className={cn(
-        "relative flex items-center h-16 z-10",
-        !isExpanded ? "justify-center px-2" : "justify-between px-4"
+        "relative flex items-center h-14 z-10",
+        !isExpanded ? "justify-center px-2" : "justify-between px-3"
       )}>
         <Link
           href="/dashboard"
@@ -333,10 +333,10 @@ export default function RootLayout({
       )}
 
       {/* Add Trade Button */}
-      <div className={cn("px-3 mt-4", !isExpanded && "mt-2 px-2")}>
+      <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
         <motion.button
           className={cn(
-            "group relative w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-[13px] transition-all duration-300 overflow-hidden",
+            "group relative w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-[13px] transition-all duration-300 overflow-hidden",
             "bg-gradient-to-r from-[#4EBF94] via-[#45B08A] to-[#3AA07A]",
             "text-white",
             "shadow-lg shadow-[#4EBF94]/20",
@@ -369,15 +369,15 @@ export default function RootLayout({
 
       {/* Quick search hint */}
       {isExpanded && (
-        <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-muted/30 dark:bg-muted/50 border border-border flex items-center gap-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted transition-colors">
-          <Command className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="mx-3 mt-2 px-2.5 py-1.5 rounded-md bg-muted/30 dark:bg-muted/50 border border-border flex items-center gap-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted transition-colors">
+          <Command className="h-3 w-3 text-muted-foreground" />
           <span className="text-[11px] text-muted-foreground flex-1">Quick search...</span>
-          <span className="text-[10px] text-muted-foreground/70 px-1.5 py-0.5 rounded bg-muted font-mono">K</span>
+          <span className="text-[9px] text-muted-foreground/70 px-1 py-0.5 rounded bg-muted font-mono">K</span>
         </div>
       )}
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-hide relative">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide relative">
         
         {/* Trading Section */}
         <SectionLabel label="Trading" />
@@ -408,7 +408,7 @@ export default function RootLayout({
           <button
             onClick={() => setBacktestingOpen(!backtestingOpen)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200",
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200",
               "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
               pathname.startsWith('/backtesting') && "text-sidebar-accent-foreground bg-sidebar-accent/50",
               !isExpanded && "justify-center px-2"
