@@ -276,20 +276,19 @@ export default function RootLayout({
         >
           <motion.div 
             className="relative flex-shrink-0"
-            whileHover={{ scale: 1.05, rotate: 2 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-border shadow-lg shadow-black/10 dark:shadow-black/30 bg-gradient-to-br from-foreground/5 to-transparent flex items-center justify-center">
+            <div className="w-9 h-9 flex items-center justify-center">
               <Image
                 src="/images/logo-icon.png"
-                width={32}
-                height={32}
+                width={36}
+                height={36}
                 alt="ProJournX"
-                className="w-7 h-7 object-contain dark:invert-0"
+                className="w-9 h-9 object-contain"
                 unoptimized
               />
             </div>
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </motion.div>
           
           {isExpanded && (
