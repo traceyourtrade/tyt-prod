@@ -564,7 +564,7 @@ export default function RootLayout({
         className={cn(
           "fixed left-3 top-[25px] z-50 hidden lg:flex flex-col transition-all duration-300 ease-out",
           "h-[calc(100vh-50px)]",
-          collapsed ? "w-[52px]" : "w-[250px]",
+          collapsed ? "w-[52px]" : "w-[220px]",
         )}
       >
         <div className={cn(
@@ -610,7 +610,7 @@ export default function RootLayout({
         className={cn(
           "min-h-screen transition-all duration-300",
           "lg:ml-[64px]",
-          !collapsed && "lg:ml-[262px]",
+          !collapsed && "lg:ml-[232px]",
         )}
       >
         {/* Top Bar */}
