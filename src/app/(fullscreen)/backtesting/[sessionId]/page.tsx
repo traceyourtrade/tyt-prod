@@ -2030,51 +2030,74 @@ export default function FullscreenBacktesting({
         </div>
       )}
 
-      <header className="bt-header">
-        <div className="bt-header-left">
-          <button className="bt-back" onClick={() => router.push("/backtesting/dashboard")}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <header className="bt-header-modern">
+        <div className="bt-header-section">
+          <button className="bt-back-btn" onClick={() => router.push("/backtesting/dashboard")}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <div className="bt-session-info">
-            <span className="bt-session-name">{sessionData?.name || 'Session'}</span>
-            <span className="bt-pair">{sessionData?.symbol || 'Loading...'}</span>
-            <span className="bt-timeframe">{currentInterval === "60" ? "1H" : currentInterval}</span>
+          
+          <div className="bt-session-pill">
+            <span className="bt-session-name-text">{sessionData?.name || 'Session'}</span>
+            <span className="bt-symbol-badge">{sessionData?.symbol || '...'}</span>
+            <span className="bt-tf-badge">{currentInterval === "60" ? "1H" : currentInterval}</span>
           </div>
-          <div className="bt-divider"></div>
-          <span className="bt-time">{currentTime}</span>
-          <span className="bt-bar-count">{currentBarIndex + 1} / {allBars.length}</span>
-        </div>
-
-        <div className="bt-header-center">
-          <div className="bt-stat">
-            <span className="bt-stat-label">Balance</span>
-            <span className="bt-stat-value">${totalBalance.toFixed(2)}</span>
-          </div>
-          <div className="bt-stat">
-            <span className="bt-stat-label">P/L</span>
-            <span className={`bt-stat-value ${tradingState.realisedPL >= 0 ? 'profit' : 'loss'}`}>
-              {tradingState.realisedPL >= 0 ? '+' : ''}${tradingState.realisedPL.toFixed(2)}
-            </span>
-          </div>
-          <div className="bt-stat">
-            <span className="bt-stat-label">Unrealized</span>
-            <span className={`bt-stat-value ${tradingState.unrealisedPL >= 0 ? 'profit' : 'loss'}`}>
-              {tradingState.unrealisedPL >= 0 ? '+' : ''}${tradingState.unrealisedPL.toFixed(2)}
-            </span>
-          </div>
-          <div className="bt-stat">
-            <span className="bt-stat-label">Win Rate</span>
-            <span className="bt-stat-value">{winRate.toFixed(0)}%</span>
+          
+          <div className="bt-meta-pill">
+            <span className="bt-meta-time">{currentTime}</span>
+            <span className="bt-meta-divider">•</span>
+            <span className="bt-meta-progress">{currentBarIndex + 1} / {allBars.length}</span>
           </div>
         </div>
 
-        <div className="bt-header-right">
+        <div className="bt-header-section bt-stats-row">
+          <div className={`bt-stat-pill ${tradingState.realisedPL >= 0 ? 'positive' : 'negative'}`}>
+            <span className="bt-stat-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 2v20M17 7l-5-5-5 5"/>
+              </svg>
+            </span>
+            <span className="bt-stat-content">
+              <span className="bt-stat-label-modern">P/L</span>
+              <span className="bt-stat-value-modern">{tradingState.realisedPL >= 0 ? '+' : ''}${tradingState.realisedPL.toFixed(2)}</span>
+            </span>
+          </div>
+          
+          <div className={`bt-stat-pill ${tradingState.unrealisedPL >= 0 ? 'positive' : 'negative'}`}>
+            <span className="bt-stat-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </span>
+            <span className="bt-stat-content">
+              <span className="bt-stat-label-modern">Unrealized</span>
+              <span className="bt-stat-value-modern">{tradingState.unrealisedPL >= 0 ? '+' : ''}${tradingState.unrealisedPL.toFixed(2)}</span>
+            </span>
+          </div>
+          
+          <div className="bt-stat-pill neutral">
+            <span className="bt-stat-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </span>
+            <span className="bt-stat-content">
+              <span className="bt-stat-label-modern">Win Rate</span>
+              <span className="bt-stat-value-modern">{winRate.toFixed(0)}%</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="bt-header-section">
           <button 
-            className="bt-panel-btn" 
+            className="bt-analytics-btn" 
             onClick={() => router.push('/backtesting/sessions')}
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 20V10M12 20V4M6 20v-6"/>
+            </svg>
             Analytics
           </button>
         </div>
