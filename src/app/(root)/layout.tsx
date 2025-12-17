@@ -205,8 +205,8 @@ export default function RootLayout({
         className={cn(
           "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
           active 
-            ? "bg-white/[0.08] text-white" 
-            : "text-white/50 hover:text-white hover:bg-white/[0.04]",
+            ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+            : "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
           !showLabel && "justify-center px-2"
         )}
       >
@@ -249,7 +249,7 @@ export default function RootLayout({
     <>
       {isExpanded && (
         <div className="px-3 mb-2 mt-5 first:mt-0">
-          <span className="text-[10px] font-semibold text-white/25 uppercase tracking-[0.2em]">
+          <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
             {label}
           </span>
         </div>
@@ -259,10 +259,10 @@ export default function RootLayout({
 
   const SidebarContent = () => (
     <div className="h-full flex flex-col relative">
-      {/* Animated gradient orbs */}
-      <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#4EBF94]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -top-4 left-12 w-20 h-20 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" style={{ animationDelay: '1s' }} />
-      <div className="absolute bottom-20 -right-8 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Animated gradient orbs - subtle in both themes */}
+      <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#4EBF94]/10 dark:bg-[#4EBF94]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-4 left-12 w-20 h-20 bg-violet-500/5 dark:bg-violet-500/10 rounded-full blur-2xl pointer-events-none" style={{ animationDelay: '1s' }} />
+      <div className="absolute bottom-20 -right-8 w-24 h-24 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
       
       {/* Logo Section */}
       <div className={cn(
@@ -279,13 +279,13 @@ export default function RootLayout({
             whileHover={{ scale: 1.05, rotate: 2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-white/10 shadow-lg shadow-black/30 bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-border shadow-lg shadow-black/10 dark:shadow-black/30 bg-gradient-to-br from-foreground/5 to-transparent flex items-center justify-center">
               <Image
                 src="/images/logo-icon.png"
                 width={32}
                 height={32}
                 alt="ProJournX"
-                className="w-7 h-7 object-contain"
+                className="w-7 h-7 object-contain dark:invert-0"
                 unoptimized
               />
             </div>
@@ -299,10 +299,10 @@ export default function RootLayout({
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <span className="font-bold text-white tracking-tight text-[15px]">
+              <span className="font-bold text-foreground tracking-tight text-[15px]">
                 ProJournX
               </span>
-              <span className="text-[10px] text-white/30 font-medium tracking-wide">
+              <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
                 Trading Journal
               </span>
             </motion.div>
@@ -311,7 +311,7 @@ export default function RootLayout({
         
         {isExpanded && (
           <motion.button
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/[0.08] transition-all"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
             onClick={() => mobileOpen ? setMobileOpen(false) : setCollapsed(true)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -323,7 +323,7 @@ export default function RootLayout({
 
       {!isExpanded && (
         <motion.button
-          className="mx-auto mt-1 w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/[0.08] transition-all"
+          className="mx-auto mt-1 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
           onClick={() => setCollapsed(false)}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -369,10 +369,10 @@ export default function RootLayout({
 
       {/* Quick search hint */}
       {isExpanded && (
-        <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center gap-2 cursor-pointer hover:bg-white/[0.05] transition-colors">
-          <Command className="h-3.5 w-3.5 text-white/30" />
-          <span className="text-[11px] text-white/30 flex-1">Quick search...</span>
-          <span className="text-[10px] text-white/20 px-1.5 py-0.5 rounded bg-white/[0.05] font-mono">K</span>
+        <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-muted/30 dark:bg-muted/50 border border-border flex items-center gap-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted transition-colors">
+          <Command className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-[11px] text-muted-foreground flex-1">Quick search...</span>
+          <span className="text-[10px] text-muted-foreground/70 px-1.5 py-0.5 rounded bg-muted font-mono">K</span>
         </div>
       )}
 
@@ -409,8 +409,8 @@ export default function RootLayout({
             onClick={() => setBacktestingOpen(!backtestingOpen)}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200",
-              "text-white/50 hover:text-white hover:bg-white/[0.04]",
-              pathname.startsWith('/backtesting') && "text-white bg-white/[0.04]",
+              "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
+              pathname.startsWith('/backtesting') && "text-sidebar-accent-foreground bg-sidebar-accent/50",
               !isExpanded && "justify-center px-2"
             )}
           >
@@ -425,7 +425,7 @@ export default function RootLayout({
                   animate={{ rotate: backtestingOpen ? 180 : 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <ChevronDown className="h-4 w-4 text-white/30" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </motion.div>
               </>
             )}
@@ -440,7 +440,7 @@ export default function RootLayout({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="pl-4 mt-1 space-y-0.5 border-l border-white/[0.06] ml-5">
+                <div className="pl-4 mt-1 space-y-0.5 border-l border-border ml-5">
                   {backtestingSubItems.map((item) => (
                     <NavItem key={item.name} item={item} showLabel={true} />
                   ))}
@@ -455,7 +455,7 @@ export default function RootLayout({
       {/* Bottom Section */}
       <div className="mt-auto relative z-10">
         <div className="px-4 mb-2">
-          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
         
         <div className="py-2 px-2 space-y-0.5">
@@ -475,8 +475,8 @@ export default function RootLayout({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent" />
-              <div className="absolute inset-0 border border-white/[0.06] rounded-xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-muted/50 via-muted/20 to-transparent" />
+              <div className="absolute inset-0 border border-border rounded-xl" />
               
               <Link
                 href="/settings"
@@ -494,17 +494,17 @@ export default function RootLayout({
                       {userInitials}
                     </span>
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4EBF94] rounded-full border-2 border-[#0a0e14] flex items-center justify-center">
-                    <Zap className="w-1.5 h-1.5 text-[#0a0e14]" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4EBF94] rounded-full border-2 border-sidebar flex items-center justify-center">
+                    <Zap className="w-1.5 h-1.5 text-sidebar" />
                   </div>
                 </div>
                 
                 {isExpanded && (
                   <div className="overflow-hidden flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-white truncate">
+                    <p className="text-[13px] font-semibold text-foreground truncate">
                       {profileData.fullName}
                     </p>
-                    <p className="text-[11px] text-white/30 truncate">
+                    <p className="text-[11px] text-muted-foreground truncate">
                       {maskedEmail}
                     </p>
                   </div>
@@ -517,7 +517,7 @@ export default function RootLayout({
           <motion.button
             className={cn(
               "group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 mt-1 text-[13px] font-medium transition-all duration-200",
-              "text-white/30 hover:text-red-400 hover:bg-red-500/10",
+              "text-muted-foreground hover:text-red-500 hover:bg-red-500/10",
               !isExpanded && "justify-center px-2"
             )}
             onClick={handleLogout}
@@ -566,16 +566,16 @@ export default function RootLayout({
       >
         <div className={cn(
           "h-full rounded-2xl overflow-hidden relative",
-          "bg-[#0a0e14]/95 backdrop-blur-2xl",
-          "border border-white/[0.08]",
-          "shadow-2xl shadow-black/40"
+          "bg-sidebar/95 backdrop-blur-2xl",
+          "border border-sidebar-border",
+          "shadow-2xl shadow-black/10 dark:shadow-black/40"
         )}>
           {/* Layered gradient overlays */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-black/20 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.02] via-transparent to-violet-500/[0.02] pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-foreground/[0.02] via-transparent to-foreground/[0.02] dark:from-white/[0.04] dark:via-transparent dark:to-black/20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.01] via-transparent to-violet-500/[0.01] dark:from-[#4EBF94]/[0.02] dark:to-violet-500/[0.02] pointer-events-none" />
           
           {/* Inner glow */}
-          <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
+          <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
           
           <SidebarContent />
         </div>
@@ -590,13 +590,13 @@ export default function RootLayout({
       >
         <div className={cn(
           "h-full rounded-2xl overflow-hidden relative",
-          "bg-[#0a0e14]/98 backdrop-blur-2xl",
-          "border border-white/[0.08]",
-          "shadow-2xl shadow-black/40"
+          "bg-sidebar/98 backdrop-blur-2xl",
+          "border border-sidebar-border",
+          "shadow-2xl shadow-black/10 dark:shadow-black/40"
         )}>
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-black/20 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.02] via-transparent to-violet-500/[0.02] pointer-events-none" />
-          <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-foreground/[0.02] via-transparent to-foreground/[0.02] dark:from-white/[0.04] dark:via-transparent dark:to-black/20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.01] via-transparent to-violet-500/[0.01] dark:from-[#4EBF94]/[0.02] dark:to-violet-500/[0.02] pointer-events-none" />
+          <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
           
           <SidebarContent />
         </div>
