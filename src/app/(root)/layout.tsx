@@ -207,7 +207,7 @@ export default function RootLayout({
           active 
             ? "bg-sidebar-accent text-sidebar-accent-foreground" 
             : "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
-          !showLabel && "justify-center px-2"
+          !showLabel && "justify-center px-1.5"
         )}
       >
         {active && (
@@ -225,7 +225,7 @@ export default function RootLayout({
         <div className="relative flex-shrink-0 transition-all duration-200">
           <Icon 
             className={cn(
-              "h-[17px] w-[17px] transition-all duration-200",
+              "h-4 w-4 transition-all duration-200",
               !active && "group-hover:scale-110"
             )}
             style={{ color: active ? item.color : undefined }}
@@ -279,13 +279,13 @@ export default function RootLayout({
             whileHover={{ scale: 1.05, rotate: 2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-9 h-9 rounded-lg overflow-hidden ring-1 ring-white/10 dark:ring-white/10 shadow-md shadow-black/5 dark:shadow-black/30 bg-sidebar-accent/50 dark:bg-white/5 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/10 dark:ring-white/10 shadow-md shadow-black/5 dark:shadow-black/30 bg-sidebar-accent/50 dark:bg-white/5 flex items-center justify-center">
               <Image
                 src="/images/logo-icon.png"
-                width={28}
-                height={28}
+                width={24}
+                height={24}
                 alt="ProJournX"
-                className="w-7 h-7 object-contain"
+                className="w-6 h-6 object-contain"
                 unoptimized
               />
             </div>
@@ -339,7 +339,7 @@ export default function RootLayout({
             "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
             "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
             "text-[#4EBF94]",
-            !isExpanded && "w-9 h-9 mx-auto p-0"
+            !isExpanded && "w-8 h-8 mx-auto p-0"
           )}
           onClick={() => {
             setAddTrades();
@@ -566,7 +566,7 @@ export default function RootLayout({
         className={cn(
           "fixed left-3 top-[25px] z-50 hidden lg:flex flex-col transition-all duration-300 ease-out",
           "h-[calc(100vh-50px)]",
-          collapsed ? "w-[68px]" : "w-[250px]",
+          collapsed ? "w-[52px]" : "w-[250px]",
         )}
       >
         <div className={cn(
@@ -611,7 +611,7 @@ export default function RootLayout({
       <div
         className={cn(
           "min-h-screen transition-all duration-300",
-          "lg:ml-[80px]",
+          "lg:ml-[64px]",
           !collapsed && "lg:ml-[262px]",
         )}
       >
