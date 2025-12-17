@@ -382,17 +382,6 @@ export default function RootLayout({
         </motion.button>
       </div>
 
-      {/* Quick search button */}
-      {isExpanded && (
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="mx-3 mt-2 px-2.5 py-1.5 rounded-md bg-muted/30 dark:bg-muted/50 border border-border flex items-center gap-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted transition-colors w-[calc(100%-1.5rem)]"
-        >
-          <Search className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[11px] text-muted-foreground flex-1 text-left">Quick search...</span>
-          <span className="text-[9px] text-muted-foreground/70 px-1 py-0.5 rounded bg-muted font-mono">⌘K</span>
-        </button>
-      )}
 
       {/* Main Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide relative">
