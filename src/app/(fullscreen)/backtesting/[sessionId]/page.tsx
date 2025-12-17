@@ -791,10 +791,18 @@ export default function FullscreenBacktesting({
                 }
                 console.log('Restored', restoredCount, 'of', savedData.drawings.length, 'drawings');
                 
-                // Restore studies/indicators
+                // Restore studies/indicators - DEDUPLICATE to prevent accumulation
                 if (savedData.studies && Array.isArray(savedData.studies)) {
-                  console.log('Restoring', savedData.studies.length, 'studies');
-                  for (const study of savedData.studies) {
+                  // Deduplicate studies by name before restoring
+                  const uniqueStudies = savedData.studies.reduce((acc: any[], study: any) => {
+                    if (!acc.find((s: any) => s.name === study.name)) {
+                      acc.push(study);
+                    }
+                    return acc;
+                  }, []);
+                  
+                  console.log('Restoring', uniqueStudies.length, 'unique studies (from', savedData.studies.length, 'saved)');
+                  for (const study of uniqueStudies) {
                     try {
                       if (study.name) {
                         chart.createStudy(study.name, study.forceOverlay || false, study.lock || false, study.inputs || [], study.overrides || {});
@@ -893,12 +901,20 @@ export default function FullscreenBacktesting({
             }
           }
           
-          // Get all studies (indicators) on the chart
+          // Get all studies (indicators) on the chart - DEDUPLICATE by name
           const allStudies = chart.getAllStudies();
           const studies: any[] = [];
+          const seenStudyNames = new Set<string>();
           
           for (const study of allStudies) {
             try {
+              // Skip duplicate studies - only save one of each type
+              if (seenStudyNames.has(study.name)) {
+                console.log('Skipping duplicate study during save:', study.name);
+                continue;
+              }
+              seenStudyNames.add(study.name);
+              
               const studyObj = chart.getStudyById(study.id);
               if (studyObj) {
                 const inputs = studyObj.getInputValues();
@@ -1531,6 +1547,28 @@ export default function FullscreenBacktesting({
     setIsPlaying(!isPlaying);
   };
 
+  const handleResetChart = async () => {
+    if (!confirm('Reset chart layout? This will clear all saved indicators and drawings. The chart will reload.')) {
+      return;
+    }
+    try {
+      const response = await fetch('/api/backtest-sessions/chart-layout', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, action: 'resetChartLayouts' })
+      });
+      const result = await response.json();
+      if (result.success) {
+        window.location.reload();
+      } else {
+        alert('Failed to reset chart: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Reset chart error:', error);
+      alert('Failed to reset chart');
+    }
+  };
+
   useEffect(() => {
     if (isPlaying && !isEndReached) {
       autoPlayIntervalRef.current = setInterval(() => {
@@ -2151,6 +2189,17 @@ export default function FullscreenBacktesting({
         </div>
 
         <div className="bt-header-section">
+          <button 
+            className="bt-reset-btn" 
+            onClick={handleResetChart}
+            title="Clear all saved indicators and drawings"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M1 4v6h6M23 20v-6h-6"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            Reset Chart
+          </button>
           <button 
             className="bt-analytics-btn" 
             onClick={() => router.push('/backtesting/sessions')}

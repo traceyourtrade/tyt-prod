@@ -163,6 +163,49 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PATCH - Reset/clear chart layouts (for fixing corrupted data)
+export async function PATCH(req: NextRequest) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('authToken')?.value;
+    const userId = cookieStore.get('userId')?.value;
+
+    if (!token || !userId) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const user = await getUserFromToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { sessionId, action } = body;
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
+    }
+
+    const BacktestSession = await getBacktestSessionsModel() as any;
+
+    if (action === 'resetChartLayouts') {
+      // Clear all chart layouts for this session
+      await BacktestSession.updateOne(
+        { uniqueId: userId, sessionId: parseInt(sessionId) },
+        { $set: { chartLayouts: [], studyTemplates: {}, drawingTemplates: {} } }
+      );
+      console.log(`Reset chart layouts for session ${sessionId} (user ${userId})`);
+      return NextResponse.json({ success: true, message: "Chart layouts reset successfully" });
+    }
+
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+
+  } catch (error) {
+    console.error("Reset chart layout error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const cookieStore = await cookies();
