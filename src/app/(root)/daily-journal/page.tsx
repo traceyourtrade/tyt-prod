@@ -392,6 +392,10 @@ const DailyJournal = () => {
     setJournalData((prev) => ({ ...prev, tradeRating: rating }));
   };
 
+  const handleSentimentChange = (sentiment: "great" | "okay" | "poor") => {
+    setJournalData((prev) => ({ ...prev, sentiment }));
+  };
+
   const handleAddTag = (tag: string) => {
     if (tag && !journalData.tags?.includes(tag)) {
       setJournalData((prev) => ({ ...prev, tags: [...(prev.tags || []), tag] }));
@@ -684,7 +688,9 @@ const DailyJournal = () => {
             <div className="h-full overflow-y-auto p-4 space-y-4">
               {/* Collapse Button */}
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trade Stats</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {mainTab === "stats" ? "Trade Stats" : mainTab === "strategy" ? "Strategy" : mainTab === "executions" ? "Executions" : "Attachments"}
+                </span>
                 <button
                   onClick={() => setIsLeftPanelCollapsed(true)}
                   className="p-1.5 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
@@ -693,7 +699,8 @@ const DailyJournal = () => {
                 </button>
               </div>
 
-              {selectedTrade && metrics && (
+              {/* Stats Tab Content */}
+              {mainTab === "stats" && selectedTrade && metrics && (
                 <>
                   {/* Net P&L - Hero Stat */}
                   <div className="p-4 rounded-xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10">
@@ -785,6 +792,256 @@ const DailyJournal = () => {
                         <span className={`text-sm font-semibold ${item.color || "text-foreground"}`}>{item.value}</span>
                       </div>
                     ))}
+                  </div>
+                </>
+              )}
+
+              {/* Strategy Tab Content */}
+              {mainTab === "strategy" && selectedTrade && (
+                <>
+                  {/* Current Strategy */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/10">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Current Strategy</span>
+                    <p className="text-lg font-semibold text-primary mt-1">
+                      {selectedTrade.strategy && selectedTrade.strategy !== "Select" ? selectedTrade.strategy : "No strategy assigned"}
+                    </p>
+                  </div>
+
+                  {/* Strategy Rules Checklist */}
+                  {strategyRules.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Rules Compliance</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {Object.values(rulesCompliance).filter(Boolean).length}/{strategyRules.length}
+                        </span>
+                      </div>
+                      {loadingRules ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {strategyRules.map((rule) => (
+                            <label
+                              key={rule.id}
+                              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                                rulesCompliance[rule.id]
+                                  ? "bg-profit/5 border-profit/20"
+                                  : "bg-white/[0.02] border-white/5 hover:border-white/10"
+                              }`}
+                            >
+                              <div className={`mt-0.5 w-4 h-4 rounded flex-shrink-0 flex items-center justify-center transition-colors ${
+                                rulesCompliance[rule.id] ? "bg-profit text-white" : "bg-white/10"
+                              }`}>
+                                {rulesCompliance[rule.id] && <Check className="w-3 h-3" />}
+                              </div>
+                              <input
+                                type="checkbox"
+                                checked={rulesCompliance[rule.id] || false}
+                                onChange={() => toggleRuleCompliance(rule.id)}
+                                className="sr-only"
+                              />
+                              <span className={`text-xs leading-relaxed ${
+                                rulesCompliance[rule.id] ? "text-foreground" : "text-muted-foreground"
+                              }`}>
+                                {rule.text}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-3">
+                        <Target className="w-5 h-5 text-muted-foreground/40" />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedTrade.strategy && selectedTrade.strategy !== "Select"
+                          ? "No rules defined for this strategy"
+                          : "Assign a strategy to see rules"}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Sentiment */}
+                  <div className="space-y-3">
+                    <span className="text-xs text-muted-foreground">Trade Sentiment</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { key: "poor", label: "Poor", icon: TrendingDown, color: "loss" },
+                        { key: "okay", label: "Okay", icon: Activity, color: "amber-500" },
+                        { key: "great", label: "Great", icon: TrendingUp, color: "profit" },
+                      ].map((s) => {
+                        const isSelected = journalData.sentiment === s.key;
+                        return (
+                          <button
+                            key={s.key}
+                            onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
+                            className={`p-3 rounded-lg border transition-all ${
+                              isSelected
+                                ? s.color === "profit" 
+                                  ? "bg-profit/10 border-profit/30 text-profit"
+                                  : s.color === "loss"
+                                  ? "bg-loss/10 border-loss/30 text-loss"
+                                  : "bg-amber-500/10 border-amber-500/30 text-amber-500"
+                                : "bg-white/[0.02] border-white/5 text-muted-foreground hover:border-white/10"
+                            }`}
+                          >
+                            <s.icon className="w-4 h-4 mx-auto mb-1" />
+                            <span className="text-[10px] font-medium">{s.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Executions Tab Content */}
+              {mainTab === "executions" && selectedTrade && (
+                <>
+                  {/* Execution Timeline */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Execution Summary</span>
+                    <p className="text-lg font-semibold text-foreground mt-1">
+                      {selectedTrade.quantity || 1} {selectedTrade.quantity === 1 ? "Unit" : "Units"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Entry Execution */}
+                    <div className="p-3 rounded-xl bg-profit/5 border border-profit/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-profit" />
+                        <span className="text-xs font-medium text-profit">Entry</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Time</span>
+                          <span className="text-foreground">{formatTime(selectedTrade.EntryTime)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Price</span>
+                          <span className="text-foreground">${selectedTrade.entryPrice || "--"}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Quantity</span>
+                          <span className="text-foreground">{selectedTrade.quantity || "--"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Exit Execution */}
+                    <div className="p-3 rounded-xl bg-loss/5 border border-loss/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-loss" />
+                        <span className="text-xs font-medium text-loss">Exit</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Time</span>
+                          <span className="text-foreground">{formatTime(selectedTrade.ExitTime)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Price</span>
+                          <span className="text-foreground">${selectedTrade.exitPrice || "--"}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">Quantity</span>
+                          <span className="text-foreground">{selectedTrade.quantity || "--"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Duration */}
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Duration</span>
+                        <span className="text-foreground">
+                          {selectedTrade.EntryTime && selectedTrade.ExitTime
+                            ? (() => {
+                                const [eh, em] = selectedTrade.EntryTime.split(":").map(Number);
+                                const [xh, xm] = selectedTrade.ExitTime.split(":").map(Number);
+                                const mins = (xh * 60 + xm) - (eh * 60 + em);
+                                const hours = Math.floor(mins / 60);
+                                const remaining = mins % 60;
+                                return hours > 0 ? `${hours}h ${remaining}m` : `${mins}m`;
+                              })()
+                            : "--"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Attachments Tab Content */}
+              {mainTab === "attachments" && selectedTrade && (
+                <>
+                  <div className="space-y-3">
+                    {/* Entry Screenshot */}
+                    <div>
+                      <span className="text-xs text-muted-foreground block mb-2">Entry Screenshot</span>
+                      {selectedTrade.beforeURL ? (
+                        <div 
+                          className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group"
+                          onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
+                        >
+                          <img 
+                            src={selectedTrade.beforeURL} 
+                            alt="Entry" 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Eye className="w-5 h-5 text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center p-6 rounded-lg border border-dashed border-white/10 hover:border-primary/30 cursor-pointer transition-colors">
+                          <Upload className="w-5 h-5 text-muted-foreground/50 mb-2" />
+                          <span className="text-[10px] text-muted-foreground">Upload Entry Screenshot</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, "before")}
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Exit Screenshot */}
+                    <div>
+                      <span className="text-xs text-muted-foreground block mb-2">Exit Screenshot</span>
+                      {selectedTrade.afterURL ? (
+                        <div 
+                          className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group"
+                          onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
+                        >
+                          <img 
+                            src={selectedTrade.afterURL} 
+                            alt="Exit" 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Eye className="w-5 h-5 text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center p-6 rounded-lg border border-dashed border-white/10 hover:border-primary/30 cursor-pointer transition-colors">
+                          <Upload className="w-5 h-5 text-muted-foreground/50 mb-2" />
+                          <span className="text-[10px] text-muted-foreground">Upload Exit Screenshot</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, "after")}
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
