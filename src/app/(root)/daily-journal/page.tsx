@@ -474,9 +474,10 @@ const DailyJournal = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiName: "deleteImage",
+          apiName: "editDropdowns",
           id: tradeId,
-          imgType: type === "before" ? "beforeURL" : "afterURL",
+          type: type === "before" ? "beforeURL" : "afterURL",
+          value: "",
           tokenn,
           accountType: selectedTrade.accountType || "",
         }),
