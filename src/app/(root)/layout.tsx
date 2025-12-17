@@ -626,15 +626,6 @@ export default function RootLayout({
             >
               <Menu className="h-5 w-5" />
             </Button>
-            {/* Desktop sidebar toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 hidden lg:flex"
-              onClick={() => setCollapsed(!collapsed)}
-            >
-              <PanelLeft className="h-5 w-5" />
-            </Button>
             <h1 className="text-lg lg:text-xl font-semibold text-foreground">
               {getPageTitle()}
             </h1>
