@@ -266,8 +266,8 @@ export default function RootLayout({
       
       {/* Logo Section */}
       <div className={cn(
-        "relative flex items-center h-16 px-4 z-10",
-        !isExpanded ? "justify-center" : "justify-between"
+        "relative flex items-center h-16 z-10",
+        !isExpanded ? "justify-center px-2" : "justify-between px-4"
       )}>
         <Link
           href="/dashboard"
