@@ -2052,42 +2052,6 @@ export default function FullscreenBacktesting({
         </div>
 
         <div className="bt-header-section bt-stats-row">
-          <div className={`bt-stat-pill ${tradingState.realisedPL >= 0 ? 'positive' : 'negative'}`}>
-            <span className="bt-stat-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M12 2v20M17 7l-5-5-5 5"/>
-              </svg>
-            </span>
-            <span className="bt-stat-content">
-              <span className="bt-stat-label-modern">P/L</span>
-              <span className="bt-stat-value-modern">{tradingState.realisedPL >= 0 ? '+' : ''}${tradingState.realisedPL.toFixed(2)}</span>
-            </span>
-          </div>
-          
-          <div className={`bt-stat-pill ${tradingState.unrealisedPL >= 0 ? 'positive' : 'negative'}`}>
-            <span className="bt-stat-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
-              </svg>
-            </span>
-            <span className="bt-stat-content">
-              <span className="bt-stat-label-modern">Unrealized</span>
-              <span className="bt-stat-value-modern">{tradingState.unrealisedPL >= 0 ? '+' : ''}${tradingState.unrealisedPL.toFixed(2)}</span>
-            </span>
-          </div>
-          
-          <div className="bt-stat-pill neutral">
-            <span className="bt-stat-icon">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-              </svg>
-            </span>
-            <span className="bt-stat-content">
-              <span className="bt-stat-label-modern">Win Rate</span>
-              <span className="bt-stat-value-modern">{winRate.toFixed(0)}%</span>
-            </span>
-          </div>
         </div>
 
         <div className="bt-header-section">
