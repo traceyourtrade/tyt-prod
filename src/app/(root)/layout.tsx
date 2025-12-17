@@ -337,8 +337,8 @@ export default function RootLayout({
         <motion.button
           className={cn(
             "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
-            "bg-[#4EBF94] hover:bg-[#45B08A]",
-            "text-white",
+            "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
+            "text-[#4EBF94]",
             !isExpanded && "w-9 h-9 mx-auto p-0"
           )}
           onClick={() => {
