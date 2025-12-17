@@ -5,15 +5,12 @@ import Cookies from "js-cookie";
 import Link from "next/link";
 import {
   Search,
-  Filter,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ArrowLeft,
   Calendar,
   TrendingUp,
   TrendingDown,
-  Trophy,
   Target,
   Zap,
   BookOpen,
@@ -21,33 +18,34 @@ import {
   Image as ImageIcon,
   X,
   Save,
-  Plus,
   FileText,
   ClipboardCheck,
   Heart,
   Shield,
   BarChart3,
-  PanelRightClose,
-  PanelRight,
-  PanelLeftClose,
-  PanelLeft,
   Clock,
   CheckCircle2,
   Activity,
-  Flame,
-  Award,
-  Sparkles,
-  ArrowUpRight,
-  ArrowDownRight,
-  LayoutDashboard,
-  Pencil,
-  Eye,
-  Share2,
-  Check,
-  ChevronUp,
+  Star,
   Percent,
   Scale,
   ListChecks,
+  Check,
+  DollarSign,
+  ArrowUpDown,
+  PanelLeft,
+  Eye,
+  Share2,
+  Layers,
+  FileImage,
+  MessageSquare,
+  Play,
+  ChevronUp,
+  Crosshair,
+  AlertTriangle,
+  BarChart2,
+  LineChart,
+  Maximize2,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
@@ -62,6 +60,7 @@ interface Trade {
   date: string;
   time?: string;
   EntryTime?: string;
+  ExitTime?: string;
   Profit: number;
   Item?: string;
   symbol?: string;
@@ -75,6 +74,10 @@ interface Trade {
   entryPrice?: string | number;
   exitPrice?: string | number;
   quantity?: number;
+  stopLoss?: number | string;
+  takeProfit?: number | string;
+  fees?: number;
+  swap?: number;
   [key: string]: any;
 }
 
@@ -84,6 +87,9 @@ interface JournalData {
   sentiment?: "great" | "okay" | "poor";
   tags?: string[];
   rulesCompliance?: Record<string, boolean>;
+  tradeRating?: number;
+  tradeNotes?: string;
+  dailyNotes?: string;
 }
 
 interface Template {
@@ -152,12 +158,12 @@ const demoTemplates: Template[] = [
 ];
 
 const demoTrades: Trade[] = [
-  { id: "demo-1", date: new Date().toISOString().split("T")[0], EntryTime: "09:32:00", Profit: 1250, Item: "AAPL", symbol: "AAPL", Type: "Long", side: "Long", strategy: "Momentum", entryPrice: "178.50", exitPrice: "182.35", jrData: { sentiment: "great", tags: ["Perfect Setup", "Followed Plan"] } },
-  { id: "demo-2", date: new Date().toISOString().split("T")[0], EntryTime: "10:15:00", Profit: -380, Item: "TSLA", symbol: "TSLA", Type: "Short", side: "Short", strategy: "Breakout", entryPrice: "245.80", exitPrice: "248.10" },
-  { id: "demo-3", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "11:45:00", Profit: 890, Item: "NVDA", symbol: "NVDA", Type: "Long", side: "Long", strategy: "Scalping", entryPrice: "485.20", exitPrice: "492.75", jrData: { sentiment: "okay" } },
-  { id: "demo-4", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "14:20:00", Profit: -520, Item: "MSFT", symbol: "MSFT", Type: "Long", side: "Long", strategy: "Swing", entryPrice: "378.90", exitPrice: "375.40" },
-  { id: "demo-5", date: new Date(Date.now() - 2 * 86400000).toISOString().split("T")[0], EntryTime: "09:55:00", Profit: 2100, Item: "META", symbol: "META", Type: "Long", side: "Long", strategy: "Reversal", entryPrice: "312.50", exitPrice: "324.80", jrData: { sentiment: "great", tags: ["News Play"] } },
-  { id: "demo-6", date: new Date(Date.now() - 3 * 86400000).toISOString().split("T")[0], EntryTime: "13:10:00", Profit: 450, Item: "GOOGL", symbol: "GOOGL", Type: "Short", side: "Short", strategy: "Momentum", entryPrice: "141.20", exitPrice: "138.95" },
+  { id: "demo-1", date: new Date().toISOString().split("T")[0], EntryTime: "09:32:00", ExitTime: "10:45:00", Profit: 280.98, Item: "XAUUSD", symbol: "XAUUSD", Type: "Short", side: "Short", strategy: "Breakout", entryPrice: "2672.2", exitPrice: "2662.764", quantity: 0.3, stopLoss: 2700, takeProfit: 2650, fees: 2.1, swap: 0, jrData: { sentiment: "great", tradeRating: 5, tags: ["Perfect Setup", "Followed Plan"] } },
+  { id: "demo-2", date: new Date().toISOString().split("T")[0], EntryTime: "10:15:00", ExitTime: "11:30:00", Profit: -380, Item: "TSLA", symbol: "TSLA", Type: "Short", side: "Short", strategy: "Breakout", entryPrice: "245.80", exitPrice: "248.10", quantity: 100, fees: 1.5 },
+  { id: "demo-3", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "11:45:00", ExitTime: "14:20:00", Profit: 890, Item: "NVDA", symbol: "NVDA", Type: "Long", side: "Long", strategy: "Scalping", entryPrice: "485.20", exitPrice: "492.75", quantity: 50, jrData: { sentiment: "okay", tradeRating: 4 } },
+  { id: "demo-4", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "14:20:00", ExitTime: "15:30:00", Profit: -520, Item: "MSFT", symbol: "MSFT", Type: "Long", side: "Long", strategy: "Swing", entryPrice: "378.90", exitPrice: "375.40", quantity: 25 },
+  { id: "demo-5", date: new Date(Date.now() - 2 * 86400000).toISOString().split("T")[0], EntryTime: "09:55:00", ExitTime: "12:10:00", Profit: 2100, Item: "META", symbol: "META", Type: "Long", side: "Long", strategy: "Reversal", entryPrice: "312.50", exitPrice: "324.80", quantity: 75, jrData: { sentiment: "great", tradeRating: 5, tags: ["News Play"] } },
+  { id: "demo-6", date: new Date(Date.now() - 3 * 86400000).toISOString().split("T")[0], EntryTime: "13:10:00", ExitTime: "14:45:00", Profit: 450, Item: "GOOGL", symbol: "GOOGL", Type: "Short", side: "Short", strategy: "Momentum", entryPrice: "141.20", exitPrice: "138.95", quantity: 100 },
 ];
 
 const commonTags = ["FOMO", "Perfect Setup", "Revenge Trade", "Followed Plan", "Overtraded", "Early Exit", "Late Entry", "News Play", "Gap Fill", "Trend Follow"];
@@ -193,13 +199,10 @@ const DailyJournal = () => {
   const [templates, setTemplates] = useState<Template[]>(demoTemplates);
   const [isDemo, setIsDemo] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [selectedTradeIndex, setSelectedTradeIndex] = useState(0);
   const [selectedTemplateIdx, setSelectedTemplateIdx] = useState(0);
-  const [journalData, setJournalData] = useState<JournalData>({ prompts: {}, tags: [] });
+  const [journalData, setJournalData] = useState<JournalData>({ prompts: {}, tags: [], tradeRating: 0 });
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "winners" | "losers">("all");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxType, setLightboxType] = useState<"before" | "after" | null>(null);
@@ -209,19 +212,16 @@ const DailyJournal = () => {
     accountId: string;
     tradeSummary: { symbol?: string; pnl?: number; date?: string };
   } | null>(null);
-  const replaceInputRef = useRef<HTMLInputElement>(null);
-  const [tagInput, setTagInput] = useState("");
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [mobileView, setMobileView] = useState<"list" | "content">("list");
-  const [isStrategyDropdownOpen, setIsStrategyDropdownOpen] = useState(false);
   const [strategyRules, setStrategyRules] = useState<{id: string; text: string}[]>([]);
   const [rulesCompliance, setRulesCompliance] = useState<Record<string, boolean>>({});
   const [loadingRules, setLoadingRules] = useState(false);
+  const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
+  const [isTradeListOpen, setIsTradeListOpen] = useState(false);
 
-  const filterRef = useRef<HTMLDivElement>(null);
-  const strategyDropdownRef = useRef<HTMLDivElement>(null);
-  
+  const [mainTab, setMainTab] = useState<"stats" | "strategy" | "executions" | "attachments">("stats");
+  const [centerTab, setCenterTab] = useState<"chart" | "notes" | "runningPnL">("chart");
+  const [notesTab, setNotesTab] = useState<"trade" | "daily">("trade");
+
   const existingStrategies: string[] = (profileData?.otherData?.strategy || []).filter((s: string) => s && s !== "Select");
 
   useEffect(() => {
@@ -238,6 +238,10 @@ const DailyJournal = () => {
       });
       setTrades(sorted);
       setIsDemo(false);
+      if (sorted.length > 0 && !selectedTrade) {
+        setSelectedTrade(sorted[0]);
+        setSelectedTradeIndex(0);
+      }
     }
   }, [selectedAccounts]);
 
@@ -258,45 +262,6 @@ const DailyJournal = () => {
     };
     fetchTemplates();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
-        setIsFilterOpen(false);
-      }
-      if (strategyDropdownRef.current && !strategyDropdownRef.current.contains(e.target as Node)) {
-        setIsStrategyDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const updateTradeStrategy = async (strategy: string) => {
-    if (!selectedTrade || isDemo) return;
-    
-    try {
-      const tradeId = selectedTrade._id || selectedTrade.id;
-      await fetch("/api/daily-journal/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          apiName: "editDropdowns",
-          id: tradeId,
-          type: "strategy",
-          value: strategy,
-          tokenn,
-          accountType: selectedTrade.accountType,
-        }),
-      });
-      setSelectedTrade({ ...selectedTrade, strategy });
-      setIsStrategyDropdownOpen(false);
-      setAccounts();
-      fetchStrategyRules(strategy);
-    } catch (error) {
-      console.error("Error updating strategy:", error);
-    }
-  };
 
   const fetchStrategyRules = async (strategyName: string, existingCompliance?: Record<string, boolean>) => {
     if (!strategyName || strategyName === "Select") {
@@ -351,66 +316,61 @@ const DailyJournal = () => {
       const idx = templates.findIndex((t) => t.name === templateName);
       if (idx >= 0) setSelectedTemplateIdx(idx);
     } else {
-      setJournalData({ prompts: {}, tags: [] });
+      setJournalData({ prompts: {}, tags: [], tradeRating: 0 });
       setSelectedTemplateIdx(0);
     }
   }, [selectedTrade, templates]);
 
   const filteredTrades = useMemo(() => {
     let data = trades;
-    if (filter === "winners") data = data.filter((t) => t.Profit > 0);
-    if (filter === "losers") data = data.filter((t) => t.Profit < 0);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       data = data.filter((t) => (t.Item || t.symbol || "").toLowerCase().includes(q));
     }
     return data;
-  }, [trades, filter, searchQuery]);
+  }, [trades, searchQuery]);
 
-  const groupedTrades = useMemo(() => {
-    const groups: Record<string, Trade[]> = {};
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const navigateTrade = (direction: "prev" | "next") => {
+    const currentIdx = filteredTrades.findIndex(t => (t.id || t._id) === (selectedTrade?.id || selectedTrade?._id));
+    let newIdx = direction === "prev" ? currentIdx - 1 : currentIdx + 1;
+    if (newIdx < 0) newIdx = filteredTrades.length - 1;
+    if (newIdx >= filteredTrades.length) newIdx = 0;
+    setSelectedTrade(filteredTrades[newIdx]);
+    setSelectedTradeIndex(newIdx);
+  };
 
-    filteredTrades.forEach((trade) => {
-      let label = trade.date;
-      if (trade.date === today) label = "Today";
-      else if (trade.date === yesterday) label = "Yesterday";
-      else {
-        const d = new Date(trade.date);
-        label = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-      }
-      if (!groups[label]) groups[label] = [];
-      groups[label].push(trade);
-    });
-    return groups;
-  }, [filteredTrades]);
-
-  const stats = useMemo(() => {
-    const winners = trades.filter((t) => t.Profit > 0).length;
-    const losers = trades.filter((t) => t.Profit < 0).length;
-    const totalPnL = trades.reduce((sum, t) => sum + (t.Profit || 0), 0);
-    const winRate = trades.length ? Math.round((winners / trades.length) * 100) : 0;
-    const totalWins = trades.filter((t) => t.Profit > 0).reduce((sum, t) => sum + t.Profit, 0);
-    const totalLosses = Math.abs(trades.filter((t) => t.Profit < 0).reduce((sum, t) => sum + t.Profit, 0));
-    const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : totalWins > 0 ? "∞" : "0.00";
-    const avgWin = winners > 0 ? totalWins / winners : 0;
-    const avgLoss = losers > 0 ? totalLosses / losers : 0;
-    const journaledTrades = trades.filter(t => t.jrData && (t.jrData.sentiment || t.jrData.templateId || (t.jrData.tags && t.jrData.tags.length > 0))).length;
-    return { winners, losers, totalPnL, winRate, profitFactor, avgWin, avgLoss, totalTrades: trades.length, journaledTrades };
-  }, [trades]);
-
-  const calendarData = useMemo(() => {
-    return trades.reduce((acc: Record<string, number>, trade) => {
-      if (!acc[trade.date]) acc[trade.date] = 0;
-      acc[trade.date] += trade.Profit;
-      return acc;
-    }, {});
-  }, [trades]);
-
-  const handleSelectTrade = (trade: Trade) => {
-    setSelectedTrade(trade);
-    setMobileView("content");
+  const calculateTradeMetrics = (trade: Trade) => {
+    const entry = parseFloat(String(trade.entryPrice || 0));
+    const exit = parseFloat(String(trade.exitPrice || 0));
+    const qty = trade.quantity || 1;
+    const isLong = trade.Type?.toLowerCase() === "long" || trade.side?.toLowerCase() === "long" || trade.Type?.toLowerCase() === "buy";
+    const pips = isLong ? ((exit - entry) * 10000) : ((entry - exit) * 10000);
+    const returnPerPip = trade.Profit / (pips || 1);
+    const roi = ((trade.Profit) / (entry * qty) * 100);
+    const grossPnL = trade.Profit + (trade.fees || 0);
+    const adjustedCost = entry * qty;
+    const sl = parseFloat(String(trade.stopLoss || 0));
+    const tp = parseFloat(String(trade.takeProfit || 0));
+    const risk = sl ? Math.abs(entry - sl) * qty : 0;
+    const rMultiple = risk > 0 ? trade.Profit / risk : 0;
+    const mae = sl ? Math.abs(entry - sl) : 0;
+    const mfe = tp ? Math.abs(tp - entry) : 0;
+    
+    return {
+      pips: Math.round(pips * 10) / 10,
+      returnPerPip: Math.round(returnPerPip * 100) / 100,
+      roi: Math.round(roi * 100) / 100,
+      grossPnL,
+      adjustedCost,
+      netROI: roi,
+      mae: entry - mae,
+      mfe: entry + mfe,
+      rMultiple: Math.round(rMultiple * 100) / 100,
+      initialTarget: trade.Profit,
+      tradeRisk: risk,
+      plannedRMultiple: tp && sl ? Math.abs(tp - entry) / Math.abs(entry - sl) : 0,
+      realizedRMultiple: rMultiple
+    };
   };
 
   const handlePromptChange = (promptId: string, value: string) => {
@@ -420,14 +380,21 @@ const DailyJournal = () => {
     }));
   };
 
-  const handleSentimentChange = (sentiment: "great" | "okay" | "poor") => {
-    setJournalData((prev) => ({ ...prev, sentiment }));
+  const handleTradeNotesChange = (value: string) => {
+    setJournalData((prev) => ({ ...prev, tradeNotes: value }));
+  };
+
+  const handleDailyNotesChange = (value: string) => {
+    setJournalData((prev) => ({ ...prev, dailyNotes: value }));
+  };
+
+  const handleRatingChange = (rating: number) => {
+    setJournalData((prev) => ({ ...prev, tradeRating: rating }));
   };
 
   const handleAddTag = (tag: string) => {
     if (tag && !journalData.tags?.includes(tag)) {
       setJournalData((prev) => ({ ...prev, tags: [...(prev.tags || []), tag] }));
-      setTagInput("");
     }
   };
 
@@ -549,42 +516,8 @@ const DailyJournal = () => {
     reader.readAsDataURL(file);
   };
 
-  const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
-
-  const renderCalendar = () => {
-    const days = daysInMonth(selectedYear, selectedMonth);
-    const firstDay = firstDayOfMonth(selectedYear, selectedMonth);
-    const cells = [];
-    const today = new Date();
-
-    for (let i = 0; i < firstDay; i++) cells.push(<div key={`e-${i}`} className="h-7" />);
-
-    for (let day = 1; day <= days; day++) {
-      const dateStr = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-      const pnl = calendarData[dateStr] || 0;
-      const isToday = new Date(selectedYear, selectedMonth, day).toDateString() === today.toDateString();
-
-      let cellClass = "text-muted-foreground/70 hover:bg-white/5";
-      if (pnl > 0) cellClass = "bg-profit/20 text-profit hover:bg-profit/30 font-medium";
-      else if (pnl < 0) cellClass = "bg-loss/20 text-loss hover:bg-loss/30 font-medium";
-
-      cells.push(
-        <motion.div
-          key={day}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className={`h-7 w-7 rounded-md flex items-center justify-center text-[11px] cursor-pointer transition-all ${cellClass} ${isToday ? "ring-1 ring-primary ring-offset-1 ring-offset-background" : ""}`}
-        >
-          {day}
-        </motion.div>
-      );
-    }
-    return cells;
-  };
-
   const formatTime = (time?: string) => {
-    if (!time) return "";
+    if (!time) return "--";
     const [h, m] = time.split(":");
     const hour = parseInt(h);
     const ampm = hour >= 12 ? "PM" : "AM";
@@ -592,858 +525,511 @@ const DailyJournal = () => {
     return `${hour12}:${m} ${ampm}`;
   };
 
-  const isJournaled = (trade: Trade) => {
-    return trade.jrData && (trade.jrData.sentiment || trade.jrData.templateId || (trade.jrData.tags && trade.jrData.tags.length > 0));
-  };
+  const metrics = selectedTrade ? calculateTradeMetrics(selectedTrade) : null;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Premium Glassmorphic Header */}
-      <div className="sticky top-0 z-40">
+    <div className="h-screen bg-background overflow-hidden flex flex-col">
+      {/* Top Navigation Bar */}
+      <div className="flex-shrink-0 border-b border-white/5 bg-background">
         {/* Gradient accent bar */}
-        <div className="h-[2px] bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+        <div className="h-[2px] bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500" />
         
-        <div className="backdrop-blur-xl bg-background/80 border-b border-white/5">
-          <div className="px-4 md:px-6 py-4">
-            <div className="flex items-center justify-between">
-              {/* Left: Title & Stats */}
-              <div className="flex items-center gap-6">
-                <div>
-                  <h1 className="text-xl font-bold text-foreground tracking-tight">Daily Journal</h1>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {stats.totalTrades} trades · {stats.journaledTrades} journaled
-                  </p>
-                </div>
-                
-                {/* Quick Stat Pills */}
-                <div className="hidden md:flex items-center gap-2">
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-sm ${
-                      stats.totalPnL >= 0 
-                        ? "bg-profit/10 border-profit/20" 
-                        : "bg-loss/10 border-loss/20"
-                    }`}
-                  >
-                    {stats.totalPnL >= 0 ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-profit" />
-                    ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-loss" />
-                    )}
-                    <span className={`text-sm font-semibold tabular-nums ${stats.totalPnL >= 0 ? "text-profit" : "text-loss"}`}>
-                      {stats.totalPnL >= 0 ? "+" : ""}{formatCompactCurrency(stats.totalPnL, currency, exchangeRate)}
-                    </span>
-                  </motion.div>
-                  
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 }}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
-                  >
-                    <Percent className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="text-sm font-semibold text-foreground">{stats.winRate}%</span>
-                    <span className="text-xs text-muted-foreground">Win</span>
-                  </motion.div>
-                  
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
-                  >
-                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-sm font-semibold">
-                      <span className="text-profit">{stats.winners}</span>
-                      <span className="text-muted-foreground mx-0.5">W</span>
-                      <span className="text-loss">{stats.losers}</span>
-                      <span className="text-muted-foreground">L</span>
-                    </span>
-                  </motion.div>
-                </div>
-              </div>
+        <div className="px-4 py-2 flex items-center justify-between">
+          {/* Left: Trade Selector */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsTradeListOpen(!isTradeListOpen)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+            >
+              <Layers className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">
+                {selectedTrade ? (selectedTrade.Item || selectedTrade.symbol) : "Select Trade"}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isTradeListOpen ? "rotate-180" : ""}`} />
+            </button>
 
-              {/* Right: Panel Toggles */}
-              <div className="hidden lg:flex items-center gap-2">
-                <button
-                  onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
-                  className={`p-2 rounded-lg transition-all ${isLeftPanelOpen ? "bg-primary/10 text-primary" : "hover:bg-white/5 text-muted-foreground"}`}
-                >
-                  {isLeftPanelOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className={`p-2 rounded-lg transition-all ${isSidebarOpen ? "bg-primary/10 text-primary" : "hover:bg-white/5 text-muted-foreground"}`}
-                >
-                  {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
-                </button>
-              </div>
+            {/* Trade Navigation */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => navigateTrade("prev")}
+                className="p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-xs text-muted-foreground px-2">
+                {selectedTradeIndex + 1} / {filteredTrades.length}
+              </span>
+              <button
+                onClick={() => navigateTrade("next")}
+                className="p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
+          </div>
+
+          {/* Center: Main Tab Navigation */}
+          <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg">
+            {[
+              { key: "stats", label: "Stats", icon: BarChart2 },
+              { key: "strategy", label: "Strategy", icon: Target },
+              { key: "executions", label: "Executions", icon: Activity },
+              { key: "attachments", label: "Attachments", icon: FileImage },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setMainTab(tab.key as typeof mainTab)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  mainTab === tab.key
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSave}
+              disabled={isSaving || isDemo}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              {isSaving ? (
+                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {isSaving ? "Saving..." : "Save"}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile View Toggle */}
-      <div className="lg:hidden sticky top-[58px] z-30 bg-background/95 backdrop-blur-xl border-b border-white/5 px-4 py-2">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setMobileView("list")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              mobileView === "list" 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-white/5 text-muted-foreground hover:bg-white/10"
-            }`}
+      {/* Trade List Dropdown */}
+      <AnimatePresence>
+        {isTradeListOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute top-[70px] left-4 z-50 w-80 max-h-96 overflow-auto bg-background/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl"
           >
-            Trades
-          </button>
-          <button
-            onClick={() => setMobileView("content")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              mobileView === "content" 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-white/5 text-muted-foreground hover:bg-white/10"
-            }`}
-          >
-            Journal
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content - Three Column Layout */}
-      <div className="flex h-[calc(100vh-100px)] lg:h-[calc(100vh-74px)]">
-        {/* Left Panel - Trade List */}
-        <AnimatePresence>
-          {(isLeftPanelOpen || mobileView === "list") && (
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: mobileView === "list" ? "100%" : 340 }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.2 }}
-              className={`flex-shrink-0 border-r border-white/5 bg-background overflow-hidden ${
-                mobileView === "content" ? "hidden lg:block" : ""
-              }`}
-            >
-              <div className="w-full lg:w-[340px] h-full flex flex-col">
-                {/* Search & Filter */}
-                <div className="p-4 space-y-3 border-b border-white/5">
-                  {/* Premium Search Bar */}
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-xl opacity-0 group-focus-within:opacity-100 blur-xl transition-opacity" />
-                    <div className="relative flex items-center bg-white/5 border border-white/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors">
-                      <Search className="w-4 h-4 text-muted-foreground ml-3" />
-                      <input
-                        type="text"
-                        placeholder="Search trades..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="flex-1 px-3 py-2.5 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
-                      />
-                      {searchQuery && (
-                        <button onClick={() => setSearchQuery("")} className="p-2 hover:bg-white/5">
-                          <X className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                      )}
+            <div className="p-3 border-b border-white/5">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search trades..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50"
+                />
+              </div>
+            </div>
+            <div className="p-2 space-y-1">
+              {filteredTrades.map((trade, idx) => (
+                <button
+                  key={trade.id || trade._id}
+                  onClick={() => {
+                    setSelectedTrade(trade);
+                    setSelectedTradeIndex(idx);
+                    setIsTradeListOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
+                    (selectedTrade?.id || selectedTrade?._id) === (trade.id || trade._id)
+                      ? "bg-primary/10 border border-primary/30"
+                      : "hover:bg-white/5 border border-transparent"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <SymbolLogo symbol={trade.Item || trade.symbol || ""} size="sm" />
+                    <div className="text-left">
+                      <span className="text-sm font-medium text-foreground">{trade.Item || trade.symbol}</span>
+                      <div className="text-[10px] text-muted-foreground">
+                        {new Date(trade.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {formatTime(trade.EntryTime)}
+                      </div>
                     </div>
                   </div>
+                  <span className={`text-sm font-semibold ${trade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                    {trade.Profit >= 0 ? "+" : ""}{formatCompactCurrency(trade.Profit, currency, exchangeRate)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-                  {/* Filter Pills */}
-                  <div className="flex gap-2">
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Stats Panel */}
+        <motion.div
+          animate={{ width: isLeftPanelCollapsed ? 48 : 260 }}
+          className="flex-shrink-0 border-r border-white/5 bg-background overflow-hidden"
+        >
+          {isLeftPanelCollapsed ? (
+            <div className="h-full flex flex-col items-center py-4">
+              <button
+                onClick={() => setIsLeftPanelCollapsed(false)}
+                className="p-2 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <PanelLeft className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="h-full overflow-y-auto p-4 space-y-4">
+              {/* Collapse Button */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trade Stats</span>
+                <button
+                  onClick={() => setIsLeftPanelCollapsed(true)}
+                  className="p-1.5 rounded-lg hover:bg-white/5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+
+              {selectedTrade && metrics && (
+                <>
+                  {/* Net P&L - Hero Stat */}
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Net P&L</span>
+                    <p className={`text-2xl font-bold mt-1 ${selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"}`}>
+                      {selectedTrade.Profit >= 0 ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
+                    </p>
+                  </div>
+
+                  {/* Trade Details Grid */}
+                  <div className="space-y-2">
                     {[
-                      { key: "all", label: "All", count: trades.length, icon: LayoutDashboard },
-                      { key: "winners", label: "Winners", count: stats.winners, icon: TrendingUp, color: "text-profit" },
-                      { key: "losers", label: "Losers", count: stats.losers, icon: TrendingDown, color: "text-loss" },
-                    ].map((f) => (
-                      <button
-                        key={f.key}
-                        onClick={() => setFilter(f.key as "all" | "winners" | "losers")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          filter === f.key
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
-                        }`}
-                      >
-                        <f.icon className={`w-3 h-3 ${filter !== f.key ? f.color || "" : ""}`} />
-                        <span>{f.label}</span>
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                          filter === f.key ? "bg-white/20" : "bg-white/10"
-                        }`}>
-                          {f.count}
-                        </span>
-                      </button>
+                      { label: "Side", value: selectedTrade.Type || selectedTrade.side || "--", color: (selectedTrade.Type?.toLowerCase() === "short" || selectedTrade.side?.toLowerCase() === "short") ? "text-loss" : "text-profit" },
+                      { label: "Quantity", value: selectedTrade.quantity?.toString() || "--" },
+                      { label: "Pips", value: metrics.pips > 0 ? `+${metrics.pips}` : metrics.pips.toString(), color: metrics.pips >= 0 ? "text-profit" : "text-loss" },
+                      { label: "Return/Pip", value: `$${metrics.returnPerPip}` },
+                      { label: "Fees", value: selectedTrade.fees ? `$${selectedTrade.fees}` : "$0" },
+                      { label: "Swap", value: selectedTrade.swap ? `$${selectedTrade.swap}` : "$0" },
+                      { label: "Net ROI", value: `${metrics.roi > 0 ? "+" : ""}${metrics.roi}%`, color: metrics.roi >= 0 ? "text-profit" : "text-loss" },
+                      { label: "Gross P&L", value: formatCompactCurrency(metrics.grossPnL, currency, exchangeRate), color: metrics.grossPnL >= 0 ? "text-profit" : "text-loss" },
+                      { label: "Adjusted Cost", value: formatCompactCurrency(metrics.adjustedCost, currency, exchangeRate) },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.02] border border-white/5">
+                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                        <span className={`text-sm font-semibold ${item.color || "text-foreground"}`}>{item.value}</span>
+                      </div>
                     ))}
                   </div>
-                </div>
 
-                {/* Trade List */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                  {Object.entries(groupedTrades).map(([date, dateTrades]) => (
-                    <div key={date} className="space-y-2">
-                      {/* Date Header */}
-                      <div className="flex items-center gap-2 px-2 py-1">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{date}</span>
-                        <div className="flex-1 h-px bg-white/5" />
-                        <span className="text-[10px] text-muted-foreground">{dateTrades.length}</span>
-                      </div>
-
-                      {/* Trade Cards */}
-                      {dateTrades.map((trade) => {
-                        const isSelected = selectedTrade?.id === trade.id || selectedTrade?._id === trade._id;
-                        const isProfitable = trade.Profit >= 0;
-                        const journaled = isJournaled(trade);
-
-                        return (
-                          <motion.div
-                            key={trade.id || trade._id}
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                            onClick={() => handleSelectTrade(trade)}
-                            className={`group relative p-3 rounded-xl cursor-pointer transition-all ${
-                              isSelected
-                                ? "bg-primary/10 border border-primary/30 shadow-lg shadow-primary/5"
-                                : "bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-white/10"
-                            }`}
-                          >
-                            {/* Selection Indicator */}
-                            {isSelected && (
-                              <motion.div
-                                layoutId="selectedIndicator"
-                                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"
-                              />
-                            )}
-
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                {/* Symbol Logo */}
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${
-                                  isProfitable ? "bg-profit/10 text-profit" : "bg-loss/10 text-loss"
-                                }`}>
-                                  <SymbolLogo symbol={trade.Item || trade.symbol || ""} size="md" />
-                                </div>
-
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-foreground">{trade.Item || trade.symbol}</span>
-                                    <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase rounded ${
-                                      trade.Type?.toLowerCase() === "buy" || trade.side?.toLowerCase() === "long"
-                                        ? "bg-profit/10 text-profit"
-                                        : "bg-loss/10 text-loss"
-                                    }`}>
-                                      {trade.Type || trade.side}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[11px] text-muted-foreground">
-                                      {formatTime(trade.EntryTime || trade.time)}
-                                    </span>
-                                    {trade.strategy && trade.strategy !== "Select" && (
-                                      <>
-                                        <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                                        <span className="text-[11px] text-muted-foreground truncate max-w-[80px]">
-                                          {trade.strategy}
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="text-right">
-                                <p className={`text-sm font-bold tabular-nums ${isProfitable ? "text-profit" : "text-loss"}`}>
-                                  {isProfitable ? "+" : ""}{formatCompactCurrency(trade.Profit, currency, exchangeRate)}
-                                </p>
-                                <div className="flex items-center justify-end gap-1 mt-0.5">
-                                  {journaled && (
-                                    <span className="flex items-center gap-0.5 text-[10px] text-primary">
-                                      <CheckCircle2 className="w-3 h-3" />
-                                    </span>
-                                  )}
-                                  {trade.jrData?.sentiment && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                      trade.jrData.sentiment === "great" 
-                                        ? "bg-profit/10 text-profit" 
-                                        : trade.jrData.sentiment === "okay"
-                                        ? "bg-amber-500/10 text-amber-500"
-                                        : "bg-loss/10 text-loss"
-                                    }`}>
-                                      {trade.jrData.sentiment === "great" ? "Great" : trade.jrData.sentiment === "okay" ? "Okay" : "Poor"}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Tags */}
-                            {trade.jrData?.tags && trade.jrData.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {trade.jrData.tags.slice(0, 3).map((tag) => (
-                                  <span key={tag} className="px-1.5 py-0.5 bg-white/5 text-[10px] text-muted-foreground rounded">
-                                    {tag}
-                                  </span>
-                                ))}
-                                {trade.jrData.tags.length > 3 && (
-                                  <span className="px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                                    +{trade.jrData.tags.length - 3}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  ))}
-
-                  {filteredTrades.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12">
-                      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-3">
-                        <Search className="w-5 h-5 text-muted-foreground/50" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">No trades found</p>
+                  {/* Playbook Selector */}
+                  {selectedTrade.strategy && selectedTrade.strategy !== "Select" && (
+                    <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
+                      <span className="text-[10px] text-primary/70 uppercase tracking-wider">Strategy</span>
+                      <p className="text-sm font-semibold text-primary mt-1">{selectedTrade.strategy}</p>
                     </div>
                   )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Center - Journal Content */}
-        <div className={`flex-1 overflow-y-auto bg-gradient-to-b from-background to-background/95 ${
-          mobileView === "list" ? "hidden lg:block" : ""
-        }`}>
-          {selectedTrade ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 md:p-6 space-y-4 max-w-3xl mx-auto"
-            >
-              {/* Trade Header Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.03] to-transparent">
-                {/* Glow effect */}
-                <div className={`absolute inset-0 opacity-20 ${
-                  selectedTrade.Profit >= 0 
-                    ? "bg-gradient-to-br from-profit/20 to-transparent" 
-                    : "bg-gradient-to-br from-loss/20 to-transparent"
-                }`} />
-                
-                <div className="relative p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                        selectedTrade.Profit >= 0 ? "bg-profit/10" : "bg-loss/10"
-                      }`}>
-                        <SymbolLogo symbol={selectedTrade.Item || selectedTrade.symbol || ""} size="lg" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-xl font-bold text-foreground">{selectedTrade.Item || selectedTrade.symbol}</h2>
-                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md ${
-                            selectedTrade.Type?.toLowerCase() === "buy" || selectedTrade.side?.toLowerCase() === "long"
-                              ? "bg-profit/15 text-profit"
-                              : "bg-loss/15 text-loss"
-                          }`}>
-                            {selectedTrade.Type || selectedTrade.side}
-                          </span>
-                          {selectedTrade.strategy && selectedTrade.strategy !== "Select" && (
-                            <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded-md">
-                              {selectedTrade.strategy}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {new Date(selectedTrade.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            {formatTime(selectedTrade.EntryTime || selectedTrade.time)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <p className={`text-2xl font-bold tabular-nums ${
-                        selectedTrade.Profit >= 0 ? "text-profit" : "text-loss"
-                      }`}>
-                        {selectedTrade.Profit >= 0 ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
-                      </p>
-                      <button
-                        onClick={() => setShareModal({
-                          isOpen: true,
-                          tradeId: selectedTrade._id || selectedTrade.id || "",
-                          accountId: selectedTrade.accountType || "",
-                          tradeSummary: {
-                            symbol: selectedTrade.Item || selectedTrade.symbol,
-                            pnl: selectedTrade.Profit,
-                            date: selectedTrade.date
-                          }
-                        })}
-                        className="mt-1 text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
-                      >
-                        <Share2 className="w-3 h-3" />
-                        Share
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Entry/Exit Info */}
-                  {(selectedTrade.entryPrice || selectedTrade.exitPrice) && (
-                    <div className="flex gap-4 mt-4 pt-4 border-t border-white/5">
-                      {selectedTrade.entryPrice && (
-                        <div>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Entry</span>
-                          <p className="text-sm font-semibold text-foreground">${selectedTrade.entryPrice}</p>
-                        </div>
-                      )}
-                      {selectedTrade.exitPrice && (
-                        <div>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Exit</span>
-                          <p className="text-sm font-semibold text-foreground">${selectedTrade.exitPrice}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Screenshots Section */}
-              <div className="grid grid-cols-2 gap-3">
-                {(["before", "after"] as const).map((type) => {
-                  const url = type === "before" ? selectedTrade.beforeURL : selectedTrade.afterURL;
-                  return (
-                    <div
-                      key={type}
-                      className="group relative aspect-video rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden"
-                    >
-                      {url ? (
-                        <>
-                          <img
-                            src={url}
-                            alt={`${type} screenshot`}
-                            className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
-                            onClick={() => openLightbox(url, type)}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-[10px] text-white/80 font-medium uppercase tracking-wider">
-                              {type === "before" ? "Entry" : "Exit"}
-                            </span>
-                            <button
-                              onClick={() => openLightbox(url, type)}
-                              className="p-1.5 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
-                            >
-                              <Eye className="w-3 h-3 text-white" />
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-white/[0.04] transition-colors">
-                          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-2">
-                            <Upload className="w-4 h-4 text-muted-foreground/60" />
-                          </div>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                            {type === "before" ? "Entry" : "Exit"} Screenshot
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(e, type)}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Strategy Rules Checklist */}
-              {selectedTrade.strategy && selectedTrade.strategy !== "Select" && strategyRules.length > 0 && (
-                <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <ListChecks className="w-4 h-4 text-primary" />
-                      <h3 className="text-sm font-medium text-foreground">Strategy Rules</h3>
-                    </div>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                      {Object.values(rulesCompliance).filter(Boolean).length}/{strategyRules.length}
-                    </span>
-                  </div>
-                  {loadingRules ? (
-                    <div className="flex items-center justify-center py-4">
-                      <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {strategyRules.map((rule) => (
-                        <label
-                          key={rule.id}
-                          className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                            rulesCompliance[rule.id]
-                              ? "bg-profit/5 border-profit/20"
-                              : "bg-white/[0.02] border-white/5 hover:border-white/10"
-                          }`}
+                  {/* Trade Scale/Rating */}
+                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span className="text-xs text-muted-foreground block mb-3">Trade Rating</span>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => handleRatingChange(star)}
+                          className="p-1 transition-transform hover:scale-110"
                         >
-                          <div className={`mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-colors ${
-                            rulesCompliance[rule.id] ? "bg-profit text-white" : "bg-white/10"
-                          }`}>
-                            {rulesCompliance[rule.id] && <Check className="w-3 h-3" />}
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={rulesCompliance[rule.id] || false}
-                            onChange={() => toggleRuleCompliance(rule.id)}
-                            className="sr-only"
+                          <Star
+                            className={`w-5 h-5 ${
+                              star <= (journalData.tradeRating || 0)
+                                ? "text-amber-400 fill-amber-400"
+                                : "text-white/20"
+                            }`}
                           />
-                          <span className={`text-sm leading-relaxed ${
-                            rulesCompliance[rule.id] ? "text-foreground" : "text-muted-foreground"
-                          }`}>
-                            {rule.text}
-                          </span>
-                        </label>
+                        </button>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
 
-              {/* Sentiment Selector */}
-              <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                <h3 className="text-sm font-medium text-foreground mb-4">How was this trade?</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { key: "poor", label: "Poor", icon: TrendingDown, color: "loss" },
-                    { key: "okay", label: "Okay", icon: Activity, color: "amber-500" },
-                    { key: "great", label: "Great", icon: TrendingUp, color: "profit" },
-                  ].map((s) => {
-                    const isSelected = journalData.sentiment === s.key;
-                    return (
-                      <motion.button
-                        key={s.key}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
-                        className={`relative p-4 rounded-xl border transition-all ${
-                          isSelected
-                            ? s.color === "profit" 
-                              ? "bg-profit/10 border-profit/30 text-profit"
-                              : s.color === "loss"
-                              ? "bg-loss/10 border-loss/30 text-loss"
-                              : "bg-amber-500/10 border-amber-500/30 text-amber-500"
-                            : "bg-white/[0.02] border-white/5 text-muted-foreground hover:border-white/10"
-                        }`}
-                      >
-                        {isSelected && (
-                          <motion.div
-                            layoutId="sentimentIndicator"
-                            className={`absolute inset-0 rounded-xl ${
-                              s.color === "profit" ? "bg-profit/5" : s.color === "loss" ? "bg-loss/5" : "bg-amber-500/5"
-                            }`}
-                          />
-                        )}
-                        <div className="relative flex flex-col items-center gap-2">
-                          <s.icon className="w-5 h-5" />
-                          <span className="text-sm font-medium">{s.label}</span>
-                        </div>
-                        {isSelected && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className={`absolute top-2 right-2 w-2 h-2 rounded-full ${
-                              s.color === "profit" ? "bg-profit" : s.color === "loss" ? "bg-loss" : "bg-amber-500"
-                            }`}
-                          />
-                        )}
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Template Selector */}
-              <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                <h3 className="text-sm font-medium text-foreground mb-3">Template</h3>
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                  {templates.map((template, idx) => {
-                    const Icon = getTemplateIcon(template.icon);
-                    const colors = getTemplateColor(template.color);
-                    const isSelected = selectedTemplateIdx === idx;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedTemplateIdx(idx)}
-                        className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                          isSelected
-                            ? `${colors.bg} ${colors.text} border ${colors.border}`
-                            : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground border border-transparent"
-                        }`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        {template.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Journal Prompts */}
-              <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02] space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground">
-                    {templates[selectedTemplateIdx]?.name || "Notes"}
-                  </h3>
-                </div>
-                {templates[selectedTemplateIdx]?.prompts.map((prompt) => {
-                  const hasValue = Boolean(journalData.prompts?.[prompt.id]);
-                  return (
-                    <div key={prompt.id} className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs text-muted-foreground">{prompt.label}</label>
-                        <QuickFillDropdown
-                          promptId={prompt.id}
-                          promptType={prompt.type === "textarea" ? "textarea" : "text"}
-                          currentValue={journalData.prompts?.[prompt.id] || ""}
-                          onSelect={(value) => handlePromptChange(prompt.id, value)}
-                        />
+                  {/* MAE / MFE */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">Price MAE / MFE</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 rounded-xl bg-loss/5 border border-loss/10">
+                        <span className="text-[9px] text-loss/70 uppercase">MAE</span>
+                        <p className="text-sm font-semibold text-loss mt-0.5">${metrics.mae.toFixed(2)}</p>
                       </div>
-                      {prompt.type === "textarea" ? (
-                        <textarea
-                          value={journalData.prompts?.[prompt.id] || ""}
-                          onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                          rows={3}
-                          placeholder={prompt.placeholder}
-                          className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={journalData.prompts?.[prompt.id] || ""}
-                          onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                          placeholder={prompt.placeholder}
-                          className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
-                        />
-                      )}
+                      <div className="p-3 rounded-xl bg-profit/5 border border-profit/10">
+                        <span className="text-[9px] text-profit/70 uppercase">MFE</span>
+                        <p className="text-sm font-semibold text-profit mt-0.5">${metrics.mfe.toFixed(2)}</p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
 
-              {/* Quick Tags */}
-              <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
-                <h3 className="text-sm font-medium text-foreground mb-3">Quick Tags</h3>
-                
-                {journalData.tags && journalData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {journalData.tags.map((tag) => (
-                      <motion.span
-                        key={tag}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium"
-                      >
-                        {tag}
-                        <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/70">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </motion.span>
+                  {/* Entry/Exit Details */}
+                  <div className="space-y-2">
+                    {[
+                      { label: "Profit Target", value: selectedTrade.takeProfit ? `$${selectedTrade.takeProfit}` : "--" },
+                      { label: "Stop Loss", value: selectedTrade.stopLoss ? `$${selectedTrade.stopLoss}` : "--" },
+                      { label: "Initial Target", value: formatCompactCurrency(metrics.initialTarget, currency, exchangeRate) },
+                      { label: "Trade Risk", value: metrics.tradeRisk > 0 ? formatCompactCurrency(metrics.tradeRisk, currency, exchangeRate) : "--" },
+                      { label: "Planned R:R", value: metrics.plannedRMultiple > 0 ? `${metrics.plannedRMultiple.toFixed(2)}R` : "--" },
+                      { label: "Realized R:R", value: `${metrics.realizedRMultiple > 0 ? "+" : ""}${metrics.realizedRMultiple.toFixed(2)}R`, color: metrics.realizedRMultiple >= 0 ? "text-profit" : "text-loss" },
+                      { label: "Average Entry", value: selectedTrade.entryPrice ? `$${selectedTrade.entryPrice}` : "--" },
+                      { label: "Average Exit", value: selectedTrade.exitPrice ? `$${selectedTrade.exitPrice}` : "--" },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.02] border border-white/5">
+                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                        <span className={`text-sm font-semibold ${item.color || "text-foreground"}`}>{item.value}</span>
+                      </div>
                     ))}
                   </div>
-                )}
+                </>
+              )}
+            </div>
+          )}
+        </motion.div>
 
-                <div className="flex flex-wrap gap-1.5">
-                  {commonTags.filter(t => !journalData.tags?.includes(t)).map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => handleAddTag(tag)}
-                      className="px-2 py-1 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground rounded-md text-xs font-medium transition-all"
-                    >
-                      + {tag}
+        {/* Center Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Center Tab Bar */}
+          <div className="flex-shrink-0 px-4 py-2 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              {[
+                { key: "chart", label: "Chart", icon: LineChart },
+                { key: "notes", label: "Notes", icon: MessageSquare },
+                { key: "runningPnL", label: "Running P&L", icon: BarChart3 },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setCenterTab(tab.key as typeof centerTab)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    centerTab === tab.key
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {centerTab === "chart" && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">5y</button>
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">1y</button>
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">3m</button>
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">1m</button>
+                <button className="px-2 py-1 rounded bg-primary/20 text-primary">4h</button>
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">1h</button>
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">D</button>
+                <span className="mx-2">|</span>
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">Indicators</button>
+                <button className="px-2 py-1 rounded bg-white/5 hover:bg-white/10">Show events</button>
+              </div>
+            )}
+          </div>
+
+          {/* Center Main Content */}
+          <div className="flex-1 overflow-hidden">
+            {centerTab === "chart" && (
+              <div className="h-full relative bg-[#0a0a0f]">
+                {/* Chart Placeholder with Pattern */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {selectedTrade?.beforeURL || selectedTrade?.afterURL ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={selectedTrade.beforeURL || selectedTrade.afterURL}
+                        alt="Trade chart"
+                        className="w-full h-full object-contain"
+                      />
+                      <button
+                        onClick={() => openLightbox(selectedTrade.beforeURL || selectedTrade.afterURL || "", "before")}
+                        className="absolute top-4 right-4 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
+                      >
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 mx-auto">
+                        <LineChart className="w-8 h-8 text-muted-foreground/40" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">No chart screenshot available</p>
+                      <label className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium rounded-lg cursor-pointer transition-colors">
+                        <Upload className="w-4 h-4" />
+                        Upload Screenshot
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleImageUpload(e, "before")}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* TradingView-style toolbar */}
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 p-1 bg-white/5 backdrop-blur-sm rounded-lg">
+                  {[Crosshair, TrendingUp, Target, Activity, Scale].map((Icon, idx) => (
+                    <button key={idx} className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors">
+                      <Icon className="w-4 h-4" />
                     </button>
                   ))}
                 </div>
               </div>
+            )}
 
-              {/* Save Button */}
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={handleSave}
-                disabled={isSaving || isDemo}
-                className="w-full py-3.5 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-primary-foreground text-sm font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Journal Entry
-                  </>
-                )}
-              </motion.button>
-
-              {isDemo && (
-                <p className="text-center text-xs text-muted-foreground">
-                  Demo mode - Add real trades to save your journal entries
-                </p>
-              )}
-            </motion.div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center p-8">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 flex items-center justify-center mb-5 mx-auto">
-                  <BookOpen className="w-8 h-8 text-muted-foreground/40" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">Select a Trade</h3>
-                <p className="text-sm text-muted-foreground max-w-[280px]">
-                  Choose a trade from the list to start journaling and track your progress
-                </p>
-              </motion.div>
-            </div>
-          )}
-        </div>
-
-        {/* Right Sidebar - Analytics */}
-        <AnimatePresence>
-          {isSidebarOpen && (
-            <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 280 }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.2 }}
-              className="hidden lg:block flex-shrink-0 border-l border-white/5 bg-background overflow-hidden"
-            >
-              <div className="w-[280px] p-4 space-y-4 overflow-y-auto h-full">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Analytics</h4>
-                  <button
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    <PanelRightClose className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-
-                {/* Glassmorphic Stat Cards */}
-                <div className="space-y-2">
-                  {[
-                    { label: "Total P&L", value: formatCompactCurrency(stats.totalPnL, currency, exchangeRate), isProfit: stats.totalPnL >= 0 },
-                    { label: "Win Rate", value: `${stats.winRate}%`, icon: Percent },
-                    { label: "Record", value: `${stats.winners}W / ${stats.losers}L` },
-                    { label: "Profit Factor", value: stats.profitFactor },
-                  ].map((stat, idx) => (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="flex items-center justify-between py-3 px-3 rounded-lg bg-white/[0.02] border border-white/5"
+            {centerTab === "notes" && (
+              <div className="h-full overflow-y-auto p-6">
+                <div className="max-w-2xl mx-auto space-y-6">
+                  {/* Notes Toggle */}
+                  <div className="flex items-center gap-2 bg-white/5 p-1 rounded-lg w-fit">
+                    <button
+                      onClick={() => setNotesTab("trade")}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        notesTab === "trade" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                      }`}
                     >
-                      <span className="text-xs text-muted-foreground">{stat.label}</span>
-                      <span className={`text-sm font-semibold tabular-nums ${
-                        stat.isProfit !== undefined 
-                          ? stat.isProfit ? "text-profit" : "text-loss"
-                          : "text-foreground"
-                      }`}>
-                        {stat.isProfit !== undefined && stat.isProfit ? "+" : ""}{stat.value}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
+                      Trade note
+                    </button>
+                    <button
+                      onClick={() => setNotesTab("daily")}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        notesTab === "daily" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Daily Journal
+                    </button>
+                  </div>
 
-                {/* Win Rate Progress */}
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">Win Rate</span>
-                    <span className="text-sm font-semibold text-foreground">{stats.winRate}%</span>
-                  </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stats.winRate}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
-                      className="h-full bg-gradient-to-r from-profit to-emerald-400 rounded-full"
-                    />
-                  </div>
-                  <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
-                    <span className="text-profit">{stats.winners} wins</span>
-                    <span className="text-loss">{stats.losers} losses</span>
-                  </div>
-                </div>
-
-                {/* Avg Win/Loss */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-3 rounded-xl bg-profit/5 border border-profit/10">
-                    <span className="text-[10px] text-profit/70 uppercase tracking-wider">Avg Win</span>
-                    <p className="text-sm font-semibold text-profit mt-1">{formatCompactCurrency(stats.avgWin, currency, exchangeRate)}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-loss/5 border border-loss/10">
-                    <span className="text-[10px] text-loss/70 uppercase tracking-wider">Avg Loss</span>
-                    <p className="text-sm font-semibold text-loss mt-1">{formatCompactCurrency(stats.avgLoss, currency, exchangeRate)}</p>
-                  </div>
-                </div>
-
-                {/* Calendar */}
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-blue-400" />
-                      <span className="text-xs font-semibold text-foreground">Calendar</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setSelectedMonth((m) => (m === 0 ? (setSelectedYear((y) => y - 1), 11) : m - 1))}
-                        className="p-1 rounded hover:bg-white/5 transition-colors"
-                      >
-                        <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
-                      </button>
-                      <span className="text-[10px] font-medium text-muted-foreground min-w-[60px] text-center">
-                        {new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "short", year: "numeric" })}
-                      </span>
-                      <button
-                        onClick={() => setSelectedMonth((m) => (m === 11 ? (setSelectedYear((y) => y + 1), 0) : m + 1))}
-                        className="p-1 rounded hover:bg-white/5 transition-colors"
-                      >
-                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-7 gap-0.5 mb-1">
-                    {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                      <div key={i} className="h-6 flex items-center justify-center text-[9px] font-medium text-muted-foreground/60">
-                        {d}
+                  {notesTab === "trade" ? (
+                    <div className="space-y-4">
+                      {/* Template Selector */}
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground mb-3">Template</h3>
+                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                          {templates.map((template, idx) => {
+                            const Icon = getTemplateIcon(template.icon);
+                            const colors = getTemplateColor(template.color);
+                            const isSelected = selectedTemplateIdx === idx;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => setSelectedTemplateIdx(idx)}
+                                className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                                  isSelected
+                                    ? `${colors.bg} ${colors.text} border ${colors.border}`
+                                    : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground border border-transparent"
+                                }`}
+                              >
+                                <Icon className="w-3.5 h-3.5" />
+                                {template.name}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-0.5">{renderCalendar()}</div>
-                  
-                  <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-white/5">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-sm bg-profit/40" />
-                      <span className="text-[9px] text-muted-foreground">Profit</span>
+
+                      {/* Journal Prompts */}
+                      <div className="space-y-4">
+                        {templates[selectedTemplateIdx]?.prompts.map((prompt) => (
+                          <div key={prompt.id} className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs text-muted-foreground">{prompt.label}</label>
+                              <QuickFillDropdown
+                                promptId={prompt.id}
+                                promptType={prompt.type === "textarea" ? "textarea" : "text"}
+                                currentValue={journalData.prompts?.[prompt.id] || ""}
+                                onSelect={(value) => handlePromptChange(prompt.id, value)}
+                              />
+                            </div>
+                            {prompt.type === "textarea" ? (
+                              <textarea
+                                value={journalData.prompts?.[prompt.id] || ""}
+                                onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
+                                rows={3}
+                                placeholder={prompt.placeholder}
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={journalData.prompts?.[prompt.id] || ""}
+                                onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
+                                placeholder={prompt.placeholder}
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Quick Tags */}
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground mb-3">Quick Tags</h3>
+                        {journalData.tags && journalData.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {journalData.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-md text-xs font-medium"
+                              >
+                                {tag}
+                                <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/70">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1.5">
+                          {commonTags.filter(t => !journalData.tags?.includes(t)).map((tag) => (
+                            <button
+                              key={tag}
+                              onClick={() => handleAddTag(tag)}
+                              className="px-2 py-1 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground rounded-md text-xs font-medium transition-all"
+                            >
+                              + {tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-sm bg-loss/40" />
-                      <span className="text-[9px] text-muted-foreground">Loss</span>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-medium text-foreground mb-3">Daily Journal Entry</h3>
+                        <textarea
+                          value={journalData.dailyNotes || ""}
+                          onChange={(e) => handleDailyNotesChange(e.target.value)}
+                          rows={8}
+                          placeholder="Write about your trading day, market conditions, mindset, and key takeaways..."
+                          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+
+            {centerTab === "runningPnL" && (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 mx-auto">
+                    <BarChart3 className="w-8 h-8 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Running P&L chart coming soon</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Image Lightbox */}
