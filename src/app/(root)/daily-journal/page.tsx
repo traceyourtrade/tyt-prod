@@ -53,6 +53,7 @@ import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { SymbolLogo } from "@/components/ui/SymbolLogo";
 import QuickFillDropdown from "@/components/journal/QuickFillDropdown";
 import ShareTradeModal from "@/components/shared/ShareTradeModal";
+import TradeChart from "@/components/daily-journal/TradeChart";
 
 interface Trade {
   id?: string;
@@ -1092,52 +1093,19 @@ const DailyJournal = () => {
 
           {/* Center Main Content */}
           <div className="flex-1 overflow-hidden">
-            {centerTab === "chart" && (
+            {centerTab === "chart" && selectedTrade && (
               <div className="h-full relative bg-[#0a0a0f]">
-                {/* Chart Placeholder with Pattern */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {selectedTrade?.beforeURL || selectedTrade?.afterURL ? (
-                    <div className="relative w-full h-full">
-                      <img
-                        src={selectedTrade.beforeURL || selectedTrade.afterURL}
-                        alt="Trade chart"
-                        className="w-full h-full object-contain"
-                      />
-                      <button
-                        onClick={() => openLightbox(selectedTrade.beforeURL || selectedTrade.afterURL || "", "before")}
-                        className="absolute top-4 right-4 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-colors"
-                      >
-                        <Maximize2 className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 mx-auto">
-                        <LineChart className="w-8 h-8 text-muted-foreground/40" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">No chart screenshot available</p>
-                      <label className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium rounded-lg cursor-pointer transition-colors">
-                        <Upload className="w-4 h-4" />
-                        Upload Screenshot
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(e, "before")}
-                        />
-                      </label>
-                    </div>
-                  )}
-                </div>
-
-                {/* TradingView-style toolbar */}
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1 p-1 bg-white/5 backdrop-blur-sm rounded-lg">
-                  {[Crosshair, TrendingUp, Target, Activity, Scale].map((Icon, idx) => (
-                    <button key={idx} className="p-2 rounded hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors">
-                      <Icon className="w-4 h-4" />
-                    </button>
-                  ))}
-                </div>
+                {/* TradingView Chart */}
+                <TradeChart
+                  symbol={selectedTrade.Item || selectedTrade.symbol || ""}
+                  date={selectedTrade.date?.split("T")[0] || new Date().toISOString().split("T")[0]}
+                  entryPrice={selectedTrade.entryPrice ? parseFloat(String(selectedTrade.entryPrice)) : undefined}
+                  exitPrice={selectedTrade.exitPrice ? parseFloat(String(selectedTrade.exitPrice)) : undefined}
+                  entryTime={selectedTrade.EntryTime}
+                  exitTime={selectedTrade.ExitTime}
+                  isLong={(selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")}
+                  interval="5min"
+                />
               </div>
             )}
 
