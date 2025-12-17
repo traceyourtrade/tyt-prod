@@ -378,8 +378,6 @@ export default function RootLayout({
 
       {/* Main Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-hide relative">
-        {/* Scroll fade */}
-        <div className="sticky top-0 left-0 right-0 h-4 bg-gradient-to-b from-[#0a0e14] to-transparent pointer-events-none -mb-4 z-10" />
         
         {/* Trading Section */}
         <SectionLabel label="Trading" />
@@ -452,8 +450,6 @@ export default function RootLayout({
           </AnimatePresence>
         </div>
 
-        {/* Scroll fade bottom */}
-        <div className="sticky bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-[#0a0e14] to-transparent pointer-events-none -mt-4" />
       </nav>
 
       {/* Bottom Section */}
