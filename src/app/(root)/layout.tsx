@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import axios from "axios";
 import "../globals.css";
 import PageLoading from "@/components/ui/page-loading";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import {
@@ -38,6 +39,9 @@ import {
   Trophy,
   Activity,
   TrendingUp,
+  Zap,
+  Command,
+  CandlestickChart,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -56,42 +60,28 @@ import CurrencyDropdown from "@/components/dashboard-components/CurrencyDropdown
 import useAccountDetails from "@/store/accountdetails";
 import calendarPopUp from "@/store/calendarPopUp";
 
-const mainNavItems = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    color: "#6B8ACD",
-  },
-  {
-    name: "Daily Journal",
-    href: "/daily-journal",
-    icon: BookOpen,
-    color: "#9B8AC4",
-  },
+const tradingItems = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "#6B8ACD" },
+  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, color: "#9B8AC4" },
   { name: "Notebook", href: "/notebook", icon: FileText, color: "#C9A86C" },
+];
+
+const analysisItems = [
   { name: "Reports", href: "/reports", icon: BarChart3, color: "#7CB89E" },
   { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A" },
   { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B" },
-  {
-    name: "AI Analysis",
-    href: "/ai-analysis",
-    icon: BrainCircuit,
-    color: "#8B5CF6",
-  },
+  { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, color: "#8B5CF6", badge: "New" },
+];
+
+const toolsItems = [
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "#F59E0B" },
-  {
-    name: "Resources",
-    href: "/resources",
-    icon: GraduationCap,
-    color: "#5EAAA8",
-  },
-  {
-    name: "Lot Calculator",
-    href: "/lot-calculator",
-    icon: Calculator,
-    color: "#6BB8C4",
-  },
+  { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8" },
+  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4" },
+];
+
+const backtestingSubItems = [
+  { name: "Dashboard", href: "/backtesting/dashboard", icon: LayoutDashboard, color: "#E879F9" },
+  { name: "Sessions", href: "/backtesting/sessions", icon: Activity, color: "#E879F9" },
 ];
 
 const bottomNavItems = [
@@ -156,6 +146,12 @@ export default function RootLayout({
     setMobileOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (pathname.startsWith('/backtesting')) {
+      setBacktestingOpen(true);
+    }
+  }, [pathname]);
+
   const isActive = (href: string) => {
     if (href === "/dashboard") {
       return pathname === "/dashboard" || pathname === "/";
@@ -196,22 +192,94 @@ export default function RootLayout({
     ? profileData.email.replace(/^(.{4}).*(@.*)$/, (_, a, b) => `${a}*****${b}`)
     : "";
 
-  const SidebarContent = () => (
-    <div className="h-full flex flex-col">
-      {/* Sidebar Header with Logo */}
-      <div
+  const isExpanded = !collapsed || mobileOpen;
+
+  const NavItem = ({ item, showLabel = true }: { item: { name: string; href: string; icon: React.ElementType; color: string; badge?: string }; showLabel?: boolean }) => {
+    const Icon = item.icon;
+    const active = isActive(item.href);
+    
+    return (
+      <Link
+        href={item.href}
+        onClick={() => setMobileOpen(false)}
         className={cn(
-          "flex items-center h-14 px-4 border-b border-border",
-          collapsed && !mobileOpen ? "justify-center" : "justify-between",
+          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+          active 
+            ? "bg-white/[0.08] text-white" 
+            : "text-white/50 hover:text-white hover:bg-white/[0.04]",
+          !showLabel && "justify-center px-2"
         )}
       >
+        {active && (
+          <motion.div 
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+            style={{ 
+              backgroundColor: item.color,
+              boxShadow: `0 0 12px 2px ${item.color}60, 0 0 20px 4px ${item.color}30`
+            }}
+            layoutId="sidebarActiveIndicator"
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
+        )}
+        
+        <div className="relative flex-shrink-0 transition-all duration-200">
+          <Icon 
+            className={cn(
+              "h-[18px] w-[18px] transition-all duration-200",
+              !active && "group-hover:scale-110"
+            )}
+            style={{ color: active ? item.color : undefined }}
+          />
+        </div>
+        
+        {showLabel && (
+          <span className="flex-1 truncate">{item.name}</span>
+        )}
+
+        {item.badge && showLabel && (
+          <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/20">
+            {item.badge}
+          </span>
+        )}
+      </Link>
+    );
+  };
+
+  const SectionLabel = ({ label }: { label: string }) => (
+    <>
+      {isExpanded && (
+        <div className="px-3 mb-2 mt-5 first:mt-0">
+          <span className="text-[10px] font-semibold text-white/25 uppercase tracking-[0.2em]">
+            {label}
+          </span>
+        </div>
+      )}
+    </>
+  );
+
+  const SidebarContent = () => (
+    <div className="h-full flex flex-col relative">
+      {/* Animated gradient orbs */}
+      <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#4EBF94]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-4 left-12 w-20 h-20 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" style={{ animationDelay: '1s' }} />
+      <div className="absolute bottom-20 -right-8 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      
+      {/* Logo Section */}
+      <div className={cn(
+        "relative flex items-center h-16 px-4 z-10",
+        !isExpanded ? "justify-center" : "justify-between"
+      )}>
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 overflow-hidden group"
+          className="flex items-center gap-3 overflow-hidden group"
           onClick={() => setMobileOpen(false)}
         >
-          {collapsed && !mobileOpen ? (
-            <div className="w-8 h-8 flex items-center justify-center">
+          <motion.div 
+            className="relative flex-shrink-0"
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-white/10 shadow-lg shadow-black/30 bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center">
               <Image
                 src="/images/logo-icon.png"
                 width={32}
@@ -221,295 +289,249 @@ export default function RootLayout({
                 unoptimized
               />
             </div>
-          ) : (
-            <>
-              <Image
-                src="/images/logo-dark.png"
-                width={160}
-                height={40}
-                alt="ProJournX"
-                className="h-9 w-auto object-contain hidden dark:block"
-                unoptimized
-              />
-              <Image
-                src="/images/logo-light.png"
-                width={160}
-                height={40}
-                alt="ProJournX"
-                className="h-9 w-auto object-contain dark:hidden"
-                unoptimized
-              />
-            </>
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </motion.div>
+          
+          {isExpanded && (
+            <motion.div 
+              className="flex flex-col"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="font-bold text-white tracking-tight text-[15px]">
+                ProJournX
+              </span>
+              <span className="text-[10px] text-white/30 font-medium tracking-wide">
+                Trading Journal
+              </span>
+            </motion.div>
           )}
         </Link>
-        {(!collapsed || mobileOpen) && (
-          <button
-            className="w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            onClick={() =>
-              mobileOpen ? setMobileOpen(false) : setCollapsed(true)
-            }
+        
+        {isExpanded && (
+          <motion.button
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/[0.08] transition-all"
+            onClick={() => mobileOpen ? setMobileOpen(false) : setCollapsed(true)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            {mobileOpen ? (
-              <X className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </button>
+            {mobileOpen ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </motion.button>
         )}
       </div>
 
-      {/* Collapse button when collapsed */}
-      {collapsed && !mobileOpen && (
-        <button
-          className="mx-auto mt-3 w-6 h-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+      {!isExpanded && (
+        <motion.button
+          className="mx-auto mt-1 w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white hover:bg-white/[0.08] transition-all"
           onClick={() => setCollapsed(false)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
           <ChevronLeft className="h-4 w-4 rotate-180" />
-        </button>
+        </motion.button>
       )}
 
-      {/* Add Trades Button */}
-      <div className={cn("px-3 mt-6", collapsed && !mobileOpen && "mt-4 px-2")}>
-        <button
+      {/* Add Trade Button */}
+      <div className={cn("px-3 mt-4", !isExpanded && "mt-2 px-2")}>
+        <motion.button
           className={cn(
-            "w-full flex items-center justify-center gap-2 py-2.5 font-medium text-sm transition-all duration-200",
-            "rounded-lg",
-            "bg-[#3B82F6]",
+            "group relative w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-[13px] transition-all duration-300 overflow-hidden",
+            "bg-gradient-to-r from-[#4EBF94] via-[#45B08A] to-[#3AA07A]",
             "text-white",
-            "hover:bg-[#2563EB]",
-            "active:bg-[#1D4ED8]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
-            collapsed && !mobileOpen ? "px-0 w-10 h-10 mx-auto" : "px-4",
+            "shadow-lg shadow-[#4EBF94]/20",
+            "hover:shadow-[0_8px_32px_rgba(78,191,148,0.35)]",
+            !isExpanded ? "px-0 w-10 h-10 mx-auto" : "px-4"
           )}
           onClick={() => {
             setAddTrades();
             setMobileOpen(false);
           }}
+          whileHover={{ y: -2, scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <Plus className="h-4 w-4" />
-          {(!collapsed || mobileOpen) && <span>Add Trade</span>}
-        </button>
+          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+          
+          <motion.div
+            className="relative z-10"
+            whileHover={{ rotate: 90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+          </motion.div>
+          
+          {isExpanded && (
+            <span className="relative z-10">Add Trade</span>
+          )}
+        </motion.button>
       </div>
+
+      {/* Quick search hint */}
+      {isExpanded && (
+        <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.05] flex items-center gap-2 cursor-pointer hover:bg-white/[0.05] transition-colors">
+          <Command className="h-3.5 w-3.5 text-white/30" />
+          <span className="text-[11px] text-white/30 flex-1">Quick search...</span>
+          <span className="text-[10px] text-white/20 px-1.5 py-0.5 rounded bg-white/[0.05] font-mono">K</span>
+        </div>
+      )}
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-5 px-2 scrollbar-hide">
-        <ul className="space-y-1">
-          {mainNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
-                    "rounded-md",
-                    active
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                    collapsed && !mobileOpen && "justify-center px-2",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
-                  )}
-                >
-                  {active && (
-                    <div
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                  )}
-                  <Icon
-                    className={cn(
-                      "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
-                      "group-hover:scale-110",
-                    )}
-                    style={{ color: item.color }}
-                  />
-                  {(!collapsed || mobileOpen) && (
-                    <span className="truncate">{item.name}</span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
+      <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-hide relative">
+        {/* Scroll fade */}
+        <div className="sticky top-0 left-0 right-0 h-4 bg-gradient-to-b from-[#0a0e14] to-transparent pointer-events-none -mb-4 z-10" />
+        
+        {/* Trading Section */}
+        <SectionLabel label="Trading" />
+        <div className="space-y-0.5 mb-1">
+          {tradingItems.map((item) => (
+            <NavItem key={item.name} item={item} showLabel={isExpanded} />
+          ))}
+        </div>
 
-          {/* Backtesting Dropdown */}
-          <li>
-            <button
-              onClick={() => setBacktestingOpen(!backtestingOpen)}
-              className={cn(
-                "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out w-full",
-                "rounded-md",
-                pathname.startsWith("/backtesting")
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                collapsed && !mobileOpen && "justify-center px-2",
-                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
-              )}
-            >
-              {pathname.startsWith("/backtesting") && (
-                <div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                  style={{ backgroundColor: "#E879F9" }}
-                />
-              )}
-              <TrendingUp
-                className={cn(
-                  "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
-                  "group-hover:scale-110",
-                )}
-                style={{ color: "#E879F9" }}
-              />
-              {(!collapsed || mobileOpen) && (
-                <>
-                  <span className="truncate flex-1 text-left">Backtesting</span>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 transition-transform duration-200",
-                      backtestingOpen && "rotate-180",
-                    )}
-                  />
-                </>
-              )}
-            </button>
+        {/* Analysis Section */}
+        <SectionLabel label="Analysis" />
+        <div className="space-y-0.5 mb-1">
+          {analysisItems.map((item) => (
+            <NavItem key={item.name} item={item} showLabel={isExpanded} />
+          ))}
+        </div>
 
-            {/* Dropdown Items */}
-            {backtestingOpen && (!collapsed || mobileOpen) && (
-              <ul className="mt-1 ml-6 space-y-1">
-                <li>
-                  <Link
-                    href="/backtesting/dashboard"
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "group flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
-                      "rounded-md",
-                      pathname === "/backtesting/dashboard"
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                    )}
-                  >
-                    <LayoutDashboard
-                      className="h-[16px] w-[16px] flex-shrink-0"
-                      style={{ color: "#6B8ACD" }}
-                    />
-                    <span className="truncate">Dashboard</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/backtesting/sessions"
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      "group flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
-                      "rounded-md",
-                      pathname === "/backtesting/sessions"
-                        ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                    )}
-                  >
-                    <Activity
-                      className="h-[16px] w-[16px] flex-shrink-0"
-                      style={{ color: "#E879F9" }}
-                    />
-                    <span className="truncate">Sessions</span>
-                  </Link>
-                </li>
-              </ul>
-            )}
-          </li>
-        </ul>
-      </nav>
+        {/* Tools Section */}
+        <SectionLabel label="Tools" />
+        <div className="space-y-0.5 mb-1">
+          {toolsItems.map((item) => (
+            <NavItem key={item.name} item={item} showLabel={isExpanded} />
+          ))}
+        </div>
 
-      {/* Bottom Navigation */}
-      <div className="py-2 px-2 border-t border-border">
-        <ul className="space-y-1">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "group relative flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
-                    "rounded-md",
-                    active
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                    collapsed && !mobileOpen && "justify-center px-2",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
-                  )}
-                >
-                  {active && (
-                    <div
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                  )}
-                  <Icon
-                    className={cn(
-                      "h-[18px] w-[18px] flex-shrink-0 transition-all duration-200",
-                      "group-hover:scale-110",
-                    )}
-                    style={{ color: item.color }}
-                  />
-                  {(!collapsed || mobileOpen) && (
-                    <span className="truncate">{item.name}</span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* User Section */}
-      <div className="p-2 border-t border-border">
-        {profileData.fullName && (
-          <Link
-            href="/settings"
-            onClick={() => setMobileOpen(false)}
+        {/* Backtesting Section - Collapsible */}
+        <div className="mb-1 mt-1">
+          <button
+            onClick={() => setBacktestingOpen(!backtestingOpen)}
             className={cn(
-              "flex items-center gap-2.5 rounded-md p-2 mb-1 transition-all duration-200 ease-out",
-              "hover:bg-muted/50",
-              collapsed && !mobileOpen && "justify-center",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200",
+              "text-white/50 hover:text-white hover:bg-white/[0.04]",
+              pathname.startsWith('/backtesting') && "text-white bg-white/[0.04]",
+              !isExpanded && "justify-center px-2"
             )}
           >
-            <div className="relative flex-shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <span className="text-xs font-semibold text-primary">
-                  {userInitials}
-                </span>
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4EBF94] rounded-full border-2 border-card" />
-            </div>
-            {(!collapsed || mobileOpen) && (
-              <div className="overflow-hidden flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-foreground truncate">
-                  {profileData.fullName}
-                </p>
-                <p className="text-[11px] text-muted-foreground truncate">
-                  {maskedEmail}
-                </p>
-              </div>
+            <CandlestickChart 
+              className="h-[18px] w-[18px] flex-shrink-0"
+              style={{ color: pathname.startsWith('/backtesting') ? '#E879F9' : undefined }}
+            />
+            {isExpanded && (
+              <>
+                <span className="flex-1 text-left">Backtesting</span>
+                <motion.div
+                  animate={{ rotate: backtestingOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="h-4 w-4 text-white/30" />
+                </motion.div>
+              </>
             )}
-          </Link>
-        )}
+          </button>
+          
+          <AnimatePresence>
+            {backtestingOpen && isExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="pl-4 mt-1 space-y-0.5 border-l border-white/[0.06] ml-5">
+                  {backtestingSubItems.map((item) => (
+                    <NavItem key={item.name} item={item} showLabel={true} />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-        <button
-          className={cn(
-            "group w-full flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out",
-            "text-muted-foreground hover:text-red-400 hover:bg-red-500/10",
-            collapsed && !mobileOpen && "justify-center px-2",
-            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500/50",
+        {/* Scroll fade bottom */}
+        <div className="sticky bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-[#0a0e14] to-transparent pointer-events-none -mt-4" />
+      </nav>
+
+      {/* Bottom Section */}
+      <div className="mt-auto relative z-10">
+        <div className="px-4 mb-2">
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
+        
+        <div className="py-2 px-2 space-y-0.5">
+          {bottomNavItems.map((item) => (
+            <NavItem key={item.name} item={item} showLabel={isExpanded} />
+          ))}
+        </div>
+
+        {/* Premium User Card */}
+        <div className="p-2 pt-0">
+          {profileData.fullName && (
+            <motion.div 
+              className={cn(
+                "relative rounded-xl overflow-hidden transition-all duration-200 cursor-pointer",
+                !isExpanded && "p-1"
+              )}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent" />
+              <div className="absolute inset-0 border border-white/[0.06] rounded-xl" />
+              
+              <Link
+                href="/settings"
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "relative flex items-center gap-3 p-3",
+                  !isExpanded && "justify-center p-2"
+                )}
+              >
+                {/* Avatar with activity ring */}
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94] to-emerald-600 opacity-30 blur-sm" />
+                  <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#4EBF94]/40 to-[#4EBF94]/10 flex items-center justify-center ring-2 ring-[#4EBF94]/30">
+                    <span className="text-sm font-bold text-[#4EBF94]">
+                      {userInitials}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4EBF94] rounded-full border-2 border-[#0a0e14] flex items-center justify-center">
+                    <Zap className="w-1.5 h-1.5 text-[#0a0e14]" />
+                  </div>
+                </div>
+                
+                {isExpanded && (
+                  <div className="overflow-hidden flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-white truncate">
+                      {profileData.fullName}
+                    </p>
+                    <p className="text-[11px] text-white/30 truncate">
+                      {maskedEmail}
+                    </p>
+                  </div>
+                )}
+              </Link>
+            </motion.div>
           )}
-          onClick={handleLogout}
-        >
-          <LogOut className="h-[18px] w-[18px] flex-shrink-0 transition-all duration-200 group-hover:scale-110" />
-          {(!collapsed || mobileOpen) && <span>Log out</span>}
-        </button>
+          
+          {/* Logout button */}
+          <motion.button
+            className={cn(
+              "group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 mt-1 text-[13px] font-medium transition-all duration-200",
+              "text-white/30 hover:text-red-400 hover:bg-red-500/10",
+              !isExpanded && "justify-center px-2"
+            )}
+            onClick={handleLogout}
+            whileHover={{ x: isExpanded ? 3 : 0 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <LogOut className="h-[18px] w-[18px] flex-shrink-0 transition-transform group-hover:scale-110" />
+            {isExpanded && <span>Log out</span>}
+          </motion.button>
+        </div>
       </div>
     </div>
   );
@@ -534,39 +556,62 @@ export default function RootLayout({
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar - Desktop */}
+      {/* Sidebar - Desktop (Floating Design) */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out",
-          "bg-card border-r border-border",
-          collapsed ? "w-[68px]" : "w-[240px]",
+          "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out p-2",
+          collapsed ? "w-[76px]" : "w-[264px]",
         )}
       >
-        <SidebarContent />
+        <div className={cn(
+          "h-full rounded-2xl overflow-hidden relative",
+          "bg-[#0a0e14]/95 backdrop-blur-2xl",
+          "border border-white/[0.08]",
+          "shadow-2xl shadow-black/40"
+        )}>
+          {/* Layered gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-black/20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.02] via-transparent to-violet-500/[0.02] pointer-events-none" />
+          
+          {/* Inner glow */}
+          <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
+          
+          <SidebarContent />
+        </div>
       </aside>
 
       {/* Sidebar - Mobile */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[240px] flex-col transition-transform duration-300 ease-out",
-          "bg-card border-r border-border",
+          "fixed left-0 top-0 z-50 flex lg:hidden h-screen w-[264px] flex-col transition-transform duration-300 ease-out p-2",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <SidebarContent />
+        <div className={cn(
+          "h-full rounded-2xl overflow-hidden relative",
+          "bg-[#0a0e14]/98 backdrop-blur-2xl",
+          "border border-white/[0.08]",
+          "shadow-2xl shadow-black/40"
+        )}>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] via-transparent to-black/20 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.02] via-transparent to-violet-500/[0.02] pointer-events-none" />
+          <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
+          
+          <SidebarContent />
+        </div>
       </aside>
 
       {/* Main Content Area */}
       <div
         className={cn(
           "min-h-screen transition-all duration-300",
-          "lg:ml-[68px]",
-          !collapsed && "lg:ml-[240px]",
+          "lg:ml-[76px]",
+          !collapsed && "lg:ml-[264px]",
         )}
       >
         {/* Top Bar */}
