@@ -42,6 +42,7 @@ import {
   Zap,
   Command,
   CandlestickChart,
+  Search,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,8 @@ export default function RootLayout({
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
   const [backtestingOpen, setBacktestingOpen] = useState<boolean>(false);
+  const [searchOpen, setSearchOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { profileData, setAccounts } = useAccountDetails();
   const { setAddTrades, setAddAcc } = calendarPopUp();
@@ -151,6 +154,35 @@ export default function RootLayout({
       setBacktestingOpen(true);
     }
   }, [pathname]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setSearchQuery("");
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const allNavItems = [
+    ...tradingItems,
+    ...analysisItems,
+    ...toolsItems,
+    ...backtestingSubItems,
+    ...bottomNavItems,
+  ];
+
+  const filteredNavItems = searchQuery
+    ? allNavItems.filter(item => 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : allNavItems;
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -350,13 +382,16 @@ export default function RootLayout({
         </motion.button>
       </div>
 
-      {/* Quick search hint */}
+      {/* Quick search button */}
       {isExpanded && (
-        <div className="mx-3 mt-2 px-2.5 py-1.5 rounded-md bg-muted/30 dark:bg-muted/50 border border-border flex items-center gap-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted transition-colors">
-          <Command className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[11px] text-muted-foreground flex-1">Quick search...</span>
-          <span className="text-[9px] text-muted-foreground/70 px-1 py-0.5 rounded bg-muted font-mono">K</span>
-        </div>
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="mx-3 mt-2 px-2.5 py-1.5 rounded-md bg-muted/30 dark:bg-muted/50 border border-border flex items-center gap-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted transition-colors w-[calc(100%-1.5rem)]"
+        >
+          <Search className="h-3 w-3 text-muted-foreground" />
+          <span className="text-[11px] text-muted-foreground flex-1 text-left">Quick search...</span>
+          <span className="text-[9px] text-muted-foreground/70 px-1 py-0.5 rounded bg-muted font-mono">⌘K</span>
+        </button>
       )}
 
       {/* Main Navigation */}
@@ -557,6 +592,76 @@ export default function RootLayout({
       <CalendarPopup />
       <AlertBox />
       <DjImgPopup />
+
+      {/* Search Modal */}
+      <AnimatePresence>
+        {searchOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
+              onClick={() => {
+                setSearchOpen(false);
+                setSearchQuery("");
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              transition={{ duration: 0.15 }}
+              className="fixed left-1/2 top-[20%] -translate-x-1/2 z-[101] w-full max-w-md"
+            >
+              <div className="bg-background border border-border rounded-xl shadow-2xl overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search pages..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    autoFocus
+                  />
+                  <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted font-mono">ESC</span>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto p-2">
+                  {filteredNavItems.length > 0 ? (
+                    filteredNavItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => {
+                            setSearchOpen(false);
+                            setSearchQuery("");
+                          }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <Icon className="h-4 w-4" style={{ color: item.color }} />
+                          <span className="text-sm">{item.name}</span>
+                          {item.badge && (
+                            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      No results found
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Overlay */}
       {mobileOpen && (
