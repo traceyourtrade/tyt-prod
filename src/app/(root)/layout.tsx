@@ -279,16 +279,14 @@ export default function RootLayout({
             whileHover={{ scale: 1.05, rotate: 2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/10 dark:ring-white/10 shadow-md shadow-black/5 dark:shadow-black/30 bg-sidebar-accent/50 dark:bg-white/5 flex items-center justify-center">
-              <Image
-                src="/images/logo-icon.png"
-                width={24}
-                height={24}
-                alt="ProJournX"
-                className="w-6 h-6 object-contain"
-                unoptimized
-              />
-            </div>
+            <Image
+              src="/images/logo-icon.png"
+              width={28}
+              height={28}
+              alt="ProJournX"
+              className="w-7 h-7 object-contain"
+              unoptimized
+            />
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </motion.div>
           
