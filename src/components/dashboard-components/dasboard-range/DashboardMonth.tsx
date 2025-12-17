@@ -16,6 +16,14 @@ import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
 
+import {
+  TradeDurationChart,
+  WinRateMetricsChart,
+  DailyCumulativePnLChart,
+  DrawdownChart,
+  ProgressTracker,
+} from '@/components/dashboard-analytics';
+
 interface TradeData {
   date: string;
   Profit: number;
@@ -42,6 +50,13 @@ const DashboardMonth: React.FC = () => {
     if (!account.tradeData) return [];
     return account.tradeData.filter(trade => isCurrentMonth(trade.date));
   });
+
+  const allTradeData = (selectedAccounts as Account[]).flatMap((account) => {
+    if (!account.tradeData) return [];
+    return account.tradeData;
+  });
+
+  const totalAccountBalance = calculateBalance(selectedAccounts);
 
   let data = Object.entries(
     (thisMonthData || []).reduce((acc: { [key: string]: number }, trade) => {
@@ -119,6 +134,27 @@ const DashboardMonth: React.FC = () => {
         {isWidgetVisible('radar') && (
           <div className="md:col-span-2">
             <Radar />
+          </div>
+        )}
+      </div>
+
+      {/* Advanced Analytics Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('trade-duration') && (
+          <TradeDurationChart trades={allTradeData} />
+        )}
+        {isWidgetVisible('win-rate-metrics') && (
+          <WinRateMetricsChart trades={allTradeData} />
+        )}
+        {isWidgetVisible('daily-cumulative-pnl') && (
+          <DailyCumulativePnLChart trades={allTradeData} />
+        )}
+        {isWidgetVisible('drawdown') && (
+          <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
+        )}
+        {isWidgetVisible('progress-tracker') && (
+          <div className="md:col-span-2">
+            <ProgressTracker trades={allTradeData} />
           </div>
         )}
       </div>

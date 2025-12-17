@@ -92,6 +92,51 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
     minCols: 2,
     minRows: 1,
   },
+  {
+    id: 'trade-duration',
+    name: 'Trade Duration',
+    description: 'Scatter plot showing P&L vs trade duration',
+    category: 'charts',
+    defaultSize: 'medium',
+    minCols: 1,
+    minRows: 1,
+  },
+  {
+    id: 'win-rate-metrics',
+    name: 'Win Rate Metrics',
+    description: 'Win %, Avg Win, Avg Loss over time',
+    category: 'charts',
+    defaultSize: 'medium',
+    minCols: 1,
+    minRows: 1,
+  },
+  {
+    id: 'daily-cumulative-pnl',
+    name: 'Daily & Cumulative P&L',
+    description: 'Combined daily bars and cumulative equity line',
+    category: 'charts',
+    defaultSize: 'medium',
+    minCols: 1,
+    minRows: 1,
+  },
+  {
+    id: 'drawdown',
+    name: 'Drawdown',
+    description: 'Peak-to-trough drawdown chart',
+    category: 'charts',
+    defaultSize: 'medium',
+    minCols: 1,
+    minRows: 1,
+  },
+  {
+    id: 'progress-tracker',
+    name: 'Progress Tracker',
+    description: 'GitHub-style trading activity heatmap',
+    category: 'charts',
+    defaultSize: 'large',
+    minCols: 2,
+    minRows: 1,
+  },
 ];
 
 export interface WidgetLayoutItem {
@@ -111,6 +156,11 @@ export const DEFAULT_DASHBOARD_LAYOUT: WidgetLayoutItem[] = [
   { widgetId: 'symbol-pnl', order: 6, visible: true, cols: 1 },
   { widgetId: 'hourly-pnl', order: 7, visible: true, cols: 1 },
   { widgetId: 'radar', order: 8, visible: true, cols: 2 },
+  { widgetId: 'trade-duration', order: 9, visible: true, cols: 1 },
+  { widgetId: 'win-rate-metrics', order: 10, visible: true, cols: 1 },
+  { widgetId: 'daily-cumulative-pnl', order: 11, visible: true, cols: 1 },
+  { widgetId: 'drawdown', order: 12, visible: true, cols: 1 },
+  { widgetId: 'progress-tracker', order: 13, visible: true, cols: 2 },
 ];
 
 export function getWidgetById(id: string): WidgetDefinition | undefined {
