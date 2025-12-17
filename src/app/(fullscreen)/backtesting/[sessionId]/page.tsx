@@ -1205,6 +1205,70 @@ export default function FullscreenBacktesting({
     tradeLinesRef.current = { entry: null, tp: null, sl: null };
   }, []);
 
+  // Track if entry line is currently being updated to prevent race conditions
+  const entryLineUpdatingRef = useRef(false);
+  const lastEntryPnLRef = useRef<number>(0);
+
+  // Update entry line label with current unrealized P&L
+  const updateEntryLineLabel = useCallback((trade: any, unrealizedPnL: number) => {
+    if (!tvWidgetRef.current || !trade) return;
+    
+    // Skip if P&L hasn't changed significantly (prevents unnecessary updates)
+    if (Math.abs(unrealizedPnL - lastEntryPnLRef.current) < 0.01) return;
+    
+    // Skip if already updating to prevent race conditions
+    if (entryLineUpdatingRef.current) return;
+    
+    try {
+      const chart = tvWidgetRef.current.activeChart();
+      if (!chart) return;
+      
+      entryLineUpdatingRef.current = true;
+      lastEntryPnLRef.current = unrealizedPnL;
+      
+      const tradeLotSize = trade.lotSize || lotSize;
+      const lotDisplay = tradeLotSize.toFixed(2);
+      const pnlSign = unrealizedPnL >= 0 ? '+' : '';
+      const entryLabel = `${lotDisplay} → ${pnlSign}${unrealizedPnL.toFixed(2)} USD`;
+      
+      // Remove old entry line if it exists
+      const oldEntryId = tradeLinesRef.current.entry;
+      if (oldEntryId) {
+        try { chart.removeEntity(oldEntryId); } catch (e) { /* already removed */ }
+      }
+      
+      // Create new entry line with updated label
+      chart.createShape(
+        { price: trade.entry },
+        {
+          shape: "horizontal_line",
+          lock: true,
+          disableSelection: true,
+          text: entryLabel,
+          overrides: {
+            linecolor: unrealizedPnL >= 0 ? "rgba(16, 185, 129, 0.9)" : "rgba(239, 68, 68, 0.9)",
+            linestyle: 2,
+            linewidth: 1,
+            showPrice: true,
+            showLabel: true,
+            horzLabelsAlign: "right",
+            textcolor: unrealizedPnL >= 0 ? "rgba(16, 185, 129, 1)" : "rgba(239, 68, 68, 1)",
+          },
+        }
+      ).then((newEntryId: any) => {
+        tradeLinesRef.current.entry = newEntryId;
+        entryLineUpdatingRef.current = false;
+      }).catch((e: any) => {
+        console.error("Failed to update entry line:", e);
+        entryLineUpdatingRef.current = false;
+      });
+      
+    } catch (e) {
+      console.error("Error updating entry line label:", e);
+      entryLineUpdatingRef.current = false;
+    }
+  }, [lotSize]);
+
   const drawTradeLines = useCallback((trade: any) => {
     if (!tvWidgetRef.current || !trade) return;
     
@@ -1217,6 +1281,35 @@ export default function FullscreenBacktesting({
       
       console.log("Drawing trade lines for:", trade);
       
+      // Calculate P&L values for each level
+      const tradeLotSize = trade.lotSize || lotSize;
+      const lotDisplay = tradeLotSize.toFixed(2);
+      
+      // Calculate potential P&L at TP level
+      let tpPnL = 0;
+      if (trade.target !== undefined) {
+        if (trade.type === "long") {
+          tpPnL = (trade.target - trade.entry) * tradeLotSize * 100000;
+        } else {
+          tpPnL = (trade.entry - trade.target) * tradeLotSize * 100000;
+        }
+      }
+      
+      // Calculate potential P&L at SL level
+      let slPnL = 0;
+      if (trade.stopLoss !== undefined) {
+        if (trade.type === "long") {
+          slPnL = (trade.stopLoss - trade.entry) * tradeLotSize * 100000;
+        } else {
+          slPnL = (trade.entry - trade.stopLoss) * tradeLotSize * 100000;
+        }
+      }
+      
+      // Format P&L labels like FX Replay: "0.90 -> +100.00 USD"
+      const tpLabel = `${lotDisplay} → ${tpPnL >= 0 ? '+' : ''}${tpPnL.toFixed(2)} USD`;
+      const slLabel = `${lotDisplay} → ${slPnL >= 0 ? '+' : ''}${slPnL.toFixed(2)} USD`;
+      const entryLabel = `${lotDisplay} → +0.00 USD`;
+      
       // Create entry line
       const entryPromise = chart.createShape(
         { price: trade.entry },
@@ -1224,7 +1317,7 @@ export default function FullscreenBacktesting({
           shape: "horizontal_line",
           lock: true,
           disableSelection: true,
-          text: "Entry",
+          text: entryLabel,
           overrides: {
             linecolor: "rgba(245, 158, 11, 0.9)",
             linestyle: 2,
@@ -1244,7 +1337,7 @@ export default function FullscreenBacktesting({
           shape: "horizontal_line",
           lock: false,
           disableSelection: false,
-          text: "TP",
+          text: tpLabel,
           overrides: {
             linecolor: "rgba(16, 185, 129, 0.9)",
             linestyle: 2,
@@ -1264,7 +1357,7 @@ export default function FullscreenBacktesting({
           shape: "horizontal_line",
           lock: false,
           disableSelection: false,
-          text: "SL",
+          text: slLabel,
           overrides: {
             linecolor: "rgba(239, 68, 68, 0.9)",
             linestyle: 2,
@@ -1296,7 +1389,7 @@ export default function FullscreenBacktesting({
     } catch (e) {
       console.error("Error drawing trade lines:", e);
     }
-  }, [removeTradeLines]);
+  }, [removeTradeLines, lotSize]);
 
   // Restore open trade after chart loads
   useEffect(() => {
@@ -1563,8 +1656,11 @@ export default function FullscreenBacktesting({
         }
       }
       dispatch({ type: "SET_UNREALISED_PL", payload: pnl });
+      
+      // Update entry line label with current unrealized P&L
+      updateEntryLineLabel(trade, pnl);
     }
-  }, [currentBarIndex, allBars, tradingState.activeTrades, lotSize, closeTrade, syncLinesToTradeState]);
+  }, [currentBarIndex, allBars, tradingState.activeTrades, lotSize, closeTrade, syncLinesToTradeState, updateEntryLineLabel]);
 
   useEffect(() => {
     if (!tradingState.activeTrades && tradingState.limitOrders.length > 0 && allBars[currentBarIndex]) {
