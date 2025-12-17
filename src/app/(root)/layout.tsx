@@ -203,11 +203,11 @@ export default function RootLayout({
         href={item.href}
         onClick={() => setMobileOpen(false)}
         className={cn(
-          "group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-all duration-200",
+          "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
           active 
             ? "bg-sidebar-accent text-sidebar-accent-foreground" 
             : "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
-          !showLabel && "justify-center px-1.5"
+          !showLabel && "justify-center px-2"
         )}
       >
         {active && (
@@ -225,7 +225,7 @@ export default function RootLayout({
         <div className="relative flex-shrink-0 transition-all duration-200">
           <Icon 
             className={cn(
-              "h-4 w-4 transition-all duration-200",
+              "h-[17px] w-[17px] transition-all duration-200",
               !active && "group-hover:scale-110"
             )}
             style={{ color: active ? item.color : undefined }}
@@ -279,13 +279,13 @@ export default function RootLayout({
             whileHover={{ scale: 1.05, rotate: 2 }}
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/10 dark:ring-white/10 shadow-md shadow-black/5 dark:shadow-black/30 bg-sidebar-accent/50 dark:bg-white/5 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg overflow-hidden ring-1 ring-white/10 dark:ring-white/10 shadow-md shadow-black/5 dark:shadow-black/30 bg-sidebar-accent/50 dark:bg-white/5 flex items-center justify-center">
               <Image
                 src="/images/logo-icon.png"
-                width={24}
-                height={24}
+                width={28}
+                height={28}
                 alt="ProJournX"
-                className="w-6 h-6 object-contain"
+                className="w-7 h-7 object-contain"
                 unoptimized
               />
             </div>
@@ -341,7 +341,7 @@ export default function RootLayout({
             "text-white",
             "shadow-lg shadow-[#4EBF94]/20",
             "hover:shadow-[0_8px_32px_rgba(78,191,148,0.35)]",
-            !isExpanded ? "px-0 w-8 h-8 mx-auto" : "px-4"
+            !isExpanded ? "px-0 w-9 h-9 mx-auto" : "px-4"
           )}
           onClick={() => {
             setAddTrades();
@@ -561,7 +561,7 @@ export default function RootLayout({
       <aside
         className={cn(
           "fixed left-0 top-0 z-50 hidden lg:flex h-screen flex-col transition-all duration-300 ease-out p-1.5",
-          collapsed ? "w-[60px]" : "w-[240px]",
+          collapsed ? "w-[68px]" : "w-[250px]",
         )}
       >
         <div className={cn(
@@ -606,8 +606,8 @@ export default function RootLayout({
       <div
         className={cn(
           "min-h-screen transition-all duration-300",
-          "lg:ml-[60px]",
-          !collapsed && "lg:ml-[240px]",
+          "lg:ml-[68px]",
+          !collapsed && "lg:ml-[250px]",
         )}
       >
         {/* Top Bar */}
