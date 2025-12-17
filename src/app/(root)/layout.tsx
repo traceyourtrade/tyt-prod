@@ -387,6 +387,72 @@ export default function RootLayout({
           ))}
         </div>
 
+        {/* Backtesting Section - Premium Feature */}
+        <div className="mb-2 mt-3">
+          {isExpanded && (
+            <div className="px-3 mb-1.5">
+              <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
+                Backtesting
+              </span>
+            </div>
+          )}
+          <div className={cn(
+            "relative rounded-lg overflow-hidden",
+            isExpanded && "mx-1 bg-gradient-to-r from-fuchsia-500/10 via-purple-500/5 to-transparent border border-fuchsia-500/20"
+          )}>
+            {/* Premium glow effect */}
+            {isExpanded && (
+              <div className="absolute -top-4 -right-4 w-16 h-16 bg-fuchsia-500/20 rounded-full blur-2xl pointer-events-none" />
+            )}
+            
+            <button
+              onClick={() => setBacktestingOpen(!backtestingOpen)}
+              className={cn(
+                "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
+                "text-fuchsia-400 hover:text-fuchsia-300",
+                !isExpanded && "justify-center rounded-md hover:bg-fuchsia-500/10"
+              )}
+            >
+              <CandlestickChart 
+                className="h-[17px] w-[17px] flex-shrink-0"
+                style={{ color: '#E879F9' }}
+              />
+              {isExpanded && (
+                <>
+                  <span className="flex-1 text-left">Backtesting</span>
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white uppercase tracking-wide">
+                    Pro
+                  </span>
+                  <motion.div
+                    animate={{ rotate: backtestingOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="h-4 w-4 text-fuchsia-400/60" />
+                  </motion.div>
+                </>
+              )}
+            </button>
+            
+            <AnimatePresence>
+              {backtestingOpen && isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pb-2 px-1 space-y-0.5">
+                    {backtestingSubItems.map((item) => (
+                      <NavItem key={item.name} item={item} showLabel={true} />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
         {/* Analysis Section */}
         <SectionLabel label="Analysis" />
         <div className="space-y-0.5 mb-1">
@@ -401,53 +467,6 @@ export default function RootLayout({
           {toolsItems.map((item) => (
             <NavItem key={item.name} item={item} showLabel={isExpanded} />
           ))}
-        </div>
-
-        {/* Backtesting Section - Collapsible */}
-        <div className="mb-1 mt-1">
-          <button
-            onClick={() => setBacktestingOpen(!backtestingOpen)}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200",
-              "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
-              pathname.startsWith('/backtesting') && "text-sidebar-accent-foreground bg-sidebar-accent/50",
-              !isExpanded && "justify-center px-2"
-            )}
-          >
-            <CandlestickChart 
-              className="h-[18px] w-[18px] flex-shrink-0"
-              style={{ color: pathname.startsWith('/backtesting') ? '#E879F9' : undefined }}
-            />
-            {isExpanded && (
-              <>
-                <span className="flex-1 text-left">Backtesting</span>
-                <motion.div
-                  animate={{ rotate: backtestingOpen ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </motion.div>
-              </>
-            )}
-          </button>
-          
-          <AnimatePresence>
-            {backtestingOpen && isExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="pl-4 mt-1 space-y-0.5 border-l border-border ml-5">
-                  {backtestingSubItems.map((item) => (
-                    <NavItem key={item.name} item={item} showLabel={true} />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
       </nav>
