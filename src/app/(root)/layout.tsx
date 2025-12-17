@@ -467,46 +467,53 @@ export default function RootLayout({
         </div>
 
         {/* Premium User Card */}
-        <div className="p-2 pt-0">
+        <div className={cn("p-2 pt-0", !isExpanded && "px-1")}>
           {profileData.fullName && (
             <motion.div 
               className={cn(
-                "relative rounded-xl overflow-hidden transition-all duration-200 cursor-pointer",
-                !isExpanded && "p-1"
+                "relative rounded-lg overflow-hidden transition-all duration-200 cursor-pointer",
+                isExpanded && "rounded-xl"
               )}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-muted/50 via-muted/20 to-transparent" />
-              <div className="absolute inset-0 border border-border rounded-xl" />
+              {isExpanded && (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-muted/50 via-muted/20 to-transparent" />
+                  <div className="absolute inset-0 border border-border rounded-xl" />
+                </>
+              )}
               
               <Link
                 href="/settings"
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "relative flex items-center gap-3 p-3",
-                  !isExpanded && "justify-center p-2"
+                  "relative flex items-center gap-3 p-2.5",
+                  !isExpanded && "justify-center p-1.5"
                 )}
               >
-                {/* Avatar with activity ring */}
+                {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94] to-emerald-600 opacity-30 blur-sm" />
-                  <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-[#4EBF94]/40 to-[#4EBF94]/10 flex items-center justify-center ring-2 ring-[#4EBF94]/30">
-                    <span className="text-sm font-bold text-[#4EBF94]">
+                  <div className={cn(
+                    "relative rounded-lg bg-gradient-to-br from-[#4EBF94]/40 to-[#4EBF94]/10 flex items-center justify-center ring-1 ring-[#4EBF94]/30",
+                    isExpanded ? "w-8 h-8" : "w-7 h-7"
+                  )}>
+                    <span className={cn(
+                      "font-bold text-[#4EBF94]",
+                      isExpanded ? "text-xs" : "text-[10px]"
+                    )}>
                       {userInitials}
                     </span>
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4EBF94] rounded-full border-2 border-sidebar flex items-center justify-center">
-                    <Zap className="w-1.5 h-1.5 text-sidebar" />
-                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4EBF94] rounded-full border-2 border-sidebar" />
                 </div>
                 
                 {isExpanded && (
                   <div className="overflow-hidden flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-foreground truncate">
+                    <p className="text-[12px] font-semibold text-foreground truncate">
                       {profileData.fullName}
                     </p>
-                    <p className="text-[11px] text-muted-foreground truncate">
+                    <p className="text-[10px] text-muted-foreground truncate">
                       {maskedEmail}
                     </p>
                   </div>
@@ -518,15 +525,15 @@ export default function RootLayout({
           {/* Logout button */}
           <motion.button
             className={cn(
-              "group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 mt-1 text-[13px] font-medium transition-all duration-200",
+              "group w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 mt-1 text-[12px] font-medium transition-all duration-200",
               "text-muted-foreground hover:text-red-500 hover:bg-red-500/10",
-              !isExpanded && "justify-center px-2"
+              !isExpanded && "justify-center px-1.5"
             )}
             onClick={handleLogout}
-            whileHover={{ x: isExpanded ? 3 : 0 }}
+            whileHover={{ x: isExpanded ? 2 : 0 }}
             whileTap={{ scale: 0.98 }}
           >
-            <LogOut className="h-[18px] w-[18px] flex-shrink-0 transition-transform group-hover:scale-110" />
+            <LogOut className="h-4 w-4 flex-shrink-0 transition-transform group-hover:scale-110" />
             {isExpanded && <span>Log out</span>}
           </motion.button>
         </div>
