@@ -42,9 +42,18 @@ export default function TradeChart({
   const [candleCount, setCandleCount] = useState(0);
 
   useEffect(() => {
-    if (!chartContainerRef.current || !symbol || !date) return;
+    console.log('[TradeChart] useEffect triggered:', { symbol, date, hasContainer: !!chartContainerRef.current });
+    
+    if (!chartContainerRef.current || !symbol || !date) {
+      console.log('[TradeChart] Early return - missing:', { 
+        hasContainer: !!chartContainerRef.current, 
+        symbol, 
+        date
+      });
+      return;
+    }
 
-    let isMounted = true;
+    let isActive = true;
 
     const initChart = async () => {
       setLoading(true);
@@ -52,12 +61,14 @@ export default function TradeChart({
 
       try {
         // Fetch candle data
+        console.log('[TradeChart] Fetching candle data...');
         const response = await fetch(
           `/api/trade-chart?symbol=${encodeURIComponent(symbol)}&date=${date}&interval=${interval}`
         );
         const data = await response.json();
+        console.log('[TradeChart] API response:', data);
 
-        if (!isMounted) return;
+        if (!isActive) return;
 
         if (data.error && !data.candles) {
           setError(data.error);
@@ -74,6 +85,8 @@ export default function TradeChart({
         }
 
         setCandleCount(candles.length);
+        console.log('[TradeChart] Creating chart with', candles.length, 'candles');
+        console.log('[TradeChart] Container dimensions:', chartContainerRef.current?.clientWidth, 'x', chartContainerRef.current?.clientHeight);
 
         // Create chart
         if (chartRef.current) {
@@ -240,14 +253,15 @@ export default function TradeChart({
         window.addEventListener("resize", handleResize);
         handleResize();
 
+        console.log('[TradeChart] Chart created successfully, setting loading to false');
         setLoading(false);
 
         return () => {
           window.removeEventListener("resize", handleResize);
         };
       } catch (err) {
-        console.error("Chart error:", err);
-        if (isMounted) {
+        console.error("[TradeChart] Chart error:", err);
+        if (isActive) {
           setError("Failed to load chart data");
           setLoading(false);
         }
@@ -257,7 +271,7 @@ export default function TradeChart({
     initChart();
 
     return () => {
-      isMounted = false;
+      isActive = false;
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
@@ -303,54 +317,56 @@ export default function TradeChart({
     return closestCandle.time as Time;
   }
 
-  if (loading) {
-    return (
-      <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground">
-        <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-        <p className="text-sm">Loading chart for {symbol}...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground">
-        <AlertCircle className="w-8 h-8 text-amber-500/50 mb-3" />
-        <p className="text-sm text-center max-w-xs">{error}</p>
-        <p className="text-xs text-muted-foreground/60 mt-2">Try uploading a screenshot instead</p>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full w-full relative">
-      {/* Chart Info Overlay */}
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-3">
-        <div className="px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur-sm border border-white/10 flex items-center gap-2">
-          <span className="text-sm font-semibold text-foreground">{symbol}</span>
-          <span className="text-xs text-muted-foreground">{interval}</span>
-        </div>
-        {entryPrice && (
-          <div className="px-2 py-1 rounded bg-profit/10 border border-profit/20 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-profit" />
-            <span className="text-xs text-profit">${entryPrice.toFixed(2)}</span>
-          </div>
-        )}
-        {exitPrice && (
-          <div className="px-2 py-1 rounded bg-loss/10 border border-loss/20 flex items-center gap-1">
-            <TrendingDown className="w-3 h-3 text-loss" />
-            <span className="text-xs text-loss">${exitPrice.toFixed(2)}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Candle Count */}
-      <div className="absolute bottom-3 right-3 z-10">
-        <span className="text-[10px] text-muted-foreground/60">{candleCount} candles</span>
-      </div>
-
-      {/* Chart Container */}
+      {/* Chart Container - ALWAYS render so ref is available */}
       <div ref={chartContainerRef} className="h-full w-full" />
+
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-[#0a0a0f]/80 backdrop-blur-sm z-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
+          <p className="text-sm">Loading chart for {symbol}...</p>
+        </div>
+      )}
+
+      {/* Error Overlay */}
+      {error && !loading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground bg-[#0a0a0f]/80 backdrop-blur-sm z-20">
+          <AlertCircle className="w-8 h-8 text-amber-500/50 mb-3" />
+          <p className="text-sm text-center max-w-xs">{error}</p>
+          <p className="text-xs text-muted-foreground/60 mt-2">Try uploading a screenshot instead</p>
+        </div>
+      )}
+
+      {/* Chart Info Overlay - only show when not loading/error */}
+      {!loading && !error && (
+        <>
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-3">
+            <div className="px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur-sm border border-white/10 flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">{symbol}</span>
+              <span className="text-xs text-muted-foreground">{interval}</span>
+            </div>
+            {entryPrice && (
+              <div className="px-2 py-1 rounded bg-profit/10 border border-profit/20 flex items-center gap-1">
+                <TrendingUp className="w-3 h-3 text-profit" />
+                <span className="text-xs text-profit">${entryPrice.toFixed(2)}</span>
+              </div>
+            )}
+            {exitPrice && (
+              <div className="px-2 py-1 rounded bg-loss/10 border border-loss/20 flex items-center gap-1">
+                <TrendingDown className="w-3 h-3 text-loss" />
+                <span className="text-xs text-loss">${exitPrice.toFixed(2)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Candle Count */}
+          <div className="absolute bottom-3 right-3 z-10">
+            <span className="text-[10px] text-muted-foreground/60">{candleCount} candles</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }

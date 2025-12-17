@@ -32,29 +32,29 @@ const generateDemoTradeData = () => {
   const strategies = ["Momentum", "Breakout", "Reversal", "Scalping", "Swing"];
   const tradingHours = ["09", "10", "11", "12", "13", "14", "15"];
 
-  // Recent trading days (last 30 days from Dec 7, 2025)
-  // 20 trading days spread across Nov-Dec 2025
+  // Recent trading days (last 30 days from Dec 2024 - use past dates for API compatibility)
+  // 20 trading days spread across Nov-Dec 2024
   const tradingDays = [
-    "2025-11-11",
-    "2025-11-12",
-    "2025-11-13",
-    "2025-11-14",
-    "2025-11-15",
-    "2025-11-18",
-    "2025-11-19",
-    "2025-11-20",
-    "2025-11-21",
-    "2025-11-22",
-    "2025-11-25",
-    "2025-11-26",
-    "2025-11-27",
-    "2025-11-29",
-    "2025-12-02",
-    "2025-12-03",
-    "2025-12-04",
-    "2025-12-05",
-    "2025-12-06",
-    "2025-12-07",
+    "2024-11-11",
+    "2024-11-12",
+    "2024-11-13",
+    "2024-11-14",
+    "2024-11-15",
+    "2024-11-18",
+    "2024-11-19",
+    "2024-11-20",
+    "2024-11-21",
+    "2024-11-22",
+    "2024-11-25",
+    "2024-11-26",
+    "2024-11-27",
+    "2024-11-29",
+    "2024-12-02",
+    "2024-12-03",
+    "2024-12-04",
+    "2024-12-05",
+    "2024-12-06",
+    "2024-12-09",
   ];
 
   // Target: $6,567 profit, 67% win rate over 20 trading days
@@ -100,6 +100,10 @@ const generateDemoTradeData = () => {
       .toString()
       .padStart(2, "0");
 
+    const durationMins = Math.floor(Math.random() * 120) + 5;
+    const exitHour = parseInt(hour) + Math.floor((parseInt(minute) + durationMins) / 60);
+    const exitMinute = ((parseInt(minute) + durationMins) % 60).toString().padStart(2, "0");
+    
     trades.push({
       date: dateStr,
       symbol: symbol,
@@ -110,8 +114,10 @@ const generateDemoTradeData = () => {
       exitPrice: (Math.random() * 500 + 50).toFixed(2),
       quantity: Math.floor(Math.random() * 100) + 10,
       side: Math.random() > 0.5 ? "Long" : "Short",
-      duration: `${Math.floor(Math.random() * 120) + 5}m`,
+      Type: Math.random() > 0.5 ? "Long" : "Short",
+      duration: `${durationMins}m`,
       EntryTime: `${hour}:${minute}:00`,
+      ExitTime: `${Math.min(exitHour, 16)}:${exitMinute}:00`,
     });
   }
   return trades;
