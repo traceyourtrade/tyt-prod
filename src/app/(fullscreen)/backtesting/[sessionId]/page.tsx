@@ -463,19 +463,19 @@ export default function FullscreenBacktesting({
     sessionStartTimeRef.current = Date.now();
   }, [sessionId, router]);
 
-  // Auto-save progress every 30 seconds - use refs to avoid restarting interval on state changes
+  // Auto-save progress every 30 seconds - use timestamp ref as source of truth
   useEffect(() => {
-    if (!sessionData || allBars.length === 0) return;
+    if (!sessionData || !allTfDataLoadedRef.current) return;
 
     const saveProgress = async () => {
       const currentSession = sessionDataRef.current;
       const currentBalance = totalBalanceRef.current;
-      const currentBar = allBars[currentBarIndexRef.current];
-      if (!currentBar || !currentSession) return;
+      const currentTs = currentReplayTimeRef.current;
+      if (!currentTs || !currentSession) return;
       
       const elapsedMinutes = Math.floor((Date.now() - sessionStartTimeRef.current) / 60000);
       const newTimeInvested = (currentSession.timeInvested || 0) + elapsedMinutes;
-      sessionStartTimeRef.current = Date.now(); // Reset for next interval
+      sessionStartTimeRef.current = Date.now();
       
       try {
         await fetch('/api/backtest-sessions', {
@@ -483,13 +483,12 @@ export default function FullscreenBacktesting({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sessionId: parseInt(sessionId),
-            progressPointer: currentBar.time,
+            progressPointer: currentTs,
             currentBalance: currentBalance,
             timeInvested: newTimeInvested,
           }),
         });
-        // Update local session data via ref (avoid state update that would trigger effect)
-        sessionDataRef.current = { ...currentSession, timeInvested: newTimeInvested, progressPointer: currentBar.time };
+        sessionDataRef.current = { ...currentSession, timeInvested: newTimeInvested, progressPointer: currentTs };
       } catch (error) {
         console.error("Failed to save progress:", error);
       }
@@ -503,26 +502,24 @@ export default function FullscreenBacktesting({
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionData?.sessionId, sessionId, allBars.length]);
+  }, [sessionData?.sessionId, sessionId]);
 
-  // Save progress when leaving page - use refs for current values
+  // Save progress when leaving page - use timestamp ref as source of truth
   useEffect(() => {
     const handleBeforeUnload = () => {
       const currentSession = sessionDataRef.current;
       const currentBalance = totalBalanceRef.current;
-      if (!currentSession || allBars.length === 0) return;
-      const currentBar = allBars[currentBarIndexRef.current];
-      if (!currentBar) return;
+      const currentTs = currentReplayTimeRef.current;
+      if (!currentSession || !currentTs) return;
       
       const elapsedMinutes = Math.floor((Date.now() - sessionStartTimeRef.current) / 60000);
       
-      // Use fetch with keepalive for PATCH requests (sendBeacon only supports POST)
       fetch('/api/backtest-sessions', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: parseInt(sessionId),
-          progressPointer: currentBar.time,
+          progressPointer: currentTs,
           currentBalance: currentBalance,
           timeInvested: (currentSession.timeInvested || 0) + elapsedMinutes,
         }),
@@ -532,8 +529,8 @@ export default function FullscreenBacktesting({
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId, allBars.length]);
+  // eslint-disable-next-line react-hooks-deps
+  }, [sessionId]);
 
   const getResolutionMs = (resolution: string): number => {
     if (resolution === '1D') return 24 * 60 * 60 * 1000;
@@ -541,15 +538,84 @@ export default function FullscreenBacktesting({
     if (resolution === '1M') return 30 * 24 * 60 * 60 * 1000;
     return parseInt(resolution) * 60 * 1000;
   };
+
+  const getResolutionSeconds = (resolution: string): number => {
+    if (resolution === '1D') return 86400;
+    if (resolution === '1W') return 604800;
+    if (resolution === '1M') return 2592000;
+    return parseInt(resolution) * 60;
+  };
   
   const sessionEndTsRef = useRef<number>(0);
+  const sessionStartTsRef = useRef<number>(0);
   const allSessionBarsRef = useRef<any[]>([]);
   const fullSessionBarsRef = useRef<Map<string, any[]>>(new Map());
   const allTfDataLoadedRef = useRef<boolean>(false);
   const currentReplayTimeRef = useRef<number>(0);
+  const lastPushedBarTimeRef = useRef<number>(0);
   
-  const PRELOAD_TIMEFRAMES = ["1", "5", "15", "60", "240", "1D"];
+  const PRELOAD_TIMEFRAMES = ["1", "5", "15", "30", "60", "120", "240", "1D", "1W"];
   
+  const getVisibleBarsFromCache = useCallback((resolution: string, currentTs: number): any[] => {
+    const fullBars = fullSessionBarsRef.current.get(resolution);
+    if (!fullBars || fullBars.length === 0) return [];
+    
+    const resMs = getResolutionMs(resolution);
+    const bucketStartMs = Math.floor(currentTs / resMs) * resMs;
+    
+    const visibleBars: any[] = [];
+    
+    for (const bar of fullBars) {
+      if (bar.time < bucketStartMs) {
+        visibleBars.push({ ...bar });
+      } else if (bar.time <= currentTs) {
+        visibleBars.push({ ...bar, time: bucketStartMs });
+        break;
+      } else {
+        break;
+      }
+    }
+    
+    return visibleBars;
+  }, []);
+  
+  const updateChartWithTimestamp = useCallback((newTimestamp: number, forceUpdate = false) => {
+    const fullBars = fullSessionBarsRef.current.get(currentInterval);
+    if (!fullBars || fullBars.length === 0) return;
+    
+    const resMs = getResolutionMs(currentInterval);
+    const bucketStartMs = Math.floor(newTimestamp / resMs) * resMs;
+    
+    const visibleBars = getVisibleBarsFromCache(currentInterval, newTimestamp);
+    if (visibleBars.length === 0) return;
+    
+    const lastBar = visibleBars[visibleBars.length - 1];
+    
+    if (onRealtimeCallbackRef.current && lastBar) {
+      if (forceUpdate || lastBar.time !== lastPushedBarTimeRef.current) {
+        onRealtimeCallbackRef.current({
+          time: lastBar.time,
+          open: lastBar.open,
+          high: lastBar.high,
+          low: lastBar.low,
+          close: lastBar.close,
+          volume: lastBar.volume || 0,
+        });
+        lastPushedBarTimeRef.current = lastBar.time;
+      }
+    }
+    
+    setAllBars(visibleBars);
+    allSessionBarsRef.current = visibleBars;
+    setCurrentBarIndex(visibleBars.length - 1);
+    
+    const isEnd = newTimestamp >= sessionEndTsRef.current;
+    setIsEndReached(isEnd);
+    
+    currentReplayTimeRef.current = newTimestamp;
+    replayTimestampRef.current = newTimestamp;
+  }, [currentInterval, getVisibleBarsFromCache]);
+
   useEffect(() => {
     if (!sessionData || !fromDate || !toDate || !sessionData.symbol) return;
     if (allTfDataLoadedRef.current) return;
@@ -560,6 +626,7 @@ export default function FullscreenBacktesting({
       const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
       const sessionEndTs = Math.floor(new Date(toDate).getTime() / 1000);
       sessionEndTsRef.current = sessionEndTs * 1000;
+      sessionStartTsRef.current = fromTs * 1000;
       
       setIsLoading(true);
       
@@ -593,6 +660,36 @@ export default function FullscreenBacktesting({
         
         allTfDataLoadedRef.current = true;
         
+        let earliestTs = sessionStartTsRef.current;
+        let latestTs = sessionEndTsRef.current;
+        let foundData = false;
+        
+        const minuteBars = fullSessionBarsRef.current.get("1") || [];
+        if (minuteBars.length > 0) {
+          earliestTs = minuteBars[0].time;
+          latestTs = minuteBars[minuteBars.length - 1].time + 60000;
+          foundData = true;
+        } else {
+          for (const [tf, bars] of fullSessionBarsRef.current.entries()) {
+            if (bars.length > 0) {
+              const resMs = getResolutionMs(tf);
+              if (!foundData || bars[0].time < earliestTs) {
+                earliestTs = bars[0].time;
+              }
+              const lastBarEnd = bars[bars.length - 1].time + resMs;
+              if (!foundData || lastBarEnd > latestTs) {
+                latestTs = lastBarEnd;
+              }
+              foundData = true;
+            }
+          }
+        }
+        
+        if (foundData) {
+          sessionStartTsRef.current = earliestTs;
+          sessionEndTsRef.current = latestTs;
+        }
+        
         const initialBars = fullSessionBarsRef.current.get(currentInterval) || [];
         if (initialBars.length > 0) {
           let maxDecimalPlaces = 0;
@@ -607,31 +704,26 @@ export default function FullscreenBacktesting({
           });
           setDecimalPlaces(maxDecimalPlaces);
           
-          const resMs = getResolutionMs(currentInterval);
-          const savedPointer = replayTimestampRef.current || sessionData?.progressPointer;
+          const savedPointer = sessionData?.progressPointer;
+          let initialTs: number;
           
-          let initialIndex = initialBars.length >= 6 ? 5 : Math.max(0, initialBars.length - 1);
-          
-          if (savedPointer) {
-            for (let i = 0; i < initialBars.length; i++) {
-              const barEnd = initialBars[i].time + resMs;
-              if (savedPointer <= barEnd) {
-                initialIndex = i;
-                break;
-              }
-            }
+          if (savedPointer && savedPointer > sessionStartTsRef.current) {
+            initialTs = savedPointer;
+          } else {
+            const resMs = getResolutionMs(currentInterval);
+            const initialBarCount = Math.min(6, initialBars.length);
+            initialTs = initialBars[initialBarCount - 1].time + resMs;
           }
           
-          const visibleBars = initialBars.slice(0, initialIndex + 1);
+          currentReplayTimeRef.current = initialTs;
+          replayTimestampRef.current = initialTs;
+          
+          const visibleBars = getVisibleBarsFromCache(currentInterval, initialTs);
           setAllBars(visibleBars);
           allSessionBarsRef.current = visibleBars;
-          setCurrentBarIndex(initialIndex);
+          setCurrentBarIndex(visibleBars.length - 1);
           
-          const currentBar = initialBars[initialIndex];
-          currentReplayTimeRef.current = currentBar.time + resMs;
-          replayTimestampRef.current = currentReplayTimeRef.current;
-          
-          setIsEndReached(initialIndex >= initialBars.length - 1);
+          setIsEndReached(initialTs >= sessionEndTsRef.current);
         }
       } catch (error) {
         console.error("Error preloading timeframes:", error);
@@ -644,59 +736,70 @@ export default function FullscreenBacktesting({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionData?.symbol, sessionData?.market, fromDate, toDate]);
   
+  const aggregateBarsFromMinute = useCallback((targetResolution: string): any[] => {
+    const minuteBars = fullSessionBarsRef.current.get("1");
+    if (!minuteBars || minuteBars.length === 0) return [];
+    
+    const targetMs = getResolutionMs(targetResolution);
+    const aggregatedMap = new Map<number, any>();
+    
+    for (const bar of minuteBars) {
+      const bucketStart = Math.floor(bar.time / targetMs) * targetMs;
+      
+      const existing = aggregatedMap.get(bucketStart);
+      if (existing) {
+        existing.high = Math.max(existing.high, bar.high);
+        existing.low = Math.min(existing.low, bar.low);
+        existing.close = bar.close;
+        existing.volume = (existing.volume || 0) + (bar.volume || 0);
+      } else {
+        aggregatedMap.set(bucketStart, {
+          time: bucketStart,
+          open: bar.open,
+          high: bar.high,
+          low: bar.low,
+          close: bar.close,
+          volume: bar.volume || 0,
+        });
+      }
+    }
+    
+    return Array.from(aggregatedMap.values()).sort((a, b) => a.time - b.time);
+  }, []);
+
   useEffect(() => {
     if (!allTfDataLoadedRef.current || !sessionData) return;
     
-    const fullBars = fullSessionBarsRef.current.get(currentInterval);
+    let fullBars = fullSessionBarsRef.current.get(currentInterval);
+    
     if (!fullBars || fullBars.length === 0) {
-      const fetchMissingTf = async () => {
-        const market = sessionData.market || 'FOREX';
-        const rawSymbol = sessionData.symbol;
-        const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
-        const sessionEndTs = Math.floor(sessionEndTsRef.current / 1000);
-        
-        setIsLoading(true);
-        try {
-          const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${sessionEndTs}&from=${fromTs}`;
-          const response = await fetch(apiUrl);
-          const data = await response.json();
-          
-          if (data && data.s === 'ok' && data.t && data.t.length > 0) {
-            const bars = data.t.map((time: number, i: number) => ({
-              time: time * 1000,
-              open: data.o[i],
-              high: data.h[i],
-              low: data.l[i],
-              close: data.c[i],
-              volume: data.v?.[i] || 0,
-            }));
-            fullSessionBarsRef.current.set(currentInterval, bars);
-            updateVisibleBarsForCurrentTime(bars);
-          }
-        } catch (error) {
-          console.error("Error fetching missing TF:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchMissingTf();
+      const aggregatedBars = aggregateBarsFromMinute(currentInterval);
+      if (aggregatedBars.length > 0) {
+        fullSessionBarsRef.current.set(currentInterval, aggregatedBars);
+        fullBars = aggregatedBars;
+      }
+    }
+    
+    if (!fullBars || fullBars.length === 0) {
+      console.warn(`No data available for timeframe ${currentInterval}`);
       return;
     }
     
-    updateVisibleBarsForCurrentTime(fullBars);
+    const currentTs = currentReplayTimeRef.current;
+    if (currentTs > 0) {
+      const visibleBars = getVisibleBarsFromCache(currentInterval, currentTs);
+      setAllBars(visibleBars);
+      allSessionBarsRef.current = visibleBars;
+      setCurrentBarIndex(visibleBars.length - 1);
+      lastPushedBarTimeRef.current = 0;
+    }
     
     if (tvWidgetRef.current && tvWidgetReadyRef.current) {
       try {
         tvWidgetRef.current.activeChart().setResolution(currentInterval as any);
       } catch (e) {
-        console.log("Could not set resolution via API, rebuilding chart");
-        tvWidgetRef.current.remove();
-        tvWidgetRef.current = null;
-        tvWidgetReadyRef.current = false;
+        console.log("Resolution switch via API, chart will update");
       }
-    } else if (tvWidgetRef.current && !tvWidgetReadyRef.current) {
-      tvWidgetRef.current.remove();
-      tvWidgetRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentInterval]);
@@ -705,25 +808,12 @@ export default function FullscreenBacktesting({
     const currentTime = currentReplayTimeRef.current || replayTimestampRef.current;
     if (!currentTime || fullBars.length === 0) return;
     
-    const resMs = getResolutionMs(currentInterval);
-    
-    let targetIndex = 0;
-    for (let i = 0; i < fullBars.length; i++) {
-      const barStart = fullBars[i].time;
-      const barEnd = barStart + resMs;
-      if (currentTime <= barEnd) {
-        targetIndex = i;
-        break;
-      }
-      targetIndex = i;
-    }
-    
-    const visibleBars = fullBars.slice(0, targetIndex + 1);
+    const visibleBars = getVisibleBarsFromCache(currentInterval, currentTime);
     setAllBars(visibleBars);
     allSessionBarsRef.current = visibleBars;
-    setCurrentBarIndex(targetIndex);
-    setIsEndReached(targetIndex >= fullBars.length - 1);
-  }, [currentInterval]);
+    setCurrentBarIndex(visibleBars.length - 1);
+    setIsEndReached(currentTime >= sessionEndTsRef.current);
+  }, [currentInterval, getVisibleBarsFromCache]);
 
   useEffect(() => {
     if (allBars.length === 0 || tvWidgetRef.current || !chartContainerRef.current) {
@@ -1673,12 +1763,11 @@ export default function FullscreenBacktesting({
   }, []);
 
   const handleNext = useCallback(() => {
-    const fullBars = fullSessionBarsRef.current.get(currentInterval) || [];
     const resMs = getResolutionMs(currentInterval);
     const currentTime = currentReplayTimeRef.current;
     
-    const nextBoundary = Math.ceil(currentTime / resMs) * resMs;
-    const newTime = nextBoundary === currentTime ? currentTime + resMs : nextBoundary;
+    const currentBucket = Math.floor(currentTime / resMs) * resMs;
+    const newTime = currentBucket + resMs;
     
     if (newTime > sessionEndTsRef.current) {
       setIsPlaying(false);
@@ -1686,191 +1775,57 @@ export default function FullscreenBacktesting({
       return;
     }
     
-    let targetIndex = 0;
-    for (let i = 0; i < fullBars.length; i++) {
-      const barEnd = fullBars[i].time + resMs;
-      if (newTime <= barEnd) {
-        targetIndex = i;
-        break;
-      }
-      targetIndex = i;
-    }
-    
-    const nextBar = fullBars[targetIndex];
-    if (!nextBar) {
-      setIsPlaying(false);
-      setIsEndReached(true);
-      return;
-    }
-    
-    const newVisibleBars = fullBars.slice(0, targetIndex + 1);
-    setAllBars(newVisibleBars);
-    allSessionBarsRef.current = newVisibleBars;
-    setCurrentBarIndex(targetIndex);
-    
-    if (onRealtimeCallbackRef.current) {
-      onRealtimeCallbackRef.current({
-        ...nextBar,
-        time: nextBar.time,
-      });
-    }
-    
-    currentReplayTimeRef.current = newTime;
-    replayTimestampRef.current = newTime;
-    setIsEndReached(targetIndex >= fullBars.length - 1);
-  }, [currentInterval]);
+    updateChartWithTimestamp(newTime);
+  }, [currentInterval, updateChartWithTimestamp]);
 
   const handlePrev = useCallback(() => {
-    const fullBars = fullSessionBarsRef.current.get(currentInterval) || [];
     const resMs = getResolutionMs(currentInterval);
     const currentTime = currentReplayTimeRef.current;
     
-    const currentBoundary = Math.floor(currentTime / resMs) * resMs;
-    const newTime = currentTime === currentBoundary ? currentTime - resMs : currentBoundary;
+    const currentBucket = Math.floor(currentTime / resMs) * resMs;
+    const newTime = currentBucket - resMs;
     
-    const sessionStartMs = fullBars.length > 0 ? fullBars[0].time : 0;
-    if (newTime < sessionStartMs + resMs) return;
+    if (newTime < sessionStartTsRef.current) return;
     
-    let targetIndex = 0;
-    for (let i = 0; i < fullBars.length; i++) {
-      const barEnd = fullBars[i].time + resMs;
-      if (newTime <= barEnd) {
-        targetIndex = i;
-        break;
-      }
-      targetIndex = i;
-    }
-    
-    const prevBar = fullBars[targetIndex];
-    if (!prevBar) return;
-    
-    const newVisibleBars = fullBars.slice(0, targetIndex + 1);
-    setAllBars(newVisibleBars);
-    allSessionBarsRef.current = newVisibleBars;
-    setCurrentBarIndex(targetIndex);
-    
-    currentReplayTimeRef.current = newTime;
-    replayTimestampRef.current = newTime;
-    setIsEndReached(false);
-  }, [currentInterval]);
+    updateChartWithTimestamp(newTime);
+  }, [currentInterval, updateChartWithTimestamp]);
 
   const handleNext10 = useCallback(() => {
-    const fullBars = fullSessionBarsRef.current.get(currentInterval) || [];
     const resMs = getResolutionMs(currentInterval);
     const currentTime = currentReplayTimeRef.current;
     
     const newTime = Math.min(currentTime + (resMs * 10), sessionEndTsRef.current);
     
-    let targetIndex = 0;
-    for (let i = 0; i < fullBars.length; i++) {
-      const barEnd = fullBars[i].time + resMs;
-      if (newTime <= barEnd) {
-        targetIndex = i;
-        break;
-      }
-      targetIndex = i;
-    }
-    
-    const targetBar = fullBars[targetIndex];
-    if (!targetBar) return;
-    
-    const newVisibleBars = fullBars.slice(0, targetIndex + 1);
-    setAllBars(newVisibleBars);
-    allSessionBarsRef.current = newVisibleBars;
-    setCurrentBarIndex(targetIndex);
-    
-    if (onRealtimeCallbackRef.current) {
-      onRealtimeCallbackRef.current({
-        ...targetBar,
-        time: targetBar.time,
-      });
-    }
-    
-    currentReplayTimeRef.current = newTime;
-    replayTimestampRef.current = newTime;
-    setIsEndReached(targetIndex >= fullBars.length - 1);
-  }, [currentInterval]);
+    updateChartWithTimestamp(newTime);
+  }, [currentInterval, updateChartWithTimestamp]);
 
   const handlePrev10 = useCallback(() => {
-    const fullBars = fullSessionBarsRef.current.get(currentInterval) || [];
     const resMs = getResolutionMs(currentInterval);
     const currentTime = currentReplayTimeRef.current;
     
-    const sessionStartMs = fullBars.length > 0 ? fullBars[0].time + resMs : 0;
-    const newTime = Math.max(currentTime - (resMs * 10), sessionStartMs);
+    const newTime = Math.max(currentTime - (resMs * 10), sessionStartTsRef.current + resMs);
     
-    let targetIndex = 0;
-    for (let i = 0; i < fullBars.length; i++) {
-      const barEnd = fullBars[i].time + resMs;
-      if (newTime <= barEnd) {
-        targetIndex = i;
-        break;
-      }
-      targetIndex = i;
-    }
-    
-    const targetBar = fullBars[targetIndex];
-    if (!targetBar) return;
-    
-    const newVisibleBars = fullBars.slice(0, targetIndex + 1);
-    setAllBars(newVisibleBars);
-    allSessionBarsRef.current = newVisibleBars;
-    setCurrentBarIndex(targetIndex);
-    
-    currentReplayTimeRef.current = newTime;
-    replayTimestampRef.current = newTime;
-    setIsEndReached(false);
-  }, [currentInterval]);
+    updateChartWithTimestamp(newTime);
+  }, [currentInterval, updateChartWithTimestamp]);
 
   const handleRestart = useCallback(() => {
     const fullBars = fullSessionBarsRef.current.get(currentInterval) || [];
-    const newIndex = fullBars.length >= 6 ? 5 : Math.max(0, fullBars.length - 1);
-    const targetBar = fullBars[newIndex];
-    
-    if (!targetBar) return;
+    if (fullBars.length === 0) return;
     
     const resMs = getResolutionMs(currentInterval);
-    const newTime = targetBar.time + resMs;
+    const initialBarCount = Math.min(6, fullBars.length);
+    const newTime = fullBars[initialBarCount - 1].time + resMs;
     
-    const newVisibleBars = fullBars.slice(0, newIndex + 1);
-    setAllBars(newVisibleBars);
-    allSessionBarsRef.current = newVisibleBars;
-    setCurrentBarIndex(newIndex);
+    updateChartWithTimestamp(newTime, true);
     
-    currentReplayTimeRef.current = newTime;
-    replayTimestampRef.current = newTime;
-    
-    setIsEndReached(false);
     setIsPlaying(false);
     removeTradeLines();
     dispatch({ type: "RESET_SESSION" });
-  }, [currentInterval, removeTradeLines]);
+  }, [currentInterval, removeTradeLines, updateChartWithTimestamp]);
 
   const handleGoToEnd = useCallback(() => {
-    const fullBars = fullSessionBarsRef.current.get(currentInterval) || [];
-    const newIndex = fullBars.length - 1;
-    const targetBar = fullBars[newIndex];
-    
-    if (!targetBar) return;
-    
-    const resMs = getResolutionMs(currentInterval);
-    const newTime = sessionEndTsRef.current;
-    
-    setAllBars(fullBars);
-    allSessionBarsRef.current = fullBars;
-    setCurrentBarIndex(newIndex);
-    
-    if (onRealtimeCallbackRef.current) {
-      onRealtimeCallbackRef.current({
-        ...targetBar,
-        time: targetBar.time,
-      });
-    }
-    
-    currentReplayTimeRef.current = newTime;
-    replayTimestampRef.current = newTime;
-    setIsEndReached(true);
-  }, [currentInterval]);
+    updateChartWithTimestamp(sessionEndTsRef.current, true);
+  }, [updateChartWithTimestamp]);
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -2463,8 +2418,9 @@ export default function FullscreenBacktesting({
   const currentSpeed = 500 / playbackSpeed;
 
   const currentBar = allBars[currentBarIndex];
-  const currentTime = currentBar
-    ? new Date(currentBar.time).toLocaleString("en-US", {
+  const displayTimestamp = currentReplayTimeRef.current || (currentBar?.time) || 0;
+  const currentTime = displayTimestamp > 0
+    ? new Date(displayTimestamp).toLocaleString("en-US", {
         month: "short",
         day: "numeric",
         hour: "2-digit",
