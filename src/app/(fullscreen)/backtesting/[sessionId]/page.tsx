@@ -204,6 +204,7 @@ export default function FullscreenBacktesting({
   };
   
   const [isLoading, setIsLoading] = useState(true);
+  const [chartDataReady, setChartDataReady] = useState(false);
   const [decimalPlaces, setDecimalPlaces] = useState(0);
   const [currentInterval, setCurrentInterval] = useState(initialInterval);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -592,17 +593,15 @@ export default function FullscreenBacktesting({
     const lastBar = visibleBars[visibleBars.length - 1];
     
     if (onRealtimeCallbackRef.current && lastBar) {
-      if (forceUpdate || lastBar.time !== lastPushedBarTimeRef.current) {
-        onRealtimeCallbackRef.current({
-          time: lastBar.time,
-          open: lastBar.open,
-          high: lastBar.high,
-          low: lastBar.low,
-          close: lastBar.close,
-          volume: lastBar.volume || 0,
-        });
-        lastPushedBarTimeRef.current = lastBar.time;
-      }
+      onRealtimeCallbackRef.current({
+        time: lastBar.time / 1000,
+        open: lastBar.open,
+        high: lastBar.high,
+        low: lastBar.low,
+        close: lastBar.close,
+        volume: lastBar.volume || 0,
+      });
+      lastPushedBarTimeRef.current = lastBar.time;
     }
     
     setAllBars(visibleBars);
@@ -724,6 +723,7 @@ export default function FullscreenBacktesting({
           setCurrentBarIndex(visibleBars.length - 1);
           
           setIsEndReached(initialTs >= sessionEndTsRef.current);
+          setChartDataReady(true);
         }
       } catch (error) {
         console.error("Error preloading timeframes:", error);
@@ -816,7 +816,11 @@ export default function FullscreenBacktesting({
   }, [currentInterval, getVisibleBarsFromCache]);
 
   useEffect(() => {
-    if (allBars.length === 0 || tvWidgetRef.current || !chartContainerRef.current) {
+    if (!chartDataReady || tvWidgetRef.current || !chartContainerRef.current) {
+      return;
+    }
+    const currentBars = allSessionBarsRef.current || [];
+    if (currentBars.length === 0) {
       return;
     }
 
@@ -852,16 +856,24 @@ export default function FullscreenBacktesting({
       getBars: (symbolInfo: any, resolution: string, periodParams: any, onHistoryCallback: any) => {
         const { firstDataRequest } = periodParams;
         const idx = currentBarIndexRef.current;
+        const visibleBars = allSessionBarsRef.current || [];
         
         if (firstDataRequest) {
-          const barsToShow = allBars.slice(0, idx + 1);
+          const barsToShow = visibleBars.slice(0, idx + 1).map((bar: any) => ({
+            ...bar,
+            time: bar.time / 1000,
+          }));
           onHistoryCallback(barsToShow, { noData: barsToShow.length === 0 });
           return;
         }
         
-        const bars = allBars.filter(
-          (bar) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
-        );
+        const fullBars = fullSessionBarsRef.current.get(resolution) || visibleBars;
+        const bars = fullBars.filter(
+          (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
+        ).map((bar: any) => ({
+          ...bar,
+          time: bar.time / 1000,
+        }));
         onHistoryCallback(bars, { noData: bars.length === 0 });
       },
       subscribeBars: (symbolInfo: any, resolution: string, onRealtimeCallback: any) => {
@@ -1396,7 +1408,8 @@ export default function FullscreenBacktesting({
         tvWidgetReadyRef.current = false;
       }
     };
-  }, [allBars, symbol, decimalPlaces]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartDataReady, symbol, decimalPlaces]);
 
   const handleDrawingTool = (id: any, type: string, properties: any, point: number, toolname: string) => {
     if (!point || !properties) return;
