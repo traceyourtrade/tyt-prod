@@ -179,6 +179,7 @@ export default function FullscreenBacktesting({
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tvWidgetRef = useRef<any>(null);
+  const tvWidgetReadyRef = useRef<boolean>(false);
   const onRealtimeCallbackRef = useRef<any>(null);
   const autoPlayIntervalRef = useRef<any>(null);
   const currentBarIndexRef = useRef(5);
@@ -684,12 +685,18 @@ export default function FullscreenBacktesting({
     
     updateVisibleBarsForCurrentTime(fullBars);
     
-    if (tvWidgetRef.current) {
+    if (tvWidgetRef.current && tvWidgetReadyRef.current) {
       try {
         tvWidgetRef.current.activeChart().setResolution(currentInterval as any);
       } catch (e) {
-        console.log("Could not set resolution via API, will use datafeed");
+        console.log("Could not set resolution via API, rebuilding chart");
+        tvWidgetRef.current.remove();
+        tvWidgetRef.current = null;
+        tvWidgetReadyRef.current = false;
       }
+    } else if (tvWidgetRef.current && !tvWidgetReadyRef.current) {
+      tvWidgetRef.current.remove();
+      tvWidgetRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentInterval]);
@@ -872,6 +879,7 @@ export default function FullscreenBacktesting({
     tvWidgetRef.current = tvWidget;
 
     tvWidget.onChartReady(() => {
+      tvWidgetReadyRef.current = true;
       const chart = tvWidget.activeChart();
       chart.setChartType(1);
       
@@ -1295,6 +1303,7 @@ export default function FullscreenBacktesting({
           // Widget might already be removed
         }
         tvWidgetRef.current = null;
+        tvWidgetReadyRef.current = false;
       }
     };
   }, [allBars, symbol, decimalPlaces]);
