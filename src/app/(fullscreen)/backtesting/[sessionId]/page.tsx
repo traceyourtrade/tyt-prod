@@ -379,7 +379,7 @@ export default function FullscreenBacktesting({
   });
 
   const totalBalance = initialBalance + tradingState.realisedPL + tradingState.unrealisedPL;
-  const isEndReached = currentBarIndex >= allBars.length - 1;
+  const [isEndReached, setIsEndReached] = useState(false);
   const winTrades = tradingState.tradeHistory.filter((trade) => trade.pnl > 0);
   const winRate = tradingState.tradeHistory.length > 0
     ? (winTrades.length / tradingState.tradeHistory.length) * 100 : 0;
@@ -540,11 +540,14 @@ export default function FullscreenBacktesting({
     if (resolution === '1M') return 30 * 24 * 60 * 60 * 1000;
     return parseInt(resolution) * 60 * 1000;
   };
+  
+  const sessionEndTsRef = useRef<number>(0);
+  const allSessionBarsRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!sessionData || !fromDate || !toDate || !sessionData.symbol) return;
     
-    const fetchAllHistory = async () => {
+    const fetchBarsForTimestamp = async () => {
       const savedTimestamp = targetTimestampRef.current;
       targetTimestampRef.current = null;
       
@@ -552,12 +555,12 @@ export default function FullscreenBacktesting({
       const rawSymbol = sessionData.symbol;
       const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
       const sessionEndTs = Math.floor(new Date(toDate).getTime() / 1000);
+      sessionEndTsRef.current = sessionEndTs * 1000;
       
       let effectiveToTs = sessionEndTs;
-      if (savedTimestamp) {
-        effectiveToTs = Math.floor(savedTimestamp / 1000);
-      } else if (replayTimestampRef.current) {
-        effectiveToTs = Math.floor(replayTimestampRef.current / 1000);
+      const targetTs = savedTimestamp || replayTimestampRef.current;
+      if (targetTs) {
+        effectiveToTs = Math.floor(targetTs / 1000);
       } else if (sessionData.progressPointer) {
         effectiveToTs = Math.floor(sessionData.progressPointer / 1000);
       }
@@ -597,15 +600,16 @@ export default function FullscreenBacktesting({
           });
           setDecimalPlaces(maxDecimalPlaces);
           setAllBars(bars);
+          allSessionBarsRef.current = bars;
           
           const newIndex = bars.length - 1;
           setCurrentBarIndex(Math.max(0, newIndex));
           
-          if (bars.length > 0) {
-            const lastBar = bars[bars.length - 1];
+          if (bars.length > 0 && !replayTimestampRef.current) {
             replayTimestampRef.current = effectiveToTs * 1000;
           }
           
+          setIsEndReached((effectiveToTs * 1000) >= sessionEndTsRef.current);
           setIsPlaying(false);
         } else {
           console.log('No data from VPS API:', data);
@@ -620,7 +624,7 @@ export default function FullscreenBacktesting({
         setIsLoading(false);
       }
     };
-    fetchAllHistory();
+    fetchBarsForTimestamp();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionData?.symbol, sessionData?.market, fromDate, toDate, currentInterval]);
 
@@ -1553,67 +1557,311 @@ export default function FullscreenBacktesting({
     }
   }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId]);
 
-  const handleNext = useCallback(() => {
-    if (!onRealtimeCallbackRef.current || currentBarIndex >= allBars.length - 1) {
+  const snapToNextBoundary = useCallback((currentTs: number, resMs: number): number => {
+    const remainder = currentTs % resMs;
+    if (remainder === 0) {
+      return currentTs + resMs;
+    }
+    return currentTs + (resMs - remainder);
+  }, []);
+  
+  const snapToPrevBoundary = useCallback((currentTs: number, resMs: number): number => {
+    const remainder = currentTs % resMs;
+    if (remainder === 0) {
+      return currentTs - resMs;
+    }
+    return currentTs - remainder;
+  }, []);
+
+  const fetchNextBar = useCallback(async () => {
+    if (!sessionData) return null;
+    
+    const currentTs = replayTimestampRef.current || 0;
+    const resMs = getResolutionMs(currentInterval);
+    const newTs = snapToNextBoundary(currentTs, resMs);
+    
+    if (newTs > sessionEndTsRef.current) {
+      return null;
+    }
+    
+    const market = sessionData.market || 'FOREX';
+    const rawSymbol = sessionData.symbol;
+    const fromTs = Math.floor(new Date(sessionData.fromDate).getTime() / 1000);
+    const toTs = Math.floor(newTs / 1000);
+    
+    try {
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTs}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const bars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        return { bars, newTs };
+      }
+    } catch (error) {
+      console.error("Error fetching next bar:", error);
+    }
+    return null;
+  }, [sessionData, currentInterval, snapToNextBoundary]);
+
+  const handleNext = useCallback(async () => {
+    if (!onRealtimeCallbackRef.current) {
       setIsPlaying(false);
       return;
     }
     
-    const nextBar = allBars[currentBarIndex + 1];
-    if (nextBar && onRealtimeCallbackRef.current) {
-      onRealtimeCallbackRef.current({
-        ...nextBar,
-        time: nextBar.time,
-      });
-      const resMs = getResolutionMs(currentInterval);
-      replayTimestampRef.current = nextBar.time + resMs;
+    const currentTs = replayTimestampRef.current || 0;
+    if (currentTs >= sessionEndTsRef.current) {
+      setIsPlaying(false);
+      setIsEndReached(true);
+      return;
     }
     
-    setCurrentBarIndex(currentBarIndex + 1);
-  }, [currentBarIndex, allBars, currentInterval]);
+    const result = await fetchNextBar();
+    if (!result) {
+      setIsPlaying(false);
+      setIsEndReached(true);
+      return;
+    }
+    
+    const { bars, newTs } = result;
+    setAllBars(bars);
+    allSessionBarsRef.current = bars;
+    
+    const newIndex = bars.length - 1;
+    setCurrentBarIndex(newIndex);
+    
+    const lastBar = bars[newIndex];
+    if (lastBar && onRealtimeCallbackRef.current) {
+      onRealtimeCallbackRef.current({
+        ...lastBar,
+        time: lastBar.time,
+      });
+    }
+    
+    replayTimestampRef.current = newTs;
+    setIsEndReached(newTs >= sessionEndTsRef.current);
+  }, [fetchNextBar]);
 
-  const handlePrev = useCallback(() => {
-    if (currentBarIndex > 0) {
-      const prevBar = allBars[currentBarIndex - 1];
-      if (prevBar) {
-        const resMs = getResolutionMs(currentInterval);
-        replayTimestampRef.current = prevBar.time + resMs;
+  const handlePrev = useCallback(async () => {
+    if (!sessionData || !replayTimestampRef.current) return;
+    
+    const currentTs = replayTimestampRef.current;
+    const resMs = getResolutionMs(currentInterval);
+    const newTs = snapToPrevBoundary(currentTs, resMs);
+    
+    const fromTs = new Date(sessionData.fromDate).getTime();
+    const minTs = fromTs + resMs;
+    if (newTs < minTs) return;
+    
+    const market = sessionData.market || 'FOREX';
+    const rawSymbol = sessionData.symbol;
+    const fromTsSec = Math.floor(fromTs / 1000);
+    const toTs = Math.floor(newTs / 1000);
+    
+    try {
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTsSec}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const bars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        
+        setAllBars(bars);
+        allSessionBarsRef.current = bars;
+        setCurrentBarIndex(bars.length - 1);
+        replayTimestampRef.current = newTs;
+        setIsEndReached(false);
       }
-      setCurrentBarIndex(currentBarIndex - 1);
+    } catch (error) {
+      console.error("Error fetching prev bar:", error);
     }
-  }, [currentBarIndex, allBars, currentInterval]);
+  }, [sessionData, currentInterval, snapToPrevBoundary]);
 
-  const handleNext10 = () => {
-    const newIndex = Math.min(currentBarIndex + 10, allBars.length - 1);
-    const bar = allBars[newIndex];
-    if (bar) {
-      const resMs = getResolutionMs(currentInterval);
-      replayTimestampRef.current = bar.time + resMs;
+  const handleNext10 = async () => {
+    const resMs = getResolutionMs(currentInterval);
+    const currentTs = replayTimestampRef.current || 0;
+    const firstBoundary = snapToNextBoundary(currentTs, resMs);
+    const newTs = Math.min(firstBoundary + (resMs * 9), sessionEndTsRef.current);
+    
+    if (!sessionData) return;
+    
+    const market = sessionData.market || 'FOREX';
+    const rawSymbol = sessionData.symbol;
+    const fromTs = Math.floor(new Date(sessionData.fromDate).getTime() / 1000);
+    const toTs = Math.floor(newTs / 1000);
+    
+    try {
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTs}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const bars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        
+        setAllBars(bars);
+        allSessionBarsRef.current = bars;
+        setCurrentBarIndex(bars.length - 1);
+        replayTimestampRef.current = newTs;
+        setIsEndReached(newTs >= sessionEndTsRef.current);
+        
+        const lastBar = bars[bars.length - 1];
+        if (lastBar && onRealtimeCallbackRef.current) {
+          onRealtimeCallbackRef.current({
+            ...lastBar,
+            time: lastBar.time,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching next 10 bars:", error);
     }
-    setCurrentBarIndex(newIndex);
   };
 
-  const handlePrev10 = () => {
-    const newIndex = Math.max(currentBarIndex - 10, 0);
-    const bar = allBars[newIndex];
-    if (bar) {
-      const resMs = getResolutionMs(currentInterval);
-      replayTimestampRef.current = bar.time + resMs;
+  const handlePrev10 = async () => {
+    if (!sessionData) return;
+    
+    const resMs = getResolutionMs(currentInterval);
+    const currentTs = replayTimestampRef.current || 0;
+    const fromTs = new Date(sessionData.fromDate).getTime();
+    const minTs = fromTs + (resMs * 6);
+    const firstBoundary = snapToPrevBoundary(currentTs, resMs);
+    const newTs = Math.max(firstBoundary - (resMs * 9), minTs);
+    
+    const market = sessionData.market || 'FOREX';
+    const rawSymbol = sessionData.symbol;
+    const fromTsSec = Math.floor(fromTs / 1000);
+    const toTs = Math.floor(newTs / 1000);
+    
+    try {
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTsSec}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const bars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        
+        setAllBars(bars);
+        allSessionBarsRef.current = bars;
+        setCurrentBarIndex(bars.length - 1);
+        replayTimestampRef.current = newTs;
+        setIsEndReached(false);
+      }
+    } catch (error) {
+      console.error("Error fetching prev 10 bars:", error);
     }
-    setCurrentBarIndex(newIndex);
   };
 
-  const handleRestart = () => {
-    const newIndex = allBars.length >= 6 ? 5 : Math.max(0, allBars.length - 1);
-    const bar = allBars[newIndex];
-    if (bar) {
-      const resMs = getResolutionMs(currentInterval);
-      replayTimestampRef.current = bar.time + resMs;
+  const handleRestart = async () => {
+    if (!sessionData) return;
+    
+    const resMs = getResolutionMs(currentInterval);
+    const fromTs = new Date(sessionData.fromDate).getTime();
+    const initialTs = fromTs + (resMs * 6);
+    
+    const market = sessionData.market || 'FOREX';
+    const rawSymbol = sessionData.symbol;
+    const fromTsSec = Math.floor(fromTs / 1000);
+    const toTs = Math.floor(initialTs / 1000);
+    
+    try {
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTsSec}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const bars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        
+        setAllBars(bars);
+        allSessionBarsRef.current = bars;
+        setCurrentBarIndex(bars.length - 1);
+        replayTimestampRef.current = initialTs;
+        setIsEndReached(false);
+      }
+    } catch (error) {
+      console.error("Error restarting:", error);
     }
-    setCurrentBarIndex(newIndex);
+    
     setIsPlaying(false);
     removeTradeLines();
     dispatch({ type: "RESET_SESSION" });
+  };
+
+  const handleGoToEnd = async () => {
+    if (!sessionData) return;
+    
+    const market = sessionData.market || 'FOREX';
+    const rawSymbol = sessionData.symbol;
+    const fromTs = Math.floor(new Date(sessionData.fromDate).getTime() / 1000);
+    const toTs = Math.floor(sessionEndTsRef.current / 1000);
+    
+    try {
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTs}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const bars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        
+        setAllBars(bars);
+        allSessionBarsRef.current = bars;
+        setCurrentBarIndex(bars.length - 1);
+        replayTimestampRef.current = sessionEndTsRef.current;
+        setIsEndReached(true);
+        
+        const lastBar = bars[bars.length - 1];
+        if (lastBar && onRealtimeCallbackRef.current) {
+          onRealtimeCallbackRef.current({
+            ...lastBar,
+            time: lastBar.time,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error going to end:", error);
+    }
   };
 
   const togglePlayPause = () => {
@@ -2336,7 +2584,7 @@ export default function FullscreenBacktesting({
                 <path d="M9 5v14l10-7L9 5z"/>
               </svg>
             </button>
-            <button onClick={() => setCurrentBarIndex(allBars.length - 1)} disabled={isEndReached} className="bt-float-btn" title="Go to end">
+            <button onClick={handleGoToEnd} disabled={isEndReached} className="bt-float-btn" title="Go to end">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
               </svg>
