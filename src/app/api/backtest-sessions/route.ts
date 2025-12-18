@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, symbol, fromDate, toDate, initialBalance, description, riskPerTrade } = body;
+    const { name, market, symbol, fromDate, toDate, initialBalance, description, riskPerTrade } = body;
 
     if (!name || !symbol || !fromDate || !toDate) {
       return NextResponse.json({ error: "Name, symbol, and date range are required" }, { status: 400 });
@@ -87,17 +87,20 @@ export async function POST(req: NextRequest) {
     const nextSessionId = lastSession ? (lastSession as any).sessionId + 1 : 1;
 
     const fromDateTimestamp = new Date(fromDate).getTime();
+    const replayTimestamp = Math.floor(fromDateTimestamp / 1000);
 
     const newSession = new BacktestSession({
       uniqueId: userId,
       sessionId: nextSessionId,
       name,
+      market: market || 'FOREX',
       symbol,
       fromDate,
       toDate,
       initialBalance: initialBalance || 10000,
       currentBalance: initialBalance || 10000,
       progressPointer: fromDateTimestamp,
+      replayTimestamp: replayTimestamp,
       status: 'active',
       description: description || '',
       riskPerTrade: riskPerTrade || 1,

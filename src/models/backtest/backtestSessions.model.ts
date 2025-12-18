@@ -27,16 +27,20 @@ export interface IChartLayout {
   timestamp: number;
 }
 
+export type MarketType = 'FOREX' | 'CRYPTO' | 'INDIAN_INDICES' | 'INDIAN_STOCK';
+
 export interface IBacktestSession extends Document {
   uniqueId: string;
   sessionId: number;
   name: string;
+  market: MarketType;
   symbol: string;
   fromDate: string;
   toDate: string;
   initialBalance: number;
   currentBalance: number;
   progressPointer: number;
+  replayTimestamp: number;
   status: 'active' | 'completed';
   description?: string;
   riskPerTrade?: number;
@@ -80,12 +84,14 @@ const BacktestSessionSchema = new Schema<IBacktestSession>(
     uniqueId: { type: String, required: true, index: true },
     sessionId: { type: Number, required: true, index: true },
     name: { type: String, required: true },
+    market: { type: String, enum: ['FOREX', 'CRYPTO', 'INDIAN_INDICES', 'INDIAN_STOCK'], default: 'FOREX' },
     symbol: { type: String, required: true },
     fromDate: { type: String, required: true },
     toDate: { type: String, required: true },
     initialBalance: { type: Number, required: true, default: 10000 },
     currentBalance: { type: Number, required: true, default: 10000 },
     progressPointer: { type: Number, default: 0 },
+    replayTimestamp: { type: Number, default: 0 },
     status: { type: String, enum: ['active', 'completed'], default: 'active' },
     description: { type: String, default: '' },
     riskPerTrade: { type: Number },

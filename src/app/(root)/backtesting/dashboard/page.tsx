@@ -40,12 +40,14 @@ interface Trade {
 interface Session {
   sessionId: number;
   name: string;
+  market?: MarketType;
   symbol: string;
   fromDate: string;
   toDate: string;
   initialBalance: number;
   currentBalance: number;
   progressPointer: number;
+  replayTimestamp?: number;
   status: 'active' | 'completed';
   description?: string;
   trades: Trade[];
@@ -54,14 +56,67 @@ interface Session {
   updatedAt: string;
 }
 
-const SYMBOLS = [
-  { value: "EURUSD", label: "EUR/USD", icon: "💶" },
-  { value: "GBPUSD", label: "GBP/USD", icon: "💷" },
-  { value: "USDJPY", label: "USD/JPY", icon: "💴" },
-  { value: "XAUUSD", label: "XAU/USD", icon: "🥇" },
-  { value: "BTCUSD", label: "BTC/USD", icon: "₿" },
-  { value: "ETHUSD", label: "ETH/USD", icon: "⟠" },
+type MarketType = 'FOREX' | 'CRYPTO' | 'INDIAN_INDICES' | 'INDIAN_STOCK';
+
+const MARKETS: { value: MarketType; label: string; icon: string }[] = [
+  { value: "FOREX", label: "Forex", icon: "💱" },
+  { value: "CRYPTO", label: "Crypto", icon: "₿" },
+  { value: "INDIAN_INDICES", label: "Indian Indices", icon: "📊" },
+  { value: "INDIAN_STOCK", label: "Indian Stocks", icon: "🇮🇳" },
 ];
+
+const SYMBOLS_BY_MARKET: Record<MarketType, { value: string; label: string; icon: string }[]> = {
+  FOREX: [
+    { value: "EURUSD", label: "EUR/USD", icon: "💶" },
+    { value: "GBPUSD", label: "GBP/USD", icon: "💷" },
+    { value: "USDJPY", label: "USD/JPY", icon: "💴" },
+    { value: "XAUUSD", label: "XAU/USD", icon: "🥇" },
+    { value: "XAGUSD", label: "XAG/USD", icon: "🥈" },
+    { value: "AUDUSD", label: "AUD/USD", icon: "🇦🇺" },
+    { value: "USDCAD", label: "USD/CAD", icon: "🇨🇦" },
+    { value: "USDCHF", label: "USD/CHF", icon: "🇨🇭" },
+    { value: "NZDUSD", label: "NZD/USD", icon: "🇳🇿" },
+    { value: "EURJPY", label: "EUR/JPY", icon: "🇪🇺" },
+    { value: "GBPJPY", label: "GBP/JPY", icon: "🇬🇧" },
+    { value: "EURGBP", label: "EUR/GBP", icon: "🇪🇺" },
+  ],
+  CRYPTO: [
+    { value: "BTCUSDT", label: "BTC/USDT", icon: "₿" },
+    { value: "ETHUSDT", label: "ETH/USDT", icon: "⟠" },
+    { value: "BNBUSDT", label: "BNB/USDT", icon: "🔶" },
+    { value: "XRPUSDT", label: "XRP/USDT", icon: "✕" },
+    { value: "SOLUSDT", label: "SOL/USDT", icon: "◎" },
+    { value: "ADAUSDT", label: "ADA/USDT", icon: "₳" },
+    { value: "DOGEUSDT", label: "DOGE/USDT", icon: "🐕" },
+    { value: "DOTUSDT", label: "DOT/USDT", icon: "●" },
+    { value: "MATICUSDT", label: "MATIC/USDT", icon: "⬡" },
+    { value: "LINKUSDT", label: "LINK/USDT", icon: "⬡" },
+  ],
+  INDIAN_INDICES: [
+    { value: "NIFTY50", label: "NIFTY 50", icon: "📈" },
+    { value: "BANKNIFTY", label: "Bank NIFTY", icon: "🏦" },
+    { value: "FINNIFTY", label: "FIN NIFTY", icon: "💰" },
+    { value: "NIFTYMIDCAP", label: "NIFTY Midcap", icon: "📊" },
+    { value: "SENSEX", label: "SENSEX", icon: "🏛️" },
+  ],
+  INDIAN_STOCK: [
+    { value: "RELIANCE", label: "Reliance", icon: "🛢️" },
+    { value: "TCS", label: "TCS", icon: "💻" },
+    { value: "HDFCBANK", label: "HDFC Bank", icon: "🏦" },
+    { value: "INFY", label: "Infosys", icon: "💻" },
+    { value: "ICICIBANK", label: "ICICI Bank", icon: "🏦" },
+    { value: "SBIN", label: "SBI", icon: "🏦" },
+    { value: "BHARTIARTL", label: "Bharti Airtel", icon: "📱" },
+    { value: "ITC", label: "ITC", icon: "🏢" },
+    { value: "KOTAKBANK", label: "Kotak Bank", icon: "🏦" },
+    { value: "LT", label: "L&T", icon: "🏗️" },
+    { value: "AXISBANK", label: "Axis Bank", icon: "🏦" },
+    { value: "WIPRO", label: "Wipro", icon: "💻" },
+    { value: "TATAMOTORS", label: "Tata Motors", icon: "🚗" },
+    { value: "TATASTEEL", label: "Tata Steel", icon: "🏭" },
+    { value: "MARUTI", label: "Maruti", icon: "🚗" },
+  ],
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -88,6 +143,7 @@ export default function BacktestingDashboard() {
 
   const [formData, setFormData] = useState({
     name: "",
+    market: "FOREX" as MarketType,
     symbol: "EURUSD",
     fromDate: "",
     toDate: "",
@@ -95,6 +151,7 @@ export default function BacktestingDashboard() {
     description: "",
     riskPerTrade: "1"
   });
+  const [symbolSearch, setSymbolSearch] = useState("");
 
   useEffect(() => {
     fetchSessions();
@@ -172,6 +229,21 @@ export default function BacktestingDashboard() {
     return result;
   }, [sessions, searchQuery, sortBy, activeFilter]);
 
+  const filteredSymbols = useMemo(() => {
+    const symbols = SYMBOLS_BY_MARKET[formData.market] || [];
+    if (!symbolSearch.trim()) return symbols;
+    return symbols.filter(s => 
+      s.value.toLowerCase().includes(symbolSearch.toLowerCase()) ||
+      s.label.toLowerCase().includes(symbolSearch.toLowerCase())
+    );
+  }, [formData.market, symbolSearch]);
+
+  const handleMarketChange = (market: MarketType) => {
+    const firstSymbol = SYMBOLS_BY_MARKET[market]?.[0]?.value || "";
+    setFormData({ ...formData, market, symbol: firstSymbol });
+    setSymbolSearch("");
+  };
+
   const createSession = async () => {
     if (!formData.name.trim() || !formData.fromDate || !formData.toDate) return;
     
@@ -181,6 +253,7 @@ export default function BacktestingDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
+          market: formData.market,
           symbol: formData.symbol,
           fromDate: formData.fromDate,
           toDate: formData.toDate,
@@ -194,6 +267,7 @@ export default function BacktestingDashboard() {
         setShowCreateModal(false);
         setFormData({
           name: "",
+          market: "FOREX",
           symbol: "EURUSD",
           fromDate: "",
           toDate: "",
@@ -201,6 +275,7 @@ export default function BacktestingDashboard() {
           description: "",
           riskPerTrade: "1"
         });
+        setSymbolSearch("");
         fetchSessions();
       }
     } catch (error) {
@@ -239,9 +314,22 @@ export default function BacktestingDashboard() {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
-  const getSymbolIcon = (symbol: string) => {
-    const found = SYMBOLS.find(s => s.value === symbol);
-    return found?.icon || "📊";
+  const getSymbolIcon = (symbol: string, market?: string) => {
+    if (market) {
+      const marketSymbols = SYMBOLS_BY_MARKET[market as MarketType] || [];
+      const found = marketSymbols.find(s => s.value === symbol);
+      if (found) return found.icon;
+    }
+    for (const m of Object.values(SYMBOLS_BY_MARKET)) {
+      const found = m.find(s => s.value === symbol);
+      if (found) return found.icon;
+    }
+    return "📊";
+  };
+
+  const getMarketLabel = (market?: string) => {
+    const found = MARKETS.find(m => m.value === market);
+    return found?.label || market || "Forex";
   };
 
   return (
@@ -610,7 +698,7 @@ export default function BacktestingDashboard() {
                             "w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center",
                             "bg-muted border border-border group-hover:border-primary/20 transition-colors"
                           )}>
-                            <span className="text-lg sm:text-xl">{getSymbolIcon(session.symbol)}</span>
+                            <span className="text-lg sm:text-xl">{getSymbolIcon(session.symbol, session.market)}</span>
                           </div>
                           <div className={cn(
                             "absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-card",
@@ -633,6 +721,9 @@ export default function BacktestingDashboard() {
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground overflow-hidden">
+                            <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-medium shrink-0">
+                              {getMarketLabel(session.market)}
+                            </span>
                             <span className="font-medium text-foreground/70 shrink-0">{session.symbol || 'N/A'}</span>
                             <span className="shrink-0">•</span>
                             <span className="truncate">
@@ -813,24 +904,66 @@ export default function BacktestingDashboard() {
 
                   <div>
                     <label className="block text-sm font-medium text-foreground/70 mb-2">
-                      Trading Pair
+                      Market Type
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {SYMBOLS.map(s => (
+                    <div className="grid grid-cols-4 gap-2">
+                      {MARKETS.map(m => (
+                        <button
+                          key={m.value}
+                          onClick={() => handleMarketChange(m.value)}
+                          className={cn(
+                            "p-3 rounded-xl border text-sm font-medium transition-all flex flex-col items-center gap-1",
+                            formData.market === m.value
+                              ? "bg-primary/10 border-primary/40 text-primary"
+                              : "bg-background border-border text-muted-foreground hover:border-primary/20 hover:text-foreground"
+                          )}
+                        >
+                          <span className="text-lg">{m.icon}</span>
+                          <span className="text-xs">{m.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground/70 mb-2">
+                      Symbol
+                    </label>
+                    <div className="relative mb-2">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={symbolSearch}
+                        onChange={(e) => setSymbolSearch(e.target.value)}
+                        placeholder="Search symbols..."
+                        className={cn(
+                          "w-full pl-10 pr-4 py-2.5 rounded-xl text-foreground placeholder:text-muted-foreground",
+                          "bg-background border border-border",
+                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                      {filteredSymbols.map(s => (
                         <button
                           key={s.value}
                           onClick={() => setFormData({ ...formData, symbol: s.value })}
                           className={cn(
-                            "p-3 rounded-xl border text-sm font-medium transition-all",
+                            "p-2.5 rounded-xl border text-sm font-medium transition-all",
                             formData.symbol === s.value
                               ? "bg-primary/10 border-primary/40 text-primary"
                               : "bg-background border-border text-muted-foreground hover:border-primary/20 hover:text-foreground"
                           )}
                         >
-                          <span className="mr-2">{s.icon}</span>
+                          <span className="mr-1.5">{s.icon}</span>
                           {s.label}
                         </button>
                       ))}
+                      {filteredSymbols.length === 0 && (
+                        <div className="col-span-3 py-4 text-center text-muted-foreground text-sm">
+                          No symbols found
+                        </div>
+                      )}
                     </div>
                   </div>
 

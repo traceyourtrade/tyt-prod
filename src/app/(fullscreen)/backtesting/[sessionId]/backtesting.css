@@ -941,6 +941,67 @@
   color: var(--bt-accent-blue);
 }
 
+.bt-float-tf-option.custom {
+  grid-column: 1 / -1;
+  color: var(--bt-accent-blue);
+  border-color: var(--bt-border-subtle);
+}
+
+.bt-float-tf-option.custom:hover {
+  border-color: var(--bt-accent-blue);
+  background: var(--bt-accent-blue-glow);
+}
+
+.bt-float-tf-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--bt-border-subtle);
+  margin: 4px 0;
+}
+
+.bt-float-tf-custom-input {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 6px;
+}
+
+.bt-float-tf-custom-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  background: var(--bt-bg-base);
+  border: 1px solid var(--bt-border-default);
+  border-radius: var(--bt-radius-sm);
+  color: var(--bt-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bt-float-tf-custom-input input:focus {
+  outline: none;
+  border-color: var(--bt-accent-blue);
+}
+
+.bt-float-tf-custom-input input::placeholder {
+  color: var(--bt-text-muted);
+}
+
+.bt-float-tf-custom-input button {
+  padding: 8px 14px;
+  background: var(--bt-accent-blue);
+  border: none;
+  border-radius: var(--bt-radius-sm);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--bt-transition-fast);
+}
+
+.bt-float-tf-custom-input button:hover {
+  background: #2563eb;
+}
+
 /* Trade Buttons */
 .bt-float-group.trade-group {
   display: flex;

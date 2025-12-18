@@ -12,15 +12,19 @@ import "./backtesting.css";
 import { widget as TradingViewWidget } from "../../../../../public/charting_library";
 import { makeApiRequest, parseFullSymbol } from "@/lib/custom-datafeed/helpers";
 
+type MarketType = 'FOREX' | 'CRYPTO' | 'INDIAN_INDICES' | 'INDIAN_STOCK';
+
 interface SessionData {
   sessionId: number;
   name: string;
+  market?: MarketType;
   symbol: string;
   fromDate: string;
   toDate: string;
   initialBalance: number;
   currentBalance: number;
   progressPointer: number;
+  replayTimestamp?: number;
   status: 'active' | 'completed';
   trades: any[];
   timeInvested: number;
@@ -95,21 +99,28 @@ const saveDrawingTemplate = async (sessionId: number, toolName: string, content:
   }
 };
 
-const symbolToChartFormat = (symbol: string): string => {
-  const mapping: Record<string, string> = {
-    'EURUSD': 'FXCM:EUR/USD',
-    'GBPUSD': 'FXCM:GBP/USD',
-    'USDJPY': 'FXCM:USD/JPY',
-    'AUDUSD': 'FXCM:AUD/USD',
-    'USDCAD': 'FXCM:USD/CAD',
-    'USDCHF': 'FXCM:USD/CHF',
-    'NZDUSD': 'FXCM:NZD/USD',
-    'XAUUSD': 'OANDA:XAU/USD',
-    'XAGUSD': 'OANDA:XAG/USD',
-    'BTCUSD': 'COINBASE:BTC/USD',
-    'ETHUSD': 'COINBASE:ETH/USD',
+const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
+  if (market === 'CRYPTO') {
+    return `ProJournX:${symbol}`;
+  }
+  if (market === 'INDIAN_INDICES' || market === 'INDIAN_STOCK') {
+    return `ProJournX:${symbol}`;
+  }
+  const forexMapping: Record<string, string> = {
+    'EURUSD': 'ProJournX:EUR/USD',
+    'GBPUSD': 'ProJournX:GBP/USD',
+    'USDJPY': 'ProJournX:USD/JPY',
+    'AUDUSD': 'ProJournX:AUD/USD',
+    'USDCAD': 'ProJournX:USD/CAD',
+    'USDCHF': 'ProJournX:USD/CHF',
+    'NZDUSD': 'ProJournX:NZD/USD',
+    'EURJPY': 'ProJournX:EUR/JPY',
+    'GBPJPY': 'ProJournX:GBP/JPY',
+    'EURGBP': 'ProJournX:EUR/GBP',
+    'XAUUSD': 'ProJournX:XAU/USD',
+    'XAGUSD': 'ProJournX:XAG/USD',
   };
-  return mapping[symbol] || `FXCM:${symbol.slice(0,3)}/${symbol.slice(3)}`;
+  return forexMapping[symbol] || `ProJournX:${symbol}`;
 };
 
 const tradingReducer = (state, action) => {
@@ -205,7 +216,7 @@ export default function FullscreenBacktesting({
   const drawerMaxHeight = 500;
   const drawerCollapsedHeight = 48;
 
-  const symbol = sessionData ? symbolToChartFormat(sessionData.symbol) : '';
+  const symbol = sessionData ? symbolToChartFormat(sessionData.symbol, sessionData.market) : '';
   const fromDate = sessionData?.fromDate || '';
   const toDate = sessionData?.toDate || '';
   const initialBalance = sessionData?.initialBalance || 10000;
@@ -312,14 +323,30 @@ export default function FullscreenBacktesting({
     setIsDragging(true);
   };
 
+  const [customTfInput, setCustomTfInput] = useState("");
+  const [showCustomTfInput, setShowCustomTfInput] = useState(false);
+  
   const timeframeOptions = [
     { value: "1", label: "1m" },
+    { value: "3", label: "3m" },
     { value: "5", label: "5m" },
     { value: "15", label: "15m" },
+    { value: "30", label: "30m" },
     { value: "60", label: "1H" },
+    { value: "120", label: "2H" },
     { value: "240", label: "4H" },
     { value: "1D", label: "1D" },
+    { value: "1W", label: "1W" },
   ];
+  
+  const handleCustomTf = () => {
+    const val = parseInt(customTfInput);
+    if (val > 0 && val <= 10080) {
+      handleTimeframeChange(String(val));
+      setShowCustomTfInput(false);
+      setCustomTfInput("");
+    }
+  };
 
   const handleSpeedSliderChange = (value: number) => {
     setSpeedMultiplier(value);
@@ -502,17 +529,17 @@ export default function FullscreenBacktesting({
   }, [sessionId, allBars.length]);
 
   useEffect(() => {
-    if (!sessionData || !fromDate || !toDate || !symbol) return;
+    if (!sessionData || !fromDate || !toDate || !sessionData.symbol) return;
     
     const fetchAllHistory = async () => {
       const savedTimestamp = targetTimestampRef.current;
       targetTimestampRef.current = null;
       
-      const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
       const toTs = Math.floor(new Date(toDate).getTime() / 1000);
-      const parsedSymbol = parseFullSymbol(`${symbol}`);
-      const apiEndpoint = "historic-data";
-      const query = `e=${parsedSymbol.exchange}&fsym=${parsedSymbol.fromSymbol}&tsym=${parsedSymbol.toSymbol}&toTs=${toTs}&fromTs=${fromTs}&timeframe=${currentInterval}`;
+      const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
+      const market = sessionData.market || 'FOREX';
+      const rawSymbol = sessionData.symbol;
+      
       setIsLoading(true);
       setAllBars([]);
       
@@ -522,17 +549,20 @@ export default function FullscreenBacktesting({
       }
       
       try {
-        const data = await makeApiRequest(`data/${apiEndpoint}?${query}`);
-        if (data && data.Data && data.Data.length > 0) {
-          let bars = data.Data.map((bar: any) => ({
-            time: bar.time * 1000,
-            low: bar.low,
-            high: bar.high,
-            open: bar.open,
-            close: bar.close,
-            volume: bar.volume,
+        const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTs}`;
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+          let bars = data.t.map((time: number, i: number) => ({
+            time: time * 1000,
+            open: data.o[i],
+            high: data.h[i],
+            low: data.l[i],
+            close: data.c[i],
+            volume: data.v?.[i] || 0,
           }));
-          bars = bars.filter((bar: any) => bar.volume > 0);
+          
           let maxDecimalPlaces = 0;
           bars.forEach((bar: any) => {
             [bar.open, bar.high, bar.low, bar.close].forEach((val: number) => {
@@ -546,7 +576,6 @@ export default function FullscreenBacktesting({
           setDecimalPlaces(maxDecimalPlaces);
           setAllBars(bars);
           
-          // Resume from stored timestamp (TF switch) or progressPointer (session load)
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
           const targetTs = savedTimestamp || sessionData?.progressPointer;
           if (targetTs) {
@@ -560,11 +589,12 @@ export default function FullscreenBacktesting({
           setCurrentBarIndex(newIndex);
           setIsPlaying(false);
         } else {
+          console.log('No data from VPS API:', data);
           setAllBars([]);
           setCurrentBarIndex(0);
         }
       } catch (error) {
-        console.error("Error fetching history:", error);
+        console.error("Error fetching history from VPS:", error);
         setAllBars([]);
         setCurrentBarIndex(0);
       } finally {
@@ -573,17 +603,19 @@ export default function FullscreenBacktesting({
     };
     fetchAllHistory();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbol, fromDate, toDate, currentInterval]);
+  }, [sessionData?.symbol, sessionData?.market, fromDate, toDate, currentInterval]);
 
   useEffect(() => {
     if (allBars.length === 0 || tvWidgetRef.current || !chartContainerRef.current) {
       return;
     }
 
+    const allMinuteResolutions = Array.from({ length: 1440 }, (_, i) => String(i + 1));
+    
     const datafeed = {
       onReady: (callback: any) => {
         setTimeout(() => callback({
-          supported_resolutions: ["1", "5", "15", "30", "60", "120", "240", "1D", "1W", "1M"],
+          supported_resolutions: [...allMinuteResolutions, "1D", "1W", "1M"],
           supports_marks: true,
         }), 0);
       },
@@ -601,8 +633,8 @@ export default function FullscreenBacktesting({
           has_intraday: true,
           has_daily: true,
           has_weekly_and_monthly: true,
-          supported_resolutions: ["1", "5", "15", "30", "60", "120", "240", "1D", "1W", "1M"],
-          intraday_multipliers: ["1", "5", "15", "30", "60", "120", "240"],
+          supported_resolutions: [...allMinuteResolutions, "1D", "1W", "1M"],
+          intraday_multipliers: allMinuteResolutions,
           data_status: "streaming",
         };
         setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
@@ -2310,6 +2342,27 @@ export default function FullscreenBacktesting({
                     {tf.label}
                   </button>
                 ))}
+                <div className="bt-float-tf-divider"></div>
+                {showCustomTfInput ? (
+                  <div className="bt-float-tf-custom-input">
+                    <input
+                      type="number"
+                      placeholder="e.g. 69"
+                      value={customTfInput}
+                      onChange={(e) => setCustomTfInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleCustomTf()}
+                      autoFocus
+                    />
+                    <button onClick={handleCustomTf}>Go</button>
+                  </div>
+                ) : (
+                  <button
+                    className="bt-float-tf-option custom"
+                    onClick={() => setShowCustomTfInput(true)}
+                  >
+                    Custom...
+                  </button>
+                )}
               </div>
             )}
           </div>
