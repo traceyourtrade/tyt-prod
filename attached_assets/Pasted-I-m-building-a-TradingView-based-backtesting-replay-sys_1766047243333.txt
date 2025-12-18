@@ -1,0 +1,198 @@
+I’m building a TradingView-based backtesting & replay system for my journaling app.
+Market data is hosted on my own VPS and exposed via a custom API.
+Your task is to design and implement the frontend + replay/backtesting module that works perfectly with this API.
+
+1️⃣ Core Architecture Rules (IMPORTANT)
+Single source of truth
+
+Replay position is always a UNIX timestamp
+
+Never use bar index as truth
+
+Timestamp must stay consistent across timeframe switches
+
+Data philosophy
+
+Backend stores 1-minute OHLCV only
+
+Backend aggregates to any timeframe on request
+
+Frontend NEVER aggregates candles
+
+2️⃣ Data API (YOU MUST USE THIS EXACTLY)
+Endpoint
+GET /api/bars
+
+Query Parameters
+Param	Type	Required	Description
+market	string	✅	FOREX / CRYPTO / INDICES / STOCKS
+symbol	string	✅	EURUSD, XAUUSD, BTCUSDT etc
+resolution	string	✅	Any TradingView resolution: 1, 5, 15, 60, 240, D, W
+from	number	❌	Optional (unix seconds). If omitted → load from earliest
+to	number	✅	Unix timestamp (acts as replay cutoff)
+Example Request
+http://72.61.242.6:5001/api/bars
+?market=FOREX
+&symbol=XAUUSD
+&resolution=240
+&to=1704067200
+
+3️⃣ API Response Format (TradingView Compatible)
+{
+  "s": "ok",
+  "t": [1702857600, 1702872000, ...],
+  "o": [2017.66, 2022.55, ...],
+  "h": [2023.94, 2024.67, ...],
+  "l": [2015.40, 2021.56, ...],
+  "c": [2022.71, 2023.39, ...],
+  "v": [639, 631, ...]
+}
+
+Notes
+
+t is candle open time
+
+Last candle may be partial
+
+API never crashes — empty data returns { s: "no_data" }
+
+4️⃣ TradingView Datafeed Requirements
+
+You must implement a custom TradingView datafeed:
+
+Required methods
+
+onReady
+
+resolveSymbol
+
+getBars
+
+subscribeBars (for replay ticking)
+
+unsubscribeBars
+
+getBars behavior
+
+Always request ONE timeframe at a time
+
+Pass:
+
+resolution exactly as TradingView gives
+
+to = current replay timestamp
+
+Do NOT request future candles
+
+5️⃣ Timeframe Switching (CRITICAL)
+
+When user switches timeframe:
+
+❌ DO NOT reset replay
+❌ DO NOT jump candles
+
+✅ DO:
+
+Keep currentReplayTimestamp unchanged
+
+Re-fetch bars for new resolution
+
+Render bars where bar.t <= currentReplayTimestamp
+
+This ensures:
+
+Same market moment across all TFs
+
+Correct partial candles
+
+6️⃣ Replay / Backtesting Engine
+Replay state
+replayState = {
+  currentTimestamp: number,
+  speed: number,
+  isPlaying: boolean
+}
+
+Replay behavior
+
+Replay advances timestamp, not bar index
+
+Every tick:
+
+Increase timestamp by N seconds
+
+Call getBars if needed
+
+Update chart via TradingView API
+
+Controls
+
+Play / Pause
+
+Speed control (1x, 2x, 5x, etc)
+
+Step forward (1 candle / 1 minute)
+
+Jump to timestamp
+
+7️⃣ Historical vs Replay Data
+
+Load full historical data before replay start
+
+Replay only affects candles after replay start
+
+Historical candles remain frozen
+
+Optional: visual separator on chart
+
+8️⃣ Performance Expectations
+
+Cache responses per:
+
+{ market, symbol, resolution, to }
+
+
+On replay advance:
+
+Only re-fetch when timestamp crosses candle boundary
+
+Avoid unnecessary network calls
+
+9️⃣ Edge Cases YOU MUST HANDLE
+
+Empty files / missing years
+
+No data returned
+
+Non-standard resolutions (e.g. 19, 69 minutes)
+
+Switching symbol during replay
+
+Switching market (FOREX → CRYPTO)
+
+🔟 Final Deliverables
+
+You must deliver:
+
+TradingView datafeed implementation
+
+Replay controller logic
+
+Timeframe-safe rendering
+
+Clean, documented code
+
+Explanation of design decisions
+
+🚨 IMPORTANT
+
+Do NOT:
+
+Aggregate candles on frontend
+
+Use bar index as replay position
+
+Assume fixed timeframes only
+
+If anything is unclear, ask before coding.
+Once architecture is confirmed, proceed to implementation.
