@@ -823,9 +823,11 @@ export default function FullscreenBacktesting({
       setAllBars(cachedBars);
       let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
       // Use replayTimestamp if available, otherwise use saved progress
+      // Only use progressPointer if session has actual trades (user made progress worth resuming)
+      const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
       const targetTs = replayTimestampRef.current > 0 
         ? replayTimestampRef.current 
-        : (savedTimestamp || sessionData?.progressPointer);
+        : (savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null));
       if (targetTs) {
         // Find the last bar whose time <= target timestamp
         let foundIndex = -1;
@@ -899,9 +901,11 @@ export default function FullscreenBacktesting({
           
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
           // Use replayTimestamp if available (timeframe switch), otherwise use saved session pointer
+          // Only use progressPointer if session has actual trades (user made progress worth resuming)
+          const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
           const targetTs = replayTimestampRef.current > 0 
             ? replayTimestampRef.current 
-            : (savedTimestamp || sessionData?.progressPointer);
+            : (savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null));
           if (targetTs) {
             // Find the last bar whose time <= target timestamp for consistent positioning
             let foundIndex = -1;
