@@ -1524,12 +1524,18 @@ export default function FullscreenBacktesting({
         }
       });
       
-      // Subscribe to favorite drawing tools changes
-      chart.onFavoriteDrawingsChanged().subscribe(null, (drawingTools: string[]) => {
-        console.log('Favorite drawing tools changed:', drawingTools);
-        favoriteDrawingToolsRef.current = drawingTools;
-        debouncedSave();
-      });
+      // Subscribe to favorite drawing tools changes (if API is available)
+      try {
+        if (typeof (chart as any).onFavoriteDrawingsChanged === 'function') {
+          (chart as any).onFavoriteDrawingsChanged().subscribe(null, (drawingTools: string[]) => {
+            console.log('Favorite drawing tools changed:', drawingTools);
+            favoriteDrawingToolsRef.current = drawingTools;
+            debouncedSave();
+          });
+        }
+      } catch (e) {
+        console.log('Favorite drawings subscription not available');
+      }
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
         const currentBar = allBars[currentBarIndexRef.current];
