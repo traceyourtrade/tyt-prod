@@ -194,6 +194,10 @@ export default function FullscreenBacktesting({
   const lastSessionKeyRef = useRef<string>("");
   const hasLoadedLayoutRef = useRef(false);
   const replayTimestampRef = useRef<number>(0); // Tracks replay position as timestamp for consistent drawing anchors
+  const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
+  const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
+  const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
+  const initialRestoreCompleteRef = useRef<boolean>(false); // Tracks if initial chart restore is complete
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -383,6 +387,38 @@ export default function FullscreenBacktesting({
     isChangingResolutionRef.current = true;
     currentIntervalRef.current = tf;
     
+    // Capture current drawings BEFORE resolution change for potential restoration
+    if (tvWidgetRef.current) {
+      try {
+        const chart = tvWidgetRef.current.activeChart();
+        const allShapes = chart.getAllShapes();
+        const drawings: any[] = [];
+        
+        for (const shape of allShapes) {
+          try {
+            const shapeObj = chart.getShapeById(shape.id);
+            if (shapeObj) {
+              const points = shapeObj.getPoints();
+              const properties = shapeObj.getProperties();
+              drawings.push({
+                name: shape.name,
+                points: points,
+                overrides: properties,
+                lock: false
+              });
+            }
+          } catch (e) {
+            // Skip shapes that can't be serialized
+          }
+        }
+        
+        pendingDrawingsRef.current = drawings;
+        console.log('Captured', drawings.length, 'drawings before resolution change');
+      } catch (e) {
+        console.warn('Could not capture drawings before resolution change:', e);
+      }
+    }
+    
     // Check if we have cached bars for this resolution
     const cachedBars = barsCacheRef.current[tf];
     if (cachedBars && cachedBars.length > 0 && tvWidgetRef.current) {
@@ -413,7 +449,38 @@ export default function FullscreenBacktesting({
       // Use TradingView's setResolution for instant switch
       try {
         tvWidgetRef.current.activeChart().setResolution(tf, () => {
-          isChangingResolutionRef.current = false;
+          // Restore drawings if they were lost during resolution change
+          setTimeout(() => {
+            try {
+              const chart = tvWidgetRef.current?.activeChart();
+              if (chart && pendingDrawingsRef.current.length > 0) {
+                const currentShapes = chart.getAllShapes();
+                if (currentShapes.length === 0) {
+                  console.log('Drawings lost during resolution change, restoring', pendingDrawingsRef.current.length, 'drawings');
+                  for (const drawing of pendingDrawingsRef.current) {
+                    try {
+                      if (drawing.name && drawing.points && drawing.points.length > 0) {
+                        chart.createMultipointShape(drawing.points, {
+                          shape: drawing.name,
+                          overrides: drawing.overrides || {},
+                          lock: drawing.lock || false,
+                          disableSelection: false,
+                          disableSave: false,
+                          disableUndo: false,
+                        });
+                      }
+                    } catch (restoreError) {
+                      console.warn('Could not restore drawing:', drawing.name, restoreError);
+                    }
+                  }
+                }
+                pendingDrawingsRef.current = [];
+              }
+            } catch (e) {
+              console.warn('Error checking/restoring drawings:', e);
+            }
+            isChangingResolutionRef.current = false;
+          }, 500); // Small delay to ensure chart has finished loading
         });
       } catch (e) {
         isChangingResolutionRef.current = false;
@@ -719,7 +786,38 @@ export default function FullscreenBacktesting({
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
             try {
               tvWidgetRef.current.activeChart().setResolution(currentInterval, () => {
-                isChangingResolutionRef.current = false;
+                // Restore drawings if they were lost during resolution change
+                setTimeout(() => {
+                  try {
+                    const chart = tvWidgetRef.current?.activeChart();
+                    if (chart && pendingDrawingsRef.current.length > 0) {
+                      const currentShapes = chart.getAllShapes();
+                      if (currentShapes.length === 0) {
+                        console.log('Drawings lost during resolution change (slow path), restoring', pendingDrawingsRef.current.length, 'drawings');
+                        for (const drawing of pendingDrawingsRef.current) {
+                          try {
+                            if (drawing.name && drawing.points && drawing.points.length > 0) {
+                              chart.createMultipointShape(drawing.points, {
+                                shape: drawing.name,
+                                overrides: drawing.overrides || {},
+                                lock: drawing.lock || false,
+                                disableSelection: false,
+                                disableSave: false,
+                                disableUndo: false,
+                              });
+                            }
+                          } catch (restoreError) {
+                            console.warn('Could not restore drawing:', drawing.name, restoreError);
+                          }
+                        }
+                      }
+                      pendingDrawingsRef.current = [];
+                    }
+                  } catch (e) {
+                    console.warn('Error checking/restoring drawings:', e);
+                  }
+                  isChangingResolutionRef.current = false;
+                }, 500);
               });
             } catch (e) {
               console.log('setResolution error:', e);
@@ -916,11 +1014,9 @@ export default function FullscreenBacktesting({
       const chart = tvWidget.activeChart();
       chart.setChartType(1);
       
-      // Track if we've finished initial restore to avoid overwriting saved data with empty state
-      // Declared before loadSavedLayout to avoid temporal dead zone issues
-      let initialRestoreComplete = false;
-      let lastSavedDrawingsCount = 0;
-      let userDeletedAllDrawings = false; // Track if user explicitly deleted all drawings
+      // Use refs for state that must persist across effect invocations
+      // (During timeframe switches, allBars changes trigger effect re-runs)
+      // Note: initialRestoreCompleteRef, lastSavedDrawingsCountRef, userDeletedAllDrawingsRef are component-level refs
       
       // Track if a layout existed to restore (prevents accidental overwrites on error)
       let hadSavedLayout = false;
@@ -1011,10 +1107,10 @@ export default function FullscreenBacktesting({
               
               console.log('Chart layout restore complete');
               
-              // Initialize lastSavedDrawingsCount from stored payload immediately
+              // Initialize lastSavedDrawingsCountRef from stored payload immediately
               // This provides a fallback if chart.getAllShapes() is slow or returns empty
               const storedDrawingCount = savedData.drawings?.length || 0;
-              lastSavedDrawingsCount = storedDrawingCount;
+              lastSavedDrawingsCountRef.current = storedDrawingCount;
               console.log('Stored drawing count (from payload):', storedDrawingCount);
               
               // Delay to allow shapes to fully render
@@ -1026,28 +1122,28 @@ export default function FullscreenBacktesting({
               console.log('Actual restored shape count:', actualCount);
               
               // Use the higher of stored vs actual count for safety
-              if (actualCount > lastSavedDrawingsCount) {
-                lastSavedDrawingsCount = actualCount;
+              if (actualCount > lastSavedDrawingsCountRef.current) {
+                lastSavedDrawingsCountRef.current = actualCount;
               }
               
               // Enable auto-saves now that restore is complete
               // We cleared existing studies and restored saved state, so enable autosave
               // This allows users to save layouts with deleted indicators (empty studies array)
-              initialRestoreComplete = true;
+              initialRestoreCompleteRef.current = true;
               console.log('Initial restore complete, auto-saves now enabled');
             }
           } else {
             console.log('No saved chart layouts found for session', sessionId);
             // Small delay before allowing saves on new sessions
             await new Promise(resolve => setTimeout(resolve, 1000));
-            initialRestoreComplete = true; // No saved data, allow new saves
+            initialRestoreCompleteRef.current = true; // No saved data, allow new saves
           }
         } catch (error) {
           console.error('Error loading saved layout:', error);
           await new Promise(resolve => setTimeout(resolve, 1000));
           // Only enable autosave if no prior layout existed (prevents accidental overwrites)
           if (!hadSavedLayout) {
-            initialRestoreComplete = true;
+            initialRestoreCompleteRef.current = true;
             console.log('No prior layout found - autosave enabled');
           } else {
             console.log('ERROR: Restore failed with prior layout - autosave DISABLED to prevent data loss');
@@ -1063,13 +1159,19 @@ export default function FullscreenBacktesting({
         loadSavedLayout();
       } else {
         // Already loaded layout - just enable auto-save immediately
-        initialRestoreComplete = true;
+        initialRestoreCompleteRef.current = true;
       }
       
       const autoSaveChart = async () => {
         // Block all auto-saves until initial restore is complete
-        if (!initialRestoreComplete) {
+        if (!initialRestoreCompleteRef.current) {
           console.log('Skipping auto-save: initial restore not complete');
+          return;
+        }
+        
+        // Block auto-saves during resolution changes - drawings may temporarily be unavailable
+        if (isChangingResolutionRef.current) {
+          console.log('Skipping auto-save: resolution change in progress');
           return;
         }
         
@@ -1128,15 +1230,15 @@ export default function FullscreenBacktesting({
           
           // Prevent overwriting saved drawings with empty state
           // Only allow empty save if user explicitly deleted all drawings
-          if (drawings.length === 0 && lastSavedDrawingsCount > 0 && !userDeletedAllDrawings) {
-            console.log('Skipping auto-save: would overwrite', lastSavedDrawingsCount, 'drawings with empty state');
+          if (drawings.length === 0 && lastSavedDrawingsCountRef.current > 0 && !userDeletedAllDrawingsRef.current) {
+            console.log('Skipping auto-save: would overwrite', lastSavedDrawingsCountRef.current, 'drawings with empty state');
             return;
           }
           
           // Update the count and reset delete flag after successful save
-          lastSavedDrawingsCount = drawings.length;
-          if (drawings.length === 0 && userDeletedAllDrawings) {
-            userDeletedAllDrawings = false; // Reset after saving the empty state
+          lastSavedDrawingsCountRef.current = drawings.length;
+          if (drawings.length === 0 && userDeletedAllDrawingsRef.current) {
+            userDeletedAllDrawingsRef.current = false; // Reset after saving the empty state
             console.log('Saved empty state after user deletion');
           }
           
@@ -1165,11 +1267,20 @@ export default function FullscreenBacktesting({
       let saveTimeout: NodeJS.Timeout | null = null;
       const debouncedSave = () => {
         // Cancel any pending save if autosave is disabled
-        if (!initialRestoreComplete) {
+        if (!initialRestoreCompleteRef.current) {
           if (saveTimeout) {
             clearTimeout(saveTimeout);
             saveTimeout = null;
           }
+          return;
+        }
+        // Block saves during resolution changes - drawings may be temporarily unavailable
+        if (isChangingResolutionRef.current) {
+          if (saveTimeout) {
+            clearTimeout(saveTimeout);
+            saveTimeout = null;
+          }
+          console.log('Skipping debounced save: resolution change in progress');
           return;
         }
         if (saveTimeout) clearTimeout(saveTimeout);
@@ -1181,17 +1292,17 @@ export default function FullscreenBacktesting({
         // Track explicit delete events to allow intentional zero-length saves
         if (type === 'remove') {
           const remainingShapes = chart.getAllShapes();
-          if (remainingShapes.length === 0 && lastSavedDrawingsCount > 0) {
+          if (remainingShapes.length === 0 && lastSavedDrawingsCountRef.current > 0) {
             console.log('User deleted all drawings, allowing empty save');
-            userDeletedAllDrawings = true;
+            userDeletedAllDrawingsRef.current = true;
           }
         } else if (type === 'create') {
           // Reset the delete flag
-          userDeletedAllDrawings = false;
+          userDeletedAllDrawingsRef.current = false;
           // Re-enable autosave if user creates new drawings (even if restore failed)
-          if (!initialRestoreComplete) {
+          if (!initialRestoreCompleteRef.current) {
             console.log('User created new drawing - enabling autosave');
-            initialRestoreComplete = true;
+            initialRestoreCompleteRef.current = true;
           }
         }
         debouncedSave();
@@ -1199,7 +1310,7 @@ export default function FullscreenBacktesting({
       tvWidget.subscribe('study_event', () => {
         // Immediately save when indicators are added/removed (not debounced)
         // This ensures deletions persist before timeframe switches
-        if (initialRestoreComplete) {
+        if (initialRestoreCompleteRef.current) {
           autoSaveChart();
         }
       });
@@ -1272,6 +1383,12 @@ export default function FullscreenBacktesting({
 
     return () => {
       if (tvWidgetRef.current) {
+        // Skip save during resolution changes - widget is kept alive and drawings may be temporarily unavailable
+        if (isChangingResolutionRef.current) {
+          console.log('Skipping cleanup save: resolution change in progress');
+          return;
+        }
+        
         try {
           const widget = tvWidgetRef.current;
           // Check if widget is still valid before saving
