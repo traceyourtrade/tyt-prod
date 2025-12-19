@@ -188,6 +188,10 @@ export default function FullscreenBacktesting({
   const sessionDataRef = useRef<SessionData | null>(null);
   const pendingOpenTradeRef = useRef<any>(null);
   const targetTimestampRef = useRef<number | null>(null);
+  const barsCacheRef = useRef<Record<string, any[]>>({});
+  const isChangingResolutionRef = useRef(false);
+  const currentIntervalRef = useRef(initialInterval);
+  const lastSessionKeyRef = useRef<string>("");
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -353,13 +357,55 @@ export default function FullscreenBacktesting({
     setPlaybackSpeed(800 / value);
   };
 
-  const handleTimeframeChange = (tf: string) => {
+  const handleTimeframeChange = async (tf: string) => {
+    if (tf === currentIntervalRef.current) {
+      setShowTimeframeDropdown(false);
+      return;
+    }
+    
     const currentBar = allBars[currentBarIndexRef.current];
     if (currentBar) {
       targetTimestampRef.current = currentBar.time;
     }
-    setCurrentInterval(tf);
-    setShowTimeframeDropdown(false);
+    
+    // Check if we have cached bars for this resolution
+    const cachedBars = barsCacheRef.current[tf];
+    if (cachedBars && cachedBars.length > 0 && tvWidgetRef.current) {
+      // Fast path: use cached data and setResolution
+      isChangingResolutionRef.current = true;
+      currentIntervalRef.current = tf;
+      setAllBars(cachedBars);
+      setCurrentInterval(tf);
+      setShowTimeframeDropdown(false);
+      
+      // Find the new bar index based on saved timestamp
+      const targetTs = targetTimestampRef.current;
+      let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
+      if (targetTs) {
+        const pointerIndex = cachedBars.findIndex((bar: any) => bar.time >= targetTs);
+        if (pointerIndex >= 0) {
+          newIndex = pointerIndex;
+        } else if (cachedBars.length > 0) {
+          newIndex = cachedBars.length - 1;
+        }
+      }
+      setCurrentBarIndex(newIndex);
+      targetTimestampRef.current = null;
+      
+      // Use TradingView's setResolution for instant switch
+      try {
+        tvWidgetRef.current.activeChart().setResolution(tf, () => {
+          isChangingResolutionRef.current = false;
+        });
+      } catch (e) {
+        isChangingResolutionRef.current = false;
+      }
+    } else {
+      // Slow path: need to fetch from API
+      currentIntervalRef.current = tf;
+      setCurrentInterval(tf);
+      setShowTimeframeDropdown(false);
+    }
   };
 
   const [tradingState, dispatch] = useReducer(tradingReducer, {
@@ -531,6 +577,40 @@ export default function FullscreenBacktesting({
   useEffect(() => {
     if (!sessionData || !fromDate || !toDate || !sessionData.symbol) return;
     
+    // Invalidate cache when symbol or date range changes
+    const sessionKey = `${sessionData.symbol}-${sessionData.market}-${fromDate}-${toDate}`;
+    if (sessionKey !== lastSessionKeyRef.current) {
+      barsCacheRef.current = {};
+      lastSessionKeyRef.current = sessionKey;
+    }
+    
+    // If we're changing resolution with cached data, skip fetch
+    if (isChangingResolutionRef.current) {
+      isChangingResolutionRef.current = false;
+      return;
+    }
+    
+    // Check cache first
+    const cachedBars = barsCacheRef.current[currentInterval];
+    if (cachedBars && cachedBars.length > 0) {
+      const savedTimestamp = targetTimestampRef.current;
+      targetTimestampRef.current = null;
+      
+      setAllBars(cachedBars);
+      let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
+      const targetTs = savedTimestamp || sessionData?.progressPointer;
+      if (targetTs) {
+        const pointerIndex = cachedBars.findIndex((bar: any) => bar.time >= targetTs);
+        if (pointerIndex >= 0) {
+          newIndex = pointerIndex;
+        } else if (cachedBars.length > 0) {
+          newIndex = cachedBars.length - 1;
+        }
+      }
+      setCurrentBarIndex(newIndex);
+      return;
+    }
+    
     const fetchAllHistory = async () => {
       const savedTimestamp = targetTimestampRef.current;
       targetTimestampRef.current = null;
@@ -541,9 +621,10 @@ export default function FullscreenBacktesting({
       const rawSymbol = sessionData.symbol;
       
       setIsLoading(true);
-      setAllBars([]);
       
-      if (tvWidgetRef.current) {
+      // Only destroy widget on first load, not on resolution change
+      const isFirstLoad = Object.keys(barsCacheRef.current).length === 0;
+      if (isFirstLoad && tvWidgetRef.current) {
         tvWidgetRef.current.remove();
         tvWidgetRef.current = null;
       }
@@ -574,6 +655,9 @@ export default function FullscreenBacktesting({
             });
           });
           setDecimalPlaces(maxDecimalPlaces);
+          
+          // Cache the bars for this resolution
+          barsCacheRef.current[currentInterval] = bars;
           setAllBars(bars);
           
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
@@ -588,6 +672,15 @@ export default function FullscreenBacktesting({
           }
           setCurrentBarIndex(newIndex);
           setIsPlaying(false);
+          
+          // If widget exists and this isn't the first load, update the resolution
+          if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
+            try {
+              tvWidgetRef.current.activeChart().setResolution(currentInterval, () => {});
+            } catch (e) {
+              console.log('setResolution error:', e);
+            }
+          }
         } else {
           console.log('No data from VPS API:', data);
           setAllBars([]);
@@ -643,13 +736,16 @@ export default function FullscreenBacktesting({
         const { firstDataRequest } = periodParams;
         const idx = currentBarIndexRef.current;
         
+        // Use cached bars for the requested resolution, fallback to current allBars
+        const barsForResolution = barsCacheRef.current[resolution] || allBars;
+        
         if (firstDataRequest) {
-          const barsToShow = allBars.slice(0, idx + 1);
+          const barsToShow = barsForResolution.slice(0, idx + 1);
           onHistoryCallback(barsToShow, { noData: barsToShow.length === 0 });
           return;
         }
         
-        const bars = allBars.filter(
+        const bars = barsForResolution.filter(
           (bar) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
         );
         onHistoryCallback(bars, { noData: bars.length === 0 });
