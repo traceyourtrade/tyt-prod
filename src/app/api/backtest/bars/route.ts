@@ -38,10 +38,21 @@ export async function GET(req: NextRequest) {
       }, { status: 400 });
     }
 
+    // Map TradingView resolution formats to VPS API expected formats
+    // TradingView uses: 1, 5, 15, 60, 1D, 1W, 1M
+    // Minute resolutions pass through as-is (1, 5, 15, 60 etc.)
+    // Only daily/weekly/monthly need mapping: 1D -> D, 1W -> W, 1M -> M
+    const resolutionMap: Record<string, string> = {
+      '1D': 'D',
+      '1W': 'W',
+      '1M': 'M',
+    };
+    const mappedResolution = resolutionMap[resolution] || resolution;
+
     const apiUrl = new URL(`${VPS_API_URL}/api/bars`);
     apiUrl.searchParams.set('market', market);
     apiUrl.searchParams.set('symbol', symbol);
-    apiUrl.searchParams.set('resolution', resolution);
+    apiUrl.searchParams.set('resolution', mappedResolution);
     apiUrl.searchParams.set('to', to);
     apiUrl.searchParams.set('userId', userId);
     if (from) {
