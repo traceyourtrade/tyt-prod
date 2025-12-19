@@ -148,8 +148,7 @@ export default function BacktestingDashboard() {
     fromDate: "",
     toDate: "",
     initialBalance: "10000",
-    description: "",
-    riskPerTrade: "1"
+    description: ""
   });
   const [symbolSearch, setSymbolSearch] = useState("");
 
@@ -258,8 +257,7 @@ export default function BacktestingDashboard() {
           fromDate: formData.fromDate,
           toDate: formData.toDate,
           initialBalance: parseFloat(formData.initialBalance) || 10000,
-          description: formData.description,
-          riskPerTrade: parseFloat(formData.riskPerTrade) || 1
+          description: formData.description
         }),
       });
 
@@ -272,8 +270,7 @@ export default function BacktestingDashboard() {
           fromDate: "",
           toDate: "",
           initialBalance: "10000",
-          description: "",
-          riskPerTrade: "1"
+          description: ""
         });
         setSymbolSearch("");
         fetchSessions();
@@ -1000,45 +997,23 @@ export default function BacktestingDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground/70 mb-2">
-                        Starting Balance
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                        <input
-                          type="number"
-                          value={formData.initialBalance}
-                          onChange={(e) => setFormData({ ...formData, initialBalance: e.target.value })}
-                          placeholder="10000"
-                          className={cn(
-                            "w-full pl-8 pr-4 py-3 rounded-xl text-foreground",
-                            "bg-background border border-border",
-                            "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                          )}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground/70 mb-2">
-                        Risk per Trade
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          value={formData.riskPerTrade}
-                          onChange={(e) => setFormData({ ...formData, riskPerTrade: e.target.value })}
-                          placeholder="1"
-                          step="0.5"
-                          className={cn(
-                            "w-full pl-4 pr-8 py-3 rounded-xl text-foreground",
-                            "bg-background border border-border",
-                            "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                          )}
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-                      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground/70 mb-2">
+                      Starting Balance
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <input
+                        type="number"
+                        value={formData.initialBalance}
+                        onChange={(e) => setFormData({ ...formData, initialBalance: e.target.value })}
+                        placeholder="10000"
+                        className={cn(
+                          "w-full pl-8 pr-4 py-3 rounded-xl text-foreground",
+                          "bg-background border border-border",
+                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                        )}
+                      />
                     </div>
                   </div>
 
