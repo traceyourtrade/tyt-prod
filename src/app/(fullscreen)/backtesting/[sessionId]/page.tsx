@@ -198,6 +198,8 @@ export default function FullscreenBacktesting({
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
   const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
   const initialRestoreCompleteRef = useRef<boolean>(false); // Tracks if initial chart restore is complete
+  const allBarsRef = useRef<any[]>([]); // Ref for bars data to avoid widget recreation on data changes
+  const widgetInitializedRef = useRef<boolean>(false); // Track if widget has been created
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -516,6 +518,14 @@ export default function FullscreenBacktesting({
   useEffect(() => {
     sessionDataRef.current = sessionData;
   }, [sessionData]);
+
+  // Keep allBarsRef in sync with allBars - used by widget to avoid recreation on data changes
+  useEffect(() => {
+    allBarsRef.current = allBars;
+  }, [allBars]);
+
+  // Boolean flag for widget effect - only triggers when bars go from empty to having data
+  const hasBarsData = allBars.length > 0;
 
   // Fetch session data on mount
   useEffect(() => {
@@ -844,9 +854,14 @@ export default function FullscreenBacktesting({
   }, [sessionData?.symbol, sessionData?.market, fromDate, toDate, currentInterval]);
 
   useEffect(() => {
-    if (allBars.length === 0 || tvWidgetRef.current || !chartContainerRef.current) {
+    // Only create widget ONCE when initial data is available
+    // Use refs to avoid recreation on data changes - only symbol/decimalPlaces changes should recreate
+    if (allBarsRef.current.length === 0 || widgetInitializedRef.current || !chartContainerRef.current) {
       return;
     }
+    
+    // Mark widget as initialized to prevent recreation
+    widgetInitializedRef.current = true;
 
     const supportedMinuteResolutions = ["1", "3", "5", "10", "15", "30", "60", "120", "240"];
     
@@ -1462,21 +1477,28 @@ export default function FullscreenBacktesting({
         } catch (error) {
           console.error('Error saving chart before unmount:', error);
         }
-        // Only destroy widget on true unmount, not on timeframe changes
-        // If we're in the middle of a resolution change, keep the widget alive
-        if (!isChangingResolutionRef.current) {
-          // This is true unmount (leaving page) - safe to destroy
-          try {
-            tvWidgetRef.current.remove();
-          } catch (e) {
-            // Widget might already be removed
-          }
-          tvWidgetRef.current = null;
+        // Only destroy widget on true unmount (page navigation)
+        // Skip destruction during timeframe changes - widget should stay alive
+        if (isChangingResolutionRef.current) {
+          console.log('Cleanup: Skipping widget destruction - resolution change in progress');
+          return;
         }
-        // If changing resolution, keep the widget alive for fast switching
+        
+        // This is true unmount (leaving page) - safe to destroy
+        try {
+          tvWidgetRef.current.remove();
+        } catch (e) {
+          // Widget might already be removed
+        }
+        tvWidgetRef.current = null;
+        widgetInitializedRef.current = false; // Reset so widget can be created again if needed
       }
     };
-  }, [allBars, symbol, decimalPlaces]);
+  // Dependencies: symbol and decimalPlaces for widget config, hasBarsData to trigger on initial data load
+  // Using hasBarsData (boolean) prevents re-runs when data changes, only triggers when data becomes available
+  // Note: decimalPlaces may change during timeframe switches but isChangingResolutionRef guard prevents destruction
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol, decimalPlaces, hasBarsData]);
 
   const handleDrawingTool = (id: any, type: string, properties: any, point: number, toolname: string) => {
     if (!point || !properties) return;
