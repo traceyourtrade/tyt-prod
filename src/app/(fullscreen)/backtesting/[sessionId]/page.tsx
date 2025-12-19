@@ -385,8 +385,7 @@ export default function FullscreenBacktesting({
     // This is already set whenever currentBarIndex changes
     const currentReplayTs = replayTimestampRef.current;
     
-    // Mark that we're changing resolution - this prevents widget destruction in cleanup
-    isChangingResolutionRef.current = true;
+    // Update interval ref immediately for cleanup guards
     currentIntervalRef.current = tf;
     
     // Capture current drawings BEFORE resolution change for potential restoration
@@ -425,6 +424,8 @@ export default function FullscreenBacktesting({
     const cachedBars = barsCacheRef.current[tf];
     if (cachedBars && cachedBars.length > 0 && tvWidgetRef.current) {
       // Fast path: use cached data and setResolution
+      // Set flag to prevent data fetch effect from re-fetching
+      isChangingResolutionRef.current = true;
       setAllBars(cachedBars);
       setCurrentInterval(tf);
       setShowTimeframeDropdown(false);
