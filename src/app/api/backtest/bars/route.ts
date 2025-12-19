@@ -85,6 +85,44 @@ export async function GET(req: NextRequest) {
 
     const data = await response.json();
     
+    // Filter bars to only include those within the requested date range
+    // The VPS API sometimes ignores the 'from' parameter and returns all historical data
+    if (data.s === 'ok' && data.t && Array.isArray(data.t) && from) {
+      const fromTs = parseInt(from, 10);
+      const toTs = parseInt(to, 10);
+      
+      // Find indices of bars within the requested range
+      const filteredIndices: number[] = [];
+      for (let i = 0; i < data.t.length; i++) {
+        const barTime = data.t[i];
+        if (barTime >= fromTs && barTime <= toTs) {
+          filteredIndices.push(i);
+        }
+      }
+      
+      // Only filter if there are bars outside the range
+      if (filteredIndices.length < data.t.length) {
+        console.log('Filtering bars:', {
+          originalCount: data.t.length,
+          filteredCount: filteredIndices.length,
+          fromTs,
+          toTs,
+          firstBarTime: data.t[0],
+          lastBarTime: data.t[data.t.length - 1]
+        });
+        
+        // Rebuild arrays with only filtered data
+        data.t = filteredIndices.map(i => data.t[i]);
+        data.o = filteredIndices.map(i => data.o[i]);
+        data.h = filteredIndices.map(i => data.h[i]);
+        data.l = filteredIndices.map(i => data.l[i]);
+        data.c = filteredIndices.map(i => data.c[i]);
+        if (data.v) {
+          data.v = filteredIndices.map(i => data.v[i]);
+        }
+      }
+    }
+    
     // Debug log for daily/weekly/monthly resolutions
     if (['1D', 'D', '1W', 'W', '1M', 'M'].includes(resolution)) {
       console.log('Higher TF response:', {
