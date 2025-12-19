@@ -85,27 +85,25 @@ export async function GET(req: NextRequest) {
 
     const data = await response.json();
     
-    // Filter bars to only include those within the requested date range
-    // The VPS API sometimes ignores the 'from' parameter and returns all historical data
-    if (data.s === 'ok' && data.t && Array.isArray(data.t) && from) {
-      const fromTs = parseInt(from, 10);
+    // Only filter out bars AFTER the 'to' date - keep all historical data before 'to'
+    // This allows users to see historical context while starting playback at their 'from' date
+    if (data.s === 'ok' && data.t && Array.isArray(data.t)) {
       const toTs = parseInt(to, 10);
       
-      // Find indices of bars within the requested range
+      // Find indices of bars up to (and including) the 'to' date
       const filteredIndices: number[] = [];
       for (let i = 0; i < data.t.length; i++) {
         const barTime = data.t[i];
-        if (barTime >= fromTs && barTime <= toTs) {
+        if (barTime <= toTs) {
           filteredIndices.push(i);
         }
       }
       
-      // Only filter if there are bars outside the range
+      // Only filter if there are bars after the 'to' date
       if (filteredIndices.length < data.t.length) {
-        console.log('Filtering bars:', {
+        console.log('Filtering future bars:', {
           originalCount: data.t.length,
           filteredCount: filteredIndices.length,
-          fromTs,
           toTs,
           firstBarTime: data.t[0],
           lastBarTime: data.t[data.t.length - 1]

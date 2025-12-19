@@ -703,12 +703,22 @@ export default function FullscreenBacktesting({
         // Update React state so playback controls and UI stay in sync
         setAllBars(bars);
         
-        // Calculate the appropriate bar index based on replay timestamp
+        // Calculate the appropriate bar index based on replay timestamp or 'from' date
         const replayTs = replayTimestampRef.current;
         let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
         if (replayTs > 0) {
+          // Use replay timestamp for timeframe switches
           for (let i = bars.length - 1; i >= 0; i--) {
             if (bars[i].time <= replayTs) {
+              newIndex = i;
+              break;
+            }
+          }
+        } else if (fromDate) {
+          // For fresh sessions, start at the 'from' date so user can replay forward
+          const fromTs = new Date(fromDate).getTime();
+          for (let i = 0; i < bars.length; i++) {
+            if (bars[i].time >= fromTs) {
               newIndex = i;
               break;
             }
@@ -840,6 +850,15 @@ export default function FullscreenBacktesting({
         if (foundIndex >= 0) {
           newIndex = foundIndex;
         }
+      } else {
+        // For fresh sessions with no saved progress, start at the 'from' date
+        const fromTimestamp = new Date(fromDate).getTime();
+        for (let i = 0; i < cachedBars.length; i++) {
+          if (cachedBars[i].time >= fromTimestamp) {
+            newIndex = i;
+            break;
+          }
+        }
       }
       // Preserve timestamp during resolution changes (when explicitly triggered via handleTimeframeChange)
       // isChangingResolutionRef is set before this path is reached via handleTimeframeChange
@@ -917,6 +936,16 @@ export default function FullscreenBacktesting({
             }
             if (foundIndex >= 0) {
               newIndex = foundIndex;
+            }
+          } else {
+            // For fresh sessions with no saved progress, start at the 'from' date
+            // This allows user to see historical data and replay forward from their chosen start date
+            const fromTimestamp = fromTs * 1000; // Convert to milliseconds
+            for (let i = 0; i < bars.length; i++) {
+              if (bars[i].time >= fromTimestamp) {
+                newIndex = i;
+                break;
+              }
             }
           }
           // Preserve timestamp during resolution changes (not first load)
