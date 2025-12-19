@@ -2255,11 +2255,6 @@ export default function FullscreenBacktesting({
           
           {/* Navigation Group */}
           <div className="bt-float-group">
-            <button onClick={handleRestart} className="bt-float-btn" title="Go to start">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/>
-              </svg>
-            </button>
             <button onClick={togglePlayPause} disabled={isEndReached} className="bt-float-btn play" title={isPlaying ? "Pause" : "Play"}>
               {isPlaying ? (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
