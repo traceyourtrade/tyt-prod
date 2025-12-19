@@ -40,11 +40,11 @@ export async function GET(req: NextRequest) {
 
     // Map TradingView resolution formats to VPS API expected formats
     // TradingView uses: 1, 5, 15, 60, 1D, 1W, 1M
+    // VPS API expects: D for daily, W for weekly, M for monthly (without the "1" prefix)
     // Minute resolutions pass through as-is (1, 5, 15, 60 etc.)
-    // Only daily/weekly/monthly need mapping: 1D -> D, 1W -> W, 1M -> M
     const resolutionMap: Record<string, string> = {
       '1D': 'D',
-      '1W': 'W',
+      '1W': 'W', 
       '1M': 'M',
     };
     const mappedResolution = resolutionMap[resolution] || resolution;
@@ -58,6 +58,16 @@ export async function GET(req: NextRequest) {
     if (from) {
       apiUrl.searchParams.set('from', from);
     }
+
+    console.log('Bars API request:', {
+      originalResolution: resolution,
+      mappedResolution,
+      symbol,
+      market,
+      from,
+      to,
+      fullUrl: apiUrl.toString()
+    });
 
     const response = await fetch(apiUrl.toString(), {
       method: 'GET',
@@ -74,6 +84,18 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
+    
+    // Debug log for daily/weekly/monthly resolutions
+    if (['1D', 'D', '1W', 'W', '1M', 'M'].includes(resolution)) {
+      console.log('Higher TF response:', {
+        resolution,
+        mappedResolution,
+        status: data.s,
+        barCount: data.t?.length || 0,
+        firstBar: data.t?.[0],
+        lastBar: data.t?.[data.t?.length - 1]
+      });
+    }
     
     return NextResponse.json(data, {
       headers: {
