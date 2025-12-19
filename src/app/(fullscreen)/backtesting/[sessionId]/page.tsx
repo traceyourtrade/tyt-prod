@@ -683,9 +683,25 @@ export default function FullscreenBacktesting({
           volume: data.v?.[i] || 0,
         }));
         
+        // Compute decimal places for this resolution's data
+        let maxDecimalPlaces = 0;
+        bars.forEach((bar: any) => {
+          [bar.open, bar.high, bar.low, bar.close].forEach((val: number) => {
+            const str = val?.toString() || "";
+            if (str.includes(".") && !str.includes("e")) {
+              const decCount = str.split(".")[1].length;
+              if (decCount > maxDecimalPlaces) maxDecimalPlaces = decCount;
+            }
+          });
+        });
+        setDecimalPlaces(maxDecimalPlaces);
+        
         // Cache the bars for this resolution
         barsCacheRef.current[resolution] = bars;
         console.log('Cached', bars.length, 'bars for resolution', resolution);
+        
+        // Update React state so playback controls and UI stay in sync
+        setAllBars(bars);
         
         // Calculate the appropriate bar index based on replay timestamp
         const replayTs = replayTimestampRef.current;
@@ -698,6 +714,9 @@ export default function FullscreenBacktesting({
             }
           }
         }
+        
+        // Update current bar index to sync playback position (preserve timestamp during TF switch)
+        setCurrentBarIndex(newIndex, bars, true);
         
         // Trigger any pending getBars callbacks for this resolution
         const pendingCallbacks = pendingCallbacksRef.current[resolution];
