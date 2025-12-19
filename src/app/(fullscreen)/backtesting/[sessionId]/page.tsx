@@ -248,6 +248,13 @@ export default function FullscreenBacktesting({
   const [showModifyTradePopup, setShowModifyTradePopup] = useState(false);
   const [modifyTradeData, setModifyTradeData] = useState({ newTP: "", newSL: "" });
   const [showOrderDialog, setShowOrderDialog] = useState(false);
+  const [showQuickOrderDialog, setShowQuickOrderDialog] = useState(false);
+  const [quickOrderData, setQuickOrderData] = useState({
+    side: 'buy' as 'buy' | 'sell',
+    lotSize: '1',
+    takeProfit: '',
+    stopLoss: '',
+  });
   const [showSpeedDropdown, setShowSpeedDropdown] = useState(false);
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -2633,6 +2640,45 @@ export default function FullscreenBacktesting({
     setOrderFormData(prev => ({ ...prev, side: 'buy' }));
   };
 
+  const handleQuickOrderSubmit = async () => {
+    if (!allBars[currentBarIndex]) return;
+    
+    // Capture all form data before any state changes
+    const orderSide = quickOrderData.side;
+    const entry = allBars[currentBarIndex].close;
+    const posSize = parseFloat(quickOrderData.lotSize) || 1;
+    const tp = quickOrderData.takeProfit ? parseFloat(quickOrderData.takeProfit) : undefined;
+    const sl = quickOrderData.stopLoss ? parseFloat(quickOrderData.stopLoss) : undefined;
+    const tradeType = orderSide === 'buy' ? 'long' : 'short';
+    const openedAt = allBars[currentBarIndex]?.time || Date.now();
+    
+    // Reset form and close dialog immediately
+    setQuickOrderData({ side: 'buy', lotSize: '1', takeProfit: '', stopLoss: '' });
+    setShowQuickOrderDialog(false);
+    
+    const trade = {
+      type: tradeType,
+      entry: entry,
+      target: tp,
+      stopLoss: sl,
+      dbId: null as string | null,
+    };
+    drawTradeLines(trade);
+    setLotSize(posSize);
+    setShowPanel(true);
+    
+    const dbId = await saveTradeToDb({
+      side: orderSide,
+      entryPrice: entry,
+      sl: sl,
+      tp: tp,
+      size: posSize,
+      openedAt: openedAt,
+    });
+    
+    dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
+  };
+
   const updateStopLossFromTicks = (ticks: string) => {
     const ticksNum = parseInt(ticks) || 0;
     const pipValue = Math.pow(10, -decimalPlaces);
@@ -2926,14 +2972,14 @@ export default function FullscreenBacktesting({
             ) : (
               <>
                 <button
-                  onClick={() => setShowOrderDialog(true)}
+                  onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'buy' })); setShowQuickOrderDialog(true); }}
                   disabled={!!tradingState.activeTrades}
                   className="bt-float-trade-btn buy"
                 >
                   Buy
                 </button>
                 <button
-                  onClick={() => { setOrderFormData(prev => ({ ...prev, side: 'sell' })); setShowOrderDialog(true); }}
+                  onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'sell' })); setShowQuickOrderDialog(true); }}
                   disabled={!!tradingState.activeTrades}
                   className="bt-float-trade-btn sell"
                 >
@@ -3584,6 +3630,70 @@ export default function FullscreenBacktesting({
                   <line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
                 Save & Journal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showQuickOrderDialog && (
+        <div className="bt-modal-overlay" onClick={() => setShowQuickOrderDialog(false)}>
+          <div className="bt-order-modal bt-quick-order-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="bt-order-modal-header">
+              <h3>{quickOrderData.side === 'buy' ? 'Buy' : 'Sell'} Order</h3>
+              <button className="bt-modal-close" onClick={() => setShowQuickOrderDialog(false)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div className="bt-quick-order-content">
+              <div className="bt-order-field">
+                <label>Lot Size *</label>
+                <input
+                  type="number"
+                  value={quickOrderData.lotSize}
+                  onChange={(e) => setQuickOrderData(prev => ({ ...prev, lotSize: e.target.value }))}
+                  step="0.01"
+                  min="0.01"
+                  placeholder="1"
+                />
+              </div>
+
+              <div className="bt-order-field">
+                <label>Take Profit (optional)</label>
+                <input
+                  type="number"
+                  value={quickOrderData.takeProfit}
+                  onChange={(e) => setQuickOrderData(prev => ({ ...prev, takeProfit: e.target.value }))}
+                  step="0.00001"
+                  placeholder="Leave empty for no TP"
+                />
+              </div>
+
+              <div className="bt-order-field">
+                <label>Stop Loss (optional)</label>
+                <input
+                  type="number"
+                  value={quickOrderData.stopLoss}
+                  onChange={(e) => setQuickOrderData(prev => ({ ...prev, stopLoss: e.target.value }))}
+                  step="0.00001"
+                  placeholder="Leave empty for no SL"
+                />
+              </div>
+            </div>
+
+            <div className="bt-order-actions">
+              <button className="bt-order-action-btn discard" onClick={() => setShowQuickOrderDialog(false)}>
+                Cancel
+              </button>
+              <button 
+                className={`bt-order-action-btn ${quickOrderData.side === 'buy' ? 'buy' : 'sell'}`}
+                onClick={handleQuickOrderSubmit}
+                disabled={!quickOrderData.lotSize || parseFloat(quickOrderData.lotSize) <= 0}
+              >
+                {quickOrderData.side === 'buy' ? 'Buy' : 'Sell'}
               </button>
             </div>
           </div>

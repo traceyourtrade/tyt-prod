@@ -2191,6 +2191,86 @@
   filter: brightness(1.1);
 }
 
+.bt-order-action-btn.buy {
+  flex: 1;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+}
+
+.bt-order-action-btn.buy:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.35);
+  filter: brightness(1.1);
+}
+
+.bt-order-action-btn.sell {
+  flex: 1;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25);
+}
+
+.bt-order-action-btn.sell:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.35);
+  filter: brightness(1.1);
+}
+
+.bt-order-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Quick Order Modal */
+.bt-quick-order-modal {
+  max-width: 360px;
+}
+
+.bt-quick-order-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.bt-quick-order-content .bt-order-field {
+  width: 100%;
+}
+
+.bt-quick-order-content .bt-order-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bt-text-muted);
+  margin-bottom: 8px;
+}
+
+.bt-quick-order-content .bt-order-field input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: var(--bt-text-primary);
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.bt-quick-order-content .bt-order-field input:focus {
+  outline: none;
+  border-color: var(--bt-accent-blue);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.bt-quick-order-content .bt-order-field input::placeholder {
+  color: var(--bt-text-muted);
+  opacity: 0.6;
+}
+
 /* =====================================================
    STATUS BAR
    ===================================================== */
