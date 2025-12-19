@@ -938,9 +938,11 @@ export default function FullscreenBacktesting({
         onHistoryCallback(bars, { noData: bars.length === 0 });
       },
       subscribeBars: (symbolInfo: any, resolution: string, onRealtimeCallback: any) => {
+        console.log('subscribeBars called for resolution:', resolution);
         onRealtimeCallbackRef.current = onRealtimeCallback;
       },
       unsubscribeBars: () => {
+        console.log('unsubscribeBars called');
         onRealtimeCallbackRef.current = null;
       },
       getMarks: (symbolInfo: any, from: number, to: number, onDataCallback: any) => {
@@ -1873,12 +1875,14 @@ export default function FullscreenBacktesting({
   }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId]);
 
   const handleNext = useCallback(() => {
-    if (!onRealtimeCallbackRef.current || currentBarIndex >= allBars.length - 1) {
+    if (currentBarIndex >= allBars.length - 1) {
       setIsPlaying(false);
       return;
     }
     
     const nextBar = allBars[currentBarIndex + 1];
+    
+    // Push bar to TradingView if subscribed
     if (nextBar && onRealtimeCallbackRef.current) {
       onRealtimeCallbackRef.current({
         ...nextBar,
