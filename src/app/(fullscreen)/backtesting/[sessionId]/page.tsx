@@ -193,6 +193,7 @@ export default function FullscreenBacktesting({
   const currentIntervalRef = useRef(initialInterval);
   const lastSessionKeyRef = useRef<string>("");
   const hasLoadedLayoutRef = useRef(false);
+  const replayTimestampRef = useRef<number>(0); // Tracks replay position as timestamp for consistent drawing anchors
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -201,9 +202,19 @@ export default function FullscreenBacktesting({
   const tradeLinesRef = useRef<{ entry: any; tp: any; sl: any }>({ entry: null, tp: null, sl: null });
   const activeTradesRef = useRef<any>(null);
   
-  const setCurrentBarIndex = (newIndex: number) => {
+  const setCurrentBarIndex = (newIndex: number, bars?: any[], preserveTimestamp: boolean = false) => {
     currentBarIndexRef.current = newIndex;
     setCurrentBarIndexState(newIndex);
+    
+    // During timeframe switches, preserve the exact replay timestamp to prevent drift
+    // Only update timestamp during normal playback/seek operations
+    if (!preserveTimestamp) {
+      const barsToUse = bars || barsCacheRef.current[currentIntervalRef.current] || allBars;
+      if (barsToUse && barsToUse[newIndex]) {
+        replayTimestampRef.current = barsToUse[newIndex].time;
+      }
+    }
+    // When preserveTimestamp is true, keep the existing replayTimestampRef value
   };
   
   const [isLoading, setIsLoading] = useState(true);
@@ -364,10 +375,9 @@ export default function FullscreenBacktesting({
       return;
     }
     
-    const currentBar = allBars[currentBarIndexRef.current];
-    if (currentBar) {
-      targetTimestampRef.current = currentBar.time;
-    }
+    // Use replayTimestamp for consistent drawing anchors across resolutions
+    // This is already set whenever currentBarIndex changes
+    const currentReplayTs = replayTimestampRef.current;
     
     // Mark that we're changing resolution - this prevents widget destruction in cleanup
     isChangingResolutionRef.current = true;
@@ -381,19 +391,24 @@ export default function FullscreenBacktesting({
       setCurrentInterval(tf);
       setShowTimeframeDropdown(false);
       
-      // Find the new bar index based on saved timestamp
-      const targetTs = targetTimestampRef.current;
+      // Find the new bar index based on replay timestamp
+      // Use <= to find the last bar at or before the replay timestamp
       let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
-      if (targetTs) {
-        const pointerIndex = cachedBars.findIndex((bar: any) => bar.time >= targetTs);
-        if (pointerIndex >= 0) {
-          newIndex = pointerIndex;
-        } else if (cachedBars.length > 0) {
-          newIndex = cachedBars.length - 1;
+      if (currentReplayTs > 0) {
+        // Find the last bar whose time <= replayTimestamp
+        let foundIndex = -1;
+        for (let i = cachedBars.length - 1; i >= 0; i--) {
+          if (cachedBars[i].time <= currentReplayTs) {
+            foundIndex = i;
+            break;
+          }
+        }
+        if (foundIndex >= 0) {
+          newIndex = foundIndex;
         }
       }
-      setCurrentBarIndex(newIndex);
-      targetTimestampRef.current = null;
+      // Preserve timestamp during timeframe switch to prevent drift
+      setCurrentBarIndex(newIndex, cachedBars, true);
       
       // Use TradingView's setResolution for instant switch
       try {
@@ -585,6 +600,7 @@ export default function FullscreenBacktesting({
       barsCacheRef.current = {};
       lastSessionKeyRef.current = sessionKey;
       hasLoadedLayoutRef.current = false; // Reset layout loaded flag for new session
+      replayTimestampRef.current = 0; // Reset replay timestamp for new session/symbol
     }
     
     // If we're changing resolution with cached data, skip fetch
@@ -601,16 +617,28 @@ export default function FullscreenBacktesting({
       
       setAllBars(cachedBars);
       let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
-      const targetTs = savedTimestamp || sessionData?.progressPointer;
+      // Use replayTimestamp if available, otherwise use saved progress
+      const targetTs = replayTimestampRef.current > 0 
+        ? replayTimestampRef.current 
+        : (savedTimestamp || sessionData?.progressPointer);
       if (targetTs) {
-        const pointerIndex = cachedBars.findIndex((bar: any) => bar.time >= targetTs);
-        if (pointerIndex >= 0) {
-          newIndex = pointerIndex;
-        } else if (cachedBars.length > 0) {
-          newIndex = cachedBars.length - 1;
+        // Find the last bar whose time <= target timestamp
+        let foundIndex = -1;
+        for (let i = cachedBars.length - 1; i >= 0; i--) {
+          if (cachedBars[i].time <= targetTs) {
+            foundIndex = i;
+            break;
+          }
+        }
+        if (foundIndex >= 0) {
+          newIndex = foundIndex;
         }
       }
-      setCurrentBarIndex(newIndex);
+      // Preserve timestamp during resolution changes (when explicitly triggered via handleTimeframeChange)
+      // isChangingResolutionRef is set before this path is reached via handleTimeframeChange
+      // For initial loads (replayTimestamp=0), always update the timestamp
+      const shouldPreserveTimestamp = replayTimestampRef.current > 0 && Object.keys(barsCacheRef.current).length > 0;
+      setCurrentBarIndex(newIndex, cachedBars, shouldPreserveTimestamp);
       return;
     }
     
@@ -664,16 +692,27 @@ export default function FullscreenBacktesting({
           setAllBars(bars);
           
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
-          const targetTs = savedTimestamp || sessionData?.progressPointer;
+          // Use replayTimestamp if available (timeframe switch), otherwise use saved session pointer
+          const targetTs = replayTimestampRef.current > 0 
+            ? replayTimestampRef.current 
+            : (savedTimestamp || sessionData?.progressPointer);
           if (targetTs) {
-            const pointerIndex = bars.findIndex((bar: any) => bar.time >= targetTs);
-            if (pointerIndex >= 0) {
-              newIndex = pointerIndex;
-            } else if (bars.length > 0) {
-              newIndex = bars.length - 1;
+            // Find the last bar whose time <= target timestamp for consistent positioning
+            let foundIndex = -1;
+            for (let i = bars.length - 1; i >= 0; i--) {
+              if (bars[i].time <= targetTs) {
+                foundIndex = i;
+                break;
+              }
+            }
+            if (foundIndex >= 0) {
+              newIndex = foundIndex;
             }
           }
-          setCurrentBarIndex(newIndex);
+          // Preserve timestamp during resolution changes (not first load)
+          // Only preserve if we already have bars cached (not first load) and have a valid timestamp
+          const shouldPreserveTimestamp = replayTimestampRef.current > 0 && Object.keys(barsCacheRef.current).length > 1;
+          setCurrentBarIndex(newIndex, bars, shouldPreserveTimestamp);
           setIsPlaying(false);
           
           // If widget exists and this isn't the first load, update the resolution
@@ -742,13 +781,24 @@ export default function FullscreenBacktesting({
       },
       getBars: (symbolInfo: any, resolution: string, periodParams: any, onHistoryCallback: any) => {
         const { firstDataRequest } = periodParams;
-        const idx = currentBarIndexRef.current;
+        const replayTs = replayTimestampRef.current;
         
-        // Use cached bars for the requested resolution, fallback to current allBars
-        const barsForResolution = barsCacheRef.current[resolution] || allBars;
+        // ONLY use cached bars for the exact requested resolution - no fallback
+        // This prevents mixing data between resolutions
+        const barsForResolution = barsCacheRef.current[resolution];
+        
+        if (!barsForResolution || barsForResolution.length === 0) {
+          // No data for this resolution yet - TradingView will retry
+          onHistoryCallback([], { noData: true });
+          return;
+        }
         
         if (firstDataRequest) {
-          const barsToShow = barsForResolution.slice(0, idx + 1);
+          // Use timestamp-based filtering to ensure consistent drawing anchors across resolutions
+          // Filter to bars whose time <= replay timestamp (hides future bars)
+          const barsToShow = replayTs > 0 
+            ? barsForResolution.filter((bar: any) => bar.time <= replayTs)
+            : barsForResolution.slice(0, currentBarIndexRef.current + 1);
           onHistoryCallback(barsToShow, { noData: barsToShow.length === 0 });
           return;
         }
@@ -1005,9 +1055,16 @@ export default function FullscreenBacktesting({
         }
       };
       
-      // Always load saved layout when widget is created
-      // Since we now do immediate saves on study deletions, the saved layout will reflect user's latest state
-      loadSavedLayout();
+      // Only load saved layout on FIRST widget creation for this session
+      // During timeframe switches, drawings should persist in memory (not reloaded)
+      // This prevents drawing drift when switching between resolutions
+      if (!hasLoadedLayoutRef.current) {
+        hasLoadedLayoutRef.current = true;
+        loadSavedLayout();
+      } else {
+        // Already loaded layout - just enable auto-save immediately
+        initialRestoreComplete = true;
+      }
       
       const autoSaveChart = async () => {
         // Block all auto-saves until initial restore is complete
@@ -1666,28 +1723,33 @@ export default function FullscreenBacktesting({
       });
     }
     
-    setCurrentBarIndex(currentBarIndex + 1);
+    // Pass allBars to update replayTimestamp correctly during playback
+    setCurrentBarIndex(currentBarIndex + 1, allBars);
   }, [currentBarIndex, allBars]);
 
   const handlePrev = useCallback(() => {
     if (currentBarIndex > 0) {
-      setCurrentBarIndex(currentBarIndex - 1);
+      // Pass allBars to update replayTimestamp correctly
+      setCurrentBarIndex(currentBarIndex - 1, allBars);
     }
-  }, [currentBarIndex]);
+  }, [currentBarIndex, allBars]);
 
   const handleNext10 = () => {
     const newIndex = Math.min(currentBarIndex + 10, allBars.length - 1);
-    setCurrentBarIndex(newIndex);
+    // Pass allBars to update replayTimestamp correctly
+    setCurrentBarIndex(newIndex, allBars);
   };
 
   const handlePrev10 = () => {
     const newIndex = Math.max(currentBarIndex - 10, 0);
-    setCurrentBarIndex(newIndex);
+    // Pass allBars to update replayTimestamp correctly
+    setCurrentBarIndex(newIndex, allBars);
   };
 
   const handleRestart = () => {
     const newIndex = allBars.length >= 6 ? 5 : Math.max(0, allBars.length - 1);
-    setCurrentBarIndex(newIndex);
+    // Pass allBars to update replayTimestamp correctly
+    setCurrentBarIndex(newIndex, allBars);
     setIsPlaying(false);
     removeTradeLines();
     dispatch({ type: "RESET_SESSION" });
