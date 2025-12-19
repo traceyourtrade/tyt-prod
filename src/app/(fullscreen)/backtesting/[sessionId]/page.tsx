@@ -610,12 +610,12 @@ export default function FullscreenBacktesting({
       return;
     }
 
-    const allMinuteResolutions = Array.from({ length: 1440 }, (_, i) => String(i + 1));
+    const supportedMinuteResolutions = ["1", "3", "5", "10", "15", "30", "60", "120", "240"];
     
     const datafeed = {
       onReady: (callback: any) => {
         setTimeout(() => callback({
-          supported_resolutions: [...allMinuteResolutions, "1D", "1W", "1M"],
+          supported_resolutions: [...supportedMinuteResolutions, "1D", "1W", "1M"],
           supports_marks: true,
         }), 0);
       },
@@ -633,8 +633,8 @@ export default function FullscreenBacktesting({
           has_intraday: true,
           has_daily: true,
           has_weekly_and_monthly: true,
-          supported_resolutions: [...allMinuteResolutions, "1D", "1W", "1M"],
-          intraday_multipliers: allMinuteResolutions,
+          supported_resolutions: [...supportedMinuteResolutions, "1D", "1W", "1M"],
+          intraday_multipliers: supportedMinuteResolutions,
           data_status: "streaming",
         };
         setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
