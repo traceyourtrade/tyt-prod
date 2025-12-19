@@ -1407,8 +1407,16 @@ export default function FullscreenBacktesting({
         try {
           const widget = tvWidgetRef.current;
           // Check if widget is still valid before saving
+          // Also verify internal state is intact (tradingViewApi may be null during cleanup)
           if (widget && typeof widget.activeChart === 'function') {
-            const chartInstance = widget.activeChart();
+            let chartInstance;
+            try {
+              chartInstance = widget.activeChart();
+            } catch (chartError) {
+              // Widget may be in an invalid state during cleanup
+              console.log('Could not access chart during cleanup:', chartError);
+              return;
+            }
             if (chartInstance) {
               // Use new format - extract drawings and studies
               const allShapes = chartInstance.getAllShapes();
