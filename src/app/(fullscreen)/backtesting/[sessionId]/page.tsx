@@ -2271,11 +2271,6 @@ export default function FullscreenBacktesting({
                 <path d="M9 5v14l10-7L9 5z"/>
               </svg>
             </button>
-            <button onClick={() => setCurrentBarIndex(allBars.length - 1)} disabled={isEndReached} className="bt-float-btn" title="Go to end">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
-              </svg>
-            </button>
           </div>
 
           <div className="bt-float-divider"></div>
