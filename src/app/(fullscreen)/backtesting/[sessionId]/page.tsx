@@ -2173,6 +2173,7 @@ export default function FullscreenBacktesting({
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
+        timeZone: "UTC",
       })
     : "...";
 
