@@ -202,6 +202,7 @@ export default function FullscreenBacktesting({
   const initialRestoreCompleteRef = useRef<boolean>(false); // Tracks if initial chart restore is complete
   const allBarsRef = useRef<any[]>([]); // Ref for bars data to avoid widget recreation on data changes
   const widgetInitializedRef = useRef<boolean>(false); // Track if widget has been created
+  const fetchingResolutionsRef = useRef<Set<string>>(new Set()); // Track in-flight resolution fetches
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -644,6 +645,108 @@ export default function FullscreenBacktesting({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionData?.sessionId, sessionId, allBars.length]);
 
+  // Helper function to fetch bars for a specific resolution and fulfill pending callbacks
+  // This is called from getBars when TradingView requests a resolution we don't have cached
+  const fetchBarsForResolution = async (resolution: string) => {
+    // Avoid duplicate fetches for the same resolution
+    if (fetchingResolutionsRef.current.has(resolution)) {
+      console.log('Already fetching resolution', resolution, '- skipping duplicate');
+      return;
+    }
+    
+    const session = sessionDataRef.current || sessionData;
+    if (!session || !fromDate || !toDate || !session.symbol) {
+      console.log('Missing session data for fetch - skipping');
+      return;
+    }
+    
+    fetchingResolutionsRef.current.add(resolution);
+    console.log('Fetching bars for resolution:', resolution);
+    
+    try {
+      const toTs = Math.floor(new Date(toDate).getTime() / 1000);
+      const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
+      const market = session.market || 'FOREX';
+      const rawSymbol = session.symbol;
+      
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${resolution}&to=${toTs}&from=${fromTs}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const bars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        
+        // Cache the bars for this resolution
+        barsCacheRef.current[resolution] = bars;
+        console.log('Cached', bars.length, 'bars for resolution', resolution);
+        
+        // Calculate the appropriate bar index based on replay timestamp
+        const replayTs = replayTimestampRef.current;
+        let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+        if (replayTs > 0) {
+          for (let i = bars.length - 1; i >= 0; i--) {
+            if (bars[i].time <= replayTs) {
+              newIndex = i;
+              break;
+            }
+          }
+        }
+        
+        // Trigger any pending getBars callbacks for this resolution
+        const pendingCallbacks = pendingCallbacksRef.current[resolution];
+        if (pendingCallbacks && pendingCallbacks.length > 0) {
+          console.log('Triggering', pendingCallbacks.length, 'pending callbacks for resolution', resolution);
+          
+          for (const { callback, periodParams } of pendingCallbacks) {
+            const { firstDataRequest } = periodParams;
+            
+            if (firstDataRequest) {
+              const barsToShow = replayTs > 0 
+                ? bars.filter((bar: any) => bar.time <= replayTs)
+                : bars.slice(0, newIndex + 1);
+              callback(barsToShow, { noData: barsToShow.length === 0 });
+            } else {
+              const filteredBars = bars.filter(
+                (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
+              );
+              callback(filteredBars, { noData: filteredBars.length === 0 });
+            }
+          }
+          delete pendingCallbacksRef.current[resolution];
+        }
+      } else {
+        console.log('No data returned for resolution', resolution);
+        // Still need to fulfill pending callbacks with no data
+        const pendingCallbacks = pendingCallbacksRef.current[resolution];
+        if (pendingCallbacks && pendingCallbacks.length > 0) {
+          for (const { callback } of pendingCallbacks) {
+            callback([], { noData: true });
+          }
+          delete pendingCallbacksRef.current[resolution];
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch bars for resolution', resolution, error);
+      // Fulfill pending callbacks with error state
+      const pendingCallbacks = pendingCallbacksRef.current[resolution];
+      if (pendingCallbacks && pendingCallbacks.length > 0) {
+        for (const { callback } of pendingCallbacks) {
+          callback([], { noData: true });
+        }
+        delete pendingCallbacksRef.current[resolution];
+      }
+    } finally {
+      fetchingResolutionsRef.current.delete(resolution);
+    }
+  };
+
   // Save progress when leaving page - use refs for current values
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -947,12 +1050,15 @@ export default function FullscreenBacktesting({
         });
         
         if (!barsForResolution || barsForResolution.length === 0) {
-          // No data for this resolution yet - queue callback and wait for data fetch
-          console.log('No bars for resolution', resolution, '- queuing callback for later');
+          // No data for this resolution yet - queue callback and trigger fetch
+          console.log('No bars for resolution', resolution, '- queuing callback and triggering fetch');
           if (!pendingCallbacksRef.current[resolution]) {
             pendingCallbacksRef.current[resolution] = [];
           }
           pendingCallbacksRef.current[resolution].push({ callback: onHistoryCallback, periodParams });
+          
+          // Trigger fetch for this resolution - this will fulfill pending callbacks when complete
+          fetchBarsForResolution(resolution);
           return;
         }
         
