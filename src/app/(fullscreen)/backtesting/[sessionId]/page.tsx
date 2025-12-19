@@ -189,6 +189,7 @@ export default function FullscreenBacktesting({
   const pendingOpenTradeRef = useRef<any>(null);
   const targetTimestampRef = useRef<number | null>(null);
   const barsCacheRef = useRef<Record<string, any[]>>({});
+  const pendingCallbacksRef = useRef<Record<string, Array<{ callback: any; periodParams: any }>>>({});
   const isChangingResolutionRef = useRef(false);
   const currentIntervalRef = useRef(initialInterval);
   const lastSessionKeyRef = useRef<string>("");
@@ -770,6 +771,7 @@ export default function FullscreenBacktesting({
           
           // Cache the bars for this resolution
           barsCacheRef.current[currentInterval] = bars;
+          
           setAllBars(bars);
           
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
@@ -795,6 +797,32 @@ export default function FullscreenBacktesting({
           const shouldPreserveTimestamp = replayTimestampRef.current > 0 && Object.keys(barsCacheRef.current).length > 1;
           setCurrentBarIndex(newIndex, bars, shouldPreserveTimestamp);
           setIsPlaying(false);
+          
+          // Trigger any pending getBars callbacks for this resolution
+          // This must happen AFTER computing newIndex so callbacks receive correct bar count
+          const pendingCallbacks = pendingCallbacksRef.current[currentInterval];
+          if (pendingCallbacks && pendingCallbacks.length > 0) {
+            console.log('Triggering', pendingCallbacks.length, 'pending callbacks for resolution', currentInterval);
+            const replayTs = replayTimestampRef.current;
+            
+            for (const { callback, periodParams } of pendingCallbacks) {
+              const { firstDataRequest } = periodParams;
+              
+              if (firstDataRequest) {
+                // Use same logic as live getBars path: timestamp-based filtering
+                const barsToShow = replayTs > 0 
+                  ? bars.filter((bar: any) => bar.time <= replayTs)
+                  : bars.slice(0, newIndex + 1);
+                callback(barsToShow, { noData: barsToShow.length === 0 });
+              } else {
+                const filteredBars = bars.filter(
+                  (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
+                );
+                callback(filteredBars, { noData: filteredBars.length === 0 });
+              }
+            }
+            delete pendingCallbacksRef.current[currentInterval];
+          }
           
           // If widget exists and this isn't the first load, update the resolution
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
@@ -918,10 +946,12 @@ export default function FullscreenBacktesting({
         });
         
         if (!barsForResolution || barsForResolution.length === 0) {
-          // No data for this resolution yet - return noData immediately
-          // The data fetch effect will populate the cache and then call setResolution
-          console.log('No bars for resolution', resolution, '- returning noData (will retry after cache is populated)');
-          onHistoryCallback([], { noData: true });
+          // No data for this resolution yet - queue callback and wait for data fetch
+          console.log('No bars for resolution', resolution, '- queuing callback for later');
+          if (!pendingCallbacksRef.current[resolution]) {
+            pendingCallbacksRef.current[resolution] = [];
+          }
+          pendingCallbacksRef.current[resolution].push({ callback: onHistoryCallback, periodParams });
           return;
         }
         
