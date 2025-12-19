@@ -450,19 +450,22 @@ export default function FullscreenBacktesting({
       
       // Use TradingView's setResolution for instant switch
       try {
-        tvWidgetRef.current.activeChart().setResolution(tf, () => {
+        const chart = tvWidgetRef.current.activeChart();
+        // Force chart to re-request data from datafeed for new resolution
+        chart.resetData();
+        chart.setResolution(tf, () => {
           // Restore drawings if they were lost during resolution change
           setTimeout(() => {
             try {
-              const chart = tvWidgetRef.current?.activeChart();
-              if (chart && pendingDrawingsRef.current.length > 0) {
-                const currentShapes = chart.getAllShapes();
+              const innerChart = tvWidgetRef.current?.activeChart();
+              if (innerChart && pendingDrawingsRef.current.length > 0) {
+                const currentShapes = innerChart.getAllShapes();
                 if (currentShapes.length === 0) {
                   console.log('Drawings lost during resolution change, restoring', pendingDrawingsRef.current.length, 'drawings');
                   for (const drawing of pendingDrawingsRef.current) {
                     try {
                       if (drawing.name && drawing.points && drawing.points.length > 0) {
-                        chart.createMultipointShape(drawing.points, {
+                        innerChart.createMultipointShape(drawing.points, {
                           shape: drawing.name,
                           overrides: drawing.overrides || {},
                           lock: drawing.lock || false,
@@ -795,7 +798,10 @@ export default function FullscreenBacktesting({
           // If widget exists and this isn't the first load, update the resolution
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
             try {
-              tvWidgetRef.current.activeChart().setResolution(currentInterval, () => {
+              const chart = tvWidgetRef.current.activeChart();
+              // Force chart to re-request data from datafeed for new resolution
+              chart.resetData();
+              chart.setResolution(currentInterval, () => {
                 // Restore drawings if they were lost during resolution change
                 setTimeout(() => {
                   try {
@@ -900,8 +906,17 @@ export default function FullscreenBacktesting({
         // This prevents mixing data between resolutions
         const barsForResolution = barsCacheRef.current[resolution];
         
+        console.log('getBars called:', { 
+          resolution, 
+          firstDataRequest, 
+          cachedKeys: Object.keys(barsCacheRef.current),
+          hasBarsForResolution: !!barsForResolution,
+          barCount: barsForResolution?.length || 0
+        });
+        
         if (!barsForResolution || barsForResolution.length === 0) {
           // No data for this resolution yet - TradingView will retry
+          console.log('No bars for resolution', resolution, '- returning noData');
           onHistoryCallback([], { noData: true });
           return;
         }
