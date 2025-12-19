@@ -196,6 +196,7 @@ export default function FullscreenBacktesting({
   const hasLoadedLayoutRef = useRef(false);
   const replayTimestampRef = useRef<number>(0); // Tracks replay position as timestamp for consistent drawing anchors
   const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
+  const favoriteDrawingToolsRef = useRef<string[]>([]); // Stores favorite drawing tools
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
   const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
   const initialRestoreCompleteRef = useRef<boolean>(false); // Tracks if initial chart restore is complete
@@ -1060,6 +1061,7 @@ export default function FullscreenBacktesting({
       ],
       enabled_features: [
         "side_toolbar_in_fullscreen_mode",
+        "items_favoriting",
       ],
       fullscreen: false,
       autosize: true,
@@ -1071,6 +1073,10 @@ export default function FullscreenBacktesting({
       },
       save_load_adapter: save_load_adapter,
       auto_save_delay: 5,
+      favorites: {
+        intervals: ["1", "5", "15", "60", "1D"],
+        drawingTools: [],
+      },
     };
 
     const tvWidget = new TradingViewWidget(widgetOptions);
@@ -1172,6 +1178,17 @@ export default function FullscreenBacktesting({
               }
               
               console.log('Chart layout restore complete');
+              
+              // Restore favorite drawing tools if saved
+              if (savedData.favoriteDrawingTools && Array.isArray(savedData.favoriteDrawingTools)) {
+                console.log('Restoring favorite drawing tools:', savedData.favoriteDrawingTools);
+                favoriteDrawingToolsRef.current = savedData.favoriteDrawingTools;
+                try {
+                  chart.setFavoriteDrawings(savedData.favoriteDrawingTools);
+                } catch (e) {
+                  console.warn('Could not restore favorite drawing tools:', e);
+                }
+              }
               
               // Initialize lastSavedDrawingsCountRef from stored payload immediately
               // This provides a fallback if chart.getAllShapes() is slow or returns empty
@@ -1312,7 +1329,8 @@ export default function FullscreenBacktesting({
             drawings,
             studies,
             interval: currentInterval,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            favoriteDrawingTools: favoriteDrawingToolsRef.current
           };
           
           const layoutData = {
@@ -1379,6 +1397,13 @@ export default function FullscreenBacktesting({
         if (initialRestoreCompleteRef.current) {
           autoSaveChart();
         }
+      });
+      
+      // Subscribe to favorite drawing tools changes
+      chart.onFavoriteDrawingsChanged().subscribe(null, (drawingTools: string[]) => {
+        console.log('Favorite drawing tools changed:', drawingTools);
+        favoriteDrawingToolsRef.current = drawingTools;
+        debouncedSave();
       });
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
