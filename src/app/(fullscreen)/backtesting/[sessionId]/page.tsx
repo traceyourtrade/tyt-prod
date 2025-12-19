@@ -800,6 +800,8 @@ export default function FullscreenBacktesting({
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
             try {
               const chart = tvWidgetRef.current.activeChart();
+              // Add small delay to ensure cache is fully synchronized before TradingView queries
+              await new Promise(resolve => setTimeout(resolve, 50));
               // Force chart to re-request data from datafeed for new resolution
               chart.resetData();
               chart.setResolution(currentInterval, () => {
@@ -916,8 +918,9 @@ export default function FullscreenBacktesting({
         });
         
         if (!barsForResolution || barsForResolution.length === 0) {
-          // No data for this resolution yet - TradingView will retry
-          console.log('No bars for resolution', resolution, '- returning noData');
+          // No data for this resolution yet - return noData immediately
+          // The data fetch effect will populate the cache and then call setResolution
+          console.log('No bars for resolution', resolution, '- returning noData (will retry after cache is populated)');
           onHistoryCallback([], { noData: true });
           return;
         }
@@ -1875,12 +1878,16 @@ export default function FullscreenBacktesting({
   }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId]);
 
   const handleNext = useCallback(() => {
-    if (currentBarIndex >= allBars.length - 1) {
+    // Use ref for latest bars to avoid stale closure issues
+    const bars = allBarsRef.current;
+    const idx = currentBarIndexRef.current;
+    
+    if (!bars || bars.length === 0 || idx >= bars.length - 1) {
       setIsPlaying(false);
       return;
     }
     
-    const nextBar = allBars[currentBarIndex + 1];
+    const nextBar = bars[idx + 1];
     
     // Push bar to TradingView if subscribed
     if (nextBar && onRealtimeCallbackRef.current) {
@@ -1890,33 +1897,40 @@ export default function FullscreenBacktesting({
       });
     }
     
-    // Pass allBars to update replayTimestamp correctly during playback
-    setCurrentBarIndex(currentBarIndex + 1, allBars);
-  }, [currentBarIndex, allBars]);
+    // Pass bars to update replayTimestamp correctly during playback
+    setCurrentBarIndex(idx + 1, bars);
+  }, []);
 
   const handlePrev = useCallback(() => {
-    if (currentBarIndex > 0) {
-      // Pass allBars to update replayTimestamp correctly
-      setCurrentBarIndex(currentBarIndex - 1, allBars);
+    const bars = allBarsRef.current;
+    const idx = currentBarIndexRef.current;
+    if (idx > 0 && bars && bars.length > 0) {
+      // Pass bars to update replayTimestamp correctly
+      setCurrentBarIndex(idx - 1, bars);
     }
-  }, [currentBarIndex, allBars]);
+  }, []);
 
   const handleNext10 = () => {
-    const newIndex = Math.min(currentBarIndex + 10, allBars.length - 1);
-    // Pass allBars to update replayTimestamp correctly
-    setCurrentBarIndex(newIndex, allBars);
+    const bars = allBarsRef.current;
+    const idx = currentBarIndexRef.current;
+    if (!bars || bars.length === 0) return;
+    const newIndex = Math.min(idx + 10, bars.length - 1);
+    setCurrentBarIndex(newIndex, bars);
   };
 
   const handlePrev10 = () => {
-    const newIndex = Math.max(currentBarIndex - 10, 0);
-    // Pass allBars to update replayTimestamp correctly
-    setCurrentBarIndex(newIndex, allBars);
+    const bars = allBarsRef.current;
+    const idx = currentBarIndexRef.current;
+    if (!bars || bars.length === 0) return;
+    const newIndex = Math.max(idx - 10, 0);
+    setCurrentBarIndex(newIndex, bars);
   };
 
   const handleRestart = () => {
-    const newIndex = allBars.length >= 6 ? 5 : Math.max(0, allBars.length - 1);
-    // Pass allBars to update replayTimestamp correctly
-    setCurrentBarIndex(newIndex, allBars);
+    const bars = allBarsRef.current;
+    if (!bars || bars.length === 0) return;
+    const newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+    setCurrentBarIndex(newIndex, bars);
     setIsPlaying(false);
     removeTradeLines();
     dispatch({ type: "RESET_SESSION" });
