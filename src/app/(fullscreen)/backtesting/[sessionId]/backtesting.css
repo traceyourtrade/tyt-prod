@@ -670,9 +670,40 @@
   background: var(--bt-bg-base);
 }
 
+.bt-chart-wrapper {
+  position: absolute;
+  inset: 0;
+}
+
 .bt-chart {
   position: absolute;
   inset: 0;
+}
+
+.bt-chart-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(10, 10, 11, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  color: var(--bt-text-secondary);
+  font-size: 13px;
+}
+
+.bt-chart-loading .bt-spinner {
+  width: 36px;
+  height: 36px;
+}
+
+.bt-chart-loading span {
+  color: var(--bt-text-muted);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* =====================================================

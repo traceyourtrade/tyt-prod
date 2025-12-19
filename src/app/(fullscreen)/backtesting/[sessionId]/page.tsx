@@ -2186,13 +2186,6 @@ export default function FullscreenBacktesting({
 
   return (
     <div className="bt-container">
-      {isLoading && (
-        <div className="bt-loading">
-          <div className="bt-spinner"></div>
-          <span>Loading chart data...</span>
-        </div>
-      )}
-
       <header className="bt-header-modern">
         <div className="bt-header-section">
           <button className="bt-back-btn" onClick={() => router.push("/backtesting/dashboard")}>
@@ -2372,7 +2365,15 @@ export default function FullscreenBacktesting({
         </div>
         
         {/* Chart Container */}
-        <div className="bt-chart" ref={chartContainerRef}></div>
+        <div className="bt-chart-wrapper">
+          {isLoading && (
+            <div className="bt-chart-loading">
+              <div className="bt-spinner"></div>
+              <span>Loading chart data...</span>
+            </div>
+          )}
+          <div className="bt-chart" ref={chartContainerRef}></div>
+        </div>
       </main>
 
       <footer className="bt-status-bar">
