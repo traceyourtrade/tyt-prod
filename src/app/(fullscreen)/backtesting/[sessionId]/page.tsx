@@ -192,6 +192,7 @@ export default function FullscreenBacktesting({
   const isChangingResolutionRef = useRef(false);
   const currentIntervalRef = useRef(initialInterval);
   const lastSessionKeyRef = useRef<string>("");
+  const hasLoadedLayoutRef = useRef(false);
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -368,12 +369,14 @@ export default function FullscreenBacktesting({
       targetTimestampRef.current = currentBar.time;
     }
     
+    // Mark that we're changing resolution - this prevents widget destruction in cleanup
+    isChangingResolutionRef.current = true;
+    currentIntervalRef.current = tf;
+    
     // Check if we have cached bars for this resolution
     const cachedBars = barsCacheRef.current[tf];
     if (cachedBars && cachedBars.length > 0 && tvWidgetRef.current) {
       // Fast path: use cached data and setResolution
-      isChangingResolutionRef.current = true;
-      currentIntervalRef.current = tf;
       setAllBars(cachedBars);
       setCurrentInterval(tf);
       setShowTimeframeDropdown(false);
@@ -401,8 +404,7 @@ export default function FullscreenBacktesting({
         isChangingResolutionRef.current = false;
       }
     } else {
-      // Slow path: need to fetch from API
-      currentIntervalRef.current = tf;
+      // Slow path: need to fetch from API - flag will be reset after fetch completes
       setCurrentInterval(tf);
       setShowTimeframeDropdown(false);
     }
@@ -582,6 +584,7 @@ export default function FullscreenBacktesting({
     if (sessionKey !== lastSessionKeyRef.current) {
       barsCacheRef.current = {};
       lastSessionKeyRef.current = sessionKey;
+      hasLoadedLayoutRef.current = false; // Reset layout loaded flag for new session
     }
     
     // If we're changing resolution with cached data, skip fetch
@@ -676,20 +679,25 @@ export default function FullscreenBacktesting({
           // If widget exists and this isn't the first load, update the resolution
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
             try {
-              tvWidgetRef.current.activeChart().setResolution(currentInterval, () => {});
+              tvWidgetRef.current.activeChart().setResolution(currentInterval, () => {
+                isChangingResolutionRef.current = false;
+              });
             } catch (e) {
               console.log('setResolution error:', e);
+              isChangingResolutionRef.current = false;
             }
+          } else {
+            isChangingResolutionRef.current = false;
           }
         } else {
           console.log('No data from VPS API:', data);
-          setAllBars([]);
-          setCurrentBarIndex(0);
+          // Don't clear bars on failure - keep existing data
+          isChangingResolutionRef.current = false;
         }
       } catch (error) {
         console.error("Error fetching history from VPS:", error);
-        setAllBars([]);
-        setCurrentBarIndex(0);
+        // Don't clear bars on error - keep existing data and allow retry
+        isChangingResolutionRef.current = false;
       } finally {
         setIsLoading(false);
       }
@@ -997,6 +1005,8 @@ export default function FullscreenBacktesting({
         }
       };
       
+      // Always load saved layout when widget is created
+      // Since we now do immediate saves on study deletions, the saved layout will reflect user's latest state
       loadSavedLayout();
       
       const autoSaveChart = async () => {
@@ -1129,7 +1139,13 @@ export default function FullscreenBacktesting({
         }
         debouncedSave();
       });
-      tvWidget.subscribe('study_event', debouncedSave);
+      tvWidget.subscribe('study_event', () => {
+        // Immediately save when indicators are added/removed (not debounced)
+        // This ensures deletions persist before timeframe switches
+        if (initialRestoreComplete) {
+          autoSaveChart();
+        }
+      });
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
         const currentBar = allBars[currentBarIndexRef.current];
@@ -1272,12 +1288,18 @@ export default function FullscreenBacktesting({
         } catch (error) {
           console.error('Error saving chart before unmount:', error);
         }
-        try {
-          tvWidgetRef.current.remove();
-        } catch (e) {
-          // Widget might already be removed
+        // Only destroy widget on true unmount, not on timeframe changes
+        // If we're in the middle of a resolution change, keep the widget alive
+        if (!isChangingResolutionRef.current) {
+          // This is true unmount (leaving page) - safe to destroy
+          try {
+            tvWidgetRef.current.remove();
+          } catch (e) {
+            // Widget might already be removed
+          }
+          tvWidgetRef.current = null;
         }
-        tvWidgetRef.current = null;
+        // If changing resolution, keep the widget alive for fast switching
       }
     };
   }, [allBars, symbol, decimalPlaces]);
