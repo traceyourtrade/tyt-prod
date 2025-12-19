@@ -2131,10 +2131,6 @@ export default function FullscreenBacktesting({
           e.preventDefault();
           if (!isEndReached) handleNext();
           break;
-        case "ArrowLeft":
-          e.preventDefault();
-          handlePrev();
-          break;
         case "KeyB":
           if (!tradingState.activeTrades && !tradingState.potentialTrade) handlePlaceTrade("long");
           break;
@@ -2153,7 +2149,7 @@ export default function FullscreenBacktesting({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEndReached, handleNext, handlePrev, tradingState.activeTrades, tradingState.potentialTrade]);
+  }, [isEndReached, handleNext, tradingState.activeTrades, tradingState.potentialTrade]);
 
   const speedOptions = [
     { value: 0.25, label: "0.25x" },
@@ -2223,17 +2219,6 @@ export default function FullscreenBacktesting({
 
         <div className="bt-header-section">
           <button 
-            className="bt-reset-btn" 
-            onClick={handleResetChart}
-            title="Clear all saved indicators and drawings"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M1 4v6h6M23 20v-6h-6"/>
-              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
-            </svg>
-            Reset Chart
-          </button>
-          <button 
             className="bt-analytics-btn" 
             onClick={() => router.push('/backtesting/sessions')}
           >
@@ -2273,11 +2258,6 @@ export default function FullscreenBacktesting({
             <button onClick={handleRestart} className="bt-float-btn" title="Go to start">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/>
-              </svg>
-            </button>
-            <button onClick={handlePrev} disabled={currentBarIndex <= 0} className="bt-float-btn" title="Previous">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M15 19V5l-10 7 10 7z"/>
               </svg>
             </button>
             <button onClick={togglePlayPause} disabled={isEndReached} className="bt-float-btn play" title={isPlaying ? "Pause" : "Play"}>
