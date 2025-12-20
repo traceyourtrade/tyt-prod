@@ -1087,7 +1087,8 @@ export default function BacktestingDashboard() {
                         className={cn(
                           "w-full px-4 py-3 rounded-xl text-foreground",
                           "bg-background border border-border",
-                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all",
+                          "dark:[color-scheme:dark]"
                         )}
                       />
                     </div>
@@ -1102,7 +1103,8 @@ export default function BacktestingDashboard() {
                         className={cn(
                           "w-full px-4 py-3 rounded-xl text-foreground",
                           "bg-background border border-border",
-                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                          "focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all",
+                          "dark:[color-scheme:dark]"
                         )}
                       />
                     </div>
