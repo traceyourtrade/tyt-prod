@@ -405,36 +405,36 @@ export default function RootLayout({
           )}
           <div className={cn(
             "relative rounded-lg overflow-hidden",
-            isExpanded && "mx-1 bg-gradient-to-r from-fuchsia-500/10 via-purple-500/5 to-transparent border border-fuchsia-500/20"
+            isExpanded && "mx-1 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20"
           )}>
             {/* Premium glow effect */}
             {isExpanded && (
-              <div className="absolute -top-4 -right-4 w-16 h-16 bg-fuchsia-500/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
             )}
             
             <button
               onClick={() => setBacktestingOpen(!backtestingOpen)}
               className={cn(
                 "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
-                "text-fuchsia-400 hover:text-fuchsia-300",
-                !isExpanded && "justify-center rounded-md hover:bg-fuchsia-500/10"
+                "text-blue-400 hover:text-blue-300",
+                !isExpanded && "justify-center rounded-md hover:bg-blue-500/10"
               )}
             >
               <CandlestickChart 
                 className="h-[17px] w-[17px] flex-shrink-0"
-                style={{ color: '#E879F9' }}
+                style={{ color: '#3B82F6' }}
               />
               {isExpanded && (
                 <>
                   <span className="flex-1 text-left">Backtesting</span>
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white uppercase tracking-wide">
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white uppercase tracking-wide">
                     Pro
                   </span>
                   <motion.div
                     animate={{ rotate: backtestingOpen ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown className="h-4 w-4 text-fuchsia-400/60" />
+                    <ChevronDown className="h-4 w-4 text-blue-400/60" />
                   </motion.div>
                 </>
               )}
