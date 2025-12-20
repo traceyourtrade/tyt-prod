@@ -123,6 +123,33 @@ const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
   return forexMapping[symbol] || `ProJournX:${symbol}`;
 };
 
+// Get contract size (lot multiplier) based on symbol type
+// Forex pairs: 100,000 units per lot
+// Gold (XAU): 100 troy ounces per lot  
+// Silver (XAG): 5,000 ounces per lot
+// Crypto: 1 unit per lot (BTC, ETH, etc.)
+const getContractSize = (symbol: string, market?: string): number => {
+  const upperSymbol = symbol.toUpperCase();
+  
+  // Gold - 100 oz per lot
+  if (upperSymbol.includes('XAU') || upperSymbol.includes('GOLD')) {
+    return 100;
+  }
+  
+  // Silver - 5000 oz per lot
+  if (upperSymbol.includes('XAG') || upperSymbol.includes('SILVER')) {
+    return 5000;
+  }
+  
+  // Crypto - 1 unit per lot (actual crypto units)
+  if (market === 'CRYPTO') {
+    return 1;
+  }
+  
+  // Standard forex pairs - 100,000 units per lot
+  return 100000;
+};
+
 const tradingReducer = (state, action) => {
   switch (action.type) {
     case "ADD_OPEN_TRADE":
