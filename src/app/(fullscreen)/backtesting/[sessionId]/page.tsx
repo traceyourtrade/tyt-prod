@@ -129,6 +129,13 @@ const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
 // Silver (XAG): 5,000 ounces per lot
 // Crypto: 1 unit per lot (BTC, ETH, etc.)
 const getContractSize = (symbol: string, market?: string): number => {
+  // Safeguard: if symbol is empty, return a placeholder that forces recalculation
+  // The caller should ensure sessionData is available before computing P&L
+  if (!symbol || symbol.trim() === '') {
+    console.warn('getContractSize called with empty symbol - using forex default');
+    return 100000;
+  }
+  
   const upperSymbol = symbol.toUpperCase();
   
   // Gold - 100 oz per lot
@@ -288,6 +295,12 @@ export default function FullscreenBacktesting({
   const fromDate = sessionData?.fromDate || '';
   const toDate = sessionData?.toDate || '';
   const initialBalance = sessionData?.initialBalance || 10000;
+  
+  // Memoize contract size based on session symbol/market to ensure consistent P&L calculations
+  const contractSize = useMemo(() => {
+    if (!sessionData?.symbol) return 100000; // Default until session loads
+    return getContractSize(sessionData.symbol, sessionData.market);
+  }, [sessionData?.symbol, sessionData?.market]);
   const [showModifyTradePopup, setShowModifyTradePopup] = useState(false);
   const [modifyTradeData, setModifyTradeData] = useState({ newTP: "", newSL: "" });
   const [showOrderDialog, setShowOrderDialog] = useState(false);
@@ -2063,6 +2076,8 @@ export default function FullscreenBacktesting({
 
   const drawTradeLines = useCallback((trade: any) => {
     if (!tvWidgetRef.current || !trade) return;
+    // Guard: Ensure session data is loaded for correct contractSize
+    if (!sessionData?.symbol) return;
     
     try {
       const chart = tvWidgetRef.current.activeChart();
@@ -2083,13 +2098,13 @@ export default function FullscreenBacktesting({
       const tradeLotSize = trade.lotSize || lotSize;
       const lotDisplay = tradeLotSize.toFixed(2);
       
-      // Calculate potential P&L at TP level
+      // Calculate potential P&L at TP level (using memoized contractSize)
       let tpPnL = 0;
       if (trade.target !== undefined) {
         if (trade.type === "long") {
-          tpPnL = (trade.target - trade.entry) * tradeLotSize * 100000;
+          tpPnL = (trade.target - trade.entry) * tradeLotSize * contractSize;
         } else {
-          tpPnL = (trade.entry - trade.target) * tradeLotSize * 100000;
+          tpPnL = (trade.entry - trade.target) * tradeLotSize * contractSize;
         }
       }
       
@@ -2097,9 +2112,9 @@ export default function FullscreenBacktesting({
       let slPnL = 0;
       if (trade.stopLoss !== undefined) {
         if (trade.type === "long") {
-          slPnL = (trade.stopLoss - trade.entry) * tradeLotSize * 100000;
+          slPnL = (trade.stopLoss - trade.entry) * tradeLotSize * contractSize;
         } else {
-          slPnL = (trade.entry - trade.stopLoss) * tradeLotSize * 100000;
+          slPnL = (trade.entry - trade.stopLoss) * tradeLotSize * contractSize;
         }
       }
       
@@ -2189,7 +2204,7 @@ export default function FullscreenBacktesting({
     } catch (e) {
       console.error("Error drawing trade lines:", e);
     }
-  }, [removeTradeLines, lotSize]);
+  }, [removeTradeLines, lotSize, contractSize, sessionData?.symbol]);
 
   // Restore open trade after chart loads
   useEffect(() => {
@@ -2226,6 +2241,8 @@ export default function FullscreenBacktesting({
 
   const closeTrade = useCallback(async (exitPrice: number, reason: string, trade: any) => {
     if (!trade) return;
+    // Guard: Ensure session data is loaded for correct contractSize
+    if (!sessionData?.symbol) return;
     
     // Remove only this trade's lines (pass prices for fallback removal)
     removeTradeLines(trade.id, {
@@ -2234,14 +2251,14 @@ export default function FullscreenBacktesting({
       sl: trade.stopLoss
     });
     
-    // Use the trade's stored lot size, fallback to global lotSize
+    // Use the trade's stored lot size, fallback to global lotSize (using memoized contractSize)
     const tradeLotSize = trade.lotSize || lotSize;
     
     let pnl = 0;
     if (trade.type === "long") {
-      pnl = (exitPrice - trade.entry) * tradeLotSize * 100000;
+      pnl = (exitPrice - trade.entry) * tradeLotSize * contractSize;
     } else {
-      pnl = (trade.entry - exitPrice) * tradeLotSize * 100000;
+      pnl = (trade.entry - exitPrice) * tradeLotSize * contractSize;
     }
     
     // Calculate R:R ratio - signed based on direction
@@ -2294,7 +2311,7 @@ export default function FullscreenBacktesting({
         console.error("Failed to close trade:", error);
       }
     }
-  }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId]);
+  }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId, contractSize, sessionData?.symbol]);
 
   const handleNext = useCallback(() => {
     // Use ref for latest bars to avoid stale closure issues
@@ -2466,6 +2483,10 @@ export default function FullscreenBacktesting({
   }, [decimalPlaces]);
 
   useEffect(() => {
+    // Guard: Don't process trades until session data is fully loaded
+    // This ensures contractSize is correctly calculated for XAU/XAG/etc
+    if (!sessionData?.symbol) return;
+    
     // Sync line positions from chart before checking TP/SL hits
     syncLinesToTradeState();
     
@@ -2478,12 +2499,13 @@ export default function FullscreenBacktesting({
       const currentClose = currentBar.close;
       let totalPnl = 0;
       
+      // Using memoized contractSize for P&L calculations
       for (const trade of trades) {
         const tradeLotSize = trade.lotSize || lotSize;
         let tradePnl = 0;
         
         if (trade.type === "long") {
-          tradePnl = (currentClose - trade.entry) * tradeLotSize * 100000;
+          tradePnl = (currentClose - trade.entry) * tradeLotSize * contractSize;
           // Check if wick touched TP (high >= target) or SL (low <= stopLoss)
           if (trade.target !== undefined && currentHigh >= trade.target) {
             closeTrade(trade.target, "TP Hit", trade);
@@ -2491,7 +2513,7 @@ export default function FullscreenBacktesting({
             closeTrade(trade.stopLoss, "SL Hit", trade);
           }
         } else {
-          tradePnl = (trade.entry - currentClose) * tradeLotSize * 100000;
+          tradePnl = (trade.entry - currentClose) * tradeLotSize * contractSize;
           // Check if wick touched TP (low <= target) or SL (high >= stopLoss)
           if (trade.target !== undefined && currentLow <= trade.target) {
             closeTrade(trade.target, "TP Hit", trade);
@@ -2508,7 +2530,7 @@ export default function FullscreenBacktesting({
     } else if (trades.length === 0) {
       dispatch({ type: "SET_UNREALISED_PL", payload: 0 });
     }
-  }, [currentBarIndex, allBars, tradingState.openTrades, lotSize, closeTrade, syncLinesToTradeState, updateEntryLineLabel]);
+  }, [currentBarIndex, allBars, tradingState.openTrades, lotSize, closeTrade, syncLinesToTradeState, updateEntryLineLabel, contractSize, sessionData?.symbol]);
 
   useEffect(() => {
     if (tradingState.limitOrders.length > 0 && allBars[currentBarIndex]) {
@@ -2740,10 +2762,11 @@ export default function FullscreenBacktesting({
     
     if (slDistance === 0) return 0;
     const riskAmount = calculateRiskAmount();
+    // Using memoized contractSize for position sizing
     // Position size formula derived from P&L formula:
-    // P&L = priceChange * lotSize * 100000
-    // To risk exactly riskAmount at SL: lotSize = riskAmount / (slDistance * 100000)
-    return riskAmount / (slDistance * 100000);
+    // P&L = priceChange * lotSize * contractSize
+    // To risk exactly riskAmount at SL: lotSize = riskAmount / (slDistance * contractSize)
+    return riskAmount / (slDistance * contractSize);
   };
 
   const saveTradeToDb = async (tradeData: {
@@ -3391,9 +3414,10 @@ export default function FullscreenBacktesting({
                       const tradeLotSize = trade.lotSize || lotSize;
                       const currentBar = allBars[currentBarIndex];
                       const currentClose = currentBar?.close || trade.entry;
+                      // Using memoized contractSize for display
                       const tradePnl = trade.type === 'long' 
-                        ? (currentClose - trade.entry) * tradeLotSize * 100000
-                        : (trade.entry - currentClose) * tradeLotSize * 100000;
+                        ? (currentClose - trade.entry) * tradeLotSize * contractSize
+                        : (trade.entry - currentClose) * tradeLotSize * contractSize;
                       return (
                         <tr key={trade.id || index}>
                           <td className="bt-table-symbol">{sessionData?.symbol || 'N/A'}</td>
