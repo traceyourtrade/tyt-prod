@@ -39,6 +39,7 @@ export interface EquityPoint {
   trade: number;
   balance: number;
   pnl: number;
+  cumulativePnl: number;
   date: string;
   timestamp: number;
 }
@@ -213,20 +214,25 @@ export function useBacktestAnalytics(session: Session | null): BacktestAnalytics
     }
 
     let balance = session.initialBalance;
+    let cumulativePnl = 0;
     const equityCurve: EquityPoint[] = [{
       trade: 0,
       balance,
       pnl: 0,
+      cumulativePnl: 0,
       date: new Date(session.fromDate).toLocaleDateString(),
       timestamp: new Date(session.fromDate).getTime()
     }];
 
     closedTrades.forEach((trade, index) => {
-      balance += trade.pnl || 0;
+      const tradePnl = trade.pnl || 0;
+      balance += tradePnl;
+      cumulativePnl += tradePnl;
       equityCurve.push({
         trade: index + 1,
         balance,
-        pnl: trade.pnl || 0,
+        pnl: tradePnl,
+        cumulativePnl,
         date: trade.closedAt ? new Date(trade.closedAt).toLocaleDateString() : '',
         timestamp: trade.closedAt || 0
       });

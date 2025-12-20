@@ -187,7 +187,12 @@ export default function ProfitAndLossChart({
             <YAxis 
               stroke="hsl(var(--muted-foreground))"
               tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-              tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`}
+              tickFormatter={(v) => {
+                if (Math.abs(v) >= 1000) {
+                  return `${(v / 1000).toFixed(1)}k`;
+                }
+                return v.toFixed(0);
+              }}
               axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
             />
             <Tooltip
@@ -197,11 +202,17 @@ export default function ProfitAndLossChart({
                 borderRadius: '8px',
                 color: 'hsl(var(--foreground))'
               }}
-              formatter={(value: number) => [`$${value.toLocaleString()}`, 'Balance']}
+              formatter={(value: number, name: string) => {
+                const prefix = value >= 0 ? '+' : '';
+                if (name === 'cumulativePnl') {
+                  return [`${prefix}$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Running PnL'];
+                }
+                return [`$${value.toLocaleString()}`, name];
+              }}
             />
             <Area
               type="monotone"
-              dataKey="balance"
+              dataKey="cumulativePnl"
               stroke={totalPnl >= 0 ? '#10b981' : '#ef4444'}
               strokeWidth={2}
               fill="url(#pnlGradient)"
