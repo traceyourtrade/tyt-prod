@@ -194,6 +194,7 @@ export default function FullscreenBacktesting({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tvWidgetRef = useRef<any>(null);
   const onRealtimeCallbackRef = useRef<any>(null);
+  const subscribedResolutionRef = useRef<string | null>(null); // Track which resolution is subscribed
   const autoPlayIntervalRef = useRef<any>(null);
   const currentBarIndexRef = useRef(5);
   const autoSaveIntervalRef = useRef<any>(null);
@@ -1152,11 +1153,26 @@ export default function FullscreenBacktesting({
       },
       subscribeBars: (symbolInfo: any, resolution: string, onRealtimeCallback: any) => {
         console.log('subscribeBars called for resolution:', resolution);
+        // Store both the callback AND which resolution it's for
+        subscribedResolutionRef.current = resolution;
         onRealtimeCallbackRef.current = onRealtimeCallback;
       },
-      unsubscribeBars: () => {
-        console.log('unsubscribeBars called');
-        onRealtimeCallbackRef.current = null;
+      unsubscribeBars: (subscriberUID: string) => {
+        // TradingView calls unsubscribe for the OLD resolution AFTER subscribing to the new one
+        // We need to ignore late unsubscribe calls that don't match the current subscription
+        // The subscriberUID contains the resolution, e.g., "GBPUSD_5" or "GBPUSD_60"
+        const unsubResolution = subscriberUID?.split('_').pop() || '';
+        const currentResolution = subscribedResolutionRef.current;
+        
+        console.log('unsubscribeBars called:', { subscriberUID, unsubResolution, currentResolution });
+        
+        // Only clear callback if unsubscribing from the currently subscribed resolution
+        if (unsubResolution === currentResolution || !currentResolution) {
+          onRealtimeCallbackRef.current = null;
+          subscribedResolutionRef.current = null;
+        } else {
+          console.log('Ignoring stale unsubscribe for old resolution:', unsubResolution);
+        }
       },
       getMarks: (symbolInfo: any, from: number, to: number, onDataCallback: any) => {
         onDataCallback([]);
