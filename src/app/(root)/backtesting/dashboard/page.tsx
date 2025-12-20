@@ -963,15 +963,16 @@ export default function BacktestingDashboard() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className={cn(
-                "relative w-full max-w-xl rounded-2xl overflow-hidden",
+                "relative w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden",
                 "bg-card border border-border shadow-2xl"
               )}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-emerald-500 to-primary" />
               
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
+              {/* Fixed Header */}
+              <div className="p-6 pb-4 shrink-0">
+                <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-foreground">
                       Create New Session
@@ -987,7 +988,10 @@ export default function BacktestingDashboard() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
+              </div>
                 
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto px-6">
                 <div className="space-y-5">
                   <div>
                     <label className="block text-sm font-medium text-foreground/70 mb-2">
@@ -1141,8 +1145,11 @@ export default function BacktestingDashboard() {
                     />
                   </div>
                 </div>
+              </div>
 
-                <div className="flex gap-3 mt-6">
+              {/* Fixed Footer */}
+              <div className="p-6 pt-4 shrink-0 border-t border-border/50">
+                <div className="flex gap-3">
                   <button
                     onClick={() => setShowCreateModal(false)}
                     className={cn(
