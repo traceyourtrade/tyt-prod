@@ -124,6 +124,44 @@ const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
   return forexMapping[symbol] || `ProJournX:${symbol}`;
 };
 
+// Get decimal places for price display based on symbol type
+// Gold/Silver: 2-3 decimals, JPY pairs: 3 decimals, Most forex: 5 decimals, Crypto: 2 decimals
+const getDecimalPlaces = (symbol: string, market?: string): number => {
+  if (!symbol || symbol.trim() === '') {
+    return 5; // Default for forex
+  }
+  
+  const upperSymbol = symbol.toUpperCase();
+  
+  // Gold - 3 decimals (e.g., 2375.000)
+  if (upperSymbol.includes('XAU') || upperSymbol.includes('GOLD')) {
+    return 3;
+  }
+  
+  // Silver - typically 3-4 decimals
+  if (upperSymbol.includes('XAG') || upperSymbol.includes('SILVER')) {
+    return 3;
+  }
+  
+  // JPY pairs - 3 decimals (e.g., 156.789)
+  if (upperSymbol.includes('JPY')) {
+    return 3;
+  }
+  
+  // Crypto - 2 decimals for most (BTC, ETH), 4 for smaller coins
+  if (market === 'CRYPTO') {
+    return 2;
+  }
+  
+  // Indian indices/stocks - 2 decimals
+  if (market === 'INDIAN_INDICES' || market === 'INDIAN_STOCK') {
+    return 2;
+  }
+  
+  // Standard forex pairs - 5 decimals (e.g., 1.08123)
+  return 5;
+};
+
 // Get contract size (lot multiplier) based on symbol type
 // Forex pairs: 100,000 units per lot
 // Gold (XAU): 100 troy ounces per lot  
@@ -747,18 +785,9 @@ export default function FullscreenBacktesting({
           volume: data.v?.[i] || 0,
         }));
         
-        // Compute decimal places for this resolution's data
-        let maxDecimalPlaces = 0;
-        bars.forEach((bar: any) => {
-          [bar.open, bar.high, bar.low, bar.close].forEach((val: number) => {
-            const str = val?.toString() || "";
-            if (str.includes(".") && !str.includes("e")) {
-              const decCount = str.split(".")[1].length;
-              if (decCount > maxDecimalPlaces) maxDecimalPlaces = decCount;
-            }
-          });
-        });
-        setDecimalPlaces(maxDecimalPlaces);
+        // Set decimal places based on instrument type (prevents floating-point artifacts)
+        const symbolDecimalPlaces = getDecimalPlaces(rawSymbol, market);
+        setDecimalPlaces(symbolDecimalPlaces);
         
         // Cache the bars for this resolution
         barsCacheRef.current[resolution] = bars;
@@ -966,17 +995,9 @@ export default function FullscreenBacktesting({
             volume: data.v?.[i] || 0,
           }));
           
-          let maxDecimalPlaces = 0;
-          bars.forEach((bar: any) => {
-            [bar.open, bar.high, bar.low, bar.close].forEach((val: number) => {
-              const str = val?.toString() || "";
-              if (str.includes(".") && !str.includes("e")) {
-                const decCount = str.split(".")[1].length;
-                if (decCount > maxDecimalPlaces) maxDecimalPlaces = decCount;
-              }
-            });
-          });
-          setDecimalPlaces(maxDecimalPlaces);
+          // Set decimal places based on instrument type (prevents floating-point artifacts)
+          const symbolDecimalPlaces = getDecimalPlaces(rawSymbol, market);
+          setDecimalPlaces(symbolDecimalPlaces);
           
           // Cache the bars for this resolution
           barsCacheRef.current[currentInterval] = bars;
