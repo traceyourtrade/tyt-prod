@@ -1,98 +1,183 @@
 "use client";
 import { useState, useEffect } from "react";
-import "./verifymail.css";
+import { motion } from "framer-motion";
+import { Mail, CheckCircle2, Loader2, Sparkles, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 const VerifyEmailScreen = () => {
-  const [status, setStatus] = useState(false);
-  const [startAnimation, setStartAnimation] = useState(false);
-
-  const loadingMessage = "Sending Verification Mail";
+  const [status, setStatus] = useState<'loading' | 'success'>('loading');
 
   useEffect(() => {
-    const statusTimer = setTimeout(() => {
-      setStatus(true);
-      setStartAnimation(false);
-    }, 1800);
+    const timer = setTimeout(() => {
+      setStatus('success');
+    }, 2000);
 
-    const animationTimer = setTimeout(() => {
-      if (!status) setStartAnimation(true);
-    }, 100);
-
-    return () => {
-      clearTimeout(statusTimer);
-      clearTimeout(animationTimer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
-  const loadingCharacters = loadingMessage.split("").map((char, index) => (
-    <span
-      key={index}
-      style={{ animationDelay: `${0.5 + index * 0.03}s` }}
-    >
-      {char === " " ? "\u00A0" : char}
-    </span>
-  ));
-
   return (
-    <div className="w-screen min-h-screen grid place-content-center bg-[url('/images/loginbggradient.png')] bg-cover bg-center bg-no-repeat font-[SF_Pro_Display]">
-      <div className="w-[90vw] max-w-[450px] min-h-[300px] pb-[30px] shadow-[rgba(50,50,93,0.25)_0px_13px_27px_-5px,rgba(0,0,0,0.3)_0px_8px_16px_-8px] flex flex-col items-center justify-start rounded-[25px] bg-white text-center">
+    <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background gradient orbs */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-emerald-500/8 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/2 right-0 w-[300px] h-[300px] bg-purple-500/8 rounded-full blur-[80px] pointer-events-none" />
+      
+      {/* Grid pattern overlay */}
+      <div 
+        className="absolute inset-0 opacity-[0.02] pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                           linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px'
+        }}
+      />
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="relative w-full max-w-md"
+      >
+        {/* Main card */}
+        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-zinc-900/90 via-zinc-900/80 to-zinc-800/60 border border-white/[0.08] backdrop-blur-xl shadow-2xl shadow-black/40">
+          {/* Top gradient accent bar */}
+          <div className="h-1 bg-gradient-to-r from-blue-500 via-emerald-500 to-blue-500" />
+          
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.03] via-transparent to-emerald-500/[0.03] pointer-events-none" />
+          
+          <div className="relative p-8 sm:p-10">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-white tracking-tight">ProJournX</span>
+              </div>
+            </div>
+            
+            {/* Icon */}
+            <motion.div 
+              className="flex justify-center mb-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+                  <Mail className="w-10 h-10 text-blue-400" />
+                </div>
+                {status === 'success' && (
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30"
+                  >
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+            
+            {/* Title */}
+            <h1 className="text-2xl font-bold text-white text-center mb-2">
+              Email Verification
+            </h1>
+            
+            {/* Description */}
+            <motion.p 
+              key={status}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-zinc-400 text-center text-sm mb-8 max-w-[280px] mx-auto"
+            >
+              {status === 'loading' 
+                ? "Sending verification email to your inbox..."
+                : "Check your inbox or spam folder for the verification email"
+              }
+            </motion.p>
+            
+            {/* Status indicator */}
+            <motion.div 
+              layout
+              className={`relative flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 ${
+                status === 'success' 
+                  ? 'bg-emerald-500/10 border-emerald-500/20' 
+                  : 'bg-zinc-800/50 border-white/[0.06]'
+              }`}
+            >
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                status === 'success' 
+                  ? 'bg-emerald-500/20' 
+                  : 'bg-zinc-700/50'
+              }`}>
+                {status === 'loading' ? (
+                  <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+                ) : (
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  >
+                    <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                  </motion.div>
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className={`font-semibold text-sm ${
+                  status === 'success' ? 'text-emerald-400' : 'text-zinc-300'
+                }`}>
+                  {status === 'loading' ? 'Sending Verification Email...' : 'Verification Email Sent!'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {status === 'loading' 
+                    ? 'Please wait a moment' 
+                    : 'Click the link in your email to verify'
+                  }
+                </p>
+              </div>
+            </motion.div>
+            
+            {/* Additional info */}
+            {status === 'success' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-6 space-y-4"
+              >
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-800/30 border border-white/[0.04]">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <span className="text-amber-400 text-sm">!</span>
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    Didn't receive the email? Check your spam folder or request a new one.
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-center gap-4">
+                  <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
+                    Resend Email
+                  </button>
+                  <span className="text-zinc-600">|</span>
+                  <Link href="/login" className="text-sm text-zinc-400 hover:text-zinc-300 transition-colors flex items-center gap-1">
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Login
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </div>
         
-        <img
-          src="/images/logo-light.png"
-          alt="Company Logo"
-          width={100}
-          height={100}
-          className="mt-[25px] w-[80px] h-auto"
-        />
-
-        <h1 className="text-[28px] mt-[20px] mb-[10px] text-[#333]">Email Verification</h1>
-
-        {status ? (
-          <p className="fadein-txt px-[15px] text-[#817a7a] mb-[15px] text-[13px] font-medium max-w-[80%]">
-            Kindly check your Inbox / Spam folder for the Verification Mail
-          </p>
-        ) : (
-          <p className="px-[15px] text-[#817a7a] mb-[15px] text-[13px] font-medium max-w-[80%]">
-            Your trades, your data, your edge — fully automated and optimized
-          </p>
-        )}
-
-        {status ? (
-          <div className="verifynotification success bg-[#803dca] flex items-center justify-between rounded-[50px] font-[SF_Pro_Display] text-[16px] mt-[15px] w-[300px] min-h-[70px] relative overflow-hidden">
-            <p className="verify-msg fadein-txt text-white font-semibold ml-[20px] whitespace-nowrap">
-              Verification Mail Sent
-            </p>
-            <div className="verifyicon-purple flex items-center justify-center bg-white w-[50px] h-[50px] rounded-full flex-shrink-0">
-              <img
-                src="images/checkmark.png"
-                alt="Success"
-                width={35}
-                height={35}
-                className="verifycheckmark fadein-txt object-contain"
-              />
-            </div>
-          </div>
-        ) : (
-          <div
-            className={`verifynotification loading ${
-              startAnimation ? "animate" : ""
-            } bg-[#525252] flex items-center rounded-[50px] font-[SF_Pro_Display] text-[16px] mt-[15px] w-[300px] min-h-[70px] relative overflow-hidden pl-[70px] pr-[10px] py-[10px] box-border`}
-          >
-            <div className="verifyicon flex items-center justify-center bg-white w-[50px] h-[50px] rounded-full absolute left-[10px] top-1/2 -translate-y-1/2 z-[2]">
-              <img
-                src="images/loader.gif"
-                alt="Loading"
-                width={30}
-                height={30}
-                className="verifyloader object-contain"
-              />
-            </div>
-            <p className="verify-msg text-white font-semibold m-0 p-0 relative z-[1] inline-block whitespace-nowrap">
-              {loadingCharacters}
-            </p>
-          </div>
-        )}
-      </div>
+        {/* Footer */}
+        <p className="text-center text-zinc-600 text-xs mt-6">
+          Need help? Contact <a href="mailto:support@projournx.com" className="text-blue-400 hover:text-blue-300 transition-colors">support@projournx.com</a>
+        </p>
+      </motion.div>
     </div>
   );
 };
