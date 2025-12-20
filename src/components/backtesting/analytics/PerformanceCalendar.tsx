@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CalendarDay } from '@/hooks/backtesting/useBacktestAnalytics';
 import type { Trade } from '@/hooks/backtesting/useBacktestAnalytics';
@@ -17,8 +17,6 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export default function PerformanceCalendar({ trades, initialBalance }: Props) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [displayMode, setDisplayMode] = useState<'dollar' | 'percent'>('dollar');
-  const [balanceMode, setBalanceMode] = useState<'initial' | 'current'>('initial');
-  const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
 
   const calendarData = useMemo(() => {
     const year = currentDate.getFullYear();
@@ -74,49 +72,91 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
   const monthName = currentDate.toLocaleString('default', { month: 'long' });
   const year = currentDate.getFullYear();
 
+  // Calculate month summary
+  const monthlyPnl = calendarData
+    .filter(d => d.isCurrentMonth && d.trades > 0)
+    .reduce((sum, d) => sum + d.pnl, 0);
+  const monthlyTrades = calendarData
+    .filter(d => d.isCurrentMonth)
+    .reduce((sum, d) => sum + d.trades, 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-3 sm:p-5 min-w-0 overflow-hidden",
-        "bg-card border-border",
-        "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+        "relative rounded-xl overflow-hidden",
+        "bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-800/40",
+        "border border-white/[0.08]",
+        "backdrop-blur-xl"
       )}
     >
-      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">
-        Performance calendar
-      </h3>
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.02] via-transparent to-purple-500/[0.02] pointer-events-none" />
+      
+      <div className="relative p-5">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center",
+              "bg-gradient-to-br from-cyan-500/20 to-cyan-600/10",
+              "border border-cyan-500/20"
+            )}>
+              <CalendarCheck className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white">Performance Calendar</h3>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {monthlyTrades} trades · <span className={monthlyPnl >= 0 ? "text-emerald-400" : "text-red-400"}>
+                  {monthlyPnl >= 0 ? '+' : ''}${monthlyPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </p>
+            </div>
+          </div>
+          
+          {/* Display mode toggle */}
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <button
+              onClick={() => setDisplayMode('dollar')}
+              className={cn(
+                "px-2.5 py-1 text-xs font-medium rounded-md transition-all duration-200",
+                displayMode === 'dollar'
+                  ? "bg-white/[0.08] text-white"
+                  : "text-zinc-400 hover:text-zinc-300"
+              )}
+            >
+              $
+            </button>
+            <button
+              onClick={() => setDisplayMode('percent')}
+              className={cn(
+                "px-2.5 py-1 text-xs font-medium rounded-md transition-all duration-200",
+                displayMode === 'percent'
+                  ? "bg-white/[0.08] text-white"
+                  : "text-zinc-400 hover:text-zinc-300"
+              )}
+            >
+              %
+            </button>
+          </div>
+        </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
-        <select
-          value={displayMode}
-          onChange={(e) => setDisplayMode(e.target.value as 'dollar' | 'percent')}
-          className={cn(
-            "px-3 py-1.5 text-sm rounded-lg cursor-pointer",
-            "bg-background border border-border text-foreground",
-            "dark:bg-zinc-900 dark:border-white/[0.08]",
-            "focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          )}
-        >
-          <option value="dollar">Dollar Profit</option>
-          <option value="percent">Percent Gain</option>
-        </select>
-
-        <div className="flex items-center gap-4">
+        {/* Navigation */}
+        <div className="flex items-center justify-center gap-6 mb-4">
           <div className="flex items-center gap-1">
             <button
               onClick={prevMonth}
-              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-medium text-foreground min-w-[100px] text-center">
+            <span className="text-sm font-medium text-white min-w-[90px] text-center">
               {monthName}
             </span>
             <button
               onClick={nextMonth}
-              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -125,122 +165,78 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
           <div className="flex items-center gap-1">
             <button
               onClick={prevYear}
-              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-medium text-foreground min-w-[50px] text-center">
+            <span className="text-sm font-medium text-white min-w-[50px] text-center">
               {year}
             </span>
             <button
               onClick={nextYear}
-              className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-3">
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input 
-              type="radio" 
-              name="balanceMode" 
-              checked={balanceMode === 'initial'}
-              onChange={() => setBalanceMode('initial')}
-              className="w-3 h-3 accent-blue-500"
-            />
-            <span className="text-xs text-muted-foreground">Initial Balance</span>
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input 
-              type="radio" 
-              name="balanceMode" 
-              checked={balanceMode === 'current'}
-              onChange={() => setBalanceMode('current')}
-              className="w-3 h-3 accent-blue-500"
-            />
-            <span className="text-xs text-muted-foreground">Current Balance</span>
-          </label>
-        </div>
-
-        <div className="flex rounded-lg overflow-hidden border border-border dark:border-white/[0.08]">
-          <button
-            onClick={() => setViewMode('month')}
-            className={cn(
-              "px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium transition-colors",
-              viewMode === 'month' 
-                ? "bg-muted text-foreground" 
-                : "bg-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Month
-          </button>
-          <button
-            onClick={() => setViewMode('year')}
-            className={cn(
-              "px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium transition-colors",
-              viewMode === 'year' 
-                ? "bg-muted text-foreground" 
-                : "bg-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Year
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
-        {WEEKDAYS.map(day => (
-          <div 
-            key={day} 
-            className="text-center text-[10px] sm:text-xs font-medium text-muted-foreground py-1 sm:py-2"
-          >
-            <span className="hidden sm:inline">{day}</span>
-            <span className="sm:hidden">{day.charAt(0)}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-        {calendarData.map((day, i) => {
-          const hasData = day.trades > 0;
-          const displayValue = displayMode === 'dollar' 
-            ? `$${Math.abs(day.pnl).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-            : `${((day.pnl / initialBalance) * 100).toFixed(1)}%`;
-
-          return (
-            <div
-              key={i}
-              className={cn(
-                "min-h-[48px] sm:min-h-[80px] rounded-md sm:rounded-lg p-1 sm:p-2 transition-colors",
-                hasData 
-                  ? day.pnl >= 0 
-                    ? "bg-profit/15"
-                    : "bg-loss/15"
-                  : "bg-muted",
-                !day.isCurrentMonth && "opacity-40"
-              )}
-            >
-              <div className="text-[9px] sm:text-xs font-medium text-muted-foreground mb-0.5 sm:mb-1">
-                {day.day}
-              </div>
-              {hasData && (
-                <>
-                  <div className={cn(
-                    "text-[10px] sm:text-sm font-semibold truncate",
-                    day.pnl >= 0 ? "text-profit" : "text-loss"
-                  )}>
-                    {day.pnl >= 0 ? '' : '-'}{displayValue}
-                  </div>
-                  <div className="text-[8px] sm:text-[10px] text-muted-foreground mt-0.5 hidden sm:block">
-                    {day.trades} trade{day.trades !== 1 ? 's' : ''}
-                  </div>
-                </>
-              )}
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 gap-1.5 mb-2">
+          {WEEKDAYS.map(day => (
+            <div key={day} className="text-center text-xs font-medium text-zinc-500 py-1">
+              {day}
             </div>
-          );
-        })}
+          ))}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1.5">
+          {calendarData.map((day, i) => {
+            const hasTrades = day.trades > 0;
+            const value = displayMode === 'dollar' 
+              ? day.pnl
+              : (day.pnl / initialBalance) * 100;
+            
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "aspect-square rounded-lg flex flex-col items-center justify-center text-center transition-all duration-200",
+                  day.isCurrentMonth 
+                    ? hasTrades
+                      ? day.pnl >= 0
+                        ? "bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20"
+                        : "bg-red-500/10 border border-red-500/20 hover:bg-red-500/20"
+                      : "bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04]"
+                    : "bg-transparent opacity-30"
+                )}
+              >
+                <span className={cn(
+                  "text-xs font-medium",
+                  day.isCurrentMonth 
+                    ? hasTrades
+                      ? "text-white"
+                      : "text-zinc-500"
+                    : "text-zinc-600"
+                )}>
+                  {day.day}
+                </span>
+                {hasTrades && day.isCurrentMonth && (
+                  <span className={cn(
+                    "text-[10px] font-semibold mt-0.5",
+                    day.pnl >= 0 ? "text-emerald-400" : "text-red-400"
+                  )}>
+                    {displayMode === 'dollar' 
+                      ? `${value >= 0 ? '+' : ''}$${Math.abs(value).toFixed(0)}`
+                      : `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`
+                    }
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );

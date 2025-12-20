@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
+import { Clock, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TimePerformance } from '@/hooks/backtesting/useBacktestAnalytics';
 
@@ -41,78 +42,130 @@ export default function PerformanceByTime({ data }: Props) {
     }
   };
 
+  // Find best performing hour (guard against empty data)
+  const bestHour = data.length > 0 
+    ? data.reduce((best, current) => current.totalPnl > best.totalPnl ? current : best, data[0])
+    : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border p-4 sm:p-5 min-w-0 overflow-hidden",
-        "bg-card border-border",
-        "dark:bg-zinc-900/50 dark:border-white/[0.08]"
+        "relative rounded-xl overflow-hidden",
+        "bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-800/40",
+        "border border-white/[0.08]",
+        "backdrop-blur-xl"
       )}
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-4">
-        <h3 className="text-base sm:text-lg font-semibold text-foreground">
-          Performance by time
-        </h3>
-        <select
-          value={selectedMetric}
-          onChange={(e) => setSelectedMetric(e.target.value as MetricType)}
-          className={cn(
-            "px-3 py-1.5 text-sm rounded-lg cursor-pointer",
-            "bg-background border border-border text-foreground",
-            "dark:bg-zinc-900 dark:border-white/[0.08]",
-            "focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          )}
-        >
-          {METRIC_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="h-[200px] sm:h-[256px] min-w-0 overflow-x-auto">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} barCategoryGap="20%">
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" vertical={false} />
-            <XAxis 
-              dataKey="hour" 
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-              axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
-            />
-            <YAxis 
-              stroke="hsl(var(--muted-foreground))"
-              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-              axisLine={{ stroke: 'rgba(255, 255, 255, 0.08)' }}
-              tickFormatter={(v) => selectedMetric === 'totalPnl' ? `${(v / 1000).toFixed(1)}k` : v.toString()}
-            />
-            {selectedMetric === 'totalPnl' && (
-              <ReferenceLine y={0} stroke="rgba(255, 255, 255, 0.2)" />
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.03] via-transparent to-emerald-500/[0.03] pointer-events-none" />
+      
+      <div className="relative p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center",
+              "bg-gradient-to-br from-blue-500/20 to-blue-600/10",
+              "border border-blue-500/20"
+            )}>
+              <Clock className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white">Performance by Time</h3>
+              {bestHour && bestHour.totalTrades > 0 && (
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Best hour: <span className="text-emerald-400">{bestHour.hour}:00</span>
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value as MetricType)}
+            className={cn(
+              "px-3 py-2 text-sm rounded-lg cursor-pointer",
+              "bg-white/[0.05] border border-white/[0.08] text-zinc-300",
+              "focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30",
+              "transition-all duration-200"
             )}
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
-                color: 'hsl(var(--foreground))'
-              }}
-              formatter={(value: number) => [formatValue(value), METRIC_OPTIONS.find(o => o.value === selectedMetric)?.label]}
-            />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-              {chartData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`}
-                  fill={selectedMetric === 'totalPnl' 
-                    ? entry.isPositive ? '#10b981' : '#ef4444'
-                    : '#14b8a6'
-                  }
-                  fillOpacity={0.8}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+          >
+            {METRIC_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value} className="bg-zinc-900">
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Chart */}
+        <div className="h-[220px] -mx-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} barCategoryGap="15%">
+              <defs>
+                <linearGradient id="barGradientPositive" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.4} />
+                </linearGradient>
+                <linearGradient id="barGradientNegative" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
+                </linearGradient>
+                <linearGradient id="barGradientNeutral" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.4} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.04)" vertical={false} />
+              <XAxis 
+                dataKey="hour" 
+                stroke="transparent"
+                tick={{ fill: '#71717a', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis 
+                stroke="transparent"
+                tick={{ fill: '#71717a', fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => selectedMetric === 'totalPnl' ? `${(v / 1000).toFixed(1)}k` : v.toString()}
+                width={45}
+              />
+              {selectedMetric === 'totalPnl' && (
+                <ReferenceLine y={0} stroke="rgba(255, 255, 255, 0.1)" />
+              )}
+              <Tooltip
+                cursor={{ fill: 'rgba(255, 255, 255, 0.03)' }}
+                contentStyle={{
+                  backgroundColor: 'rgba(24, 24, 27, 0.95)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                  padding: '10px 14px'
+                }}
+                labelStyle={{ color: '#a1a1aa', fontSize: 12, marginBottom: 4 }}
+                formatter={(value: number) => [
+                  <span key="value" className="text-white font-medium">{formatValue(value)}</span>,
+                  <span key="label" className="text-zinc-400">{METRIC_OPTIONS.find(o => o.value === selectedMetric)?.label}</span>
+                ]}
+              />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                {chartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`}
+                    fill={selectedMetric === 'totalPnl' 
+                      ? (entry.isPositive ? 'url(#barGradientPositive)' : 'url(#barGradientNegative)')
+                      : 'url(#barGradientNeutral)'
+                    }
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </motion.div>
   );
