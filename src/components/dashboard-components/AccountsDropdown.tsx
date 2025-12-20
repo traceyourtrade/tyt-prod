@@ -113,9 +113,9 @@ const AccountsDropdown = () => {
         ) : (
           <DollarSign className="w-4 h-4 text-primary" />
         )}
-        <span className="hidden sm:inline text-foreground">{getDisplayText()}</span>
+        <span className="text-foreground text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{getDisplayText()}</span>
         <ChevronDown className={cn(
-          "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200",
+          "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 flex-shrink-0",
           isOpen && "rotate-180"
         )} />
       </button>
