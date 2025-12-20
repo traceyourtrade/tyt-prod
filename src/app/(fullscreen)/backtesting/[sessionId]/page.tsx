@@ -209,6 +209,7 @@ export default function FullscreenBacktesting({
   const currentIntervalRef = useRef(initialInterval);
   const lastSessionKeyRef = useRef<string>("");
   const hasLoadedLayoutRef = useRef(false);
+  const hasScrolledToStartRef = useRef(false);
   const replayTimestampRef = useRef<number>(0); // Tracks replay position as timestamp for consistent drawing anchors
   const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
   const favoriteDrawingToolsRef = useRef<string[]>([]); // Stores favorite drawing tools
@@ -837,6 +838,7 @@ export default function FullscreenBacktesting({
       barsCacheRef.current = {};
       lastSessionKeyRef.current = sessionKey;
       hasLoadedLayoutRef.current = false; // Reset layout loaded flag for new session
+      hasScrolledToStartRef.current = false; // Reset scroll flag for new session
       replayTimestampRef.current = 0; // Reset replay timestamp for new session/symbol
     }
     
@@ -1434,10 +1436,58 @@ export default function FullscreenBacktesting({
       // This prevents drawing drift when switching between resolutions
       if (!hasLoadedLayoutRef.current) {
         hasLoadedLayoutRef.current = true;
-        loadSavedLayout();
+        loadSavedLayout().then(() => {
+          // After layout loads, scroll chart to session start date
+          scrollChartToStartDate(chart);
+        });
       } else {
         // Already loaded layout - just enable auto-save immediately
         initialRestoreCompleteRef.current = true;
+        // Scroll to start date if not done yet
+        scrollChartToStartDate(chart);
+      }
+      
+      // Function to scroll chart to the session's start date
+      function scrollChartToStartDate(chart: any, retryCount = 0) {
+        if (hasScrolledToStartRef.current) return;
+        
+        // Get the replay timestamp (should be set to fromDate position by bar loading logic)
+        const targetTimestamp = replayTimestampRef.current;
+        
+        // If timestamp not set yet, retry a few times with delay
+        if ((!targetTimestamp || targetTimestamp <= 0) && retryCount < 5) {
+          setTimeout(() => scrollChartToStartDate(chart, retryCount + 1), 500);
+          return;
+        }
+        
+        if (!targetTimestamp || targetTimestamp <= 0) {
+          console.log('Could not scroll to start date: no replay timestamp available');
+          return;
+        }
+        
+        try {
+          // Calculate visible range: show ~100 bars before and after the target
+          const intervalMs = getIntervalMs(currentIntervalRef.current);
+          const barsToShow = 50;
+          const from = (targetTimestamp - (intervalMs * barsToShow)) / 1000;
+          const to = (targetTimestamp + (intervalMs * barsToShow)) / 1000;
+          
+          chart.setVisibleRange({ from, to });
+          hasScrolledToStartRef.current = true;
+          console.log('Scrolled chart to session start date:', new Date(targetTimestamp).toISOString());
+        } catch (e) {
+          console.warn('Could not scroll chart to start date:', e);
+        }
+      }
+      
+      // Helper to get interval duration in milliseconds
+      function getIntervalMs(interval: string): number {
+        const num = parseInt(interval) || 1;
+        if (interval.endsWith('D') || interval === 'D') return 24 * 60 * 60 * 1000;
+        if (interval.endsWith('W') || interval === 'W') return 7 * 24 * 60 * 60 * 1000;
+        if (interval.endsWith('M') || interval === 'M') return 30 * 24 * 60 * 60 * 1000;
+        // Minutes
+        return num * 60 * 1000;
       }
       
       const autoSaveChart = async () => {
