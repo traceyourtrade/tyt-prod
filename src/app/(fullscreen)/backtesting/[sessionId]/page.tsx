@@ -1814,40 +1814,108 @@ export default function FullscreenBacktesting({
     }
   };
 
-  const removeTradeLines = useCallback((tradeId?: string) => {
-    if (!tvWidgetRef.current) return;
+  const removeTradeLines = useCallback((tradeId?: string, tradePrices?: { entry?: number; tp?: number; sl?: number }) => {
+    if (!tvWidgetRef.current) {
+      console.log("removeTradeLines: No widget ref");
+      return;
+    }
     
     try {
       const chart = tvWidgetRef.current.activeChart();
-      if (!chart) return;
+      if (!chart) {
+        console.log("removeTradeLines: No active chart");
+        return;
+      }
+      
+      // Helper function to safely remove an entity by ID
+      const safeRemoveEntity = (entityId: any, label: string) => {
+        if (!entityId) return false;
+        try {
+          chart.removeEntity(entityId);
+          console.log(`Removed ${label} line:`, entityId);
+          return true;
+        } catch (e) {
+          console.log(`Could not remove ${label} line (may already be removed):`, entityId);
+          return false;
+        }
+      };
+      
+      // Helper function to remove horizontal lines by price level (fallback)
+      const removeLinesByPrice = (prices: number[]) => {
+        try {
+          const allShapes = chart.getAllShapes();
+          console.log("getAllShapes for fallback removal:", allShapes.length, "shapes found");
+          
+          for (const shape of allShapes) {
+            if (shape.name === 'horizontal_line') {
+              try {
+                const shapeObj = chart.getShapeById(shape.id);
+                if (shapeObj) {
+                  const points = shapeObj.getPoints();
+                  if (points && points.length > 0) {
+                    const shapePrice = points[0].price;
+                    // Check if this shape's price matches any of our trade prices (with tolerance)
+                    const matchesPrice = prices.some(p => Math.abs(shapePrice - p) < 0.00001);
+                    if (matchesPrice) {
+                      chart.removeEntity(shape.id);
+                      console.log("Fallback removed horizontal line at price:", shapePrice);
+                    }
+                  }
+                }
+              } catch (shapeErr) {
+                // Shape might already be removed
+              }
+            }
+          }
+        } catch (e) {
+          console.log("Fallback removal error:", e);
+        }
+      };
       
       // If tradeId specified AND exists, remove only that trade's lines
       if (tradeId && tradeLinesRef.current[tradeId]) {
         const { entry, tp, sl } = tradeLinesRef.current[tradeId];
         console.log("Removing trade lines for trade:", tradeId, { entry, tp, sl });
-        if (entry) { try { chart.removeEntity(entry); } catch (e) { /* already removed */ } }
-        if (tp) { try { chart.removeEntity(tp); } catch (e) { /* already removed */ } }
-        if (sl) { try { chart.removeEntity(sl); } catch (e) { /* already removed */ } }
+        
+        const entryRemoved = safeRemoveEntity(entry, 'entry');
+        const tpRemoved = safeRemoveEntity(tp, 'TP');
+        const slRemoved = safeRemoveEntity(sl, 'SL');
+        
+        // If any removal failed and we have price data, try fallback removal
+        if ((!entryRemoved || !tpRemoved || !slRemoved) && tradePrices) {
+          const pricesToRemove = [tradePrices.entry, tradePrices.tp, tradePrices.sl].filter(p => p !== undefined) as number[];
+          if (pricesToRemove.length > 0) {
+            console.log("Attempting fallback removal by price:", pricesToRemove);
+            removeLinesByPrice(pricesToRemove);
+          }
+        }
+        
         delete tradeLinesRef.current[tradeId];
         return;
       }
       
-      // If tradeId specified but not found, just log and return (don't wipe all)
+      // If tradeId specified but not found, try fallback removal by price
       if (tradeId) {
-        console.log("Trade lines not found for:", tradeId);
+        console.log("Trade lines not found for:", tradeId, "- trying fallback removal");
+        if (tradePrices) {
+          const pricesToRemove = [tradePrices.entry, tradePrices.tp, tradePrices.sl].filter(p => p !== undefined) as number[];
+          if (pricesToRemove.length > 0) {
+            removeLinesByPrice(pricesToRemove);
+          }
+        }
         return;
       }
       
       // No tradeId provided - remove ALL trade lines
-      console.log("Removing all trade lines:", tradeLinesRef.current);
+      console.log("Removing all trade lines:", Object.keys(tradeLinesRef.current));
       for (const tid of Object.keys(tradeLinesRef.current)) {
         const lines = tradeLinesRef.current[tid];
         // Skip if not a valid trade lines object (e.g., old format legacy keys)
         if (!lines || typeof lines !== 'object' || !('entry' in lines)) continue;
         const { entry, tp, sl } = lines;
-        if (entry) { try { chart.removeEntity(entry); } catch (e) { /* already removed */ } }
-        if (tp) { try { chart.removeEntity(tp); } catch (e) { /* already removed */ } }
-        if (sl) { try { chart.removeEntity(sl); } catch (e) { /* already removed */ } }
+        safeRemoveEntity(entry, 'entry');
+        safeRemoveEntity(tp, 'TP');
+        safeRemoveEntity(sl, 'SL');
       }
       tradeLinesRef.current = {};
     } catch (e) {
@@ -1925,7 +1993,11 @@ export default function FullscreenBacktesting({
       
       // Remove only THIS trade's existing lines IF they exist (don't call for new trades)
       if (trade.id && tradeLinesRef.current[trade.id]) {
-        removeTradeLines(trade.id);
+        removeTradeLines(trade.id, {
+          entry: trade.entry,
+          tp: trade.target,
+          sl: trade.stopLoss
+        });
       }
       
       console.log("Drawing trade lines for:", trade);
@@ -2078,8 +2150,12 @@ export default function FullscreenBacktesting({
   const closeTrade = useCallback(async (exitPrice: number, reason: string, trade: any) => {
     if (!trade) return;
     
-    // Remove only this trade's lines
-    removeTradeLines(trade.id);
+    // Remove only this trade's lines (pass prices for fallback removal)
+    removeTradeLines(trade.id, {
+      entry: trade.entry,
+      tp: trade.target,
+      sl: trade.stopLoss
+    });
     
     // Use the trade's stored lot size, fallback to global lotSize
     const tradeLotSize = trade.lotSize || lotSize;
