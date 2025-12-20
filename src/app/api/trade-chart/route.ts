@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { getUserModel } from '@/models/main/user.model';
 
-const TWELVE_DATA_API_KEY = process.env.TWELVE_DATA_API_KEY;
-const TWELVE_DATA_BASE_URL = 'https://api.twelvedata.com';
+const VPS_API_URL = 'http://72.61.242.6:5001';
 
 interface CacheEntry {
   data: any;
@@ -23,127 +24,192 @@ function getFromCache(key: string): any | null {
 
 function setCache(key: string, data: any): void {
   chartCache.set(key, { data, timestamp: Date.now() });
-  // Limit cache size
   if (chartCache.size > 500) {
     const oldestKey = chartCache.keys().next().value;
     if (oldestKey) chartCache.delete(oldestKey);
   }
 }
 
+async function getUserFromToken(token: string) {
+  const User = await getUserModel();
+  return await User.findOne({ "tokens.token": token });
+}
+
+function detectMarketType(symbol: string): string {
+  const upperSymbol = symbol.toUpperCase();
+  
+  // Crypto pairs
+  if (upperSymbol.includes('BTC') || upperSymbol.includes('ETH') || 
+      upperSymbol.includes('USDT') || upperSymbol.includes('BNB') ||
+      upperSymbol.includes('XRP') || upperSymbol.includes('SOL') ||
+      upperSymbol.includes('ADA') || upperSymbol.includes('DOGE')) {
+    return 'CRYPTO';
+  }
+  
+  // Indian indices
+  if (upperSymbol.includes('NIFTY') || upperSymbol.includes('BANKNIFTY') ||
+      upperSymbol.includes('SENSEX') || upperSymbol.includes('FINNIFTY')) {
+    return 'INDIAN_INDICES';
+  }
+  
+  // Indian stocks (common suffixes)
+  if (upperSymbol.endsWith('.NS') || upperSymbol.endsWith('.BO') ||
+      upperSymbol.includes('RELIANCE') || upperSymbol.includes('TCS') ||
+      upperSymbol.includes('INFY') || upperSymbol.includes('HDFC')) {
+    return 'INDIAN_STOCK';
+  }
+  
+  // Forex pairs (6 characters, all letters, common pairs)
+  const forexPairs = [
+    'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD',
+    'EURGBP', 'EURJPY', 'GBPJPY', 'AUDJPY', 'EURAUD', 'EURCHF', 'AUDNZD',
+    'XAUUSD', 'XAGUSD', 'GOLD', 'SILVER'
+  ];
+  if (forexPairs.includes(upperSymbol) || 
+      (upperSymbol.length === 6 && /^[A-Z]+$/.test(upperSymbol))) {
+    return 'FOREX';
+  }
+  
+  // Default to FOREX for unknown
+  return 'FOREX';
+}
+
+function mapIntervalToResolution(interval: string): string {
+  const intervalMap: Record<string, string> = {
+    '1min': '1',
+    '5min': '5',
+    '15min': '15',
+    '30min': '30',
+    '1h': '60',
+    '4h': '240',
+    '1day': 'D',
+    '1week': 'W',
+    '1month': 'M',
+  };
+  return intervalMap[interval] || interval;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   
-  const symbol = searchParams.get('symbol') || 'AAPL';
-  const date = searchParams.get('date'); // Trade date in YYYY-MM-DD format
+  const symbol = searchParams.get('symbol') || '';
+  const date = searchParams.get('date');
   const interval = searchParams.get('interval') || '5min';
+  const market = searchParams.get('market');
+  
+  if (!symbol) {
+    return NextResponse.json({ 
+      error: 'Symbol parameter required',
+      candles: [] 
+    }, { status: 400 });
+  }
   
   if (!date) {
-    return NextResponse.json({ error: 'Date parameter required' }, { status: 400 });
-  }
-  
-  const cacheKey = `${symbol}:${date}:${interval}`;
-  const cachedData = getFromCache(cacheKey);
-  
-  if (cachedData) {
-    console.log(`[TradeChart Cache HIT] ${cacheKey}`);
-    return NextResponse.json(cachedData);
-  }
-  
-  if (!TWELVE_DATA_API_KEY) {
-    console.error('[TradeChart] API key not configured');
-    return NextResponse.json({
-      error: 'Twelve Data API key not configured',
-    }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Date parameter required',
+      candles: [] 
+    }, { status: 400 });
   }
   
   try {
-    // For intraday charts, we get the whole day's data
+    const cookieStore = await cookies();
+    const token = cookieStore.get('authToken')?.value;
+    const userId = cookieStore.get('userId')?.value;
+
+    if (!token || !userId) {
+      return NextResponse.json({ 
+        error: 'Authentication required',
+        candles: [] 
+      }, { status: 401 });
+    }
+
+    const user = await getUserFromToken(token);
+    if (!user) {
+      return NextResponse.json({ 
+        error: 'Invalid token',
+        candles: [] 
+      }, { status: 401 });
+    }
+
+    // Cache key includes userId to scope data per user
+    const cacheKey = `${userId}:${symbol}:${date}:${interval}`;
+    const cachedData = getFromCache(cacheKey);
+    
+    if (cachedData) {
+      console.log(`[TradeChart Cache HIT] ${cacheKey}`);
+      return NextResponse.json(cachedData);
+    }
+
+    const detectedMarket = market || detectMarketType(symbol);
+    const resolution = mapIntervalToResolution(interval);
+    
+    // Calculate time range for the trade date
     const tradeDate = new Date(date);
-    const startDate = new Date(tradeDate);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(tradeDate);
-    endDate.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(tradeDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(tradeDate);
+    endOfDay.setHours(23, 59, 59, 999);
     
-    // Format dates for API
-    const startStr = startDate.toISOString().split('T')[0] + ' 00:00:00';
-    const endStr = endDate.toISOString().split('T')[0] + ' 23:59:59';
+    const fromTs = Math.floor(startOfDay.getTime() / 1000);
+    const toTs = Math.floor(endOfDay.getTime() / 1000);
     
-    const params = new URLSearchParams({
-      symbol: symbol,
-      interval: interval,
-      start_date: startStr,
-      end_date: endStr,
-      apikey: TWELVE_DATA_API_KEY,
-      format: 'JSON',
-      timezone: 'America/New_York',
+    const apiUrl = new URL(`${VPS_API_URL}/api/bars`);
+    apiUrl.searchParams.set('market', detectedMarket);
+    apiUrl.searchParams.set('symbol', symbol);
+    apiUrl.searchParams.set('resolution', resolution);
+    apiUrl.searchParams.set('from', fromTs.toString());
+    apiUrl.searchParams.set('to', toTs.toString());
+    apiUrl.searchParams.set('userId', userId);
+
+    console.log('[TradeChart] Fetching from VPS:', {
+      symbol,
+      market: detectedMarket,
+      resolution,
+      date,
+      url: apiUrl.toString()
     });
-    
-    const url = `${TWELVE_DATA_BASE_URL}/time_series?${params.toString()}`;
-    console.log('[TradeChart] Fetching:', url.replace(TWELVE_DATA_API_KEY, '***'));
-    
-    const response = await fetch(url);
+
+    const response = await fetch(apiUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      console.error('[TradeChart] VPS API error:', response.status, response.statusText);
+      return NextResponse.json({ 
+        error: 'Failed to fetch chart data',
+        candles: [] 
+      }, { status: response.status });
+    }
+
     const data = await response.json();
     
-    if (data.status === 'error') {
-      console.error('[TradeChart] API Error:', data.message);
-      
-      // If specific interval fails, try daily
-      if (interval !== '1day') {
-        const dailyParams = new URLSearchParams({
-          symbol: symbol,
-          interval: '1day',
-          outputsize: '30',
-          apikey: TWELVE_DATA_API_KEY,
-          format: 'JSON',
-          timezone: 'America/New_York',
-        });
-        
-        const dailyUrl = `${TWELVE_DATA_BASE_URL}/time_series?${dailyParams.toString()}`;
-        console.log('[TradeChart] Trying daily interval:', dailyUrl.replace(TWELVE_DATA_API_KEY, '***'));
-        
-        const dailyResponse = await fetch(dailyUrl);
-        const dailyData = await dailyResponse.json();
-        
-        if (dailyData.values && Array.isArray(dailyData.values)) {
-          const formattedData = dailyData.values
-            .map((bar: any) => ({
-              time: bar.datetime,
-              open: parseFloat(bar.open),
-              high: parseFloat(bar.high),
-              low: parseFloat(bar.low),
-              close: parseFloat(bar.close),
-              volume: bar.volume ? parseFloat(bar.volume) : 0,
-            }))
-            .reverse();
-          
-          const result = { candles: formattedData, interval: '1day' };
-          setCache(cacheKey, result);
-          return NextResponse.json(result);
-        }
-      }
-      
-      return NextResponse.json({ error: data.message || 'Failed to fetch data' }, { status: 400 });
+    if (data.s !== 'ok' || !data.t || !Array.isArray(data.t) || data.t.length === 0) {
+      console.log('[TradeChart] No data from VPS:', data);
+      return NextResponse.json({ 
+        error: 'No data available for this symbol/date',
+        candles: [],
+        interval 
+      });
     }
     
-    if (!data.values || !Array.isArray(data.values)) {
-      console.error('[TradeChart] No data returned:', data);
-      return NextResponse.json({ error: 'No data available', candles: [] }, { status: 200 });
-    }
+    // Convert VPS array format to candles object format
+    const candles = data.t.map((timestamp: number, i: number) => ({
+      time: new Date(timestamp * 1000).toISOString(),
+      open: data.o[i],
+      high: data.h[i],
+      low: data.l[i],
+      close: data.c[i],
+      volume: data.v ? data.v[i] : 0,
+    }));
     
-    const formattedData = data.values
-      .map((bar: any) => ({
-        time: bar.datetime,
-        open: parseFloat(bar.open),
-        high: parseFloat(bar.high),
-        low: parseFloat(bar.low),
-        close: parseFloat(bar.close),
-        volume: bar.volume ? parseFloat(bar.volume) : 0,
-      }))
-      .reverse(); // API returns newest first, we want oldest first
+    console.log(`[TradeChart] Returning ${candles.length} candles for ${symbol}`);
     
-    console.log(`[TradeChart] Returning ${formattedData.length} candles for ${symbol}`);
-    
-    const result = { candles: formattedData, interval };
+    const result = { candles, interval };
     setCache(cacheKey, result);
     
     return NextResponse.json(result);
@@ -152,6 +218,7 @@ export async function GET(request: Request) {
     console.error('[TradeChart] Fetch error:', error);
     return NextResponse.json({
       error: 'Failed to fetch chart data',
+      candles: []
     }, { status: 500 });
   }
 }
