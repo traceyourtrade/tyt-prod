@@ -125,8 +125,22 @@ const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
 
 const tradingReducer = (state, action) => {
   switch (action.type) {
-    case "SET_ACTIVE_TRADE":
-      return { ...state, activeTrades: action.payload };
+    case "ADD_OPEN_TRADE":
+      return { ...state, openTrades: [...state.openTrades, action.payload] };
+    case "UPDATE_OPEN_TRADE":
+      return {
+        ...state,
+        openTrades: state.openTrades.map((t) =>
+          t.id === action.payload.id ? { ...t, ...action.payload } : t
+        ),
+      };
+    case "CLOSE_OPEN_TRADE":
+      return {
+        ...state,
+        openTrades: state.openTrades.filter((t) => t.id !== action.payload),
+      };
+    case "SET_OPEN_TRADES":
+      return { ...state, openTrades: action.payload };
     case "SET_POTENTIAL_TRADE":
       return { ...state, potentialTrade: action.payload };
     case "SET_LIMIT_ORDERS":
@@ -156,7 +170,7 @@ const tradingReducer = (state, action) => {
     case "RESET_SESSION":
       return {
         ...state,
-        activeTrades: null,
+        openTrades: [],
         potentialTrade: null,
         limitOrders: [],
         unrealisedPL: 0,
@@ -208,8 +222,8 @@ export default function FullscreenBacktesting({
   const [sessionLoading, setSessionLoading] = useState(true);
   const [allBars, setAllBars] = useState<any[]>([]);
   const [currentBarIndex, setCurrentBarIndexState] = useState(5);
-  const tradeLinesRef = useRef<{ entry: any; tp: any; sl: any }>({ entry: null, tp: null, sl: null });
-  const activeTradesRef = useRef<any>(null);
+  const tradeLinesRef = useRef<Record<string, { entry: any; tp: any; sl: any }>>({});
+  const openTradesRef = useRef<any[]>([]);
   
   const setCurrentBarIndex = (newIndex: number, bars?: any[], preserveTimestamp: boolean = false) => {
     currentBarIndexRef.current = newIndex;
@@ -509,7 +523,7 @@ export default function FullscreenBacktesting({
   };
 
   const [tradingState, dispatch] = useReducer(tradingReducer, {
-    activeTrades: null,
+    openTrades: [],
     potentialTrade: null,
     limitOrders: [],
     balance: initialBalance,
@@ -1599,40 +1613,29 @@ export default function FullscreenBacktesting({
         const point = points[0]?.price;
         const toolname = (drawing as any)._source?.toolname;
 
-        // Handle TP/SL line drag events - use stored shape IDs for reliable detection
+        // Handle TP/SL line drag events - look up which trade owns this line
         if (type === "move" || type === "properties_changed") {
-          const storedLines = tradeLinesRef.current;
-          // Debug: Log all info to diagnose ID matching issues
-          console.log("Drawing event:", { 
-            eventId: id, 
-            eventType: type, 
-            storedTP: storedLines.tp, 
-            storedSL: storedLines.sl,
-            idType: typeof id,
-            tpType: typeof storedLines.tp,
-            strictEqual: id === storedLines.tp,
-            looseEqual: id == storedLines.tp
-          });
+          const allTradeLines = tradeLinesRef.current;
+          const newPrice = points[0]?.price;
           
-          // Use loose equality (==) to handle string/number type mismatches
-          const isTPLine = storedLines.tp && String(id) === String(storedLines.tp);
-          const isSLLine = storedLines.sl && String(id) === String(storedLines.sl);
-          
-          if (isTPLine || isSLLine) {
-            const newPrice = points[0]?.price;
-            const currentActiveTrade = activeTradesRef.current;
-            if (newPrice && currentActiveTrade) {
-              const updatedTrade = { ...currentActiveTrade };
-              const precision = decimalPlaces || 5;
-              if (isTPLine) {
-                updatedTrade.target = parseFloat(newPrice.toFixed(precision));
-              } else if (isSLLine) {
-                updatedTrade.stopLoss = parseFloat(newPrice.toFixed(precision));
+          if (newPrice) {
+            // Find which trade this line belongs to
+            for (const [tradeId, lines] of Object.entries(allTradeLines)) {
+              const isTPLine = lines.tp && String(id) === String(lines.tp);
+              const isSLLine = lines.sl && String(id) === String(lines.sl);
+              
+              if (isTPLine || isSLLine) {
+                const precision = decimalPlaces || 5;
+                const updates: any = { id: tradeId };
+                if (isTPLine) {
+                  updates.target = parseFloat(newPrice.toFixed(precision));
+                } else if (isSLLine) {
+                  updates.stopLoss = parseFloat(newPrice.toFixed(precision));
+                }
+                dispatch({ type: "UPDATE_OPEN_TRADE", payload: updates });
+                console.log(`${isTPLine ? 'TP' : 'SL'} line for trade ${tradeId} moved to:`, newPrice.toFixed(precision));
+                break; // Found the matching trade
               }
-              // Update ref immediately so TP/SL hit detection uses new values
-              activeTradesRef.current = updatedTrade;
-              dispatch({ type: "SET_ACTIVE_TRADE", payload: updatedTrade });
-              console.log(`${isTPLine ? 'TP' : 'SL'} line moved to:`, newPrice.toFixed(precision));
             }
           }
         }
@@ -1795,38 +1798,45 @@ export default function FullscreenBacktesting({
     }
   };
 
-  const removeTradeLines = useCallback(() => {
+  const removeTradeLines = useCallback((tradeId?: string) => {
     if (!tvWidgetRef.current) return;
     
     try {
       const chart = tvWidgetRef.current.activeChart();
       if (!chart) return;
       
-      // Remove lines using stored IDs from tradeLinesRef
-      const { entry, tp, sl } = tradeLinesRef.current;
-      console.log("Removing trade lines with IDs:", { entry, tp, sl });
-      
-      if (entry) {
-        try { chart.removeEntity(entry); console.log("Removed entry line:", entry); } catch (e) { /* shape already removed */ }
-      }
-      if (tp) {
-        try { chart.removeEntity(tp); console.log("Removed TP line:", tp); } catch (e) { /* shape already removed */ }
-      }
-      if (sl) {
-        try { chart.removeEntity(sl); console.log("Removed SL line:", sl); } catch (e) { /* shape already removed */ }
+      // If tradeId specified, only remove that trade's lines
+      if (tradeId && tradeLinesRef.current[tradeId]) {
+        const { entry, tp, sl } = tradeLinesRef.current[tradeId];
+        console.log("Removing trade lines for trade:", tradeId, { entry, tp, sl });
+        if (entry) { try { chart.removeEntity(entry); } catch (e) { /* already removed */ } }
+        if (tp) { try { chart.removeEntity(tp); } catch (e) { /* already removed */ } }
+        if (sl) { try { chart.removeEntity(sl); } catch (e) { /* already removed */ } }
+        delete tradeLinesRef.current[tradeId];
+      } else {
+        // Remove ALL trade lines
+        console.log("Removing all trade lines:", tradeLinesRef.current);
+        for (const tid of Object.keys(tradeLinesRef.current)) {
+          const lines = tradeLinesRef.current[tid];
+          // Skip if not a valid trade lines object (e.g., old format legacy keys)
+          if (!lines || typeof lines !== 'object' || !('entry' in lines)) continue;
+          const { entry, tp, sl } = lines;
+          if (entry) { try { chart.removeEntity(entry); } catch (e) { /* already removed */ } }
+          if (tp) { try { chart.removeEntity(tp); } catch (e) { /* already removed */ } }
+          if (sl) { try { chart.removeEntity(sl); } catch (e) { /* already removed */ } }
+        }
+        tradeLinesRef.current = {};
       }
     } catch (e) {
       console.error("Error in removeTradeLines:", e);
     }
-    
-    tradeLinesRef.current = { entry: null, tp: null, sl: null };
   }, []);
 
   // Track if entry line is currently being updated to prevent race conditions
   const entryLineUpdatingRef = useRef(false);
   const lastEntryPnLRef = useRef<number>(0);
 
-  // Update entry line label with current unrealized P&L
+  // Update entry line label with current unrealized P&L using setProperties (keeps line ID stable)
   const updateEntryLineLabel = useCallback((trade: any, unrealizedPnL: number) => {
     if (!tvWidgetRef.current || !trade) return;
     
@@ -1840,6 +1850,23 @@ export default function FullscreenBacktesting({
       const chart = tvWidgetRef.current.activeChart();
       if (!chart) return;
       
+      const tradeLineId = trade.id || 'default';
+      const tradeLines = tradeLinesRef.current[tradeLineId];
+      const entryLineId = tradeLines?.entry;
+      
+      if (!entryLineId) {
+        // No entry line exists yet, skip update
+        return;
+      }
+      
+      const entryShape = chart.getShapeById(entryLineId);
+      if (!entryShape) {
+        // Shape was removed, clear the reference
+        console.log("Entry shape not found, clearing reference for trade:", tradeLineId);
+        if (tradeLines) tradeLines.entry = null;
+        return;
+      }
+      
       entryLineUpdatingRef.current = true;
       lastEntryPnLRef.current = unrealizedPnL;
       
@@ -1848,38 +1875,18 @@ export default function FullscreenBacktesting({
       const pnlSign = unrealizedPnL >= 0 ? '+' : '';
       const entryLabel = `${lotDisplay} → ${pnlSign}${unrealizedPnL.toFixed(2)} USD`;
       
-      // Remove old entry line if it exists
-      const oldEntryId = tradeLinesRef.current.entry;
-      if (oldEntryId) {
-        try { chart.removeEntity(oldEntryId); } catch (e) { /* already removed */ }
+      // Update properties in place - keeps the same shape ID so TP/SL refs remain intact
+      try {
+        entryShape.setProperties({ text: entryLabel, showLabel: true, horzLabelsAlign: 'right' });
+        entryShape.applyOverrides({
+          linecolor: unrealizedPnL >= 0 ? "rgba(16, 185, 129, 0.9)" : "rgba(239, 68, 68, 0.9)",
+          textcolor: unrealizedPnL >= 0 ? "rgba(16, 185, 129, 1)" : "rgba(239, 68, 68, 1)",
+        });
+      } catch (e) {
+        console.log("Could not update entry shape properties:", e);
       }
       
-      // Create new entry line with updated label
-      chart.createShape(
-        { price: trade.entry },
-        {
-          shape: "horizontal_line",
-          lock: true,
-          disableSelection: true,
-          text: entryLabel,
-          overrides: {
-            linecolor: unrealizedPnL >= 0 ? "rgba(16, 185, 129, 0.9)" : "rgba(239, 68, 68, 0.9)",
-            linestyle: 2,
-            linewidth: 1,
-            showPrice: true,
-            showLabel: true,
-            horzLabelsAlign: "right",
-            textcolor: unrealizedPnL >= 0 ? "rgba(16, 185, 129, 1)" : "rgba(239, 68, 68, 1)",
-          },
-        }
-      ).then((newEntryId: any) => {
-        tradeLinesRef.current.entry = newEntryId;
-        entryLineUpdatingRef.current = false;
-      }).catch((e: any) => {
-        console.error("Failed to update entry line:", e);
-        entryLineUpdatingRef.current = false;
-      });
-      
+      entryLineUpdatingRef.current = false;
     } catch (e) {
       console.error("Error updating entry line label:", e);
       entryLineUpdatingRef.current = false;
@@ -1893,8 +1900,10 @@ export default function FullscreenBacktesting({
       const chart = tvWidgetRef.current.activeChart();
       if (!chart) return;
       
-      // First remove any existing trade lines
-      removeTradeLines();
+      // Remove only THIS trade's existing lines (not all trades)
+      if (trade.id) {
+        removeTradeLines(trade.id);
+      }
       
       console.log("Drawing trade lines for:", trade);
       
@@ -1990,7 +1999,9 @@ export default function FullscreenBacktesting({
       // Wait for all shapes to be created, then force chart refresh
       Promise.all([entryPromise, tpPromise, slPromise]).then(([entryId, tpId, slId]) => {
         console.log("Lines created:", { entryId, tpId, slId });
-        tradeLinesRef.current = { entry: entryId, tp: tpId, sl: slId };
+        // Store lines keyed by trade ID for multi-trade support
+        const tradeId = trade.id || 'default';
+        tradeLinesRef.current[tradeId] = { entry: entryId, tp: tpId, sl: slId };
         
         // Force chart to refresh by getting visible range and resetting it
         try {
@@ -2019,40 +2030,46 @@ export default function FullscreenBacktesting({
       
       // Wait for chart to be fully ready before drawing lines
       setTimeout(() => {
-        dispatch({ type: "SET_ACTIVE_TRADE", payload: openTrade });
-        drawTradeLines(openTrade);
+        const tradeId = openTrade.id || `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const tradeWithId = { ...openTrade, id: tradeId };
+        dispatch({ type: "ADD_OPEN_TRADE", payload: tradeWithId });
+        drawTradeLines(tradeWithId);
         setShowPanel(true);
-        console.log("Restored open trade:", openTrade);
+        console.log("Restored open trade:", tradeWithId);
       }, 500);
     }
   }, [allBars.length, isLoading, drawTradeLines]);
 
   useEffect(() => {
     // Only handle removal here - drawing is done directly in placement functions
-    if (!tradingState.activeTrades) {
+    if (tradingState.openTrades.length === 0) {
       removeTradeLines();
     }
-  }, [tradingState.activeTrades, removeTradeLines]);
+  }, [tradingState.openTrades, removeTradeLines]);
 
-  // Keep activeTradesRef in sync with state for event handlers
+  // Keep openTradesRef in sync with state for event handlers
   useEffect(() => {
-    activeTradesRef.current = tradingState.activeTrades;
-  }, [tradingState.activeTrades]);
+    openTradesRef.current = tradingState.openTrades;
+  }, [tradingState.openTrades]);
 
   const closeTrade = useCallback(async (exitPrice: number, reason: string, trade: any) => {
     if (!trade) return;
     
-    removeTradeLines();
+    // Remove only this trade's lines
+    removeTradeLines(trade.id);
+    
+    // Use the trade's stored lot size, fallback to global lotSize
+    const tradeLotSize = trade.lotSize || lotSize;
     
     let pnl = 0;
     if (trade.type === "long") {
-      pnl = (exitPrice - trade.entry) * lotSize * 100000;
+      pnl = (exitPrice - trade.entry) * tradeLotSize * 100000;
     } else {
-      pnl = (trade.entry - exitPrice) * lotSize * 100000;
+      pnl = (trade.entry - exitPrice) * tradeLotSize * 100000;
     }
     
     // Calculate R:R ratio - signed based on direction
-    const slDistance = Math.abs(trade.entry - trade.stopLoss);
+    const slDistance = trade.stopLoss ? Math.abs(trade.entry - trade.stopLoss) : 0;
     let signedRR = 0;
     if (slDistance > 0) {
       // For long: positive move = (exit - entry), for short: positive move = (entry - exit)
@@ -2069,7 +2086,7 @@ export default function FullscreenBacktesting({
       exit: exitPrice,
       sl: trade.stopLoss,
       tp: trade.target,
-      lotSize: lotSize,
+      lotSize: tradeLotSize,
       pnl: pnl,
       rr: parseFloat(signedRR.toFixed(2)),
       reason: reason,
@@ -2079,7 +2096,7 @@ export default function FullscreenBacktesting({
     dispatch({ type: "ADD_TRADE_HISTORY", payload: tradeData });
     dispatch({ type: "SET_REALISED_PL", payload: tradingState.realisedPL + pnl });
     dispatch({ type: "SET_UNREALISED_PL", payload: 0 });
-    dispatch({ type: "SET_ACTIVE_TRADE", payload: null });
+    dispatch({ type: "CLOSE_OPEN_TRADE", payload: trade.id });
     
     // Update trade in database (close it)
     const parsedSessionId = parseInt(sessionId);
@@ -2207,75 +2224,65 @@ export default function FullscreenBacktesting({
 
   // Function to sync TP/SL line positions from chart before hit detection
   const syncLinesToTradeState = useCallback(() => {
-    const storedLines = tradeLinesRef.current;
-    const hasActiveTrade = !!activeTradesRef.current;
+    const allTradeLines = tradeLinesRef.current;
+    const openTrades = openTradesRef.current || [];
     const hasWidget = !!tvWidgetRef.current;
     
-    // Debug log to see what's available
     console.log("syncLinesToTradeState called:", {
       hasWidget,
-      hasActiveTrade,
-      storedTP: storedLines.tp,
-      storedSL: storedLines.sl,
-      currentTarget: activeTradesRef.current?.target,
-      currentSL: activeTradesRef.current?.stopLoss
+      hasActiveTrade: openTrades.length > 0,
+      tradeCount: openTrades.length
     });
     
-    if (!tvWidgetRef.current || !activeTradesRef.current) return;
-    if (!storedLines.tp && !storedLines.sl) return;
+    if (!tvWidgetRef.current || openTrades.length === 0) return;
     
     try {
       const chart = tvWidgetRef.current.activeChart();
       if (!chart) return;
       
-      const currentTrade = activeTradesRef.current;
-      let updated = false;
       const precision = decimalPlaces || 5;
-      const updatedTrade = { ...currentTrade };
       
-      // Check TP line position (only if TP is defined)
-      if (storedLines.tp && currentTrade.target !== undefined) {
-        try {
-          const tpShape = chart.getShapeById(storedLines.tp);
-          console.log("TP shape lookup:", { id: storedLines.tp, found: !!tpShape });
-          if (tpShape) {
-            const tpPoints = tpShape.getPoints();
-            const tpPrice = tpPoints[0]?.price;
-            console.log("TP line price:", tpPrice, "current target:", currentTrade.target);
-            if (tpPrice && Math.abs(tpPrice - currentTrade.target) > 0.00001) {
-              updatedTrade.target = parseFloat(tpPrice.toFixed(precision));
-              updated = true;
-              console.log("Synced TP from chart line:", updatedTrade.target);
+      // Sync lines for each open trade
+      for (const trade of openTrades) {
+        const storedLines = allTradeLines[trade.id];
+        if (!storedLines) continue;
+        
+        let updated = false;
+        const updates: any = { id: trade.id };
+        
+        // Check TP line position
+        if (storedLines.tp && trade.target !== undefined) {
+          try {
+            const tpShape = chart.getShapeById(storedLines.tp);
+            if (tpShape) {
+              const tpPoints = tpShape.getPoints();
+              const tpPrice = tpPoints[0]?.price;
+              if (tpPrice && Math.abs(tpPrice - trade.target) > 0.00001) {
+                updates.target = parseFloat(tpPrice.toFixed(precision));
+                updated = true;
+              }
             }
-          }
-        } catch (e) { 
-          console.log("TP shape error:", e);
+          } catch (e) { /* shape may be removed */ }
         }
-      }
-      
-      // Check SL line position (only if SL is defined)
-      if (storedLines.sl && currentTrade.stopLoss !== undefined) {
-        try {
-          const slShape = chart.getShapeById(storedLines.sl);
-          console.log("SL shape lookup:", { id: storedLines.sl, found: !!slShape });
-          if (slShape) {
-            const slPoints = slShape.getPoints();
-            const slPrice = slPoints[0]?.price;
-            console.log("SL line price:", slPrice, "current stopLoss:", currentTrade.stopLoss);
-            if (slPrice && Math.abs(slPrice - currentTrade.stopLoss) > 0.00001) {
-              updatedTrade.stopLoss = parseFloat(slPrice.toFixed(precision));
-              updated = true;
-              console.log("Synced SL from chart line:", updatedTrade.stopLoss);
+        
+        // Check SL line position
+        if (storedLines.sl && trade.stopLoss !== undefined) {
+          try {
+            const slShape = chart.getShapeById(storedLines.sl);
+            if (slShape) {
+              const slPoints = slShape.getPoints();
+              const slPrice = slPoints[0]?.price;
+              if (slPrice && Math.abs(slPrice - trade.stopLoss) > 0.00001) {
+                updates.stopLoss = parseFloat(slPrice.toFixed(precision));
+                updated = true;
+              }
             }
-          }
-        } catch (e) { 
-          console.log("SL shape error:", e);
+          } catch (e) { /* shape may be removed */ }
         }
-      }
-      
-      if (updated) {
-        activeTradesRef.current = updatedTrade;
-        dispatch({ type: "SET_ACTIVE_TRADE", payload: updatedTrade });
+        
+        if (updated) {
+          dispatch({ type: "UPDATE_OPEN_TRADE", payload: updates });
+        }
       }
     } catch (e) {
       console.error("Error syncing lines:", e);
@@ -2287,40 +2294,48 @@ export default function FullscreenBacktesting({
     syncLinesToTradeState();
     
     // Use ref for immediate access to latest trade values (including after dragging TP/SL)
-    const trade = activeTradesRef.current;
-    if (trade && allBars[currentBarIndex]) {
+    const trades = openTradesRef.current || [];
+    if (trades.length > 0 && allBars[currentBarIndex]) {
       const currentBar = allBars[currentBarIndex];
       const currentHigh = currentBar.high;
       const currentLow = currentBar.low;
       const currentClose = currentBar.close;
-      let pnl = 0;
+      let totalPnl = 0;
       
-      if (trade.type === "long") {
-        pnl = (currentClose - trade.entry) * lotSize * 100000;
-        // Check if wick touched TP (high >= target) or SL (low <= stopLoss)
-        if (trade.target !== undefined && currentHigh >= trade.target) {
-          closeTrade(trade.target, "TP Hit", trade);
-        } else if (trade.stopLoss !== undefined && currentLow <= trade.stopLoss) {
-          closeTrade(trade.stopLoss, "SL Hit", trade);
+      for (const trade of trades) {
+        const tradeLotSize = trade.lotSize || lotSize;
+        let tradePnl = 0;
+        
+        if (trade.type === "long") {
+          tradePnl = (currentClose - trade.entry) * tradeLotSize * 100000;
+          // Check if wick touched TP (high >= target) or SL (low <= stopLoss)
+          if (trade.target !== undefined && currentHigh >= trade.target) {
+            closeTrade(trade.target, "TP Hit", trade);
+          } else if (trade.stopLoss !== undefined && currentLow <= trade.stopLoss) {
+            closeTrade(trade.stopLoss, "SL Hit", trade);
+          }
+        } else {
+          tradePnl = (trade.entry - currentClose) * tradeLotSize * 100000;
+          // Check if wick touched TP (low <= target) or SL (high >= stopLoss)
+          if (trade.target !== undefined && currentLow <= trade.target) {
+            closeTrade(trade.target, "TP Hit", trade);
+          } else if (trade.stopLoss !== undefined && currentHigh >= trade.stopLoss) {
+            closeTrade(trade.stopLoss, "SL Hit", trade);
+          }
         }
-      } else {
-        pnl = (trade.entry - currentClose) * lotSize * 100000;
-        // Check if wick touched TP (low <= target) or SL (high >= stopLoss)
-        if (trade.target !== undefined && currentLow <= trade.target) {
-          closeTrade(trade.target, "TP Hit", trade);
-        } else if (trade.stopLoss !== undefined && currentHigh >= trade.stopLoss) {
-          closeTrade(trade.stopLoss, "SL Hit", trade);
-        }
+        totalPnl += tradePnl;
+        
+        // Update entry line label with current unrealized P&L
+        updateEntryLineLabel(trade, tradePnl);
       }
-      dispatch({ type: "SET_UNREALISED_PL", payload: pnl });
-      
-      // Update entry line label with current unrealized P&L
-      updateEntryLineLabel(trade, pnl);
+      dispatch({ type: "SET_UNREALISED_PL", payload: totalPnl });
+    } else if (trades.length === 0) {
+      dispatch({ type: "SET_UNREALISED_PL", payload: 0 });
     }
-  }, [currentBarIndex, allBars, tradingState.activeTrades, lotSize, closeTrade, syncLinesToTradeState, updateEntryLineLabel]);
+  }, [currentBarIndex, allBars, tradingState.openTrades, lotSize, closeTrade, syncLinesToTradeState, updateEntryLineLabel]);
 
   useEffect(() => {
-    if (!tradingState.activeTrades && tradingState.limitOrders.length > 0 && allBars[currentBarIndex]) {
+    if (tradingState.limitOrders.length > 0 && allBars[currentBarIndex]) {
       const currentBar = allBars[currentBarIndex];
       const currentHigh = currentBar.high;
       const currentLow = currentBar.low;
@@ -2336,12 +2351,15 @@ export default function FullscreenBacktesting({
         }
         
         if (triggered) {
+          const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           const trade = {
+            id: tradeId,
             type: order.type,
             entry: order.entryPrice,
             target: order.target,
             stopLoss: order.stopLoss,
             dbId: null as string | null,
+            lotSize: order.lotSize || lotSize,
           };
           drawTradeLines(trade);
           dispatch({ type: "REMOVE_LIMIT_ORDER", payload: order.id });
@@ -2366,22 +2384,17 @@ export default function FullscreenBacktesting({
             .then(res => res.json())
             .then(result => {
               if (result.success && result.trade?.id) {
-                dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId: result.trade.id } });
-              } else {
-                dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
+                dispatch({ type: "UPDATE_OPEN_TRADE", payload: { id: tradeId, dbId: result.trade.id } });
               }
             })
-            .catch(() => {
-              dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
-            });
-          } else {
-            dispatch({ type: "SET_ACTIVE_TRADE", payload: trade });
+            .catch(() => {});
           }
+          dispatch({ type: "ADD_OPEN_TRADE", payload: trade });
           break;
         }
       }
     }
-  }, [currentBarIndex, allBars, tradingState.limitOrders, tradingState.activeTrades, drawTradeLines, sessionId, lotSize]);
+  }, [currentBarIndex, allBars, tradingState.limitOrders, tradingState.openTrades, drawTradeLines, sessionId, lotSize]);
 
   const handlePlaybackSpeedChange = (speed: number) => {
     setPlaybackSpeed(500 / speed);
@@ -2394,12 +2407,15 @@ export default function FullscreenBacktesting({
     const tp = currentPrice + (type === "long" ? 0.0100 : -0.0100);
     const sl = currentPrice - (type === "long" ? 0.0050 : -0.0050);
     
+    const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const trade = {
+      id: tradeId,
       type: type,
       entry: currentPrice,
       target: tp,
       stopLoss: sl,
       dbId: null as string | null,
+      lotSize: lotSize,
     };
     drawTradeLines(trade);
     setShowPanel(true);
@@ -2414,7 +2430,7 @@ export default function FullscreenBacktesting({
       openedAt: openedAt,
     });
     
-    dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
+    dispatch({ type: "ADD_OPEN_TRADE", payload: { ...trade, dbId } });
   };
 
   const handlePlaceOrderFromDrawing = () => {
@@ -2427,12 +2443,15 @@ export default function FullscreenBacktesting({
     if (!tradingState.potentialTrade || !allBars[currentBarIndex]) return;
     const currentPrice = allBars[currentBarIndex].close;
     const openedAt = allBars[currentBarIndex]?.time || Date.now();
+    const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const trade = {
+      id: tradeId,
       type: tradingState.potentialTrade.type,
       entry: currentPrice,
       target: tradingState.potentialTrade.target,
       stopLoss: tradingState.potentialTrade.stopLoss,
       dbId: null as string | null,
+      lotSize: lotSize,
     };
     // Draw lines FIRST before any state updates to ensure immediate visibility
     drawTradeLines(trade);
@@ -2450,7 +2469,7 @@ export default function FullscreenBacktesting({
       openedAt: openedAt,
     });
     
-    dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
+    dispatch({ type: "ADD_OPEN_TRADE", payload: { ...trade, dbId } });
   };
 
   const handleLimitOrder = () => {
@@ -2599,12 +2618,15 @@ export default function FullscreenBacktesting({
     const openedAt = allBars[currentBarIndex]?.time || Date.now();
     
     if (orderFormData.orderType === 'market') {
+      const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const trade = {
+        id: tradeId,
         type: tradeType,
         entry: entry,
         target: tp,
         stopLoss: sl,
         dbId: null as string | null,
+        lotSize: posSize,
       };
       drawTradeLines(trade);
       setShowOrderDialog(false);
@@ -2621,7 +2643,7 @@ export default function FullscreenBacktesting({
         openedAt: openedAt,
       });
       
-      dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
+      dispatch({ type: "ADD_OPEN_TRADE", payload: { ...trade, dbId } });
     } else {
       const limitOrder = {
         id: Date.now(),
@@ -2656,12 +2678,15 @@ export default function FullscreenBacktesting({
     setQuickOrderData({ side: 'buy', lotSize: '1', takeProfit: '', stopLoss: '' });
     setShowQuickOrderDialog(false);
     
+    const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const trade = {
+      id: tradeId,
       type: tradeType,
       entry: entry,
       target: tp,
       stopLoss: sl,
       dbId: null as string | null,
+      lotSize: posSize,
     };
     drawTradeLines(trade);
     setLotSize(posSize);
@@ -2676,7 +2701,7 @@ export default function FullscreenBacktesting({
       openedAt: openedAt,
     });
     
-    dispatch({ type: "SET_ACTIVE_TRADE", payload: { ...trade, dbId } });
+    dispatch({ type: "ADD_OPEN_TRADE", payload: { ...trade, dbId } });
   };
 
   const updateStopLossFromTicks = (ticks: string) => {
@@ -2707,37 +2732,50 @@ export default function FullscreenBacktesting({
     }));
   };
 
-  const handleManualClose = () => {
-    if (!tradingState.activeTrades) return;
+  const handleManualClose = (trade: any) => {
+    if (!trade) return;
     
     // Get the last available bar price for closing
     const currentBar = allBars[currentBarIndex] || allBars[currentBarIndex - 1] || allBars[allBars.length - 1];
     if (currentBar) {
-      closeTrade(currentBar.close, "Manual Close", tradingState.activeTrades);
+      closeTrade(currentBar.close, "Manual Close", trade);
     }
   };
 
-  const handleModifyTrade = () => {
-    if (tradingState.activeTrades) {
+  const handleCloseAllTrades = () => {
+    const currentBar = allBars[currentBarIndex] || allBars[currentBarIndex - 1] || allBars[allBars.length - 1];
+    if (!currentBar) return;
+    
+    tradingState.openTrades.forEach((trade: any) => {
+      closeTrade(currentBar.close, "Manual Close", trade);
+    });
+  };
+
+  const [selectedTradeForModify, setSelectedTradeForModify] = useState<any>(null);
+
+  const handleModifyTrade = (trade: any) => {
+    if (trade) {
+      setSelectedTradeForModify(trade);
       setModifyTradeData({
-        newTP: tradingState.activeTrades.target.toString(),
-        newSL: tradingState.activeTrades.stopLoss.toString(),
+        newTP: trade.target?.toString() || '',
+        newSL: trade.stopLoss?.toString() || '',
       });
       setShowModifyTradePopup(true);
     }
   };
 
   const executeModifyTrade = () => {
-    if (tradingState.activeTrades) {
+    if (selectedTradeForModify) {
       dispatch({
-        type: "SET_ACTIVE_TRADE",
+        type: "UPDATE_OPEN_TRADE",
         payload: {
-          ...tradingState.activeTrades,
+          id: selectedTradeForModify.id,
           target: parseFloat(modifyTradeData.newTP),
           stopLoss: parseFloat(modifyTradeData.newSL),
         },
       });
       setShowModifyTradePopup(false);
+      setSelectedTradeForModify(null);
     }
   };
 
@@ -2762,13 +2800,13 @@ export default function FullscreenBacktesting({
           if (!isEndReached) handleNext();
           break;
         case "KeyB":
-          if (!tradingState.activeTrades && !tradingState.potentialTrade) handlePlaceTrade("long");
+          if (!tradingState.potentialTrade) handlePlaceTrade("long");
           break;
         case "KeyS":
-          if (!tradingState.activeTrades && !tradingState.potentialTrade) handlePlaceTrade("short");
+          if (!tradingState.potentialTrade) handlePlaceTrade("short");
           break;
         case "KeyP":
-          if (tradingState.potentialTrade && !tradingState.activeTrades) handlePlaceOrderFromDrawing();
+          if (tradingState.potentialTrade) handlePlaceOrderFromDrawing();
           break;
         case "Escape":
           setShowPanel(false);
@@ -2779,7 +2817,7 @@ export default function FullscreenBacktesting({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEndReached, handleNext, tradingState.activeTrades, tradingState.potentialTrade]);
+  }, [isEndReached, handleNext, tradingState.openTrades, tradingState.potentialTrade]);
 
   const speedOptions = [
     { value: 0.25, label: "0.25x" },
@@ -2965,14 +3003,7 @@ export default function FullscreenBacktesting({
 
           {/* Trade Buttons */}
           <div className="bt-float-group trade-group">
-            {tradingState.activeTrades ? (
-              <button
-                onClick={handleManualClose}
-                className="bt-float-trade-btn close"
-              >
-                Close Trade
-              </button>
-            ) : tradingState.potentialTrade ? (
+            {tradingState.potentialTrade ? (
               <button
                 onClick={handlePlaceOrderFromDrawing}
                 className="bt-float-trade-btn place"
@@ -2994,6 +3025,14 @@ export default function FullscreenBacktesting({
                   Sell
                 </button>
               </>
+            )}
+            {tradingState.openTrades.length > 0 && (
+              <button
+                onClick={handleCloseAllTrades}
+                className="bt-float-trade-btn close"
+              >
+                Close All ({tradingState.openTrades.length})
+              </button>
             )}
           </div>
         </div>
@@ -3095,7 +3134,7 @@ export default function FullscreenBacktesting({
             >
               Open Positions
               <span className="bt-drawer-tab-count">
-                {tradingState.activeTrades ? 1 : 0}
+                {tradingState.openTrades.length}
               </span>
             </button>
             <button 
@@ -3157,7 +3196,7 @@ export default function FullscreenBacktesting({
         <div className="bt-drawer-content">
           {activeDrawerTab === 'open' && (
             <>
-              {tradingState.activeTrades ? (
+              {tradingState.openTrades.length > 0 ? (
                 <table className="bt-trade-table">
                   <thead>
                     <tr>
@@ -3172,52 +3211,62 @@ export default function FullscreenBacktesting({
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td className="bt-table-symbol">{sessionData?.symbol || 'N/A'}</td>
-                      <td>
-                        <span className={`bt-table-side ${tradingState.activeTrades.type}`}>
-                          {tradingState.activeTrades.type === 'long' ? 'BUY' : 'SELL'}
-                        </span>
-                      </td>
-                      <td className="bt-table-value">{lotSize}</td>
-                      <td className="bt-table-value">{tradingState.activeTrades.entry.toFixed(decimalPlaces || 5)}</td>
-                      <td className="bt-table-value profit">
-                        {tradingState.activeTrades.target !== undefined 
-                          ? tradingState.activeTrades.target.toFixed(decimalPlaces || 5) 
-                          : '-'}
-                      </td>
-                      <td className="bt-table-value loss">
-                        {tradingState.activeTrades.stopLoss !== undefined 
-                          ? tradingState.activeTrades.stopLoss.toFixed(decimalPlaces || 5) 
-                          : '-'}
-                      </td>
-                      <td className={`bt-table-value ${tradingState.unrealisedPL >= 0 ? 'profit' : 'loss'}`}>
-                        {tradingState.unrealisedPL >= 0 ? '+' : ''}${tradingState.unrealisedPL.toFixed(2)}
-                      </td>
-                      <td>
-                        <div className="bt-table-actions">
-                          <button 
-                            className="bt-table-action-btn edit" 
-                            onClick={handleModifyTrade}
-                            title="Modify"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                          </button>
-                          <button 
-                            className="bt-table-action-btn close" 
-                            onClick={handleManualClose}
-                            title="Close"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M18 6L6 18M6 6l12 12"/>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                    {tradingState.openTrades.map((trade: any, index: number) => {
+                      const tradeLotSize = trade.lotSize || lotSize;
+                      const currentBar = allBars[currentBarIndex];
+                      const currentClose = currentBar?.close || trade.entry;
+                      const tradePnl = trade.type === 'long' 
+                        ? (currentClose - trade.entry) * tradeLotSize * 100000
+                        : (trade.entry - currentClose) * tradeLotSize * 100000;
+                      return (
+                        <tr key={trade.id || index}>
+                          <td className="bt-table-symbol">{sessionData?.symbol || 'N/A'}</td>
+                          <td>
+                            <span className={`bt-table-side ${trade.type}`}>
+                              {trade.type === 'long' ? 'BUY' : 'SELL'}
+                            </span>
+                          </td>
+                          <td className="bt-table-value">{tradeLotSize}</td>
+                          <td className="bt-table-value">{trade.entry.toFixed(decimalPlaces || 5)}</td>
+                          <td className="bt-table-value profit">
+                            {trade.target !== undefined 
+                              ? trade.target.toFixed(decimalPlaces || 5) 
+                              : '-'}
+                          </td>
+                          <td className="bt-table-value loss">
+                            {trade.stopLoss !== undefined 
+                              ? trade.stopLoss.toFixed(decimalPlaces || 5) 
+                              : '-'}
+                          </td>
+                          <td className={`bt-table-value ${tradePnl >= 0 ? 'profit' : 'loss'}`}>
+                            {tradePnl >= 0 ? '+' : ''}${tradePnl.toFixed(2)}
+                          </td>
+                          <td>
+                            <div className="bt-table-actions">
+                              <button 
+                                className="bt-table-action-btn edit" 
+                                onClick={() => handleModifyTrade(trade)}
+                                title="Modify"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                              </button>
+                              <button 
+                                className="bt-table-action-btn close" 
+                                onClick={() => handleManualClose(trade)}
+                                title="Close"
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M18 6L6 18M6 6l12 12"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               ) : (
