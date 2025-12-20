@@ -81,8 +81,8 @@ const toolsItems = [
 ];
 
 const backtestingSubItems = [
-  { name: "Dashboard", href: "/backtesting/dashboard", icon: LayoutDashboard, color: "#E879F9" },
-  { name: "Sessions", href: "/backtesting/sessions", icon: Activity, color: "#E879F9" },
+  { name: "Dashboard", href: "/backtesting/dashboard", icon: LayoutDashboard, color: "#3B82F6" },
+  { name: "Sessions", href: "/backtesting/sessions", icon: Activity, color: "#3B82F6" },
 ];
 
 const bottomNavItems = [
