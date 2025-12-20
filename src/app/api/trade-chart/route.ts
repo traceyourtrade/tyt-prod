@@ -197,9 +197,29 @@ export async function GET(request: Request) {
       });
     }
     
-    // Convert VPS array format to candles object format
-    const candles = data.t.map((timestamp: number, i: number) => ({
-      time: new Date(timestamp * 1000).toISOString(),
+    // Filter candles to only include the requested date range
+    // VPS API ignores 'from' parameter and returns all data since 2023
+    const filteredIndices: number[] = [];
+    for (let i = 0; i < data.t.length; i++) {
+      const barTime = data.t[i];
+      if (barTime >= fromTs && barTime <= toTs) {
+        filteredIndices.push(i);
+      }
+    }
+    
+    console.log(`[TradeChart] Filtered ${data.t.length} bars to ${filteredIndices.length} for date ${date}`);
+    
+    if (filteredIndices.length === 0) {
+      return NextResponse.json({ 
+        error: 'No data available for this specific date',
+        candles: [],
+        interval 
+      });
+    }
+    
+    // Convert VPS array format to candles object format (only filtered data)
+    const candles = filteredIndices.map((i) => ({
+      time: new Date(data.t[i] * 1000).toISOString(),
       open: data.o[i],
       high: data.h[i],
       low: data.l[i],
