@@ -1805,7 +1805,7 @@ export default function FullscreenBacktesting({
       const chart = tvWidgetRef.current.activeChart();
       if (!chart) return;
       
-      // If tradeId specified, only remove that trade's lines
+      // If tradeId specified AND exists, remove only that trade's lines
       if (tradeId && tradeLinesRef.current[tradeId]) {
         const { entry, tp, sl } = tradeLinesRef.current[tradeId];
         console.log("Removing trade lines for trade:", tradeId, { entry, tp, sl });
@@ -1813,20 +1813,27 @@ export default function FullscreenBacktesting({
         if (tp) { try { chart.removeEntity(tp); } catch (e) { /* already removed */ } }
         if (sl) { try { chart.removeEntity(sl); } catch (e) { /* already removed */ } }
         delete tradeLinesRef.current[tradeId];
-      } else {
-        // Remove ALL trade lines
-        console.log("Removing all trade lines:", tradeLinesRef.current);
-        for (const tid of Object.keys(tradeLinesRef.current)) {
-          const lines = tradeLinesRef.current[tid];
-          // Skip if not a valid trade lines object (e.g., old format legacy keys)
-          if (!lines || typeof lines !== 'object' || !('entry' in lines)) continue;
-          const { entry, tp, sl } = lines;
-          if (entry) { try { chart.removeEntity(entry); } catch (e) { /* already removed */ } }
-          if (tp) { try { chart.removeEntity(tp); } catch (e) { /* already removed */ } }
-          if (sl) { try { chart.removeEntity(sl); } catch (e) { /* already removed */ } }
-        }
-        tradeLinesRef.current = {};
+        return;
       }
+      
+      // If tradeId specified but not found, just log and return (don't wipe all)
+      if (tradeId) {
+        console.log("Trade lines not found for:", tradeId);
+        return;
+      }
+      
+      // No tradeId provided - remove ALL trade lines
+      console.log("Removing all trade lines:", tradeLinesRef.current);
+      for (const tid of Object.keys(tradeLinesRef.current)) {
+        const lines = tradeLinesRef.current[tid];
+        // Skip if not a valid trade lines object (e.g., old format legacy keys)
+        if (!lines || typeof lines !== 'object' || !('entry' in lines)) continue;
+        const { entry, tp, sl } = lines;
+        if (entry) { try { chart.removeEntity(entry); } catch (e) { /* already removed */ } }
+        if (tp) { try { chart.removeEntity(tp); } catch (e) { /* already removed */ } }
+        if (sl) { try { chart.removeEntity(sl); } catch (e) { /* already removed */ } }
+      }
+      tradeLinesRef.current = {};
     } catch (e) {
       console.error("Error in removeTradeLines:", e);
     }
@@ -1900,8 +1907,8 @@ export default function FullscreenBacktesting({
       const chart = tvWidgetRef.current.activeChart();
       if (!chart) return;
       
-      // Remove only THIS trade's existing lines (not all trades)
-      if (trade.id) {
+      // Remove only THIS trade's existing lines IF they exist (don't call for new trades)
+      if (trade.id && tradeLinesRef.current[trade.id]) {
         removeTradeLines(trade.id);
       }
       
