@@ -19,7 +19,10 @@ import {
   Trash2,
   X,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  CheckSquare,
+  Square,
+  CheckCircle2
 } from "lucide-react";
 
 interface Trade {
@@ -140,6 +143,8 @@ export default function BacktestingDashboard() {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'pnl' | 'name'>('newest');
   const [menuOpen, setMenuOpen] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [selectedSessions, setSelectedSessions] = useState<Set<number>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -294,6 +299,66 @@ export default function BacktestingDashboard() {
       console.error("Failed to delete session:", error);
     }
     setMenuOpen(null);
+  };
+
+  const toggleSessionSelection = (sessionId: number) => {
+    setSelectedSessions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sessionId)) {
+        newSet.delete(sessionId);
+      } else {
+        newSet.add(sessionId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedSessions.size === filteredSessions.length) {
+      setSelectedSessions(new Set());
+    } else {
+      setSelectedSessions(new Set(filteredSessions.map(s => s.sessionId)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedSessions(new Set());
+  };
+
+  const bulkDeleteSessions = async () => {
+    if (selectedSessions.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedSessions.size} session${selectedSessions.size > 1 ? 's' : ''}?`)) return;
+    
+    setIsDeleting(true);
+    const failedDeletes: number[] = [];
+    
+    try {
+      const deletePromises = Array.from(selectedSessions).map(async (sessionId) => {
+        try {
+          const res = await fetch(`/api/backtest-sessions?sessionId=${sessionId}`, { method: "DELETE" });
+          if (!res.ok) {
+            failedDeletes.push(sessionId);
+          }
+        } catch {
+          failedDeletes.push(sessionId);
+        }
+      });
+      
+      await Promise.all(deletePromises);
+      
+      if (failedDeletes.length > 0) {
+        setSelectedSessions(new Set(failedDeletes));
+        alert(`Failed to delete ${failedDeletes.length} session${failedDeletes.length > 1 ? 's' : ''}. They remain selected.`);
+      } else {
+        setSelectedSessions(new Set());
+      }
+      
+      await fetchSessions();
+    } catch (error) {
+      console.error("Failed to delete sessions:", error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const getProgress = useCallback((session: Session) => {
@@ -546,7 +611,28 @@ export default function BacktestingDashboard() {
         >
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <h2 className="text-lg font-semibold text-foreground shrink-0">Sessions</h2>
+              <div className="flex items-center gap-3">
+                {filteredSessions.length > 0 && (
+                  <button
+                    onClick={toggleSelectAll}
+                    className={cn(
+                      "flex items-center justify-center w-6 h-6 rounded-md transition-all",
+                      "hover:bg-muted border",
+                      selectedSessions.size === filteredSessions.length && filteredSessions.length > 0
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "border-border text-muted-foreground"
+                    )}
+                    title={selectedSessions.size === filteredSessions.length ? "Deselect all" : "Select all"}
+                  >
+                    {selectedSessions.size === filteredSessions.length && filteredSessions.length > 0 ? (
+                      <CheckSquare className="w-4 h-4" />
+                    ) : (
+                      <Square className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+                <h2 className="text-lg font-semibold text-foreground shrink-0">Sessions</h2>
+              </div>
               <div className={cn(
                 "flex items-center gap-1 p-1 rounded-xl overflow-x-auto",
                 "bg-muted"
@@ -691,6 +777,26 @@ export default function BacktestingDashboard() {
                   <div className="relative p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSessionSelection(session.sessionId);
+                          }}
+                          className={cn(
+                            "flex items-center justify-center w-6 h-6 rounded-md transition-all shrink-0",
+                            "border",
+                            selectedSessions.has(session.sessionId)
+                              ? "bg-primary border-primary text-primary-foreground"
+                              : "border-border text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100",
+                            selectedSessions.size > 0 && "opacity-100"
+                          )}
+                        >
+                          {selectedSessions.has(session.sessionId) ? (
+                            <CheckSquare className="w-4 h-4" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </button>
                         <div className="relative shrink-0">
                           <div className={cn(
                             "w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center",
@@ -1062,6 +1168,55 @@ export default function BacktestingDashboard() {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk Action Toolbar */}
+      <AnimatePresence>
+        {selectedSessions.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className={cn(
+              "flex items-center gap-4 px-6 py-3 rounded-2xl shadow-2xl",
+              "bg-card/95 backdrop-blur-xl border border-border",
+              "dark:bg-zinc-900/95 dark:border-white/[0.08]"
+            )}>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-primary" />
+                <span className="font-semibold text-foreground">
+                  {selectedSessions.size} selected
+                </span>
+              </div>
+              <div className="w-px h-6 bg-border" />
+              <button
+                onClick={clearSelection}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-sm font-medium transition-colors",
+                  "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                Cancel
+              </button>
+              <motion.button
+                onClick={bulkDeleteSessions}
+                disabled={isDeleting}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all",
+                  "bg-red-500 text-white hover:bg-red-600",
+                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? "Deleting..." : "Delete"}
+              </motion.button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
