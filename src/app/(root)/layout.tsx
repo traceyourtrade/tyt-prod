@@ -738,9 +738,7 @@ export default function RootLayout({
             <CurrencyDropdown />
 
             {/* Accounts Dropdown */}
-            <div className="hidden sm:block">
-              <AccountsDropdown />
-            </div>
+            <AccountsDropdown />
 
             {/* Date Range */}
             <Button
