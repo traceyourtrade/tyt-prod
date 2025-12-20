@@ -682,7 +682,8 @@ export default function BacktestingDashboard() {
                   className={cn(
                     "group relative rounded-2xl transition-all duration-300",
                     "bg-card border border-border hover:border-primary/20",
-                    "dark:bg-zinc-900/50 dark:border-white/[0.04] dark:hover:border-white/[0.08]"
+                    "dark:bg-zinc-900/50 dark:border-white/[0.04] dark:hover:border-white/[0.08]",
+                    menuOpen === session.sessionId && "z-30"
                   )}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-transparent to-emerald-500/0 group-hover:from-primary/[0.02] group-hover:to-emerald-500/[0.02] transition-all duration-500 rounded-2xl overflow-hidden pointer-events-none" />
@@ -797,7 +798,7 @@ export default function BacktestingDashboard() {
                                   animate={{ opacity: 1, scale: 1, y: 0 }}
                                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
                                   className={cn(
-                                    "absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden z-20",
+                                    "absolute right-0 top-full mt-2 w-44 rounded-xl z-50",
                                     "bg-card border border-border shadow-xl"
                                   )}
                                 >
