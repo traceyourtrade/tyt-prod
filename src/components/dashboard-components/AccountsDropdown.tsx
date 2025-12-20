@@ -103,17 +103,18 @@ const AccountsDropdown = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+          "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
           "border border-border bg-card hover:bg-muted/50",
           isOpen && "border-primary/50 ring-2 ring-primary/20"
         )}
+        aria-label={getDisplayText()}
       >
         {isPropFirmMode ? (
-          <Zap className="w-4 h-4 text-amber-500" />
+          <Zap className="w-4 h-4 text-amber-500 flex-shrink-0" />
         ) : (
-          <DollarSign className="w-4 h-4 text-primary" />
+          <Wallet className="w-4 h-4 text-primary flex-shrink-0" />
         )}
-        <span className="text-foreground text-xs sm:text-sm truncate max-w-[120px] sm:max-w-none">{getDisplayText()}</span>
+        <span className="hidden sm:inline text-foreground text-sm truncate max-w-[140px]">{getDisplayText()}</span>
         <ChevronDown className={cn(
           "w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 flex-shrink-0",
           isOpen && "rotate-180"
