@@ -1245,6 +1245,202 @@ export default function FullscreenBacktesting({
       }
     };
 
+    // Custom Sessions indicator definition using TradingView's custom study API
+    const sessionsIndicator = {
+      name: "Sessions by ProJournX",
+      metainfo: {
+        _metainfoVersion: 51,
+        id: "Sessions@ProJournX-1",
+        name: "Sessions by ProJournX",
+        description: "Trading Sessions (Tokyo, London, New York)",
+        shortDescription: "Sessions",
+        is_hidden_study: false,
+        is_price_study: true,
+        isCustomIndicator: true,
+        format: {
+          type: "inherit"
+        },
+        plots: [
+          { id: "tokyoBg", type: "bg_colorer", palette: "tokyoPalette" },
+          { id: "londonBg", type: "bg_colorer", palette: "londonPalette" },
+          { id: "newYorkBg", type: "bg_colorer", palette: "newYorkPalette" },
+        ],
+        palettes: {
+          tokyoPalette: {
+            colors: { 0: { name: "Tokyo" } },
+            valToIndex: { 1: 0 }
+          },
+          londonPalette: {
+            colors: { 0: { name: "London" } },
+            valToIndex: { 1: 0 }
+          },
+          newYorkPalette: {
+            colors: { 0: { name: "New York" } },
+            valToIndex: { 1: 0 }
+          }
+        },
+        defaults: {
+          palettes: {
+            tokyoPalette: {
+              colors: { 0: { color: "rgba(41, 98, 255, 0.15)", width: 1, style: 0 } }
+            },
+            londonPalette: {
+              colors: { 0: { color: "rgba(255, 152, 0, 0.15)", width: 1, style: 0 } }
+            },
+            newYorkPalette: {
+              colors: { 0: { color: "rgba(8, 153, 129, 0.15)", width: 1, style: 0 } }
+            }
+          },
+          styles: {},
+          inputs: {
+            showTokyo: true,
+            showLondon: true,
+            showNewYork: true,
+          }
+        },
+        styles: {
+          tokyoBg: { title: "Tokyo Session", histogramBase: 0 },
+          londonBg: { title: "London Session", histogramBase: 0 },
+          newYorkBg: { title: "New York Session", histogramBase: 0 },
+        },
+        inputs: [
+          { id: "showTokyo", name: "Show Tokyo Session", defval: true, type: "bool" },
+          { id: "showLondon", name: "Show London Session", defval: true, type: "bool" },
+          { id: "showNewYork", name: "Show New York Session", defval: true, type: "bool" },
+        ],
+      },
+      constructor: function() {
+        this.init = function(context: any, inputCallback: any) {
+          this._context = context;
+          this._input = inputCallback;
+        };
+        
+        this.main = function(context: any, inputCallback: any) {
+          this._context = context;
+          this._input = inputCallback;
+          
+          const showTokyo = this._input(0);
+          const showLondon = this._input(1);
+          const showNewYork = this._input(2);
+          
+          // Get current bar time
+          const time = this._context.symbol.time;
+          if (!time) return [NaN, NaN, NaN];
+          
+          const date = new Date(time * 1000);
+          const utcHour = date.getUTCHours();
+          const utcMin = date.getUTCMinutes();
+          const utcTime = utcHour * 60 + utcMin; // Total minutes from midnight UTC
+          
+          // Proper DST detection using actual transition rules
+          const year = date.getUTCFullYear();
+          const month = date.getUTCMonth(); // 0-11
+          const dayOfMonth = date.getUTCDate();
+          
+          // Helper: Find nth occurrence of a weekday in a month (or last if n=-1)
+          const getNthWeekday = (y: number, m: number, weekday: number, n: number): number => {
+            if (n === -1) {
+              // Last occurrence: start from end of month
+              const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+              for (let d = lastDay; d >= 1; d--) {
+                if (new Date(Date.UTC(y, m, d)).getUTCDay() === weekday) return d;
+              }
+            } else {
+              // Nth occurrence
+              let count = 0;
+              for (let d = 1; d <= 31; d++) {
+                const dt = new Date(Date.UTC(y, m, d));
+                if (dt.getUTCMonth() !== m) break;
+                if (dt.getUTCDay() === weekday) {
+                  count++;
+                  if (count === n) return d;
+                }
+              }
+            }
+            return 1;
+          };
+          
+          // London BST: Last Sunday of March (01:00 UTC) to last Sunday of October (01:00 UTC)
+          const londonDSTStartDay = getNthWeekday(year, 2, 0, -1); // Last Sunday of March
+          const londonDSTEndDay = getNthWeekday(year, 9, 0, -1);   // Last Sunday of October
+          
+          // Check if we're in London DST with time-of-day precision on transition days
+          let isLondonDST = false;
+          if (month > 2 && month < 9) {
+            isLondonDST = true; // Apr-Sep: always DST
+          } else if (month === 2) {
+            // March: DST starts at 01:00 UTC on last Sunday
+            if (dayOfMonth > londonDSTStartDay) {
+              isLondonDST = true;
+            } else if (dayOfMonth === londonDSTStartDay && utcHour >= 1) {
+              isLondonDST = true;
+            }
+          } else if (month === 9) {
+            // October: DST ends at 01:00 UTC on last Sunday
+            if (dayOfMonth < londonDSTEndDay) {
+              isLondonDST = true;
+            } else if (dayOfMonth === londonDSTEndDay && utcHour < 1) {
+              isLondonDST = true;
+            }
+          }
+          
+          // New York EDT: Second Sunday of March (07:00 UTC) to first Sunday of November (06:00 UTC)
+          // Spring forward: 2:00 AM EST -> 3:00 AM EDT = 07:00 UTC
+          // Fall back: 2:00 AM EDT -> 1:00 AM EST = 06:00 UTC
+          const nyDSTStartDay = getNthWeekday(year, 2, 0, 2);  // Second Sunday of March
+          const nyDSTEndDay = getNthWeekday(year, 10, 0, 1);   // First Sunday of November
+          
+          let isNewYorkDST = false;
+          if (month > 2 && month < 10) {
+            isNewYorkDST = true; // Apr-Oct: always DST
+          } else if (month === 2) {
+            // March: DST starts at 07:00 UTC on second Sunday
+            if (dayOfMonth > nyDSTStartDay) {
+              isNewYorkDST = true;
+            } else if (dayOfMonth === nyDSTStartDay && utcHour >= 7) {
+              isNewYorkDST = true;
+            }
+          } else if (month === 10) {
+            // November: DST ends at 06:00 UTC on first Sunday
+            if (dayOfMonth < nyDSTEndDay) {
+              isNewYorkDST = true;
+            } else if (dayOfMonth === nyDSTEndDay && utcHour < 6) {
+              isNewYorkDST = true;
+            }
+          }
+          
+          // Session times - converted to UTC with DST adjustments
+          // Tokyo: 09:00-15:00 JST (UTC+9) = 00:00-06:00 UTC (Japan doesn't observe DST)
+          const tokyoStart = 0 * 60 + 0;   // 00:00 UTC
+          const tokyoEnd = 6 * 60 + 0;     // 06:00 UTC
+          
+          // London: 08:30-16:30 local time
+          // GMT (winter): 08:30-16:30 UTC
+          // BST (summer): 07:30-15:30 UTC (clocks +1 hour)
+          const londonStart = isLondonDST ? (7 * 60 + 30) : (8 * 60 + 30);
+          const londonEnd = isLondonDST ? (15 * 60 + 30) : (16 * 60 + 30);
+          
+          // New York: 09:30-16:00 local time
+          // EST (winter, UTC-5): 14:30-21:00 UTC
+          // EDT (summer, UTC-4): 13:30-20:00 UTC
+          const newYorkStart = isNewYorkDST ? (13 * 60 + 30) : (14 * 60 + 30);
+          const newYorkEnd = isNewYorkDST ? (20 * 60 + 0) : (21 * 60 + 0);
+          
+          // Determine which sessions are active
+          const inTokyo = showTokyo && utcTime >= tokyoStart && utcTime < tokyoEnd;
+          const inLondon = showLondon && utcTime >= londonStart && utcTime < londonEnd;
+          const inNewYork = showNewYork && utcTime >= newYorkStart && utcTime < newYorkEnd;
+          
+          // Return palette indices: 1 = show color, NaN = no color
+          return [
+            inTokyo ? 1 : NaN,
+            inLondon ? 1 : NaN,
+            inNewYork ? 1 : NaN
+          ];
+        };
+      }
+    };
+
     const widgetOptions: any = {
       symbol: symbol,
       interval: currentInterval,
@@ -1259,6 +1455,7 @@ export default function FullscreenBacktesting({
       enabled_features: [
         "side_toolbar_in_fullscreen_mode",
         "items_favoriting",
+        "study_templates",
       ],
       fullscreen: false,
       autosize: true,
@@ -1273,6 +1470,9 @@ export default function FullscreenBacktesting({
       favorites: {
         intervals: ["1", "5", "15", "60", "1D"],
         drawingTools: [],
+      },
+      custom_indicators_getter: function(PineJS: any) {
+        return Promise.resolve([sessionsIndicator]);
       },
     };
 
