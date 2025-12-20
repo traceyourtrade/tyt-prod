@@ -12,55 +12,39 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-
-    title: "Trace Your Trade | India's #1 Automated Trading Journal",
+    title: "ProJournX | Professional Trading Journal",
     description:
-        "Trace Your Trade is India's only #1 automated trading journal. Automate trade syncing, track performance, backtest strategies, review trades, and join a strong community of active traders. Turn market moves into money-making insights with automation.",
+        "ProJournX is your professional trading journal. Track performance, backtest strategies, review trades, and improve your trading with powerful analytics and insights.",
     icons: {
         icon: "/favicon.png",
     },
     keywords: [
-        "trading journal India",
-        "automated trading journal",
+        "trading journal",
+        "professional trading journal",
         "trade analytics",
         "backtesting platform",
         "forex trading journal",
         "stock trading journal",
         "crypto trading journal",
         "performance tracking for traders",
-        "trading community India",
-        "Trace Your Trade"
+        "ProJournX"
     ],
-    authors: [{ name: "TraceYourTrade Team", url: "https://traceyourtrade.com" }],
+    authors: [{ name: "ProJournX Team" }],
     openGraph: {
-        title: "Trace Your Trade | India's #1 Automated Trading Journal",
+        title: "ProJournX | Professional Trading Journal",
         description:
-            "Automated trade journaling, backtesting, analytics, and performance tracking for traders. Join India's fastest growing trading community.",
-        url: "https://traceyourtrade.com",
-        siteName: "Trace Your Trade",
+            "Professional trade journaling, backtesting, analytics, and performance tracking for traders.",
+        siteName: "ProJournX",
         locale: "en_IN",
         type: "website",
-        images: [
-            {
-                url: "https://traceyourtrade.com/images/og-image.png",
-                width: 1200,
-                height: 630,
-                alt: "Trace Your Trade - Automated Trading Journal",
-            },
-        ],
     },
     twitter: {
         card: "summary_large_image",
-        title: "Trace Your Trade | India's #1 Automated Trading Journal",
+        title: "ProJournX | Professional Trading Journal",
         description:
-            "Turn market moves into money-making insights with automation! Trade journaling, backtesting, analytics, and community — all in one platform.",
-        creator: "@traceyourtrade", // replace with actual Twitter handle if you have one
-        images: ["https://traceyourtrade.com/images/og-image.png"],
+            "Professional trade journaling, backtesting, analytics, and insights — all in one platform.",
     },
     category: "Finance",
-    alternates: {
-        canonical: "https://traceyourtrade.com",
-    },
 };
 
 export default function RootLayout({
