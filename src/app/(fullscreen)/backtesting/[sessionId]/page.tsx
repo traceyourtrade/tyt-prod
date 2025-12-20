@@ -2708,8 +2708,12 @@ export default function FullscreenBacktesting({
   };
 
   const handleManualClose = () => {
-    if (tradingState.activeTrades && allBars[currentBarIndex]) {
-      closeTrade(allBars[currentBarIndex].close, "Manual Close", tradingState.activeTrades);
+    if (!tradingState.activeTrades) return;
+    
+    // Get the last available bar price for closing
+    const currentBar = allBars[currentBarIndex] || allBars[currentBarIndex - 1] || allBars[allBars.length - 1];
+    if (currentBar) {
+      closeTrade(currentBar.close, "Manual Close", tradingState.activeTrades);
     }
   };
 
@@ -2961,10 +2965,16 @@ export default function FullscreenBacktesting({
 
           {/* Trade Buttons */}
           <div className="bt-float-group trade-group">
-            {tradingState.potentialTrade ? (
+            {tradingState.activeTrades ? (
+              <button
+                onClick={handleManualClose}
+                className="bt-float-trade-btn close"
+              >
+                Close Trade
+              </button>
+            ) : tradingState.potentialTrade ? (
               <button
                 onClick={handlePlaceOrderFromDrawing}
-                disabled={!!tradingState.activeTrades}
                 className="bt-float-trade-btn place"
               >
                 Place {tradingState.potentialTrade.type === 'long' ? 'Long' : 'Short'}
@@ -2973,14 +2983,12 @@ export default function FullscreenBacktesting({
               <>
                 <button
                   onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'buy' })); setShowQuickOrderDialog(true); }}
-                  disabled={!!tradingState.activeTrades}
                   className="bt-float-trade-btn buy"
                 >
                   Buy
                 </button>
                 <button
                   onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'sell' })); setShowQuickOrderDialog(true); }}
-                  disabled={!!tradingState.activeTrades}
                   className="bt-float-trade-btn sell"
                 >
                   Sell

@@ -1083,6 +1083,17 @@
   transform: translateY(-2px);
 }
 
+.bt-float-trade-btn.close {
+  background: linear-gradient(135deg, var(--bt-warning) 0%, #d97706 100%);
+  color: white;
+  box-shadow: 0 4px 12px var(--bt-warning-bg);
+}
+
+.bt-float-trade-btn.close:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--bt-warning-bg);
+}
+
 .bt-float-trade-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
