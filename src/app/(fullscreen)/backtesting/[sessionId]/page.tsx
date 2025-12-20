@@ -1310,9 +1310,46 @@ export default function FullscreenBacktesting({
         ],
       },
       constructor: function() {
+        // Cache DST transition dates per year to avoid recalculating on every bar
+        this._dstCache = {};
+        
         this.init = function(context: any, inputCallback: any) {
           this._context = context;
           this._input = inputCallback;
+        };
+        
+        // Helper: Find nth occurrence of a weekday in a month (or last if n=-1)
+        this.getNthWeekday = function(y: number, m: number, weekday: number, n: number): number {
+          if (n === -1) {
+            const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+            for (let d = lastDay; d >= 1; d--) {
+              if (new Date(Date.UTC(y, m, d)).getUTCDay() === weekday) return d;
+            }
+          } else {
+            let count = 0;
+            for (let d = 1; d <= 31; d++) {
+              const dt = new Date(Date.UTC(y, m, d));
+              if (dt.getUTCMonth() !== m) break;
+              if (dt.getUTCDay() === weekday) {
+                count++;
+                if (count === n) return d;
+              }
+            }
+          }
+          return 1;
+        };
+        
+        // Get cached DST dates for a year
+        this.getDSTDates = function(year: number) {
+          if (this._dstCache[year]) return this._dstCache[year];
+          
+          this._dstCache[year] = {
+            londonStart: this.getNthWeekday(year, 2, 0, -1),  // Last Sunday March
+            londonEnd: this.getNthWeekday(year, 9, 0, -1),    // Last Sunday October
+            nyStart: this.getNthWeekday(year, 2, 0, 2),       // 2nd Sunday March
+            nyEnd: this.getNthWeekday(year, 10, 0, 1),        // 1st Sunday November
+          };
+          return this._dstCache[year];
         };
         
         this.main = function(context: any, inputCallback: any) {
@@ -1323,120 +1360,52 @@ export default function FullscreenBacktesting({
           const showLondon = this._input(1);
           const showNewYork = this._input(2);
           
-          // Get current bar time
           const time = this._context.symbol.time;
           if (!time) return [NaN, NaN, NaN];
           
           const date = new Date(time * 1000);
           const utcHour = date.getUTCHours();
           const utcMin = date.getUTCMinutes();
-          const utcTime = utcHour * 60 + utcMin; // Total minutes from midnight UTC
-          
-          // Proper DST detection using actual transition rules
+          const utcTime = utcHour * 60 + utcMin;
           const year = date.getUTCFullYear();
-          const month = date.getUTCMonth(); // 0-11
+          const month = date.getUTCMonth();
           const dayOfMonth = date.getUTCDate();
           
-          // Helper: Find nth occurrence of a weekday in a month (or last if n=-1)
-          const getNthWeekday = (y: number, m: number, weekday: number, n: number): number => {
-            if (n === -1) {
-              // Last occurrence: start from end of month
-              const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-              for (let d = lastDay; d >= 1; d--) {
-                if (new Date(Date.UTC(y, m, d)).getUTCDay() === weekday) return d;
-              }
-            } else {
-              // Nth occurrence
-              let count = 0;
-              for (let d = 1; d <= 31; d++) {
-                const dt = new Date(Date.UTC(y, m, d));
-                if (dt.getUTCMonth() !== m) break;
-                if (dt.getUTCDay() === weekday) {
-                  count++;
-                  if (count === n) return d;
-                }
-              }
-            }
-            return 1;
-          };
+          // Get cached DST transition dates
+          const dst = this.getDSTDates(year);
           
-          // London BST: Last Sunday of March (01:00 UTC) to last Sunday of October (01:00 UTC)
-          const londonDSTStartDay = getNthWeekday(year, 2, 0, -1); // Last Sunday of March
-          const londonDSTEndDay = getNthWeekday(year, 9, 0, -1);   // Last Sunday of October
-          
-          // Check if we're in London DST with time-of-day precision on transition days
+          // Check London DST
           let isLondonDST = false;
           if (month > 2 && month < 9) {
-            isLondonDST = true; // Apr-Sep: always DST
-          } else if (month === 2) {
-            // March: DST starts at 01:00 UTC on last Sunday
-            if (dayOfMonth > londonDSTStartDay) {
-              isLondonDST = true;
-            } else if (dayOfMonth === londonDSTStartDay && utcHour >= 1) {
-              isLondonDST = true;
-            }
-          } else if (month === 9) {
-            // October: DST ends at 01:00 UTC on last Sunday
-            if (dayOfMonth < londonDSTEndDay) {
-              isLondonDST = true;
-            } else if (dayOfMonth === londonDSTEndDay && utcHour < 1) {
-              isLondonDST = true;
-            }
+            isLondonDST = true;
+          } else if (month === 2 && (dayOfMonth > dst.londonStart || (dayOfMonth === dst.londonStart && utcHour >= 1))) {
+            isLondonDST = true;
+          } else if (month === 9 && (dayOfMonth < dst.londonEnd || (dayOfMonth === dst.londonEnd && utcHour < 1))) {
+            isLondonDST = true;
           }
           
-          // New York EDT: Second Sunday of March (07:00 UTC) to first Sunday of November (06:00 UTC)
-          // Spring forward: 2:00 AM EST -> 3:00 AM EDT = 07:00 UTC
-          // Fall back: 2:00 AM EDT -> 1:00 AM EST = 06:00 UTC
-          const nyDSTStartDay = getNthWeekday(year, 2, 0, 2);  // Second Sunday of March
-          const nyDSTEndDay = getNthWeekday(year, 10, 0, 1);   // First Sunday of November
-          
+          // Check NY DST
           let isNewYorkDST = false;
           if (month > 2 && month < 10) {
-            isNewYorkDST = true; // Apr-Oct: always DST
-          } else if (month === 2) {
-            // March: DST starts at 07:00 UTC on second Sunday
-            if (dayOfMonth > nyDSTStartDay) {
-              isNewYorkDST = true;
-            } else if (dayOfMonth === nyDSTStartDay && utcHour >= 7) {
-              isNewYorkDST = true;
-            }
-          } else if (month === 10) {
-            // November: DST ends at 06:00 UTC on first Sunday
-            if (dayOfMonth < nyDSTEndDay) {
-              isNewYorkDST = true;
-            } else if (dayOfMonth === nyDSTEndDay && utcHour < 6) {
-              isNewYorkDST = true;
-            }
+            isNewYorkDST = true;
+          } else if (month === 2 && (dayOfMonth > dst.nyStart || (dayOfMonth === dst.nyStart && utcHour >= 7))) {
+            isNewYorkDST = true;
+          } else if (month === 10 && (dayOfMonth < dst.nyEnd || (dayOfMonth === dst.nyEnd && utcHour < 6))) {
+            isNewYorkDST = true;
           }
           
-          // Session times - converted to UTC with DST adjustments
-          // Tokyo: 09:00-15:00 JST (UTC+9) = 00:00-06:00 UTC (Japan doesn't observe DST)
-          const tokyoStart = 0 * 60 + 0;   // 00:00 UTC
-          const tokyoEnd = 6 * 60 + 0;     // 06:00 UTC
+          // Session times in UTC minutes
+          const tokyoStart = 0, tokyoEnd = 360;  // 00:00-06:00 UTC
+          const londonStart = isLondonDST ? 450 : 510;  // 07:30 or 08:30 UTC
+          const londonEnd = isLondonDST ? 930 : 990;    // 15:30 or 16:30 UTC
+          const newYorkStart = isNewYorkDST ? 810 : 870;  // 13:30 or 14:30 UTC
+          const newYorkEnd = isNewYorkDST ? 1200 : 1260;  // 20:00 or 21:00 UTC
           
-          // London: 08:30-16:30 local time
-          // GMT (winter): 08:30-16:30 UTC
-          // BST (summer): 07:30-15:30 UTC (clocks +1 hour)
-          const londonStart = isLondonDST ? (7 * 60 + 30) : (8 * 60 + 30);
-          const londonEnd = isLondonDST ? (15 * 60 + 30) : (16 * 60 + 30);
-          
-          // New York: 09:30-16:00 local time
-          // EST (winter, UTC-5): 14:30-21:00 UTC
-          // EDT (summer, UTC-4): 13:30-20:00 UTC
-          const newYorkStart = isNewYorkDST ? (13 * 60 + 30) : (14 * 60 + 30);
-          const newYorkEnd = isNewYorkDST ? (20 * 60 + 0) : (21 * 60 + 0);
-          
-          // Determine which sessions are active
           const inTokyo = showTokyo && utcTime >= tokyoStart && utcTime < tokyoEnd;
           const inLondon = showLondon && utcTime >= londonStart && utcTime < londonEnd;
           const inNewYork = showNewYork && utcTime >= newYorkStart && utcTime < newYorkEnd;
           
-          // Return palette indices: 1 = show color, NaN = no color
-          return [
-            inTokyo ? 1 : NaN,
-            inLondon ? 1 : NaN,
-            inNewYork ? 1 : NaN
-          ];
+          return [inTokyo ? 1 : NaN, inLondon ? 1 : NaN, inNewYork ? 1 : NaN];
         };
       }
     };
