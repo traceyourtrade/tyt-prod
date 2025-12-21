@@ -234,6 +234,29 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     return null;
   };
 
+  const getContractSize = (market: string, symbol: string): number => {
+    const upperSymbol = symbol.toUpperCase();
+    
+    switch (market) {
+      case "FOREX":
+        return 100000; // 1 lot = 100,000 units
+      case "CRYPTO":
+        return 1; // Direct units
+      case "INDIAN_STOCK":
+      case "INDIAN_INDICES":
+        return 1; // Direct units for Indian markets
+      default:
+        // Check for commodities
+        if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
+          return 100; // Gold: 100 oz per lot
+        }
+        if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
+          return 5000; // Silver: 5000 oz per lot
+        }
+        return 100000; // Default to Forex
+    }
+  };
+
   const calculatePnL = (trade: TradeEntry): number => {
     const entryPrice = parseFloat(trade.entryPrice) || 0;
     const exitPrice = parseFloat(trade.exitPrice) || 0;
@@ -243,11 +266,12 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     
     if (trade.status !== "completed" || exitPrice === 0) return 0;
     
-    if (trade.side === "buy") {
-      return (exitPrice - entryPrice) * size - commission - otherCharges;
-    } else {
-      return (entryPrice - exitPrice) * size - commission - otherCharges;
-    }
+    const contractSize = getContractSize(trade.market, trade.symbol);
+    const priceDiff = trade.side === "buy" 
+      ? exitPrice - entryPrice 
+      : entryPrice - exitPrice;
+    
+    return priceDiff * size * contractSize - commission - otherCharges;
   };
 
   const handleSubmit = async () => {
