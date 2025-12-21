@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, FileUp, RefreshCw, PenLine, Briefcase, TrendingUp, Plus, Loader2 } from "lucide-react";
+import { X, FileUp, RefreshCw, PenLine, Briefcase, TrendingUp, Plus, Loader2, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import calendarPopUp from "@/store/calendarPopUp";
 import useAccountDetails from "@/store/accountdetails";
+import usePropFirmStore from "@/store/propFirmStore";
 import ManualTradeForm from "./components/manual/ManualTradeForm";
 import FileUpload from "./components/file-upload/FileUpload";
 import AutoSync from "./components/auto-sync/AutoSync";
@@ -19,10 +20,25 @@ const tabs = [
 const AddtradesMain = () => {
   const { showAddTrades, setAddTrades } = calendarPopUp();
   const { selectedAccounts } = useAccountDetails();
+  const { isEnabled: isPropFirmMode } = usePropFirmStore();
   const [selectedTab, setSelectedTab] = useState(1);
+  
+  const filteredAccounts = useMemo(() => {
+    return selectedAccounts.filter(acc => {
+      const isAccountPropFirm = acc.isPropFirm === true;
+      return isPropFirmMode ? isAccountPropFirm : !isAccountPropFirm;
+    });
+  }, [selectedAccounts, isPropFirmMode]);
+
   const [selectedAccount, setSelectedAccount] = useState(
-    selectedAccounts.length > 0 ? selectedAccounts[0].accountName : ""
+    filteredAccounts.length > 0 ? filteredAccounts[0].accountName : ""
   );
+
+  useEffect(() => {
+    if (filteredAccounts.length > 0 && !filteredAccounts.find(a => a.accountName === selectedAccount)) {
+      setSelectedAccount(filteredAccounts[0].accountName);
+    }
+  }, [filteredAccounts, selectedAccount]);
   
   // Submit state for Manual Trade form
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,23 +127,38 @@ const AddtradesMain = () => {
           {/* Account Selector */}
           <div className="px-6 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg border border-border/50">
-                <Briefcase className="w-4 h-4 text-muted-foreground" />
+              <div className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg border",
+                isPropFirmMode 
+                  ? "bg-amber-500/10 border-amber-500/30" 
+                  : "bg-muted/30 border-border/50"
+              )}>
+                {isPropFirmMode ? (
+                  <Zap className="w-4 h-4 text-amber-500" />
+                ) : (
+                  <Briefcase className="w-4 h-4 text-muted-foreground" />
+                )}
                 <select
                   value={selectedAccount}
                   onChange={(e) => setSelectedAccount(e.target.value)}
                   className="bg-transparent text-sm font-medium text-foreground outline-none cursor-pointer min-w-[120px]"
                 >
-                  {selectedAccounts.map((account) => (
-                    <option key={account.accountName} value={account.accountName} className="bg-card">
-                      {account.accountName}
+                  {filteredAccounts.length > 0 ? (
+                    filteredAccounts.map((account) => (
+                      <option key={account.accountName} value={account.accountName} className="bg-card">
+                        {account.accountName}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled className="bg-card">
+                      No {isPropFirmMode ? "prop firm" : "trading"} accounts
                     </option>
-                  ))}
+                  )}
                 </select>
               </div>
               {selectedAccount && (
                 <span className="text-xs text-muted-foreground">
-                  Trading account selected
+                  {isPropFirmMode ? "Prop firm" : "Trading"} account selected
                 </span>
               )}
             </div>
