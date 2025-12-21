@@ -3247,7 +3247,7 @@ export default function FullscreenBacktesting({
             <span className="bt-float-label" style={{ marginRight: '4px', fontSize: '10px' }}>Skip</span>
             <button 
               className="bt-float-tf-btn" 
-              onClick={() => { setShowSkipDurationDropdown(!showSkipDurationDropdown); setShowTimeframeDropdown(false); }}
+              onClick={() => setShowSkipDurationDropdown(!showSkipDurationDropdown)}
             >
               {skipDurationOptions.find(s => s.value === skipDuration)?.label || '1 bar'}
               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
@@ -3265,55 +3265,6 @@ export default function FullscreenBacktesting({
                     {opt.label}
                   </button>
                 ))}
-              </div>
-            )}
-          </div>
-
-          <div className="bt-float-divider"></div>
-
-          {/* Timeframe Dropdown */}
-          <div className="bt-float-timeframe">
-            <button 
-              className="bt-float-tf-btn" 
-              onClick={() => { setShowTimeframeDropdown(!showTimeframeDropdown); setShowSkipDurationDropdown(false); }}
-            >
-              {timeframeOptions.find(tf => tf.value === currentInterval)?.label || '1H'}
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7 10l5 5 5-5H7z"/>
-              </svg>
-            </button>
-            {showTimeframeDropdown && (
-              <div className="bt-float-tf-dropdown">
-                {timeframeOptions.map((tf) => (
-                  <button
-                    key={tf.value}
-                    className={`bt-float-tf-option ${currentInterval === tf.value ? 'active' : ''}`}
-                    onClick={() => handleTimeframeChange(tf.value)}
-                  >
-                    {tf.label}
-                  </button>
-                ))}
-                <div className="bt-float-tf-divider"></div>
-                {showCustomTfInput ? (
-                  <div className="bt-float-tf-custom-input">
-                    <input
-                      type="number"
-                      placeholder="e.g. 69"
-                      value={customTfInput}
-                      onChange={(e) => setCustomTfInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleCustomTf()}
-                      autoFocus
-                    />
-                    <button onClick={handleCustomTf}>Go</button>
-                  </div>
-                ) : (
-                  <button
-                    className="bt-float-tf-option custom"
-                    onClick={() => setShowCustomTfInput(true)}
-                  >
-                    Custom...
-                  </button>
-                )}
               </div>
             )}
           </div>
