@@ -547,9 +547,9 @@ const DailyJournal = () => {
   const currentTradeNumber = filteredTrades.findIndex(t => (t.id || t._id) === (selectedTrade?.id || selectedTrade?._id)) + 1;
 
   return (
-    <div className="h-screen bg-[#08090b] overflow-hidden flex flex-col">
+    <div className="h-screen bg-background overflow-hidden flex flex-col">
       {/* Top Header Bar */}
-      <div className="flex-shrink-0 border-b border-white/[0.06] bg-[#0c0d10]/80 backdrop-blur-xl">
+      <div className="flex-shrink-0 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="h-[2px] bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500" />
         
         <div className="px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
@@ -558,7 +558,7 @@ const DailyJournal = () => {
             {/* Mobile Trade List Toggle */}
             <button
               onClick={() => setIsMobileTradeListOpen(true)}
-              className="md:hidden p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] transition-all"
+              className="md:hidden p-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all"
               aria-label="Open trade list"
             >
               <Layers className="w-4 h-4 text-muted-foreground" />
@@ -567,17 +567,17 @@ const DailyJournal = () => {
             <div className="flex items-center gap-1 sm:gap-2">
               <button
                 onClick={() => navigateTrade("prev")}
-                className="p-1.5 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] transition-all"
+                className="p-1.5 sm:p-2 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all"
               >
                 <ChevronLeft className="w-4 h-4 text-muted-foreground" />
               </button>
-              <div className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+              <div className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-muted/30 border border-border">
                 <span className="text-xs sm:text-sm font-medium text-foreground">{currentTradeNumber}</span>
                 <span className="text-xs sm:text-sm text-muted-foreground">/{filteredTrades.length}</span>
               </div>
               <button
                 onClick={() => navigateTrade("next")}
-                className="p-1.5 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] transition-all"
+                className="p-1.5 sm:p-2 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all"
               >
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -585,7 +585,7 @@ const DailyJournal = () => {
 
             {/* Current Trade Info - Hide date on mobile */}
             {selectedTrade && (
-              <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-white/[0.06]">
+              <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-border">
                 <SymbolLogo symbol={selectedTrade.Item || selectedTrade.symbol || ""} size="sm" />
                 <div>
                   <div className="flex items-center gap-1 sm:gap-2">
@@ -613,7 +613,7 @@ const DailyJournal = () => {
             {/* Mobile Stats Toggle */}
             <button
               onClick={() => setIsMobileStatsOpen(true)}
-              className="lg:hidden p-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] transition-all"
+              className="lg:hidden p-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all"
               aria-label="Open stats panel"
             >
               <BarChart2 className="w-4 h-4 text-muted-foreground" />
@@ -631,7 +631,7 @@ const DailyJournal = () => {
                     date: selectedTrade.date,
                   },
                 })}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] text-sm text-muted-foreground hover:text-foreground transition-all"
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border text-sm text-muted-foreground hover:text-foreground transition-all"
               >
                 <Share2 className="w-4 h-4" />
                 <span className="hidden md:inline">Share</span>
@@ -655,11 +655,11 @@ const DailyJournal = () => {
         <motion.div
           initial={false}
           animate={{ width: isLeftPanelCollapsed ? 0 : 280 }}
-          className="hidden md:block flex-shrink-0 border-r border-white/[0.06] bg-[#0a0b0e] overflow-hidden"
+          className="hidden md:block flex-shrink-0 border-r border-border bg-card overflow-hidden"
         >
           <div className="w-[280px] h-full flex flex-col">
             {/* Search */}
-            <div className="p-4 border-b border-white/[0.06]">
+            <div className="p-4 border-b border-border">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                 <input
@@ -667,7 +667,7 @@ const DailyJournal = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search trades..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
                 />
               </div>
             </div>
@@ -684,10 +684,10 @@ const DailyJournal = () => {
                       setSelectedTrade(trade);
                       setSelectedTradeIndex(idx);
                     }}
-                    className={`w-full p-4 text-left border-b border-white/[0.03] transition-all ${
+                    className={`w-full p-4 text-left border-b border-border/30 transition-all ${
                       isSelected 
                         ? "bg-gradient-to-r from-primary/10 to-transparent border-l-2 border-l-primary" 
-                        : "hover:bg-white/[0.02]"
+                        : "hover:bg-muted/30"
                     }`}
                     whileHover={{ x: isSelected ? 0 : 4 }}
                   >
@@ -723,7 +723,7 @@ const DailyJournal = () => {
           initial={false}
           animate={{ left: isLeftPanelCollapsed ? 0 : 280 }}
           onClick={() => setIsLeftPanelCollapsed(!isLeftPanelCollapsed)}
-          className="hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 p-1.5 bg-[#0c0d10] border border-white/[0.06] rounded-r-lg hover:bg-white/[0.05] transition-colors items-center justify-center"
+          className="hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 p-1.5 bg-card border border-border rounded-r-lg hover:bg-muted/50 transition-colors items-center justify-center"
         >
           {isLeftPanelCollapsed ? <PanelRightOpen className="w-4 h-4 text-muted-foreground" /> : <PanelRightClose className="w-4 h-4 text-muted-foreground" />}
         </motion.button>
@@ -731,8 +731,8 @@ const DailyJournal = () => {
         {/* Center Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Center Tab Bar */}
-          <div className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-[#0a0b0e]/50">
-            <div className="flex items-center gap-1 p-1 bg-white/[0.02] rounded-xl border border-white/[0.06]">
+          <div className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-border flex items-center justify-between gap-2 bg-card/50">
+            <div className="flex items-center gap-1 p-1 bg-muted/20 rounded-xl border border-border">
               {[
                 { key: "chart", label: "Chart", icon: LineChart },
                 { key: "notes", label: "Notes", icon: MessageSquare },
@@ -743,7 +743,7 @@ const DailyJournal = () => {
                   onClick={() => setCenterTab(tab.key as typeof centerTab)}
                   className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                     centerTab === tab.key
-                      ? "bg-white/[0.08] text-foreground shadow-sm"
+                      ? "bg-muted/50 text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -761,7 +761,7 @@ const DailyJournal = () => {
                     className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all ${
                       tf === "4h"
                         ? "bg-primary/20 text-primary font-medium"
-                        : "bg-white/[0.03] hover:bg-white/[0.06] text-muted-foreground"
+                        : "bg-muted/30 hover:bg-muted/50 text-muted-foreground"
                     }`}
                   >
                     {tf}
@@ -774,7 +774,7 @@ const DailyJournal = () => {
           {/* Center Main Content */}
           <div className="flex-1 overflow-hidden">
             {centerTab === "chart" && selectedTrade && (
-              <div className="h-full relative bg-[#08090b]">
+              <div className="h-full relative bg-background">
                 <TradeChart
                   symbol={selectedTrade.Item || selectedTrade.symbol || ""}
                   date={selectedTrade.date?.split("T")[0] || new Date().toISOString().split("T")[0]}
@@ -792,7 +792,7 @@ const DailyJournal = () => {
               <div className="h-full overflow-y-auto p-6">
                 <div className="max-w-3xl mx-auto space-y-6">
                   {/* Notes Toggle */}
-                  <div className="flex items-center gap-1 p-1 bg-white/[0.02] rounded-xl border border-white/[0.06] w-fit">
+                  <div className="flex items-center gap-1 p-1 bg-muted/20 rounded-xl border border-border w-fit">
                     <button
                       onClick={() => setNotesTab("trade")}
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -828,7 +828,7 @@ const DailyJournal = () => {
                                 className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
                                   isSelected
                                     ? `${colors.bg} ${colors.text} ${colors.border}`
-                                    : "bg-white/[0.02] text-muted-foreground hover:bg-white/[0.05] hover:text-foreground border-white/[0.06]"
+                                    : "bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border-border"
                                 }`}
                               >
                                 <Icon className="w-4 h-4" />
@@ -858,7 +858,7 @@ const DailyJournal = () => {
                                 onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
                                 rows={4}
                                 placeholder={prompt.placeholder}
-                                className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
+                                className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
                               />
                             ) : (
                               <input
@@ -866,7 +866,7 @@ const DailyJournal = () => {
                                 value={journalData.prompts?.[prompt.id] || ""}
                                 onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
                                 placeholder={prompt.placeholder}
-                                className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
+                                className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
                               />
                             )}
                           </div>
@@ -874,7 +874,7 @@ const DailyJournal = () => {
                       </div>
 
                       {/* Quick Tags */}
-                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                      <div className="p-4 rounded-xl bg-muted/20 border border-border">
                         <h3 className="text-sm font-medium text-foreground mb-3">Quick Tags</h3>
                         {journalData.tags && journalData.tags.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-3">
@@ -896,7 +896,7 @@ const DailyJournal = () => {
                             <button
                               key={tag}
                               onClick={() => handleAddTag(tag)}
-                              className="px-3 py-1.5 bg-white/[0.03] hover:bg-white/[0.06] text-muted-foreground hover:text-foreground rounded-lg text-xs font-medium transition-all border border-white/[0.06]"
+                              className="px-3 py-1.5 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-lg text-xs font-medium transition-all border border-border"
                             >
                               + {tag}
                             </button>
@@ -913,7 +913,7 @@ const DailyJournal = () => {
                           onChange={(e) => handleDailyNotesChange(e.target.value)}
                           rows={12}
                           placeholder="Write about your trading day, market conditions, mindset, and key takeaways..."
-                          className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
+                          className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
                         />
                       </div>
                     </div>
@@ -925,7 +925,7 @@ const DailyJournal = () => {
             {centerTab === "runningPnL" && (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/[0.05] to-transparent flex items-center justify-center mb-4 mx-auto border border-white/[0.06]">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-muted/50 to-transparent flex items-center justify-center mb-4 mx-auto border border-border">
                     <BarChart3 className="w-10 h-10 text-muted-foreground/30" />
                   </div>
                   <p className="text-sm text-muted-foreground">Running P&L chart coming soon</p>
@@ -939,12 +939,12 @@ const DailyJournal = () => {
         <motion.div
           initial={false}
           animate={{ width: isRightPanelCollapsed ? 0 : 340 }}
-          className="hidden lg:block flex-shrink-0 border-l border-white/[0.06] bg-[#0a0b0e] overflow-hidden"
+          className="hidden lg:block flex-shrink-0 border-l border-border bg-card overflow-hidden"
         >
           <div className="w-[340px] h-full flex flex-col">
             {/* Right Panel Tabs */}
-            <div className="flex-shrink-0 p-4 border-b border-white/[0.06]">
-              <div className="flex gap-1 p-1 bg-white/[0.02] rounded-xl border border-white/[0.06]">
+            <div className="flex-shrink-0 p-4 border-b border-border">
+              <div className="flex gap-1 p-1 bg-muted/20 rounded-xl border border-border">
                 {[
                   { key: "stats", label: "Stats", icon: BarChart2 },
                   { key: "strategy", label: "Strategy", icon: Target },
@@ -956,7 +956,7 @@ const DailyJournal = () => {
                     onClick={() => setMainTab(tab.key as typeof mainTab)}
                     className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all ${
                       mainTab === tab.key
-                        ? "bg-white/[0.08] text-foreground"
+                        ? "bg-muted/50 text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -984,7 +984,7 @@ const DailyJournal = () => {
 
                   {/* Trade Info Grid */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Side</span>
                       <p className={`text-sm font-semibold mt-1 ${
                         (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
@@ -994,15 +994,15 @@ const DailyJournal = () => {
                         {selectedTrade.Type || selectedTrade.side || "--"}
                       </p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Quantity</span>
                       <p className="text-sm font-semibold text-foreground mt-1">{selectedTrade.quantity || "--"}</p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Pips</span>
                       <p className="text-sm font-semibold text-primary mt-1">{metrics.pips}</p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Return/Pip</span>
                       <p className="text-sm font-semibold text-foreground mt-1">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
                     </div>
@@ -1016,7 +1016,7 @@ const DailyJournal = () => {
                       { label: "Net ROI", value: `${metrics.netROI > 0 ? "+" : ""}${isFinite(metrics.netROI) ? metrics.netROI.toFixed(2) : "0"}%`, color: metrics.netROI >= 0 ? "text-profit" : "text-loss" },
                       { label: "Gross P&L", value: formatCompactCurrency(metrics.grossPnL * exchangeRate, currency), color: metrics.grossPnL >= 0 ? "text-profit" : "text-loss" },
                     ].map((item) => (
-                      <div key={item.label} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                      <div key={item.label} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-muted/20 border border-border">
                         <span className="text-xs text-muted-foreground">{item.label}</span>
                         <span className={`text-sm font-semibold ${item.color || "text-foreground"}`}>{item.value}</span>
                       </div>
@@ -1032,7 +1032,7 @@ const DailyJournal = () => {
                   )}
 
                   {/* Trade Rating */}
-                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                  <div className="p-4 rounded-xl bg-muted/20 border border-border">
                     <span className="text-xs text-muted-foreground block mb-3">Trade Rating</span>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -1054,7 +1054,7 @@ const DailyJournal = () => {
                   </div>
 
                   {/* Sentiment */}
-                  <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                  <div className="p-4 rounded-xl bg-muted/20 border border-border">
                     <span className="text-xs text-muted-foreground block mb-3">How did this trade feel?</span>
                     <div className="grid grid-cols-3 gap-2">
                       {[
@@ -1074,7 +1074,7 @@ const DailyJournal = () => {
                                   : s.color === "loss"
                                   ? "bg-loss/10 border-loss/30 text-loss"
                                   : "bg-amber-500/10 border-amber-500/30 text-amber-500"
-                                : "bg-white/[0.02] border-white/[0.06] text-muted-foreground hover:border-white/10"
+                                : "bg-muted/20 border-border text-muted-foreground hover:border-primary/30"
                             }`}
                           >
                             <s.icon className="w-5 h-5 mx-auto mb-1.5" />
@@ -1115,7 +1115,7 @@ const DailyJournal = () => {
                               className={`w-full flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left ${
                                 rulesCompliance[rule.id]
                                   ? "bg-profit/10 border-profit/20"
-                                  : "bg-white/[0.02] border-white/[0.06] hover:border-white/10"
+                                  : "bg-muted/20 border-border hover:border-primary/30"
                               }`}
                             >
                               <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -1130,14 +1130,14 @@ const DailyJournal = () => {
                           ))}
                         </div>
                       ) : (
-                        <div className="p-6 text-center rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                        <div className="p-6 text-center rounded-xl bg-muted/20 border border-border">
                           <ListChecks className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
                           <p className="text-sm text-muted-foreground">No rules defined for this strategy</p>
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="p-8 text-center rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div className="p-8 text-center rounded-xl bg-muted/20 border border-border">
                       <Target className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                       <p className="text-sm text-muted-foreground mb-1">No strategy assigned</p>
                       <p className="text-xs text-muted-foreground/70">Assign a strategy to track rule compliance</p>
@@ -1149,7 +1149,7 @@ const DailyJournal = () => {
               {/* Executions Tab */}
               {mainTab === "executions" && selectedTrade && (
                 <>
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.06]">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-muted/30 to-transparent border border-border">
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Execution Summary</span>
                     <p className="text-xl font-semibold text-foreground mt-2">
                       {selectedTrade.quantity || 1} {(selectedTrade.quantity || 1) === 1 ? "Unit" : "Units"}
@@ -1191,7 +1191,7 @@ const DailyJournal = () => {
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div className="p-4 rounded-xl bg-muted/20 border border-border">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Duration</span>
                         <span className="text-foreground font-medium">
@@ -1219,7 +1219,7 @@ const DailyJournal = () => {
                     <span className="text-xs text-muted-foreground block mb-2">Entry Screenshot</span>
                     {selectedTrade.beforeURL ? (
                       <div 
-                        className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group border border-white/[0.06]"
+                        className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group border border-border"
                         onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
                       >
                         <img 
@@ -1232,7 +1232,7 @@ const DailyJournal = () => {
                         </div>
                       </div>
                     ) : (
-                      <label className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-white/10 hover:border-primary/30 cursor-pointer transition-colors bg-white/[0.01]">
+                      <label className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer transition-colors bg-muted/10">
                         <Upload className="w-6 h-6 text-muted-foreground/40 mb-2" />
                         <span className="text-xs text-muted-foreground">Upload Entry Screenshot</span>
                         <input
@@ -1249,7 +1249,7 @@ const DailyJournal = () => {
                     <span className="text-xs text-muted-foreground block mb-2">Exit Screenshot</span>
                     {selectedTrade.afterURL ? (
                       <div 
-                        className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group border border-white/[0.06]"
+                        className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group border border-border"
                         onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
                       >
                         <img 
@@ -1262,7 +1262,7 @@ const DailyJournal = () => {
                         </div>
                       </div>
                     ) : (
-                      <label className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-white/10 hover:border-primary/30 cursor-pointer transition-colors bg-white/[0.01]">
+                      <label className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer transition-colors bg-muted/10">
                         <Upload className="w-6 h-6 text-muted-foreground/40 mb-2" />
                         <span className="text-xs text-muted-foreground">Upload Exit Screenshot</span>
                         <input
@@ -1285,7 +1285,7 @@ const DailyJournal = () => {
           initial={false}
           animate={{ right: isRightPanelCollapsed ? 0 : 340 }}
           onClick={() => setIsRightPanelCollapsed(!isRightPanelCollapsed)}
-          className="hidden lg:flex absolute top-1/2 -translate-y-1/2 z-10 p-1.5 bg-[#0c0d10] border border-white/[0.06] rounded-l-lg hover:bg-white/[0.05] transition-colors items-center justify-center"
+          className="hidden lg:flex absolute top-1/2 -translate-y-1/2 z-10 p-1.5 bg-card border border-border rounded-l-lg hover:bg-muted/50 transition-colors items-center justify-center"
         >
           {isRightPanelCollapsed ? <PanelRightClose className="w-4 h-4 text-muted-foreground" /> : <PanelRightOpen className="w-4 h-4 text-muted-foreground" />}
         </motion.button>
@@ -1349,7 +1349,7 @@ const DailyJournal = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="md:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="md:hidden fixed inset-0 z-50 bg-background/80 dark:bg-black/60 backdrop-blur-sm"
             onClick={() => setIsMobileTradeListOpen(false)}
           >
             <motion.div
@@ -1357,19 +1357,19 @@ const DailyJournal = () => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute left-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-[#0a0b0e] border-r border-white/[0.06] flex flex-col"
+              className="absolute left-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-card border-r border-border flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
+              <div className="p-4 border-b border-border flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">Trades</span>
                 <button
                   onClick={() => setIsMobileTradeListOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/[0.05]"
+                  className="p-1.5 rounded-lg hover:bg-muted/50"
                 >
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
-              <div className="p-4 border-b border-white/[0.06]">
+              <div className="p-4 border-b border-border">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                   <input
@@ -1377,7 +1377,7 @@ const DailyJournal = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search trades..."
-                    className="w-full pl-10 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
                   />
                 </div>
               </div>
@@ -1393,8 +1393,8 @@ const DailyJournal = () => {
                         setSelectedTradeIndex(idx);
                         setIsMobileTradeListOpen(false);
                       }}
-                      className={`w-full p-4 text-left border-b border-white/[0.03] transition-all ${
-                        isSelected ? "bg-primary/10 border-l-2 border-l-primary" : "hover:bg-white/[0.02]"
+                      className={`w-full p-4 text-left border-b border-border/30 transition-all ${
+                        isSelected ? "bg-primary/10 border-l-2 border-l-primary" : "hover:bg-muted/30"
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -1427,7 +1427,7 @@ const DailyJournal = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="lg:hidden fixed inset-0 z-50 bg-background/80 dark:bg-black/60 backdrop-blur-sm"
             onClick={() => setIsMobileStatsOpen(false)}
           >
             <motion.div
@@ -1435,11 +1435,11 @@ const DailyJournal = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute right-0 top-0 bottom-0 w-[90%] max-w-[360px] bg-[#0a0b0e] border-l border-white/[0.06] flex flex-col"
+              className="absolute right-0 top-0 bottom-0 w-[90%] max-w-[360px] bg-card border-l border-border flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
-                <div className="flex gap-1 p-1 bg-white/[0.02] rounded-xl border border-white/[0.06] flex-1 mr-2">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <div className="flex gap-1 p-1 bg-muted/20 rounded-xl border border-border flex-1 mr-2">
                   {[
                     { key: "stats", label: "Stats", icon: BarChart2 },
                     { key: "strategy", label: "Strategy", icon: Target },
@@ -1450,7 +1450,7 @@ const DailyJournal = () => {
                       key={tab.key}
                       onClick={() => setMainTab(tab.key as typeof mainTab)}
                       className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
-                        mainTab === tab.key ? "bg-white/[0.08] text-foreground" : "text-muted-foreground"
+                        mainTab === tab.key ? "bg-muted/50 text-foreground" : "text-muted-foreground"
                       }`}
                     >
                       <tab.icon className="w-3 h-3" />
@@ -1460,7 +1460,7 @@ const DailyJournal = () => {
                 </div>
                 <button
                   onClick={() => setIsMobileStatsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/[0.05]"
+                  className="p-1.5 rounded-lg hover:bg-muted/50"
                 >
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
@@ -1478,18 +1478,18 @@ const DailyJournal = () => {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                      <div className="p-3 rounded-xl bg-muted/20 border border-border">
                         <span className="text-[10px] text-muted-foreground uppercase">Side</span>
                         <p className={`text-sm font-semibold mt-1 ${
                           (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long") ? "text-profit" : "text-loss"
                         }`}>{selectedTrade.Type || selectedTrade.side}</p>
                       </div>
-                      <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                      <div className="p-3 rounded-xl bg-muted/20 border border-border">
                         <span className="text-[10px] text-muted-foreground uppercase">Qty</span>
                         <p className="text-sm font-semibold text-foreground mt-1">{selectedTrade.quantity || "--"}</p>
                       </div>
                     </div>
-                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div className="p-3 rounded-xl bg-muted/20 border border-border">
                       <span className="text-xs text-muted-foreground block mb-2">Trade Rating</span>
                       <div className="flex gap-2">
                         {[1, 2, 3, 4, 5].map((star) => (
@@ -1511,7 +1511,7 @@ const DailyJournal = () => {
                         <p className="text-lg font-semibold text-foreground mt-1">{selectedTrade.strategy}</p>
                       </div>
                     ) : (
-                      <div className="p-6 text-center rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                      <div className="p-6 text-center rounded-xl bg-muted/20 border border-border">
                         <Target className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
                         <p className="text-sm text-muted-foreground">No strategy assigned</p>
                       </div>
@@ -1551,11 +1551,11 @@ const DailyJournal = () => {
                     <div>
                       <span className="text-xs text-muted-foreground block mb-2">Entry Screenshot</span>
                       {selectedTrade.beforeURL ? (
-                        <div className="relative aspect-video rounded-xl overflow-hidden cursor-pointer" onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}>
+                        <div className="relative aspect-video rounded-xl overflow-hidden cursor-pointer border border-border" onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}>
                           <img src={selectedTrade.beforeURL} alt="Entry" className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <label className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-white/10 cursor-pointer">
+                        <label className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer bg-muted/10">
                           <Upload className="w-5 h-5 text-muted-foreground/40 mb-1" />
                           <span className="text-xs text-muted-foreground">Upload</span>
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "before")} />
@@ -1565,11 +1565,11 @@ const DailyJournal = () => {
                     <div>
                       <span className="text-xs text-muted-foreground block mb-2">Exit Screenshot</span>
                       {selectedTrade.afterURL ? (
-                        <div className="relative aspect-video rounded-xl overflow-hidden cursor-pointer" onClick={() => openLightbox(selectedTrade.afterURL!, "after")}>
+                        <div className="relative aspect-video rounded-xl overflow-hidden cursor-pointer border border-border" onClick={() => openLightbox(selectedTrade.afterURL!, "after")}>
                           <img src={selectedTrade.afterURL} alt="Exit" className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <label className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-white/10 cursor-pointer">
+                        <label className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer bg-muted/10">
                           <Upload className="w-5 h-5 text-muted-foreground/40 mb-1" />
                           <span className="text-xs text-muted-foreground">Upload</span>
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "after")} />
