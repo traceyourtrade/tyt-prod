@@ -266,19 +266,16 @@ const SignUp: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="mb-12"
           >
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-blue-500 rounded-xl blur-lg opacity-50" />
-                <Image
-                  width={48}
-                  height={48}
-                  src="/images/logo-dark.png"
-                  alt="ProJournX"
-                  className="relative w-12 h-12 object-contain"
-                  unoptimized
-                />
-              </div>
-              <span className="text-xl font-semibold text-white tracking-tight">ProJournX</span>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-blue-500 rounded-2xl blur-xl opacity-40" />
+              <Image
+                width={72}
+                height={72}
+                src="/images/logo-dark.png"
+                alt="ProJournX"
+                className="relative w-[72px] h-[72px] object-contain"
+                unoptimized
+              />
             </div>
           </motion.div>
 
@@ -366,17 +363,14 @@ const SignUp: React.FC = () => {
             <div className="relative bg-[#0d1117]/80 backdrop-blur-xl border border-white/[0.08] rounded-3xl p-8 shadow-2xl">
               {/* Mobile Logo */}
               <div className="lg:hidden flex justify-center mb-8">
-                <div className="flex items-center gap-2">
-                  <Image
-                    width={40}
-                    height={40}
-                    src="/images/logo-dark.png"
-                    alt="ProJournX"
-                    className="w-10 h-10 object-contain"
-                    unoptimized
-                  />
-                  <span className="text-lg font-semibold text-white">ProJournX</span>
-                </div>
+                <Image
+                  width={56}
+                  height={56}
+                  src="/images/logo-dark.png"
+                  alt="ProJournX"
+                  className="w-14 h-14 object-contain"
+                  unoptimized
+                />
               </div>
 
               {/* Header */}
