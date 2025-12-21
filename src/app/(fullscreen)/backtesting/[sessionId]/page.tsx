@@ -352,6 +352,8 @@ export default function FullscreenBacktesting({
   });
   const [showSpeedDropdown, setShowSpeedDropdown] = useState(false);
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
+  const [showSkipDurationDropdown, setShowSkipDurationDropdown] = useState(false);
+  const [skipDuration, setSkipDuration] = useState("1"); // Skip duration in minutes (matches chart candle = 1 candle forward)
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
   const [barPosition, setBarPosition] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -465,6 +467,33 @@ export default function FullscreenBacktesting({
     { value: "1D", label: "1D" },
     { value: "1W", label: "1W" },
   ];
+  
+  // Skip duration options - how much time to skip per forward click
+  const skipDurationOptions = [
+    { value: "1", label: "1 bar" },
+    { value: "5", label: "5m" },
+    { value: "15", label: "15m" },
+    { value: "30", label: "30m" },
+    { value: "60", label: "1H" },
+    { value: "240", label: "4H" },
+    { value: "1440", label: "1D" },
+  ];
+  
+  // Helper to convert interval string to minutes
+  const intervalToMinutes = useCallback((interval: string): number => {
+    if (interval === "1D") return 1440;
+    if (interval === "1W") return 10080;
+    return parseInt(interval) || 1;
+  }, []);
+  
+  // Calculate how many candles to skip based on skip duration and chart timeframe
+  // Uses Math.round to honor the configured duration as closely as possible
+  const getCandlesToSkip = useCallback((): number => {
+    if (skipDuration === "1") return 1; // "1 bar" option = always 1 candle
+    const skipMinutes = parseInt(skipDuration) || 1;
+    const chartMinutes = intervalToMinutes(currentInterval);
+    return Math.max(1, Math.round(skipMinutes / chartMinutes));
+  }, [skipDuration, currentInterval, intervalToMinutes]);
   
   const handleCustomTf = () => {
     const val = parseInt(customTfInput);
@@ -2359,6 +2388,46 @@ export default function FullscreenBacktesting({
     setCurrentBarIndex(idx + 1, bars);
   }, []);
 
+  // Handle forward with skip duration - skips multiple candles based on time
+  const handleSkipForward = useCallback(() => {
+    const bars = allBarsRef.current;
+    const idx = currentBarIndexRef.current;
+    
+    if (!bars || bars.length === 0 || idx >= bars.length - 1) {
+      setIsPlaying(false);
+      return;
+    }
+    
+    const candlesToSkip = getCandlesToSkip();
+    const newIndex = Math.min(idx + candlesToSkip, bars.length - 1);
+    
+    // Push all bars in between to TradingView to update the chart
+    if (onRealtimeCallbackRef.current) {
+      for (let i = idx + 1; i <= newIndex; i++) {
+        const bar = bars[i];
+        if (bar) {
+          onRealtimeCallbackRef.current({
+            ...bar,
+            time: bar.time,
+          });
+        }
+      }
+    }
+    
+    setCurrentBarIndex(newIndex, bars);
+  }, [getCandlesToSkip]);
+  
+  // Handle backward with skip duration
+  const handleSkipBackward = useCallback(() => {
+    const bars = allBarsRef.current;
+    const idx = currentBarIndexRef.current;
+    if (!bars || bars.length === 0 || idx <= 0) return;
+    
+    const candlesToSkip = getCandlesToSkip();
+    const newIndex = Math.max(idx - candlesToSkip, 0);
+    setCurrentBarIndex(newIndex, bars);
+  }, [getCandlesToSkip]);
+
   const handlePrev = useCallback(() => {
     const bars = allBarsRef.current;
     const idx = currentBarIndexRef.current;
@@ -3004,7 +3073,7 @@ export default function FullscreenBacktesting({
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
       
-      // Ctrl + Space = advance one candle
+      // Ctrl + Space = advance one candle (ignores skip duration)
       if (e.ctrlKey && e.code === "Space") {
         e.preventDefault();
         if (!isEndReached) handleNext();
@@ -3018,7 +3087,7 @@ export default function FullscreenBacktesting({
           break;
         case "ArrowRight":
           e.preventDefault();
-          if (!isEndReached) handleNext();
+          if (!isEndReached) handleSkipForward();
           break;
         case "KeyB":
           if (!tradingState.potentialTrade) handlePlaceTrade("long");
@@ -3038,7 +3107,7 @@ export default function FullscreenBacktesting({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEndReached, handleNext, tradingState.openTrades, tradingState.potentialTrade]);
+  }, [isEndReached, handleNext, handleSkipForward, tradingState.openTrades, tradingState.potentialTrade]);
 
   const speedOptions = [
     { value: 0.25, label: "0.25x" },
@@ -3148,7 +3217,7 @@ export default function FullscreenBacktesting({
                 </svg>
               )}
             </button>
-            <button onClick={handleNext} disabled={isEndReached} className="bt-float-btn" title="Next">
+            <button onClick={handleSkipForward} disabled={isEndReached} className="bt-float-btn" title={`Skip Forward (${skipDurationOptions.find(s => s.value === skipDuration)?.label || '1 bar'})`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M9 5v14l10-7L9 5z"/>
               </svg>
@@ -3173,11 +3242,40 @@ export default function FullscreenBacktesting({
 
           <div className="bt-float-divider"></div>
 
+          {/* Skip Duration Dropdown */}
+          <div className="bt-float-timeframe">
+            <span className="bt-float-label" style={{ marginRight: '4px', fontSize: '10px' }}>Skip</span>
+            <button 
+              className="bt-float-tf-btn" 
+              onClick={() => { setShowSkipDurationDropdown(!showSkipDurationDropdown); setShowTimeframeDropdown(false); }}
+            >
+              {skipDurationOptions.find(s => s.value === skipDuration)?.label || '1 bar'}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 10l5 5 5-5H7z"/>
+              </svg>
+            </button>
+            {showSkipDurationDropdown && (
+              <div className="bt-float-tf-dropdown">
+                {skipDurationOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`bt-float-tf-option ${skipDuration === opt.value ? 'active' : ''}`}
+                    onClick={() => { setSkipDuration(opt.value); setShowSkipDurationDropdown(false); }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bt-float-divider"></div>
+
           {/* Timeframe Dropdown */}
           <div className="bt-float-timeframe">
             <button 
               className="bt-float-tf-btn" 
-              onClick={() => setShowTimeframeDropdown(!showTimeframeDropdown)}
+              onClick={() => { setShowTimeframeDropdown(!showTimeframeDropdown); setShowSkipDurationDropdown(false); }}
             >
               {timeframeOptions.find(tf => tf.value === currentInterval)?.label || '1H'}
               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
