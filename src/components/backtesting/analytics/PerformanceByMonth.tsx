@@ -12,6 +12,7 @@ interface Props {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_SHORT = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
 export default function PerformanceByMonth({ data, initialBalance }: Props) {
   const [calcMode, setCalcMode] = useState<'accumulated' | 'overall'>('accumulated');
@@ -47,32 +48,29 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
         "backdrop-blur-xl"
       )}
     >
-      {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] via-transparent to-teal-500/[0.02] pointer-events-none" />
       
-      <div className="relative p-5">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-          <div className="flex items-center gap-3">
+      <div className="relative p-3 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center",
+              "w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0",
               "bg-gradient-to-br from-amber-500/20 to-amber-600/10",
               "border border-amber-500/20"
             )}>
-              <CalendarDays className="w-5 h-5 text-amber-400" />
+              <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
             </div>
-            <div>
-              <h3 className="text-base font-semibold text-white">Performance by Month</h3>
-              <p className="text-xs text-zinc-400 mt-0.5">Monthly breakdown of your returns</p>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-semibold text-white truncate">Performance by Month</h3>
+              <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">Monthly breakdown of your returns</p>
             </div>
           </div>
           
-          {/* Toggle buttons */}
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-1 p-0.5 sm:p-1 rounded-lg bg-white/[0.03] border border-white/[0.06] self-start sm:self-auto">
             <button
               onClick={() => setCalcMode('accumulated')}
               className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                "px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-md transition-all duration-200",
                 calcMode === 'accumulated'
                   ? "bg-white/[0.08] text-white"
                   : "text-zinc-400 hover:text-zinc-300"
@@ -83,7 +81,7 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
             <button
               onClick={() => setCalcMode('overall')}
               className={cn(
-                "px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200",
+                "px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-medium rounded-md transition-all duration-200",
                 calcMode === 'overall'
                   ? "bg-white/[0.08] text-white"
                   : "text-zinc-400 hover:text-zinc-300"
@@ -94,24 +92,22 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
           </div>
         </div>
 
-        {/* Month grid */}
-        <div className="overflow-x-auto -mx-5 px-5">
-          <div className="min-w-[700px]">
-            {/* Header row */}
-            <div className="grid grid-cols-14 gap-1.5 mb-2">
-              <div className="col-span-1" />
-              {MONTHS.map(month => (
-                <div key={month} className="text-center text-xs font-medium text-zinc-500">
-                  {month}
+        <div className="overflow-x-auto -mx-3 sm:-mx-5 px-3 sm:px-5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          <div className="min-w-[320px] sm:min-w-[700px]">
+            <div className="grid gap-0.5 sm:gap-1.5 mb-1.5 sm:mb-2" style={{ gridTemplateColumns: 'minmax(32px, 40px) repeat(12, minmax(22px, 1fr)) minmax(32px, 50px)' }}>
+              <div />
+              {MONTHS.map((month, idx) => (
+                <div key={month} className="text-center text-[9px] sm:text-xs font-medium text-zinc-500">
+                  <span className="hidden sm:inline">{month}</span>
+                  <span className="sm:hidden">{MONTHS_SHORT[idx]}</span>
                 </div>
               ))}
-              <div className="text-center text-xs font-medium text-zinc-400">YTD</div>
+              <div className="text-center text-[9px] sm:text-xs font-medium text-zinc-400">YTD</div>
             </div>
             
-            {/* Year rows */}
             {years.map(year => (
-              <div key={year} className="grid grid-cols-14 gap-1.5 mb-1.5">
-                <div className="flex items-center text-sm font-semibold text-zinc-300">
+              <div key={year} className="grid gap-0.5 sm:gap-1.5 mb-1 sm:mb-1.5" style={{ gridTemplateColumns: 'minmax(32px, 40px) repeat(12, minmax(22px, 1fr)) minmax(32px, 50px)' }}>
+                <div className="flex items-center text-[10px] sm:text-sm font-semibold text-zinc-300">
                   {year}
                 </div>
                 {Array.from({ length: 12 }, (_, i) => {
@@ -121,32 +117,34 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
                     : null;
                   
                   return (
-                    <div key={i} className="aspect-[2/1] min-h-[36px]">
+                    <div key={i} className="aspect-[1.5/1] sm:aspect-[2/1] min-h-[24px] sm:min-h-[36px]">
                       {value !== null ? (
                         <div className={cn(
-                          "h-full rounded-lg flex items-center justify-center text-xs font-semibold transition-all duration-200",
+                          "h-full rounded sm:rounded-lg flex items-center justify-center text-[8px] sm:text-xs font-semibold transition-all duration-200",
                           value >= 0 
-                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25" 
-                            : "bg-red-500/15 text-red-400 border border-red-500/20 hover:bg-red-500/25"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" 
+                            : "bg-red-500/15 text-red-400 border border-red-500/20"
                         )}>
-                          {value >= 0 ? '+' : ''}{value.toFixed(2)}%
+                          <span className="hidden sm:inline">{value >= 0 ? '+' : ''}{value.toFixed(2)}%</span>
+                          <span className="sm:hidden">{value >= 0 ? '+' : ''}{value.toFixed(1)}%</span>
                         </div>
                       ) : (
-                        <div className="h-full rounded-lg flex items-center justify-center text-xs text-zinc-600 bg-white/[0.02] border border-white/[0.04]">
+                        <div className="h-full rounded sm:rounded-lg flex items-center justify-center text-[8px] sm:text-xs text-zinc-600 bg-white/[0.02] border border-white/[0.04]">
                           —
                         </div>
                       )}
                     </div>
                   );
                 })}
-                <div className="aspect-[2/1] min-h-[36px]">
+                <div className="aspect-[1.5/1] sm:aspect-[2/1] min-h-[24px] sm:min-h-[36px]">
                   <div className={cn(
-                    "h-full rounded-lg flex items-center justify-center text-xs font-bold transition-all duration-200",
+                    "h-full rounded sm:rounded-lg flex items-center justify-center text-[8px] sm:text-xs font-bold transition-all duration-200",
                     getYTDValue(year) >= 0 
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" 
                       : "bg-red-500/20 text-red-300 border border-red-500/30"
                   )}>
-                    {getYTDValue(year) >= 0 ? '+' : ''}{getYTDValue(year).toFixed(2)}%
+                    <span className="hidden sm:inline">{getYTDValue(year) >= 0 ? '+' : ''}{getYTDValue(year).toFixed(2)}%</span>
+                    <span className="sm:hidden">{getYTDValue(year) >= 0 ? '+' : ''}{getYTDValue(year).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>
@@ -154,22 +152,21 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
           </div>
         </div>
 
-        {/* Total summary */}
-        <div className="flex items-center justify-end gap-3 mt-5 pt-4 border-t border-white/[0.06]">
-          <span className="text-sm text-zinc-400">Total Return</span>
+        <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-3 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-white/[0.06]">
+          <span className="text-xs sm:text-sm text-zinc-400">Total Return</span>
           <div className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl",
+            "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl",
             totalValue >= 0 
               ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border border-emerald-500/30" 
               : "bg-gradient-to-r from-red-500/20 to-red-500/10 border border-red-500/30"
           )}>
             {totalValue >= 0 ? (
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
             ) : (
-              <TrendingDown className="w-4 h-4 text-red-400" />
+              <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
             )}
             <span className={cn(
-              "text-lg font-bold",
+              "text-sm sm:text-lg font-bold",
               totalValue >= 0 ? "text-emerald-400" : "text-red-400"
             )}>
               {totalValue >= 0 ? '+' : ''}{totalValue.toFixed(2)}%

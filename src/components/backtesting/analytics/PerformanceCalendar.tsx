@@ -94,20 +94,19 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.02] via-transparent to-purple-500/[0.02] pointer-events-none" />
       
-      <div className="relative p-5">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 mb-5">
-          <div className="flex items-center gap-3">
+      <div className="relative p-3 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center",
+              "w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0",
               "bg-gradient-to-br from-cyan-500/20 to-cyan-600/10",
               "border border-cyan-500/20"
             )}>
-              <CalendarCheck className="w-5 h-5 text-cyan-400" />
+              <CalendarCheck className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
             </div>
-            <div>
-              <h3 className="text-base font-semibold text-white">Performance Calendar</h3>
-              <p className="text-xs text-zinc-400 mt-0.5">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-semibold text-white">Performance Calendar</h3>
+              <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">
                 {monthlyTrades} trades · <span className={monthlyPnl >= 0 ? "text-emerald-400" : "text-red-400"}>
                   {monthlyPnl >= 0 ? '+' : ''}${monthlyPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
@@ -115,12 +114,11 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
             </div>
           </div>
           
-          {/* Display mode toggle */}
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-1 p-0.5 sm:p-1 rounded-lg bg-white/[0.03] border border-white/[0.06] self-start sm:self-auto">
             <button
               onClick={() => setDisplayMode('dollar')}
               className={cn(
-                "px-2.5 py-1 text-xs font-medium rounded-md transition-all duration-200",
+                "px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-medium rounded-md transition-all duration-200",
                 displayMode === 'dollar'
                   ? "bg-white/[0.08] text-white"
                   : "text-zinc-400 hover:text-zinc-300"
@@ -131,7 +129,7 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
             <button
               onClick={() => setDisplayMode('percent')}
               className={cn(
-                "px-2.5 py-1 text-xs font-medium rounded-md transition-all duration-200",
+                "px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-medium rounded-md transition-all duration-200",
                 displayMode === 'percent'
                   ? "bg-white/[0.08] text-white"
                   : "text-zinc-400 hover:text-zinc-300"
@@ -142,56 +140,54 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-center gap-6 mb-4">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-3 sm:gap-6 mb-3 sm:mb-4">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             <button
               onClick={prevMonth}
-              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
-            <span className="text-sm font-medium text-white min-w-[90px] text-center">
+            <span className="text-xs sm:text-sm font-medium text-white min-w-[70px] sm:min-w-[90px] text-center">
               {monthName}
             </span>
             <button
               onClick={nextMonth}
-              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             <button
               onClick={prevYear}
-              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
-            <span className="text-sm font-medium text-white min-w-[50px] text-center">
+            <span className="text-xs sm:text-sm font-medium text-white min-w-[40px] sm:min-w-[50px] text-center">
               {year}
             </span>
             <button
               onClick={nextYear}
-              className="p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/[0.05] transition-colors text-zinc-400 hover:text-white"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
 
-        {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-1.5 mb-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1 sm:mb-2">
           {WEEKDAYS.map(day => (
-            <div key={day} className="text-center text-xs font-medium text-zinc-500 py-1">
-              {day}
+            <div key={day} className="text-center text-[10px] sm:text-xs font-medium text-zinc-500 py-0.5 sm:py-1">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.charAt(0)}</span>
             </div>
           ))}
         </div>
 
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
           {calendarData.map((day, i) => {
             const hasTrades = day.trades > 0;
             const value = displayMode === 'dollar' 
@@ -202,18 +198,18 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
               <div
                 key={i}
                 className={cn(
-                  "aspect-square rounded-lg flex flex-col items-center justify-center text-center transition-all duration-200",
+                  "aspect-square rounded sm:rounded-lg flex flex-col items-center justify-center text-center transition-all duration-200",
                   day.isCurrentMonth 
                     ? hasTrades
                       ? day.pnl >= 0
-                        ? "bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20"
-                        : "bg-red-500/10 border border-red-500/20 hover:bg-red-500/20"
-                      : "bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04]"
+                        ? "bg-emerald-500/10 border border-emerald-500/20"
+                        : "bg-red-500/10 border border-red-500/20"
+                      : "bg-white/[0.02] border border-white/[0.04]"
                     : "bg-transparent opacity-30"
                 )}
               >
                 <span className={cn(
-                  "text-xs font-medium",
+                  "text-[10px] sm:text-xs font-medium",
                   day.isCurrentMonth 
                     ? hasTrades
                       ? "text-white"
@@ -224,7 +220,7 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
                 </span>
                 {hasTrades && day.isCurrentMonth && (
                   <span className={cn(
-                    "text-[10px] font-semibold mt-0.5",
+                    "text-[7px] sm:text-[10px] font-semibold mt-0.5 truncate max-w-full px-0.5",
                     day.pnl >= 0 ? "text-emerald-400" : "text-red-400"
                   )}>
                     {displayMode === 'dollar' 

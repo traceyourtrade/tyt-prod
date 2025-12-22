@@ -61,21 +61,20 @@ export default function PerformanceByTime({ data }: Props) {
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.03] via-transparent to-emerald-500/[0.03] pointer-events-none" />
       
-      <div className="relative p-5">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="flex items-center gap-3">
+      <div className="relative p-3 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center",
+              "w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0",
               "bg-gradient-to-br from-blue-500/20 to-blue-600/10",
               "border border-blue-500/20"
             )}>
-              <Clock className="w-5 h-5 text-blue-400" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
             </div>
-            <div>
-              <h3 className="text-base font-semibold text-white">Performance by Time</h3>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-semibold text-white">Performance by Time</h3>
               {bestHour && bestHour.totalTrades > 0 && (
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">
                   Best hour: <span className="text-emerald-400">{bestHour.hour}:00</span>
                 </p>
               )}
@@ -86,7 +85,7 @@ export default function PerformanceByTime({ data }: Props) {
             value={selectedMetric}
             onChange={(e) => setSelectedMetric(e.target.value as MetricType)}
             className={cn(
-              "px-3 py-2 text-sm rounded-lg cursor-pointer",
+              "px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg cursor-pointer w-full sm:w-auto",
               "bg-white/[0.05] border border-white/[0.08] text-zinc-300",
               "focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30",
               "transition-all duration-200"
@@ -100,8 +99,7 @@ export default function PerformanceByTime({ data }: Props) {
           </select>
         </div>
 
-        {/* Chart */}
-        <div className="h-[220px] -mx-2">
+        <div className="h-[180px] sm:h-[220px] -mx-2 overflow-x-auto">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} barCategoryGap="15%">
               <defs>

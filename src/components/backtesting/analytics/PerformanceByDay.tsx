@@ -140,14 +140,13 @@ export default function PerformanceByDay({ data }: Props) {
           </ResponsiveContainer>
         </div>
 
-        {/* Win rate badges */}
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/[0.06]">
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/[0.06]">
           {chartData.filter(d => d.totalTrades > 0).map(d => (
             <div 
               key={d.day}
               className={cn(
-                "px-2.5 py-1 rounded-lg text-xs font-medium",
-                "flex items-center gap-1.5",
+                "px-2 sm:px-2.5 py-1 rounded sm:rounded-lg text-[10px] sm:text-xs font-medium",
+                "flex items-center justify-center sm:justify-start gap-1 sm:gap-1.5",
                 d.winRate >= 50 
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
                   : "bg-red-500/10 text-red-400 border border-red-500/20"
