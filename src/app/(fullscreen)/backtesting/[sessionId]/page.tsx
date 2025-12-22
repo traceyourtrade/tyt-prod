@@ -1355,11 +1355,6 @@ export default function FullscreenBacktesting({
       fullscreen: false,
       autosize: true,
       theme: "dark",
-      overrides: {
-        "paneProperties.background": "#0a0a0b",
-        "paneProperties.backgroundType": "solid",
-        "scalesProperties.backgroundColor": "#0a0a0b",
-      },
       save_load_adapter: save_load_adapter,
       auto_save_delay: 5,
       favorites: {
@@ -1686,30 +1681,44 @@ export default function FullscreenBacktesting({
           }
           
           // Get chart properties including canvas/background colors
-          let chartProperties: any = {};
+          // TradingView Charting Library properties API
+          let chartProperties: any = null;
           try {
-            // Get pane properties for background color
-            const paneProperties = chart.getPanes()[0]?.getMainSourcePriceScale()?.properties?.();
-            const chartModel = (tvWidget as any)._options?.overrides || {};
-            
-            // Try to get current overrides from the chart
-            chartProperties = {
-              background: chartModel['paneProperties.background'] || '#0a0a0b',
-              backgroundType: chartModel['paneProperties.backgroundType'] || 'solid',
-              scalesBackground: chartModel['scalesProperties.backgroundColor'] || '#0a0a0b'
-            };
+            const props = chart.properties();
+            if (props && typeof props.child === 'function') {
+              const paneProps = props.child('paneProperties');
+              if (paneProps) {
+                const background = paneProps.child('background')?.value?.() || paneProps.child('background')?.getValue?.();
+                const backgroundType = paneProps.child('backgroundType')?.value?.() || paneProps.child('backgroundType')?.getValue?.();
+                
+                if (background) {
+                  chartProperties = {
+                    background: background,
+                    backgroundType: backgroundType || 'solid',
+                    scalesBackground: background
+                  };
+                  console.log('Captured chart properties:', chartProperties);
+                }
+              }
+            }
           } catch (e) {
-            console.log('Could not get chart properties for save');
+            console.log('TradingView properties API not available, skipping chartProperties save');
           }
-
-          const savedData = {
+          
+          // Build saved data object - only include chartProperties if successfully captured
+          // This prevents overwriting user's settings with fallback dark colors
+          const savedData: any = {
             drawings,
             studies,
-            chartProperties,
             interval: currentInterval,
             timestamp: Date.now(),
             favoriteDrawingTools: favoriteDrawingToolsRef.current
           };
+          
+          // Add chartProperties only if successfully captured
+          if (chartProperties) {
+            savedData.chartProperties = chartProperties;
+          }
           
           const layoutData = {
             id: `session_${sessionId}_default`,
