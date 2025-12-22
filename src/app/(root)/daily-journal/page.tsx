@@ -789,13 +789,13 @@ const DailyJournal = () => {
             )}
 
             {centerTab === "notes" && (
-              <div className="h-full overflow-y-auto p-6">
-                <div className="max-w-3xl mx-auto space-y-6">
+              <div className="h-full overflow-y-auto p-3 sm:p-6">
+                <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
                   {/* Notes Toggle */}
                   <div className="flex items-center gap-1 p-1 bg-muted/20 rounded-xl border border-border w-fit">
                     <button
                       onClick={() => setNotesTab("trade")}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         notesTab === "trade" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -803,7 +803,7 @@ const DailyJournal = () => {
                     </button>
                     <button
                       onClick={() => setNotesTab("daily")}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                         notesTab === "daily" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
@@ -812,11 +812,34 @@ const DailyJournal = () => {
                   </div>
 
                   {notesTab === "trade" ? (
-                    <div className="space-y-6">
-                      {/* Template Selector */}
+                    <div className="space-y-4 sm:space-y-6">
+                      {/* Template Selector - Compact on mobile */}
                       <div>
-                        <h3 className="text-sm font-medium text-foreground mb-3">Template</h3>
-                        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                        <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Template</h3>
+                        {/* Mobile: Grid layout for templates */}
+                        <div className="grid grid-cols-2 gap-2 sm:hidden">
+                          {templates.map((template, idx) => {
+                            const Icon = getTemplateIcon(template.icon);
+                            const colors = getTemplateColor(template.color);
+                            const isSelected = selectedTemplateIdx === idx;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => setSelectedTemplateIdx(idx)}
+                                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all border ${
+                                  isSelected
+                                    ? `${colors.bg} ${colors.text} ${colors.border}`
+                                    : "bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border-border"
+                                }`}
+                              >
+                                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span className="truncate">{template.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {/* Desktop: Horizontal scroll */}
+                        <div className="hidden sm:flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                           {templates.map((template, idx) => {
                             const Icon = getTemplateIcon(template.icon);
                             const colors = getTemplateColor(template.color);
@@ -839,12 +862,12 @@ const DailyJournal = () => {
                         </div>
                       </div>
 
-                      {/* Journal Prompts */}
-                      <div className="space-y-4">
+                      {/* Journal Prompts - Compact on mobile */}
+                      <div className="space-y-3 sm:space-y-4">
                         {templates[selectedTemplateIdx]?.prompts.map((prompt) => (
-                          <div key={prompt.id} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-sm text-foreground font-medium">{prompt.label}</label>
+                          <div key={prompt.id} className="space-y-1.5 sm:space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <label className="text-xs sm:text-sm text-foreground font-medium">{prompt.label}</label>
                               <QuickFillDropdown
                                 promptId={prompt.id}
                                 promptType={prompt.type === "textarea" ? "textarea" : "text"}
@@ -856,9 +879,9 @@ const DailyJournal = () => {
                               <textarea
                                 value={journalData.prompts?.[prompt.id] || ""}
                                 onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                                rows={4}
+                                rows={3}
                                 placeholder={prompt.placeholder}
-                                className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/20 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
                               />
                             ) : (
                               <input
@@ -866,37 +889,37 @@ const DailyJournal = () => {
                                 value={journalData.prompts?.[prompt.id] || ""}
                                 onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
                                 placeholder={prompt.placeholder}
-                                className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/20 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
                               />
                             )}
                           </div>
                         ))}
                       </div>
 
-                      {/* Quick Tags */}
-                      <div className="p-4 rounded-xl bg-muted/20 border border-border">
-                        <h3 className="text-sm font-medium text-foreground mb-3">Quick Tags</h3>
+                      {/* Quick Tags - Compact on mobile */}
+                      <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/20 border border-border">
+                        <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Quick Tags</h3>
                         {journalData.tags && journalData.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-3">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
                             {journalData.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-medium border border-primary/20"
+                                className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-primary/10 text-primary rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium border border-primary/20"
                               >
                                 {tag}
                                 <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/70">
-                                  <X className="w-3 h-3" />
+                                  <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                 </button>
                               </span>
                             ))}
                           </div>
                         )}
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {commonTags.filter(t => !journalData.tags?.includes(t)).map((tag) => (
                             <button
                               key={tag}
                               onClick={() => handleAddTag(tag)}
-                              className="px-3 py-1.5 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-lg text-xs font-medium transition-all border border-border"
+                              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium transition-all border border-border"
                             >
                               + {tag}
                             </button>
@@ -905,15 +928,15 @@ const DailyJournal = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       <div>
-                        <h3 className="text-sm font-medium text-foreground mb-3">Daily Journal Entry</h3>
+                        <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Daily Journal Entry</h3>
                         <textarea
                           value={journalData.dailyNotes || ""}
                           onChange={(e) => handleDailyNotesChange(e.target.value)}
-                          rows={12}
+                          rows={8}
                           placeholder="Write about your trading day, market conditions, mindset, and key takeaways..."
-                          className="w-full px-4 py-3 bg-muted/20 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
+                          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/20 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
                         />
                       </div>
                     </div>
