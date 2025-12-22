@@ -1346,6 +1346,7 @@ export default function FullscreenBacktesting({
       disabled_features: [
         "use_localstorage_for_settings",
         "header_compare",
+        "create_volume_indicator_by_default",
       ],
       enabled_features: [
         "side_toolbar_in_fullscreen_mode",
@@ -1452,6 +1453,29 @@ export default function FullscreenBacktesting({
                     } catch (studyError) {
                       console.warn('Could not restore study:', study.name, studyError);
                     }
+                  }
+                }
+                
+                // Restore chart properties (canvas color, etc.) if saved
+                if (savedData.chartProperties) {
+                  console.log('Restoring chart properties:', savedData.chartProperties);
+                  try {
+                    const overrides: any = {};
+                    if (savedData.chartProperties.background) {
+                      overrides['paneProperties.background'] = savedData.chartProperties.background;
+                    }
+                    if (savedData.chartProperties.backgroundType) {
+                      overrides['paneProperties.backgroundType'] = savedData.chartProperties.backgroundType;
+                    }
+                    if (savedData.chartProperties.scalesBackground) {
+                      overrides['scalesProperties.backgroundColor'] = savedData.chartProperties.scalesBackground;
+                    }
+                    if (Object.keys(overrides).length > 0) {
+                      chart.applyOverrides(overrides);
+                      console.log('Applied chart property overrides:', overrides);
+                    }
+                  } catch (e) {
+                    console.warn('Could not restore chart properties:', e);
                   }
                 }
               } else {
@@ -1661,9 +1685,27 @@ export default function FullscreenBacktesting({
             console.log('Saved empty state after user deletion');
           }
           
+          // Get chart properties including canvas/background colors
+          let chartProperties: any = {};
+          try {
+            // Get pane properties for background color
+            const paneProperties = chart.getPanes()[0]?.getMainSourcePriceScale()?.properties?.();
+            const chartModel = (tvWidget as any)._options?.overrides || {};
+            
+            // Try to get current overrides from the chart
+            chartProperties = {
+              background: chartModel['paneProperties.background'] || '#0a0a0b',
+              backgroundType: chartModel['paneProperties.backgroundType'] || 'solid',
+              scalesBackground: chartModel['scalesProperties.backgroundColor'] || '#0a0a0b'
+            };
+          } catch (e) {
+            console.log('Could not get chart properties for save');
+          }
+
           const savedData = {
             drawings,
             studies,
+            chartProperties,
             interval: currentInterval,
             timestamp: Date.now(),
             favoriteDrawingTools: favoriteDrawingToolsRef.current
