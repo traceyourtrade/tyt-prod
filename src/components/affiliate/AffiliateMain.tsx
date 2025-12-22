@@ -83,7 +83,7 @@ export default function AffiliateMain() {
 
   const fetchAffiliateData = async () => {
     try {
-      const res = await axios.get("/api/affiliate");
+      const res = await axios.get("/api/affiliate", { withCredentials: true });
       if (res.data.isAffiliate) {
         setIsAffiliate(true);
         setAffiliate(res.data.affiliate);
@@ -102,7 +102,7 @@ export default function AffiliateMain() {
   const handleJoinProgram = async () => {
     setJoining(true);
     try {
-      const res = await axios.post("/api/affiliate");
+      const res = await axios.post("/api/affiliate", {}, { withCredentials: true });
       if (res.data.success) {
         await fetchAffiliateData();
       }
