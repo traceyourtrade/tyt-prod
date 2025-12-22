@@ -711,31 +711,25 @@
    ===================================================== */
 .bt-floating-bar {
   position: absolute;
-  top: 12px;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0;
-  padding: 6px 12px;
-  background: linear-gradient(180deg, rgba(24, 27, 35, 0.98) 0%, rgba(18, 20, 26, 0.98) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--bt-radius-lg);
-  border: 1px solid var(--bt-border-default);
-  box-shadow: var(--bt-shadow-lg), 0 0 40px rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  background: rgba(18, 20, 26, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--bt-radius-md);
+  border: 1px solid var(--bt-border-subtle);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   z-index: 100;
   animation: bt-slide-up 0.3s ease-out;
 }
 
 .bt-floating-bar::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: var(--bt-radius-xl);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, transparent 50%, rgba(20, 184, 166, 0.2) 100%);
-  z-index: -1;
-  opacity: 0.5;
+  display: none;
 }
 
 .bt-floating-bar.dragging {
@@ -748,11 +742,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 24px;
+  width: 14px;
+  height: 20px;
   color: var(--bt-text-disabled);
   cursor: grab;
-  margin-right: 6px;
+  margin-right: 4px;
   transition: color var(--bt-transition-fast);
 }
 
@@ -771,7 +765,7 @@
 }
 
 .bt-float-group.speed-group {
-  gap: 6px;
+  gap: 4px;
 }
 
 /* Playback Buttons */
@@ -779,11 +773,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   background: transparent;
   border: none;
-  border-radius: var(--bt-radius-sm);
+  border-radius: 4px;
   color: var(--bt-text-secondary);
   cursor: pointer;
   transition: all var(--bt-transition-fast);
@@ -805,21 +799,21 @@
   cursor: not-allowed;
 }
 
-/* Play Button - Premium Design */
+/* Play Button - Compact Design */
 .bt-float-btn.play {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, var(--bt-accent-blue) 0%, #1d4ed8 100%);
+  width: 26px;
+  height: 26px;
+  background: var(--bt-accent-blue);
   color: white;
   border-radius: 50%;
-  margin: 0 6px;
-  box-shadow: 0 4px 16px var(--bt-accent-blue-glow);
+  margin: 0 4px;
+  box-shadow: 0 2px 8px var(--bt-accent-blue-glow);
 }
 
 .bt-float-btn.play:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  transform: scale(1.1);
-  box-shadow: 0 6px 24px var(--bt-accent-blue-glow);
+  background: #2563eb;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px var(--bt-accent-blue-glow);
 }
 
 .bt-float-btn.play:active:not(:disabled) {
@@ -837,9 +831,9 @@
 
 .bt-float-divider {
   width: 1px;
-  height: 20px;
-  background: linear-gradient(180deg, transparent 0%, var(--bt-border-strong) 50%, transparent 100%);
-  margin: 0 10px;
+  height: 16px;
+  background: var(--bt-border-default);
+  margin: 0 6px;
 }
 
 /* Speed Control */
@@ -888,10 +882,10 @@
 }
 
 .bt-float-speed-value {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 600;
   color: var(--bt-accent-teal);
-  min-width: 24px;
+  min-width: 20px;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -904,13 +898,13 @@
 .bt-float-tf-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
+  gap: 3px;
+  padding: 4px 8px;
   background: var(--bt-bg-surface);
-  border: 1px solid var(--bt-border-default);
-  border-radius: var(--bt-radius-sm);
+  border: 1px solid var(--bt-border-subtle);
+  border-radius: 4px;
   color: var(--bt-text-primary);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--bt-transition-fast);
@@ -1036,66 +1030,59 @@
 /* Trade Buttons */
 .bt-float-group.trade-group {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .bt-float-trade-btn {
-  padding: 5px 12px;
-  border-radius: var(--bt-radius-sm);
-  font-size: 11px;
-  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   transition: all var(--bt-transition-fast);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
 }
 
 .bt-float-trade-btn.buy,
 .bt-float-trade-btn.long {
-  background: linear-gradient(135deg, var(--bt-profit) 0%, #059669 100%);
+  background: var(--bt-profit);
   color: white;
-  box-shadow: 0 4px 12px var(--bt-profit-glow);
 }
 
 .bt-float-trade-btn.buy:hover:not(:disabled),
 .bt-float-trade-btn.long:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--bt-profit-glow);
+  background: #059669;
 }
 
 .bt-float-trade-btn.sell,
 .bt-float-trade-btn.short {
-  background: linear-gradient(135deg, var(--bt-loss) 0%, #dc2626 100%);
+  background: var(--bt-loss);
   color: white;
-  box-shadow: 0 4px 12px var(--bt-loss-glow);
 }
 
 .bt-float-trade-btn.sell:hover:not(:disabled),
 .bt-float-trade-btn.short:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--bt-loss-glow);
+  background: #dc2626;
 }
 
 .bt-float-trade-btn.place {
-  background: linear-gradient(135deg, var(--bt-purple) 0%, #7c3aed 100%);
+  background: var(--bt-purple);
   color: white;
-  box-shadow: 0 4px 12px var(--bt-purple-bg);
 }
 
 .bt-float-trade-btn.place:hover:not(:disabled) {
-  transform: translateY(-2px);
+  background: #7c3aed;
 }
 
 .bt-float-trade-btn.close {
-  background: linear-gradient(135deg, var(--bt-warning) 0%, #d97706 100%);
+  background: var(--bt-warning);
   color: white;
-  box-shadow: 0 4px 12px var(--bt-warning-bg);
 }
 
 .bt-float-trade-btn.close:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--bt-warning-bg);
+  background: #d97706;
 }
 
 .bt-float-trade-btn:disabled {
