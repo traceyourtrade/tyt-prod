@@ -34,32 +34,30 @@ export default function AnnouncementBanner() {
             {showBanner && (
                 <motion.div
                     key="announcement-banner"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="px-4 lg:px-6 pt-4"
                 >
-                    <div className="relative bg-gradient-to-r from-[#0c1222]/90 via-[#0f1729]/90 to-[#0c1222]/90 backdrop-blur-xl border-b border-[#4EBF94]/20">
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#4EBF94]/5 via-violet-500/5 to-blue-500/5" />
-                        <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[#4EBF94] via-emerald-400 to-[#4EBF94]" />
-                        <div className="absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-[#4EBF94]/10 to-transparent" />
+                    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#4EBF94]/10 via-emerald-500/5 to-violet-500/10 border border-[#4EBF94]/20 backdrop-blur-sm">
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#4EBF94]/5 to-transparent opacity-50" />
                         
-                        <div className="relative max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 lg:px-6 py-2.5">
+                        <div className="relative flex items-center justify-between gap-3 px-4 py-3">
                             <div className="flex items-center gap-3 min-w-0">
-                                <div className="flex-shrink-0 w-6 h-6 rounded-md bg-gradient-to-br from-[#4EBF94]/20 to-emerald-500/10 flex items-center justify-center ring-1 ring-[#4EBF94]/30">
-                                    <Sparkles className="w-3.5 h-3.5 text-[#4EBF94]" />
+                                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-[#4EBF94] to-emerald-600 flex items-center justify-center shadow-lg shadow-[#4EBF94]/20">
+                                    <Sparkles className="w-3.5 h-3.5 text-white" />
                                 </div>
-                                <p className="text-[13px] text-foreground/90 font-medium truncate">
+                                <p className="text-sm text-foreground font-medium">
                                     {banner}
                                 </p>
                             </div>
                             
                             <motion.button
                                 onClick={() => setDismissed(true)}
-                                className="flex-shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200"
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
+                                className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all duration-200"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                             >
                                 <X className="w-4 h-4" />
                             </motion.button>
