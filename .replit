@@ -37,3 +37,8 @@ externalPort = 80
 deploymentTarget = "autoscale"
 run = ["npm", "run", "start"]
 build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+NEXT_PUBLIC_ADMIN_API_URL = "https://d79a07a8-1f6d-4b5f-a951-6202487ee4ab-00-bdq72o4dzmbp.sisko.replit.dev"
