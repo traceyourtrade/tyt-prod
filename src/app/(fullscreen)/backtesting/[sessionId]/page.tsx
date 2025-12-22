@@ -3273,28 +3273,25 @@ export default function FullscreenBacktesting({
 
           {/* Trade Buttons */}
           <div className="bt-float-group trade-group">
-            {tradingState.potentialTrade ? (
+            <button
+              onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'buy' })); setShowQuickOrderDialog(true); }}
+              className="bt-float-trade-btn long"
+            >
+              Long
+            </button>
+            <button
+              onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'sell' })); setShowQuickOrderDialog(true); }}
+              className="bt-float-trade-btn short"
+            >
+              Short
+            </button>
+            {tradingState.potentialTrade && (
               <button
                 onClick={handlePlaceOrderFromDrawing}
                 className="bt-float-trade-btn place"
               >
-                Place {tradingState.potentialTrade.type === 'long' ? 'Long' : 'Short'}
+                Place
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'buy' })); setShowQuickOrderDialog(true); }}
-                  className="bt-float-trade-btn long"
-                >
-                  Long
-                </button>
-                <button
-                  onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'sell' })); setShowQuickOrderDialog(true); }}
-                  className="bt-float-trade-btn short"
-                >
-                  Short
-                </button>
-              </>
             )}
             {tradingState.openTrades.length > 0 && (
               <button
