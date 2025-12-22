@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
 import { getCommissionModel } from "@/models/main/commission.model";
@@ -19,14 +18,12 @@ const generateUniqueId = () => {
 export async function GET(req: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token");
+    const token = cookieStore.get("authToken");
+    const userId = cookieStore.get("userId")?.value;
 
-    if (!token) {
+    if (!token || !userId) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
-
-    const decoded = jwt.verify(token.value, process.env.SECRET_KEY as string) as { uniqueId: string };
-    const userId = decoded.uniqueId;
 
     const Affiliate = await getAffiliateModel();
     const Referral = await getReferralModel();
@@ -96,14 +93,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token");
+    const token = cookieStore.get("authToken");
+    const userId = cookieStore.get("userId")?.value;
 
-    if (!token) {
+    if (!token || !userId) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
-
-    const decoded = jwt.verify(token.value, process.env.SECRET_KEY as string) as { uniqueId: string };
-    const userId = decoded.uniqueId;
 
     const Affiliate = await getAffiliateModel();
 
