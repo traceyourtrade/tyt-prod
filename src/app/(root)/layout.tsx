@@ -43,6 +43,7 @@ import {
   Command,
   CandlestickChart,
   Search,
+  Gift,
 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ const toolsItems = [
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "#F59E0B" },
   { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8" },
   { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4" },
+  { name: "Affiliate", href: "/affiliate", icon: Gift, color: "#4EBF94" },
 ];
 
 const backtestingSubItems = [
@@ -114,6 +116,7 @@ const pageTitles: Record<string, string> = {
   "/backtesting/reports": "Backtesting Reports",
   "/backtesting/sessions": "Backtesting Sessions",
   "/lot-calculator": "Lot Calculator",
+  "/affiliate": "Affiliate Program",
   "/settings": "Settings",
   "/support": "Support",
 };
