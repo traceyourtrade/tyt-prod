@@ -112,64 +112,6 @@ interface Account {
   [key: string]: any;
 }
 
-const demoTemplates: Template[] = [
-  {
-    name: "Trade Review",
-    description: "Comprehensive review of your trade execution",
-    icon: "ClipboardCheck",
-    color: "blue",
-    prompts: [
-      { id: "went_well", label: "What went well?", placeholder: "Describe the positive aspects of this trade...", type: "textarea" },
-      { id: "improve", label: "What could improve?", placeholder: "Areas for improvement...", type: "textarea" },
-      { id: "lessons", label: "Key lessons learned", placeholder: "What will you remember from this trade?", type: "textarea" },
-      { id: "follow_plan", label: "Did you follow your plan?", placeholder: "Yes/No and explain...", type: "textarea" },
-    ],
-    isPremade: true,
-  },
-  {
-    name: "Quick Notes",
-    description: "Simple freeform notes for fast journaling",
-    icon: "Zap",
-    color: "yellow",
-    prompts: [{ id: "notes", label: "Trade Notes", placeholder: "Write your thoughts about this trade...", type: "textarea" }],
-    isPremade: true,
-  },
-  {
-    name: "Setup Analysis",
-    description: "Analyze your entry and exit decisions",
-    icon: "Target",
-    color: "green",
-    prompts: [
-      { id: "entry_reason", label: "Entry Reason", placeholder: "Why did you enter this trade?", type: "textarea" },
-      { id: "exit_reason", label: "Exit Reason", placeholder: "Why did you exit?", type: "textarea" },
-      { id: "setup_grade", label: "Setup Quality (1-10)", placeholder: "Rate your setup...", type: "text" },
-      { id: "would_take_again", label: "Would you take this trade again?", placeholder: "Yes/No and why...", type: "textarea" },
-    ],
-    isPremade: true,
-  },
-  {
-    name: "Emotional Check",
-    description: "Track your mindset and emotions",
-    icon: "Heart",
-    color: "pink",
-    prompts: [
-      { id: "mindset_before", label: "Mindset before trade", placeholder: "How were you feeling before entering?", type: "textarea" },
-      { id: "emotions_during", label: "Emotions during trade", placeholder: "What emotions came up while in the trade?", type: "textarea" },
-      { id: "mindset_after", label: "Mindset after trade", placeholder: "How do you feel about the outcome?", type: "textarea" },
-      { id: "confidence", label: "Confidence level (1-10)", placeholder: "Rate your confidence...", type: "text" },
-    ],
-    isPremade: true,
-  },
-];
-
-const demoTrades: Trade[] = [
-  { id: "demo-1", date: new Date().toISOString().split("T")[0], EntryTime: "09:32:00", ExitTime: "10:45:00", Profit: 280.98, Item: "XAUUSD", symbol: "XAUUSD", Type: "Short", side: "Short", strategy: "Breakout", entryPrice: "2672.2", exitPrice: "2662.764", quantity: 0.3, stopLoss: 2700, takeProfit: 2650, fees: 2.1, swap: 0, jrData: { sentiment: "great", tradeRating: 5, tags: ["Perfect Setup", "Followed Plan"] } },
-  { id: "demo-2", date: new Date().toISOString().split("T")[0], EntryTime: "10:15:00", ExitTime: "11:30:00", Profit: -380, Item: "TSLA", symbol: "TSLA", Type: "Short", side: "Short", strategy: "Breakout", entryPrice: "245.80", exitPrice: "248.10", quantity: 100, fees: 1.5 },
-  { id: "demo-3", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "11:45:00", ExitTime: "14:20:00", Profit: 890, Item: "NVDA", symbol: "NVDA", Type: "Long", side: "Long", strategy: "Scalping", entryPrice: "485.20", exitPrice: "492.75", quantity: 50, jrData: { sentiment: "okay", tradeRating: 4 } },
-  { id: "demo-4", date: new Date(Date.now() - 86400000).toISOString().split("T")[0], EntryTime: "14:20:00", ExitTime: "15:30:00", Profit: -520, Item: "MSFT", symbol: "MSFT", Type: "Long", side: "Long", strategy: "Swing", entryPrice: "378.90", exitPrice: "375.40", quantity: 25 },
-  { id: "demo-5", date: new Date(Date.now() - 2 * 86400000).toISOString().split("T")[0], EntryTime: "09:55:00", ExitTime: "12:10:00", Profit: 2100, Item: "META", symbol: "META", Type: "Long", side: "Long", strategy: "Reversal", entryPrice: "312.50", exitPrice: "324.80", quantity: 75, jrData: { sentiment: "great", tradeRating: 5, tags: ["News Play"] } },
-  { id: "demo-6", date: new Date(Date.now() - 3 * 86400000).toISOString().split("T")[0], EntryTime: "13:10:00", ExitTime: "14:45:00", Profit: 450, Item: "GOOGL", symbol: "GOOGL", Type: "Short", side: "Short", strategy: "Momentum", entryPrice: "141.20", exitPrice: "138.95", quantity: 100 },
-];
 
 const commonTags = ["FOMO", "Perfect Setup", "Revenge Trade", "Followed Plan", "Overtraded", "Early Exit", "Late Entry", "News Play", "Gap Fill", "Trend Follow"];
 
@@ -200,8 +142,8 @@ const DailyJournal = () => {
   const { currency, exchangeRate } = useCurrencyStore();
   const tokenn = Cookies.get("Trace Your Trades") || "";
 
-  const [trades, setTrades] = useState<Trade[]>(demoTrades);
-  const [templates, setTemplates] = useState<Template[]>(demoTemplates);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [isDemo, setIsDemo] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [selectedTradeIndex, setSelectedTradeIndex] = useState(0);
@@ -264,7 +206,7 @@ const DailyJournal = () => {
           if (data.data?.length) setTemplates(data.data);
         }
       } catch {
-        setTemplates(demoTemplates);
+        setTemplates([]);
       }
     };
     fetchTemplates();

@@ -16,150 +16,6 @@ interface Account {
   [key: string]: any;
 }
 
-const generateDemoTradeData = () => {
-  const trades = [];
-  const symbols = [
-    "AAPL",
-    "TSLA",
-    "NVDA",
-    "MSFT",
-    "GOOGL",
-    "AMZN",
-    "META",
-    "SPY",
-    "QQQ",
-  ];
-  const strategies = ["Momentum", "Breakout", "Reversal", "Scalping", "Swing"];
-  const tradingHours = ["09", "10", "11", "12", "13", "14", "15"];
-
-  // Recent trading days (last 30 days from Dec 2024 - use past dates for API compatibility)
-  // 20 trading days spread across Nov-Dec 2024
-  const tradingDays = [
-    "2024-11-11",
-    "2024-11-12",
-    "2024-11-13",
-    "2024-11-14",
-    "2024-11-15",
-    "2024-11-18",
-    "2024-11-19",
-    "2024-11-20",
-    "2024-11-21",
-    "2024-11-22",
-    "2024-11-25",
-    "2024-11-26",
-    "2024-11-27",
-    "2024-11-29",
-    "2024-12-02",
-    "2024-12-03",
-    "2024-12-04",
-    "2024-12-05",
-    "2024-12-06",
-    "2024-12-09",
-  ];
-
-  // Target: $6,567 profit, 67% win rate over 20 trading days
-  // ~30 trades total: 20 wins, 10 losses = 67% win rate
-  const totalTrades = 30;
-  const winCount = 20;
-  const lossCount = 10;
-
-  // Calculate average win/loss to hit $6,567 profit
-  // If avg win = $450 and avg loss = $350: 20*450 - 10*350 = 9000 - 3500 = $5,500
-  // Adjust: avg win = $480, avg loss = $330: 20*480 - 10*330 = 9600 - 3300 = $6,300 (close)
-  const avgWin = 490;
-  const avgLoss = 310;
-
-  const winProfits = Array(winCount)
-    .fill(0)
-    .map(() => Math.floor(avgWin + (Math.random() - 0.5) * 300));
-  const lossProfits = Array(lossCount)
-    .fill(0)
-    .map(() => -Math.floor(avgLoss + (Math.random() - 0.5) * 200));
-
-  // Adjust last win to hit target of $6,567
-  const currentTotal =
-    winProfits.reduce((a, b) => a + b, 0) +
-    lossProfits.reduce((a, b) => a + b, 0);
-  const adjustment = 6567 - currentTotal;
-  winProfits[winProfits.length - 1] += adjustment;
-
-  const allProfits = [...winProfits, ...lossProfits];
-
-  // Shuffle and distribute across trading days
-  for (let i = allProfits.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allProfits[i], allProfits[j]] = [allProfits[j], allProfits[i]];
-  }
-
-  for (let i = 0; i < totalTrades; i++) {
-    const dateStr = tradingDays[i % tradingDays.length];
-    const profit = allProfits[i];
-    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-    const hour = tradingHours[Math.floor(Math.random() * tradingHours.length)];
-    const minute = Math.floor(Math.random() * 60)
-      .toString()
-      .padStart(2, "0");
-
-    const durationMins = Math.floor(Math.random() * 120) + 5;
-    const exitHour = parseInt(hour) + Math.floor((parseInt(minute) + durationMins) / 60);
-    const exitMinute = ((parseInt(minute) + durationMins) % 60).toString().padStart(2, "0");
-    
-    trades.push({
-      date: dateStr,
-      symbol: symbol,
-      Item: symbol,
-      Profit: profit,
-      strategy: strategies[Math.floor(Math.random() * strategies.length)],
-      entryPrice: (Math.random() * 500 + 50).toFixed(2),
-      exitPrice: (Math.random() * 500 + 50).toFixed(2),
-      quantity: Math.floor(Math.random() * 100) + 10,
-      side: Math.random() > 0.5 ? "Long" : "Short",
-      Type: Math.random() > 0.5 ? "Long" : "Short",
-      duration: `${durationMins}m`,
-      EntryTime: `${hour}:${minute}:00`,
-      ExitTime: `${Math.min(exitHour, 16)}:${exitMinute}:00`,
-    });
-  }
-  return trades;
-};
-
-const demoAccounts: Account[] = [
-  {
-    checked: true,
-    accountName: "Demo Trading Account",
-    accountId: "demo-001",
-    accountBalance: 17672,
-    accountType: "Paper Trading",
-    broker: "Demo Broker",
-    description: "Demo account for UI preview",
-    isPropFirm: false,
-    tradeData: generateDemoTradeData(),
-  },
-  {
-    checked: true,
-    accountName: "FTMO Challenge",
-    accountId: "demo-002",
-    accountBalance: 50000,
-    accountType: "Manual",
-    broker: "FTMO",
-    description: "Prop firm challenge account",
-    isPropFirm: true,
-    tradeData: generateDemoTradeData(),
-  },
-];
-
-const demoProfileData = {
-  uniqueId: "demo-user",
-  fullName: "Demo Trader",
-  email: "demo@example.com",
-  accountValue: 17672,
-};
-
-const demoStrategies = [
-  { name: "Momentum", winRate: 71, trades: 14, profit: 3200 },
-  { name: "Breakout", winRate: 62, trades: 10, profit: 1850 },
-  { name: "Reversal", winRate: 67, trades: 6, profit: 1517 },
-];
 
 interface ProfileData {
   uniqueId?: string;
@@ -282,36 +138,18 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       }
     } catch (error) {
       console.error("setAccounts: Error fetching accounts:", error);
+      set({
+        accounts: [],
+        profileData: {},
+        selectedAccounts: [],
+        strategies: [],
+        error: "Session expired. Please login again.",
+        loading: false,
+      });
 
-      // In development, load demo data for UI preview
-      if (process.env.NODE_ENV === "development") {
-        console.log("setAccounts: Loading demo data for development preview");
-        set({
-          accounts: demoAccounts,
-          profileData: demoProfileData,
-          selectedAccounts: demoAccounts,
-          strategies: demoStrategies,
-          error: null,
-          loading: false,
-        });
-      } else {
-        // In production, redirect to login on authentication failure
-        console.error(
-          "setAccounts: Authentication failed, redirecting to login",
-        );
-        set({
-          accounts: [],
-          profileData: {},
-          selectedAccounts: [],
-          strategies: [],
-          error: "Session expired. Please login again.",
-          loading: false,
-        });
-
-        // Redirect to login page
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
+      // Redirect to login page
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
       }
     }
   },
