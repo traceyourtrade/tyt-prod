@@ -3284,15 +3284,15 @@ export default function FullscreenBacktesting({
               <>
                 <button
                   onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'buy' })); setShowQuickOrderDialog(true); }}
-                  className="bt-float-trade-btn buy"
+                  className="bt-float-trade-btn long"
                 >
-                  Buy
+                  Long
                 </button>
                 <button
                   onClick={() => { setQuickOrderData(prev => ({ ...prev, side: 'sell' })); setShowQuickOrderDialog(true); }}
-                  className="bt-float-trade-btn sell"
+                  className="bt-float-trade-btn short"
                 >
-                  Sell
+                  Short
                 </button>
               </>
             )}

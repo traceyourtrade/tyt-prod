@@ -1051,24 +1051,28 @@
   letter-spacing: 0.05em;
 }
 
-.bt-float-trade-btn.buy {
+.bt-float-trade-btn.buy,
+.bt-float-trade-btn.long {
   background: linear-gradient(135deg, var(--bt-profit) 0%, #059669 100%);
   color: white;
   box-shadow: 0 4px 12px var(--bt-profit-glow);
 }
 
-.bt-float-trade-btn.buy:hover:not(:disabled) {
+.bt-float-trade-btn.buy:hover:not(:disabled),
+.bt-float-trade-btn.long:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--bt-profit-glow);
 }
 
-.bt-float-trade-btn.sell {
+.bt-float-trade-btn.sell,
+.bt-float-trade-btn.short {
   background: linear-gradient(135deg, var(--bt-loss) 0%, #dc2626 100%);
   color: white;
   box-shadow: 0 4px 12px var(--bt-loss-glow);
 }
 
-.bt-float-trade-btn.sell:hover:not(:disabled) {
+.bt-float-trade-btn.sell:hover:not(:disabled),
+.bt-float-trade-btn.short:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--bt-loss-glow);
 }
