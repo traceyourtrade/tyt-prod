@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,12 +15,32 @@ interface Props {
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function PerformanceCalendar({ trades, initialBalance }: Props) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const firstTradeDate = useMemo(() => {
+    if (trades.length === 0) return new Date();
+    
+    const sortedTrades = [...trades].sort((a, b) => {
+      const dateA = new Date(a.openedAt ?? a.closedAt ?? Date.now()).getTime();
+      const dateB = new Date(b.openedAt ?? b.closedAt ?? Date.now()).getTime();
+      return dateA - dateB;
+    });
+    
+    const firstTrade = sortedTrades[0];
+    const tradeDate = new Date(firstTrade.openedAt ?? firstTrade.closedAt ?? Date.now());
+    return isNaN(tradeDate.getTime()) ? new Date() : tradeDate;
+  }, [trades]);
+
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [displayMode, setDisplayMode] = useState<'dollar' | 'percent'>('dollar');
 
+  useEffect(() => {
+    setCurrentDate(null);
+  }, [trades]);
+
+  const effectiveDate = currentDate ?? firstTradeDate;
+
   const calendarData = useMemo(() => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const year = effectiveDate.getFullYear();
+    const month = effectiveDate.getMonth();
     
     const firstDayOfMonth = new Date(year, month, 1);
     
@@ -51,26 +71,26 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
     }
 
     return result;
-  }, [currentDate, trades]);
+  }, [effectiveDate, trades]);
 
   const prevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    setCurrentDate(new Date(effectiveDate.getFullYear(), effectiveDate.getMonth() - 1, 1));
   };
 
   const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    setCurrentDate(new Date(effectiveDate.getFullYear(), effectiveDate.getMonth() + 1, 1));
   };
 
   const prevYear = () => {
-    setCurrentDate(new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1));
+    setCurrentDate(new Date(effectiveDate.getFullYear() - 1, effectiveDate.getMonth(), 1));
   };
 
   const nextYear = () => {
-    setCurrentDate(new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), 1));
+    setCurrentDate(new Date(effectiveDate.getFullYear() + 1, effectiveDate.getMonth(), 1));
   };
 
-  const monthName = currentDate.toLocaleString('default', { month: 'long' });
-  const year = currentDate.getFullYear();
+  const monthName = effectiveDate.toLocaleString('default', { month: 'long' });
+  const year = effectiveDate.getFullYear();
 
   // Calculate month summary
   const monthlyPnl = calendarData
