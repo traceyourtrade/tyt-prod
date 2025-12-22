@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Megaphone } from "lucide-react";
+import { X, Sparkles } from "lucide-react";
 
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || "";
 
@@ -34,22 +34,36 @@ export default function AnnouncementBanner() {
             {showBanner && (
                 <motion.div
                     key="announcement-banner"
-                    initial={{ y: -50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -50, opacity: 0 }}
-                    className="bg-gradient-to-r from-[#1FA4A5] to-[#50D1B2] text-white px-4 py-3"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
                 >
-                    <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <Megaphone size={18} />
-                            <p className="text-sm font-medium">{banner}</p>
+                    <div className="relative bg-gradient-to-r from-[#0c1222]/90 via-[#0f1729]/90 to-[#0c1222]/90 backdrop-blur-xl border-b border-[#4EBF94]/20">
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#4EBF94]/5 via-violet-500/5 to-blue-500/5" />
+                        <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[#4EBF94] via-emerald-400 to-[#4EBF94]" />
+                        <div className="absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-[#4EBF94]/10 to-transparent" />
+                        
+                        <div className="relative max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 lg:px-6 py-2.5">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex-shrink-0 w-6 h-6 rounded-md bg-gradient-to-br from-[#4EBF94]/20 to-emerald-500/10 flex items-center justify-center ring-1 ring-[#4EBF94]/30">
+                                    <Sparkles className="w-3.5 h-3.5 text-[#4EBF94]" />
+                                </div>
+                                <p className="text-[13px] text-foreground/90 font-medium truncate">
+                                    {banner}
+                                </p>
+                            </div>
+                            
+                            <motion.button
+                                onClick={() => setDismissed(true)}
+                                className="flex-shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-200"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                            >
+                                <X className="w-4 h-4" />
+                            </motion.button>
                         </div>
-                        <button
-                            onClick={() => setDismissed(true)}
-                            className="p-1 hover:bg-white/20 rounded transition-colors"
-                        >
-                            <X size={16} />
-                        </button>
                     </div>
                 </motion.div>
             )}
