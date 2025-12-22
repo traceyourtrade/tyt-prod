@@ -38,6 +38,8 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Broker Auto-Sync:** Feature for automatic trade import from supported brokers.
 - **Support Page:** Comprehensive help center with FAQs and a contact form.
 - **Backtesting Module:** Full-screen TradingView-powered chart for historical market simulation, with replay controls, trade placement, real-time P&L tracking, and session analytics. It includes persistent chart layouts, drawings, indicators, and a favorites toolbar saved per session.
+- **Affiliate Program:** User-facing affiliate dashboard at `/affiliate` where users can join the program, get unique referral links, track referrals, and view commissions. Admin APIs support managing affiliates and creating personalized coupon codes. Uses `ADMIN_API_KEY` for admin endpoint authentication.
+- **Announcement Banner:** Global banner component fetching from admin API to display announcements and maintenance mode overlays.
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for routes, components, utilities, database models, state management, and type definitions.
