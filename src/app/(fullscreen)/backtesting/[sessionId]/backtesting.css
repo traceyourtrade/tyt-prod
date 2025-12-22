@@ -2277,13 +2277,7 @@
    STATUS BAR
    ===================================================== */
 .bt-status-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 48px;
-  padding: 0 16px;
-  background: var(--bt-bg-elevated);
-  border-top: 1px solid var(--bt-border-subtle);
+  display: none;
 }
 
 .bt-status-left {

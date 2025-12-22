@@ -3316,72 +3316,6 @@ export default function FullscreenBacktesting({
         </div>
       </main>
 
-      <footer className="bt-status-bar">
-        <div className="bt-status-left">
-          <div className="bt-status-drag">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="8" cy="6" r="2"/>
-              <circle cx="16" cy="6" r="2"/>
-              <circle cx="8" cy="12" r="2"/>
-              <circle cx="16" cy="12" r="2"/>
-              <circle cx="8" cy="18" r="2"/>
-              <circle cx="16" cy="18" r="2"/>
-            </svg>
-          </div>
-          <button className="bt-status-analytics">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3v18h18"/>
-              <path d="M18 9l-5 5-4-4-3 3"/>
-            </svg>
-            Analytics
-          </button>
-        </div>
-        
-        <div className="bt-status-center">
-          <div className="bt-status-item">
-            <span className="bt-status-label">Account Balance:</span>
-            <span className="bt-status-value">${totalBalance.toFixed(2)}</span>
-          </div>
-          <div className="bt-status-item">
-            <span className="bt-status-label">Realized PnL:</span>
-            <span className={`bt-status-value ${tradingState.realisedPL >= 0 ? 'profit' : 'loss'}`}>
-              {tradingState.realisedPL >= 0 ? '' : '-'}${Math.abs(tradingState.realisedPL).toFixed(2)}
-            </span>
-          </div>
-          <div className="bt-status-item">
-            <span className="bt-status-label">Unrealized PnL:</span>
-            <span className={`bt-status-value ${tradingState.unrealisedPL >= 0 ? 'profit' : 'loss'}`}>
-              ${tradingState.unrealisedPL.toFixed(2)}
-            </span>
-          </div>
-        </div>
-        
-        <div className="bt-status-right">
-          <button className="bt-status-icon" onClick={() => router.push("/backtesting/dashboard")} title="Exit to Dashboard">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
-          <button 
-            className="bt-status-icon" 
-            onClick={() => {
-              if (document.fullscreenElement) {
-                document.exitFullscreen();
-              } else {
-                document.documentElement.requestFullscreen();
-              }
-            }}
-            title="Toggle Fullscreen"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
-            </svg>
-          </button>
-        </div>
-      </footer>
-
       {/* Bottom Drawer Panel */}
       <div 
         className={`bt-bottom-drawer ${isDrawerResizing ? 'resizing' : ''} ${isDrawerCollapsed ? 'collapsed' : ''}`}
@@ -3446,10 +3380,46 @@ export default function FullscreenBacktesting({
           <div className="bt-drawer-actions">
             <button 
               className="bt-drawer-toggle-btn" 
+              onClick={() => router.push('/backtesting/sessions')}
+              title="Analytics"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3v18h18"/>
+                <path d="M18 9l-5 5-4-4-3 3"/>
+              </svg>
+            </button>
+            <button 
+              className="bt-drawer-toggle-btn" 
+              onClick={() => {
+                if (document.fullscreenElement) {
+                  document.exitFullscreen();
+                } else {
+                  document.documentElement.requestFullscreen();
+                }
+              }}
+              title="Fullscreen"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+              </svg>
+            </button>
+            <button 
+              className="bt-drawer-toggle-btn" 
+              onClick={() => router.push("/backtesting/dashboard")}
+              title="Exit"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
+            <button 
+              className="bt-drawer-toggle-btn" 
               onClick={() => setIsDrawerCollapsed(!isDrawerCollapsed)}
               title={isDrawerCollapsed ? "Expand panel" : "Collapse panel"}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 {isDrawerCollapsed ? (
                   <path d="M18 15l-6-6-6 6"/>
                 ) : (
