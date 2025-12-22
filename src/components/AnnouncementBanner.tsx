@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles } from "lucide-react";
+import { X, Sparkles, Wrench } from "lucide-react";
 
 const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || "";
 
 export default function AnnouncementBanner() {
     const [banner, setBanner] = useState<string | null>(null);
+    const [maintenanceMode, setMaintenanceMode] = useState(false);
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
@@ -17,7 +18,10 @@ export default function AnnouncementBanner() {
                 const res = await fetch(`${ADMIN_API_URL}/api/settings/banner`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                if (data.active && data.banner) {
+                
+                if (data.maintenanceMode) {
+                    setMaintenanceMode(true);
+                } else if (data.active && data.banner) {
                     setBanner(data.banner);
                 }
             } catch (error) {
@@ -26,6 +30,50 @@ export default function AnnouncementBanner() {
         }
         fetchBanner();
     }, []);
+
+    if (maintenanceMode) {
+        return (
+            <div className="fixed inset-0 z-[9999] bg-[#060914] flex items-center justify-center">
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[120px]" />
+                    <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px]" />
+                </div>
+                
+                <motion.div
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="relative text-center px-6"
+                >
+                    <motion.div 
+                        className="w-24 h-24 mx-auto mb-8 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center border border-amber-500/30 shadow-2xl shadow-amber-500/10"
+                        animate={{ rotate: [0, -5, 5, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                        <Wrench className="w-12 h-12 text-amber-400" />
+                    </motion.div>
+                    
+                    <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
+                        Under Maintenance
+                    </h1>
+                    <p className="text-gray-400 max-w-md text-lg leading-relaxed">
+                        We're performing scheduled maintenance to improve your experience. 
+                        Please check back shortly.
+                    </p>
+                    
+                    <motion.div 
+                        className="mt-8 flex items-center justify-center gap-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                    >
+                        <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                        <span className="text-sm text-amber-400/80 font-medium">Working on it...</span>
+                    </motion.div>
+                </motion.div>
+            </div>
+        );
+    }
 
     const showBanner = banner && !dismissed;
 
