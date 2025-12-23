@@ -797,7 +797,10 @@ export default function FullscreenBacktesting({
         
         try {
           const toTs = Math.floor(new Date(session.toDate).getTime() / 1000);
-          const fromTs = Math.floor(new Date(session.fromDate).getTime() / 1000);
+          const fullFromTs = Math.floor(new Date(session.fromDate).getTime() / 1000);
+          // Limit preload to last 3 months for faster background loading
+          const threeMonthsAgo = toTs - (90 * 24 * 60 * 60);
+          const fromTs = Math.max(fullFromTs, threeMonthsAgo);
           const apiUrl = `/api/backtest/bars?market=${session.market || 'FOREX'}&symbol=${session.symbol}&resolution=${tf}&to=${toTs}&from=${fromTs}`;
           
           const response = await fetch(apiUrl);
@@ -1090,7 +1093,13 @@ export default function FullscreenBacktesting({
       targetTimestampRef.current = null;
       
       const toTs = Math.floor(new Date(toDate).getTime() / 1000);
-      const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
+      const fullFromTs = Math.floor(new Date(fromDate).getTime() / 1000);
+      
+      // Limit initial load to last 3 months for faster loading
+      // Users can scroll back to load more historical data via getBars
+      const threeMonthsAgo = toTs - (90 * 24 * 60 * 60); // 90 days in seconds
+      const fromTs = Math.max(fullFromTs, threeMonthsAgo);
+      
       const market = sessionData.market || 'FOREX';
       const rawSymbol = sessionData.symbol;
       
