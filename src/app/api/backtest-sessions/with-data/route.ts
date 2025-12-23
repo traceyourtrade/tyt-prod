@@ -68,23 +68,42 @@ export async function GET(req: NextRequest) {
     const market = sessionData.market;
     const symbol = sessionData.symbol;
     
-    // Calculate 16-month window: 8 months before and 8 months after session fromDate
-    // This keeps initial load fast while providing historical context
+    // Resolution-based window sizing for faster initial loads
+    // Intraday: smaller windows, Daily+: larger windows
+    const getWindowMonths = (res: string): number => {
+      // Handle numeric resolutions (minutes) - any resolution < 1440 is intraday
+      const numericRes = parseInt(res, 10);
+      if (!isNaN(numericRes) && numericRes < 1440) {
+        // Very short timeframes (1-15 min): 1 month each side
+        if (numericRes <= 15) return 1;
+        // Medium timeframes (30-240 min): 2 months each side
+        return 2;
+      }
+      // Daily, Weekly, Monthly: 8 months each side (16 months total)
+      return 8;
+    };
+    
+    const windowMonths = getWindowMonths(resolution);
     const sessionFromDate = new Date(sessionData.fromDate);
-    const eightMonthsBeforeDate = new Date(sessionFromDate);
-    eightMonthsBeforeDate.setMonth(eightMonthsBeforeDate.getMonth() - 8);
-    if (eightMonthsBeforeDate.getDate() !== sessionFromDate.getDate()) {
-      eightMonthsBeforeDate.setDate(0);
-    }
-    const eightMonthsAfterDate = new Date(sessionFromDate);
-    const originalDay = eightMonthsAfterDate.getDate();
-    eightMonthsAfterDate.setMonth(eightMonthsAfterDate.getMonth() + 8);
-    if (eightMonthsAfterDate.getDate() !== originalDay) {
-      eightMonthsAfterDate.setDate(0);
+    
+    // Calculate window start date
+    const windowStartDate = new Date(sessionFromDate);
+    const startOriginalDay = windowStartDate.getDate();
+    windowStartDate.setMonth(windowStartDate.getMonth() - windowMonths);
+    if (windowStartDate.getDate() !== startOriginalDay) {
+      windowStartDate.setDate(0);
     }
     
-    const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
-    const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
+    // Calculate window end date
+    const windowEndDate = new Date(sessionFromDate);
+    const endOriginalDay = windowEndDate.getDate();
+    windowEndDate.setMonth(windowEndDate.getMonth() + windowMonths);
+    if (windowEndDate.getDate() !== endOriginalDay) {
+      windowEndDate.setDate(0);
+    }
+    
+    const fromTs = Math.floor(windowStartDate.getTime() / 1000);
+    const toTs = Math.floor(windowEndDate.getTime() / 1000);
 
     const resolutionMap: Record<string, string> = {
       '1D': 'D',

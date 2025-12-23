@@ -120,6 +120,21 @@ const addMonths = (date: Date, months: number): Date => {
   return result;
 };
 
+// Resolution-based window sizing for faster initial loads
+// Intraday: smaller windows, Daily+: larger windows
+const getWindowMonths = (resolution: string): number => {
+  // Handle numeric resolutions (minutes) - any resolution < 1440 is intraday
+  const numericRes = parseInt(resolution, 10);
+  if (!isNaN(numericRes) && numericRes < 1440) {
+    // Very short timeframes (1-15 min): 1 month each side
+    if (numericRes <= 15) return 1;
+    // Medium timeframes (30-240 min): 2 months each side
+    return 2;
+  }
+  // Daily, Weekly, Monthly: 8 months each side (16 months total)
+  return 8;
+};
+
 const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
   if (market === 'CRYPTO') {
     return `ProJournX:${symbol}`;
@@ -720,12 +735,13 @@ export default function FullscreenBacktesting({
             
             // Cache bars for this resolution and track loaded range
             barsCacheRef.current[result.resolution] = bars;
-            // Calculate the 16-month window (8 months before and 8 months after session fromDate)
+            // Calculate window based on resolution (smaller for intraday, larger for daily+)
             const sessionFromDate = new Date(sessionResult.fromDate);
-            const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
-            const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
-            const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
-            const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
+            const windowMonths = getWindowMonths(result.resolution);
+            const windowStartDate = subMonths(sessionFromDate, windowMonths);
+            const windowEndDate = addMonths(sessionFromDate, windowMonths);
+            const fromTs = Math.floor(windowStartDate.getTime() / 1000);
+            const toTs = Math.floor(windowEndDate.getTime() / 1000);
             loadedRangeRef.current[result.resolution] = { from: fromTs, to: toTs };
             lastSessionKeyRef.current = `${sessionResult.symbol}-${sessionResult.market}-${sessionResult.fromDate}-${sessionResult.toDate}`;
             
@@ -825,12 +841,13 @@ export default function FullscreenBacktesting({
         if (tf === currentTf || barsCacheRef.current[tf]) continue;
         
         try {
-          // Load 16-month window: 8 months before and 8 months after session fromDate
+          // Load window based on resolution (smaller for intraday, larger for daily+)
           const sessionFromDate = new Date(session.fromDate);
-          const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
-          const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
-          const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
-          const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
+          const windowMonths = getWindowMonths(tf);
+          const windowStartDate = subMonths(sessionFromDate, windowMonths);
+          const windowEndDate = addMonths(sessionFromDate, windowMonths);
+          const fromTs = Math.floor(windowStartDate.getTime() / 1000);
+          const toTs = Math.floor(windowEndDate.getTime() / 1000);
           const apiUrl = `/api/backtest/bars?market=${session.market || 'FOREX'}&symbol=${session.symbol}&resolution=${tf}&to=${toTs}&from=${fromTs}`;
           
           const response = await fetch(apiUrl);
@@ -923,12 +940,13 @@ export default function FullscreenBacktesting({
     console.log('Fetching bars for resolution:', resolution);
     
     try {
-      // Load 16-month window: 8 months before and 8 months after session fromDate
+      // Load window based on resolution (smaller for intraday, larger for daily+)
       const sessionFromDate = new Date(fromDate);
-      const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
-      const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
-      const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
-      const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
+      const windowMonths = getWindowMonths(resolution);
+      const windowStartDate = subMonths(sessionFromDate, windowMonths);
+      const windowEndDate = addMonths(sessionFromDate, windowMonths);
+      const fromTs = Math.floor(windowStartDate.getTime() / 1000);
+      const toTs = Math.floor(windowEndDate.getTime() / 1000);
       const market = session.market || 'FOREX';
       const rawSymbol = session.symbol;
       
@@ -1220,14 +1238,14 @@ export default function FullscreenBacktesting({
       const savedTimestamp = targetTimestampRef.current;
       targetTimestampRef.current = null;
       
-      // Load 16-month window: 8 months before and 8 months after session fromDate
-      // This keeps initial load fast while providing historical context
+      // Load window based on resolution (smaller for intraday, larger for daily+)
       // Users can scroll beyond this window to load more data dynamically
       const sessionFromDate = new Date(sessionData.fromDate);
-      const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
-      const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
-      const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
-      const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
+      const windowMonths = getWindowMonths(resolution);
+      const windowStartDate = subMonths(sessionFromDate, windowMonths);
+      const windowEndDate = addMonths(sessionFromDate, windowMonths);
+      const fromTs = Math.floor(windowStartDate.getTime() / 1000);
+      const toTs = Math.floor(windowEndDate.getTime() / 1000);
       
       const market = sessionData.market || 'FOREX';
       const rawSymbol = sessionData.symbol;
