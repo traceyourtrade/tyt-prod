@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
     
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, max-age=60'
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=600'
       }
     });
 

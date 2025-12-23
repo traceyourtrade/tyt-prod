@@ -665,23 +665,73 @@ export default function FullscreenBacktesting({
   // Boolean flag for widget effect - only triggers when bars go from empty to having data
   const hasBarsData = allBars.length > 0;
 
-  // Fetch session data on mount
+  // Fetch session data AND initial bars in one request for faster load
   useEffect(() => {
-    const fetchSession = async () => {
+    const fetchSessionWithData = async () => {
       try {
         setSessionLoading(true);
-        const res = await fetch(`/api/backtest-sessions?sessionId=${sessionId}`);
+        setIsLoading(true);
+        
+        // Use combined endpoint that fetches session + bars in one request
+        const res = await fetch(`/api/backtest-sessions/with-data?sessionId=${sessionId}&resolution=${currentIntervalRef.current}`);
         const result = await res.json();
-        if (result.success && result.data) {
-          setSessionData(result.data);
+        
+        if (result.success && result.session) {
+          const sessionResult = result.session;
+          setSessionData(sessionResult);
+          
+          // Process bars data if available
+          if (result.bars && result.bars.s === 'ok' && result.bars.t && result.bars.t.length > 0) {
+            const bars = result.bars.t.map((time: number, i: number) => ({
+              time: time * 1000,
+              open: result.bars.o[i],
+              high: result.bars.h[i],
+              low: result.bars.l[i],
+              close: result.bars.c[i],
+              volume: result.bars.v?.[i] || 0,
+            }));
+            
+            // Set decimal places based on instrument type
+            const symbolDecimalPlaces = getDecimalPlaces(sessionResult.symbol, sessionResult.market);
+            setDecimalPlaces(symbolDecimalPlaces);
+            
+            // Cache bars for this resolution
+            barsCacheRef.current[result.resolution] = bars;
+            lastSessionKeyRef.current = `${sessionResult.symbol}-${sessionResult.market}-${sessionResult.fromDate}-${sessionResult.toDate}`;
+            
+            setAllBars(bars);
+            
+            // Calculate initial bar index
+            let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+            const sessionHasTrades = sessionResult.trades && sessionResult.trades.length > 0;
+            const targetTs = sessionHasTrades ? sessionResult.progressPointer : null;
+            
+            if (targetTs) {
+              for (let i = bars.length - 1; i >= 0; i--) {
+                if (bars[i].time <= targetTs) {
+                  newIndex = i;
+                  break;
+                }
+              }
+            } else {
+              const fromTimestamp = new Date(sessionResult.fromDate).getTime();
+              for (let i = 0; i < bars.length; i++) {
+                if (bars[i].time >= fromTimestamp) {
+                  newIndex = i;
+                  break;
+                }
+              }
+            }
+            setCurrentBarIndex(newIndex, bars, false);
+          }
           
           // Load existing trades from session
-          if (result.data.trades && result.data.trades.length > 0) {
+          if (sessionResult.trades && sessionResult.trades.length > 0) {
             let totalPnl = 0;
             const closedTrades: any[] = [];
             let openTrade: any = null;
             
-            for (const t of result.data.trades) {
+            for (const t of sessionResult.trades) {
               if (t.status === 'closed') {
                 totalPnl += t.pnl || 0;
                 closedTrades.push({
@@ -710,15 +760,19 @@ export default function FullscreenBacktesting({
               }
             }
             
-            // Bulk set trade history (avoids duplicates on refetch)
             dispatch({ type: "SET_TRADE_HISTORY", payload: closedTrades });
             dispatch({ type: "SET_REALISED_PL", payload: totalPnl });
             
-            // Store open trade in ref for restoration after chart loads
             if (openTrade) {
               pendingOpenTradeRef.current = openTrade;
             }
           }
+          
+          // Background preload common timeframes after a short delay
+          setTimeout(() => {
+            preloadCommonTimeframes(sessionResult);
+          }, 2000);
+          
         } else {
           console.error("Session not found");
           router.push('/backtesting/dashboard');
@@ -728,9 +782,48 @@ export default function FullscreenBacktesting({
         router.push('/backtesting/dashboard');
       } finally {
         setSessionLoading(false);
+        setIsLoading(false);
       }
     };
-    fetchSession();
+    
+    // Background preload function for common timeframes
+    const preloadCommonTimeframes = async (session: SessionData) => {
+      const commonTimeframes = ['5', '15', '60', '240'];
+      const currentTf = currentIntervalRef.current;
+      
+      for (const tf of commonTimeframes) {
+        if (tf === currentTf || barsCacheRef.current[tf]) continue;
+        
+        try {
+          const toTs = Math.floor(new Date(session.toDate).getTime() / 1000);
+          const fromTs = Math.floor(new Date(session.fromDate).getTime() / 1000);
+          const apiUrl = `/api/backtest/bars?market=${session.market || 'FOREX'}&symbol=${session.symbol}&resolution=${tf}&to=${toTs}&from=${fromTs}`;
+          
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+          
+          if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+            const bars = data.t.map((time: number, i: number) => ({
+              time: time * 1000,
+              open: data.o[i],
+              high: data.h[i],
+              low: data.l[i],
+              close: data.c[i],
+              volume: data.v?.[i] || 0,
+            }));
+            barsCacheRef.current[tf] = bars;
+            console.log('Preloaded', bars.length, 'bars for timeframe', tf);
+          }
+        } catch (e) {
+          // Silently fail preloading - non-critical
+        }
+        
+        // Small delay between requests to avoid overwhelming the server
+        await new Promise(r => setTimeout(r, 500));
+      }
+    };
+    
+    fetchSessionWithData();
     sessionStartTimeRef.current = Date.now();
   }, [sessionId, router]);
 
@@ -3185,9 +3278,53 @@ export default function FullscreenBacktesting({
   if (sessionLoading) {
     return (
       <div className="bt-container">
-        <div className="bt-loading">
-          <div className="bt-spinner"></div>
-          <span>Loading session...</span>
+        {/* Skeleton Header */}
+        <header className="bt-header-modern">
+          <div className="bt-header-section">
+            <div className="bt-skeleton-pill" style={{ width: 32, height: 32 }} />
+            <div className="bt-skeleton-pill" style={{ width: 180, height: 32 }} />
+            <div className="bt-skeleton-pill" style={{ width: 120, height: 32 }} />
+          </div>
+          <div className="bt-header-section" />
+          <div className="bt-header-section">
+            <div className="bt-skeleton-pill" style={{ width: 100, height: 32 }} />
+          </div>
+        </header>
+        
+        {/* Skeleton Chart Area */}
+        <main className="bt-chart-area" style={{ marginBottom: 48 }}>
+          <div className="bt-chart-wrapper">
+            <div className="bt-chart-skeleton">
+              <div className="bt-skeleton-chart-loading">
+                <div className="bt-spinner"></div>
+                <span>Loading chart...</span>
+              </div>
+              {/* Skeleton candlesticks */}
+              <div className="bt-skeleton-candles">
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <div 
+                    key={i} 
+                    className="bt-skeleton-candle"
+                    style={{ 
+                      height: `${30 + Math.random() * 40}%`,
+                      animationDelay: `${i * 50}ms`
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+        
+        {/* Skeleton Bottom Drawer */}
+        <div className="bt-bottom-drawer collapsed" style={{ height: 48 }}>
+          <div className="bt-drawer-header">
+            <div className="bt-drawer-tabs">
+              <div className="bt-skeleton-pill" style={{ width: 120, height: 24 }} />
+              <div className="bt-skeleton-pill" style={{ width: 120, height: 24 }} />
+              <div className="bt-skeleton-pill" style={{ width: 120, height: 24 }} />
+            </div>
+          </div>
         </div>
       </div>
     );
