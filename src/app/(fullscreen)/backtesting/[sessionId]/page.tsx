@@ -100,6 +100,16 @@ const saveDrawingTemplate = async (sessionId: number, toolName: string, content:
   }
 };
 
+const subMonths = (date: Date, months: number): Date => {
+  const result = new Date(date);
+  const targetMonth = result.getMonth() - months;
+  result.setMonth(targetMonth);
+  if (result.getMonth() !== ((12 + targetMonth % 12) % 12)) {
+    result.setDate(0);
+  }
+  return result;
+};
+
 const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
   if (market === 'CRYPTO') {
     return `ProJournX:${symbol}`;
@@ -797,10 +807,9 @@ export default function FullscreenBacktesting({
         
         try {
           const toTs = Math.floor(new Date(session.toDate).getTime() / 1000);
-          const fullFromTs = Math.floor(new Date(session.fromDate).getTime() / 1000);
-          // Limit preload to last 3 months for faster background loading
-          const threeMonthsAgo = toTs - (90 * 24 * 60 * 60);
-          const fromTs = Math.max(fullFromTs, threeMonthsAgo);
+          // Load from 8 months before session start date (same as initial load)
+          const eightMonthsBeforeDate = subMonths(new Date(session.fromDate), 8);
+          const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
           const apiUrl = `/api/backtest/bars?market=${session.market || 'FOREX'}&symbol=${session.symbol}&resolution=${tf}&to=${toTs}&from=${fromTs}`;
           
           const response = await fetch(apiUrl);
@@ -893,7 +902,9 @@ export default function FullscreenBacktesting({
     
     try {
       const toTs = Math.floor(new Date(toDate).getTime() / 1000);
-      const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
+      // Load from 8 months before session start date for historical context
+      const eightMonthsBeforeDate = subMonths(new Date(fromDate), 8);
+      const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
       const market = session.market || 'FOREX';
       const rawSymbol = session.symbol;
       
@@ -1093,12 +1104,12 @@ export default function FullscreenBacktesting({
       targetTimestampRef.current = null;
       
       const toTs = Math.floor(new Date(toDate).getTime() / 1000);
-      const fullFromTs = Math.floor(new Date(fromDate).getTime() / 1000);
       
-      // Limit initial load to last 3 months for faster loading
-      // Users can scroll back to load more historical data via getBars
-      const threeMonthsAgo = toTs - (90 * 24 * 60 * 60); // 90 days in seconds
-      const fromTs = Math.max(fullFromTs, threeMonthsAgo);
+      // Load data starting from 8 months BEFORE the session's start date
+      // This gives traders historical context before their trading period begins
+      // Users can scroll back further to load more historical data via getBars
+      const eightMonthsBeforeDate = subMonths(new Date(sessionData.fromDate), 8);
+      const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
       
       const market = sessionData.market || 'FOREX';
       const rawSymbol = sessionData.symbol;
