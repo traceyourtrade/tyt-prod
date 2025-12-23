@@ -316,6 +316,7 @@ export default function FullscreenBacktesting({
   };
   
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [decimalPlaces, setDecimalPlaces] = useState(0);
   const [currentInterval, setCurrentInterval] = useState(initialInterval);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -1094,6 +1095,7 @@ export default function FullscreenBacktesting({
       const rawSymbol = sessionData.symbol;
       
       setIsLoading(true);
+      setLoadError(null);
       
       // Only destroy widget on first load, not on resolution change
       const isFirstLoad = Object.keys(barsCacheRef.current).length === 0;
@@ -1106,6 +1108,12 @@ export default function FullscreenBacktesting({
         const apiUrl = `/api/backtest/bars?market=${market}&symbol=${rawSymbol}&resolution=${currentInterval}&to=${toTs}&from=${fromTs}`;
         const response = await fetch(apiUrl);
         const data = await response.json();
+        
+        // Check for API errors
+        if (data.s === 'error') {
+          setLoadError(data.errmsg || 'Failed to load chart data. Please try again.');
+          return;
+        }
         
         if (data && data.s === 'ok' && data.t && data.t.length > 0) {
           let bars = data.t.map((time: number, i: number) => ({
@@ -1246,6 +1254,10 @@ export default function FullscreenBacktesting({
         console.error("Error fetching history from VPS:", error);
         // Don't clear bars on error - keep existing data and allow retry
         isChangingResolutionRef.current = false;
+        // Set error state if this is the first load (no bars cached yet)
+        if (Object.keys(barsCacheRef.current).length === 0) {
+          setLoadError('Connection failed. The market data server may be temporarily unavailable.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -3498,6 +3510,32 @@ export default function FullscreenBacktesting({
             <div className="bt-chart-loading">
               <div className="bt-spinner"></div>
               <span>Loading chart data...</span>
+            </div>
+          )}
+          {!isLoading && loadError && (
+            <div className="bt-chart-error">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 8v4"/>
+                <circle cx="12" cy="16" r="1" fill="currentColor"/>
+              </svg>
+              <span className="bt-error-title">Unable to load chart</span>
+              <span className="bt-error-message">{loadError}</span>
+              <button 
+                className="bt-retry-btn"
+                onClick={() => {
+                  setLoadError(null);
+                  setIsLoading(true);
+                  // Reset widget state to allow re-creation
+                  widgetInitializedRef.current = false;
+                  barsCacheRef.current = {};
+                  // Force re-fetch by updating a dependency
+                  const fetchKey = Date.now();
+                  window.location.reload();
+                }}
+              >
+                Try Again
+              </button>
             </div>
           )}
           <div className="bt-chart" ref={chartContainerRef}></div>
