@@ -110,6 +110,16 @@ const subMonths = (date: Date, months: number): Date => {
   return result;
 };
 
+const addMonths = (date: Date, months: number): Date => {
+  const result = new Date(date);
+  const originalDay = result.getDate();
+  result.setMonth(result.getMonth() + months);
+  if (result.getDate() !== originalDay) {
+    result.setDate(0);
+  }
+  return result;
+};
+
 const symbolToChartFormat = (symbol: string, market?: MarketType): string => {
   if (market === 'CRYPTO') {
     return `ProJournX:${symbol}`;
@@ -287,7 +297,9 @@ export default function FullscreenBacktesting({
   const pendingOpenTradeRef = useRef<any>(null);
   const targetTimestampRef = useRef<number | null>(null);
   const barsCacheRef = useRef<Record<string, any[]>>({});
+  const loadedRangeRef = useRef<Record<string, { from: number; to: number }>>({});
   const pendingCallbacksRef = useRef<Record<string, Array<{ callback: any; periodParams: any }>>>({});
+  const fetchingRangeRef = useRef<Record<string, boolean>>({});
   const isChangingResolutionRef = useRef(false);
   const currentIntervalRef = useRef(initialInterval);
   const lastSessionKeyRef = useRef<string>("");
@@ -706,8 +718,15 @@ export default function FullscreenBacktesting({
             const symbolDecimalPlaces = getDecimalPlaces(sessionResult.symbol, sessionResult.market);
             setDecimalPlaces(symbolDecimalPlaces);
             
-            // Cache bars for this resolution
+            // Cache bars for this resolution and track loaded range
             barsCacheRef.current[result.resolution] = bars;
+            // Calculate the 16-month window (8 months before and 8 months after session fromDate)
+            const sessionFromDate = new Date(sessionResult.fromDate);
+            const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
+            const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
+            const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
+            const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
+            loadedRangeRef.current[result.resolution] = { from: fromTs, to: toTs };
             lastSessionKeyRef.current = `${sessionResult.symbol}-${sessionResult.market}-${sessionResult.fromDate}-${sessionResult.toDate}`;
             
             setAllBars(bars);
@@ -806,10 +825,12 @@ export default function FullscreenBacktesting({
         if (tf === currentTf || barsCacheRef.current[tf]) continue;
         
         try {
-          const toTs = Math.floor(new Date(session.toDate).getTime() / 1000);
-          // Load from 8 months before session start date (same as initial load)
-          const eightMonthsBeforeDate = subMonths(new Date(session.fromDate), 8);
+          // Load 16-month window: 8 months before and 8 months after session fromDate
+          const sessionFromDate = new Date(session.fromDate);
+          const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
+          const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
           const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
+          const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
           const apiUrl = `/api/backtest/bars?market=${session.market || 'FOREX'}&symbol=${session.symbol}&resolution=${tf}&to=${toTs}&from=${fromTs}`;
           
           const response = await fetch(apiUrl);
@@ -825,6 +846,7 @@ export default function FullscreenBacktesting({
               volume: data.v?.[i] || 0,
             }));
             barsCacheRef.current[tf] = bars;
+            loadedRangeRef.current[tf] = { from: fromTs, to: toTs };
             console.log('Preloaded', bars.length, 'bars for timeframe', tf);
           }
         } catch (e) {
@@ -901,10 +923,12 @@ export default function FullscreenBacktesting({
     console.log('Fetching bars for resolution:', resolution);
     
     try {
-      const toTs = Math.floor(new Date(toDate).getTime() / 1000);
-      // Load from 8 months before session start date for historical context
-      const eightMonthsBeforeDate = subMonths(new Date(fromDate), 8);
+      // Load 16-month window: 8 months before and 8 months after session fromDate
+      const sessionFromDate = new Date(fromDate);
+      const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
+      const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
       const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
+      const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
       const market = session.market || 'FOREX';
       const rawSymbol = session.symbol;
       
@@ -926,8 +950,9 @@ export default function FullscreenBacktesting({
         const symbolDecimalPlaces = getDecimalPlaces(rawSymbol, market);
         setDecimalPlaces(symbolDecimalPlaces);
         
-        // Cache the bars for this resolution
+        // Cache the bars for this resolution and track loaded range
         barsCacheRef.current[resolution] = bars;
+        loadedRangeRef.current[resolution] = { from: fromTs, to: toTs };
         console.log('Cached', bars.length, 'bars for resolution', resolution);
         
         // Update React state so playback controls and UI stay in sync
@@ -1003,6 +1028,98 @@ export default function FullscreenBacktesting({
       }
     } finally {
       fetchingResolutionsRef.current.delete(resolution);
+    }
+  };
+
+  // Fetch additional bars when user scrolls beyond loaded range
+  const fetchMoreBars = async (resolution: string, direction: 'back' | 'forward', periodParams: any, callback: any) => {
+    const rangeKey = resolution;
+    if (fetchingRangeRef.current[rangeKey]) {
+      callback([], { noData: true });
+      return;
+    }
+    
+    const session = sessionDataRef.current || sessionData;
+    if (!session) {
+      callback([], { noData: true });
+      return;
+    }
+    
+    fetchingRangeRef.current[rangeKey] = true;
+    const currentRange = loadedRangeRef.current[resolution];
+    
+    try {
+      let fetchFrom: number, fetchTo: number;
+      
+      if (direction === 'back') {
+        // Load 4 more months backwards
+        const currentFromDate = new Date(currentRange.from * 1000);
+        const newFromDate = subMonths(currentFromDate, 4);
+        fetchFrom = Math.floor(newFromDate.getTime() / 1000);
+        fetchTo = currentRange.from;
+      } else {
+        // Load 4 more months forwards
+        const currentToDate = new Date(currentRange.to * 1000);
+        const newToDate = addMonths(currentToDate, 4);
+        fetchFrom = currentRange.to;
+        fetchTo = Math.floor(newToDate.getTime() / 1000);
+      }
+      
+      const market = session.market || 'FOREX';
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${session.symbol}&resolution=${resolution}&to=${fetchTo}&from=${fetchFrom}`;
+      
+      console.log(`Fetching more bars (${direction}):`, { resolution, fetchFrom, fetchTo });
+      
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+        const newBars = data.t.map((time: number, i: number) => ({
+          time: time * 1000,
+          open: data.o[i],
+          high: data.h[i],
+          low: data.l[i],
+          close: data.c[i],
+          volume: data.v?.[i] || 0,
+        }));
+        
+        // Merge with existing cache
+        const existingBars = barsCacheRef.current[resolution] || [];
+        let mergedBars: any[];
+        
+        if (direction === 'back') {
+          // Prepend new bars, remove duplicates
+          const existingTimes = new Set(existingBars.map((b: any) => b.time));
+          const uniqueNewBars = newBars.filter((b: any) => !existingTimes.has(b.time));
+          mergedBars = [...uniqueNewBars, ...existingBars];
+          loadedRangeRef.current[resolution] = { from: fetchFrom, to: currentRange.to };
+        } else {
+          // Append new bars, remove duplicates
+          const existingTimes = new Set(existingBars.map((b: any) => b.time));
+          const uniqueNewBars = newBars.filter((b: any) => !existingTimes.has(b.time));
+          mergedBars = [...existingBars, ...uniqueNewBars];
+          loadedRangeRef.current[resolution] = { from: currentRange.from, to: fetchTo };
+        }
+        
+        // Sort by time
+        mergedBars.sort((a, b) => a.time - b.time);
+        barsCacheRef.current[resolution] = mergedBars;
+        
+        console.log(`Merged bars: ${existingBars.length} + ${newBars.length} = ${mergedBars.length}`);
+        
+        // Filter for requested period
+        const filteredBars = newBars.filter(
+          (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
+        );
+        callback(filteredBars, { noData: filteredBars.length === 0 });
+      } else {
+        callback([], { noData: true });
+      }
+    } catch (error) {
+      console.error('Failed to fetch more bars:', error);
+      callback([], { noData: true });
+    } finally {
+      fetchingRangeRef.current[rangeKey] = false;
     }
   };
 
@@ -1103,13 +1220,14 @@ export default function FullscreenBacktesting({
       const savedTimestamp = targetTimestampRef.current;
       targetTimestampRef.current = null;
       
-      const toTs = Math.floor(new Date(toDate).getTime() / 1000);
-      
-      // Load data starting from 8 months BEFORE the session's start date
-      // This gives traders historical context before their trading period begins
-      // Users can scroll back further to load more historical data via getBars
-      const eightMonthsBeforeDate = subMonths(new Date(sessionData.fromDate), 8);
+      // Load 16-month window: 8 months before and 8 months after session fromDate
+      // This keeps initial load fast while providing historical context
+      // Users can scroll beyond this window to load more data dynamically
+      const sessionFromDate = new Date(sessionData.fromDate);
+      const eightMonthsBeforeDate = subMonths(sessionFromDate, 8);
+      const eightMonthsAfterDate = addMonths(sessionFromDate, 8);
       const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
+      const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
       
       const market = sessionData.market || 'FOREX';
       const rawSymbol = sessionData.symbol;
@@ -1149,8 +1267,9 @@ export default function FullscreenBacktesting({
           const symbolDecimalPlaces = getDecimalPlaces(rawSymbol, market);
           setDecimalPlaces(symbolDecimalPlaces);
           
-          // Cache the bars for this resolution
+          // Cache the bars for this resolution and track loaded range
           barsCacheRef.current[currentInterval] = bars;
+          loadedRangeRef.current[currentInterval] = { from: fromTs, to: toTs };
           
           setAllBars(bars);
           
@@ -1362,6 +1481,27 @@ export default function FullscreenBacktesting({
             : barsForResolution.slice(0, currentBarIndexRef.current + 1);
           onHistoryCallback(barsToShow, { noData: barsToShow.length === 0 });
           return;
+        }
+        
+        // Check if requested period is outside the loaded range - fetch more if needed
+        const loadedRange = loadedRangeRef.current[resolution];
+        if (loadedRange) {
+          const requestedFrom = periodParams.from;
+          const requestedTo = periodParams.to;
+          
+          if (requestedFrom < loadedRange.from) {
+            // User scrolled back beyond loaded data - fetch more
+            console.log('Scrolled back beyond loaded range, fetching more...');
+            fetchMoreBars(resolution, 'back', periodParams, onHistoryCallback);
+            return;
+          }
+          
+          if (requestedTo > loadedRange.to) {
+            // User scrolled forward beyond loaded data - fetch more
+            console.log('Scrolled forward beyond loaded range, fetching more...');
+            fetchMoreBars(resolution, 'forward', periodParams, onHistoryCallback);
+            return;
+          }
         }
         
         const bars = barsForResolution.filter(

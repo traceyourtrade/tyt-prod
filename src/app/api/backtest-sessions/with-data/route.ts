@@ -67,11 +67,24 @@ export async function GET(req: NextRequest) {
 
     const market = sessionData.market;
     const symbol = sessionData.symbol;
-    const fromDate = sessionData.fromDate;
-    const toDate = sessionData.toDate;
-
-    const toTs = Math.floor(new Date(toDate).getTime() / 1000);
-    const fromTs = Math.floor(new Date(fromDate).getTime() / 1000);
+    
+    // Calculate 16-month window: 8 months before and 8 months after session fromDate
+    // This keeps initial load fast while providing historical context
+    const sessionFromDate = new Date(sessionData.fromDate);
+    const eightMonthsBeforeDate = new Date(sessionFromDate);
+    eightMonthsBeforeDate.setMonth(eightMonthsBeforeDate.getMonth() - 8);
+    if (eightMonthsBeforeDate.getDate() !== sessionFromDate.getDate()) {
+      eightMonthsBeforeDate.setDate(0);
+    }
+    const eightMonthsAfterDate = new Date(sessionFromDate);
+    const originalDay = eightMonthsAfterDate.getDate();
+    eightMonthsAfterDate.setMonth(eightMonthsAfterDate.getMonth() + 8);
+    if (eightMonthsAfterDate.getDate() !== originalDay) {
+      eightMonthsAfterDate.setDate(0);
+    }
+    
+    const fromTs = Math.floor(eightMonthsBeforeDate.getTime() / 1000);
+    const toTs = Math.floor(eightMonthsAfterDate.getTime() / 1000);
 
     const resolutionMap: Record<string, string> = {
       '1D': 'D',
