@@ -3489,14 +3489,14 @@ export default function FullscreenBacktesting({
                 <div className="bt-spinner"></div>
                 <span>Loading chart...</span>
               </div>
-              {/* Skeleton candlesticks */}
+              {/* Skeleton candlesticks - deterministic heights to avoid hydration mismatch */}
               <div className="bt-skeleton-candles">
-                {Array.from({ length: 30 }).map((_, i) => (
+                {[45, 62, 38, 55, 48, 70, 42, 58, 35, 65, 50, 40, 68, 52, 44, 60, 47, 56, 36, 63, 49, 41, 67, 53, 46, 59, 37, 64, 51, 43].map((height, i) => (
                   <div 
                     key={i} 
                     className="bt-skeleton-candle"
                     style={{ 
-                      height: `${30 + Math.random() * 40}%`,
+                      height: `${height}%`,
                       animationDelay: `${i * 50}ms`
                     }}
                   />

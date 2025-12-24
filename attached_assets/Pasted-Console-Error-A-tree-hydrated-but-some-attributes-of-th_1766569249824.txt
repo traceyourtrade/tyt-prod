@@ -1,0 +1,326 @@
+Console Error
+
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+See more info here: https://nextjs.org/docs/messages/react-hydration-error
+
+
+  ...
+    <LoadingBoundary name="6/" loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/backtesti..." tree={[...]} params={{sessionId:"6"}} cacheNode={{lazyData:null, ...}} ...>
+              <SegmentViewNode type="page" pagePath="(fullscree...">
+                <SegmentTrieNode>
+                <ClientPageRoot Component={function FullscreenBacktesting} serverProvidedParams={{...}}>
+                  <FullscreenBacktesting params={Promise} searchParams={Promise}>
+                    <div className="bt-container">
+                      <header>
+                      <main className="bt-chart-area" style={{...}}>
+                        <div className="bt-chart-w...">
+                          <div className="bt-chart-s...">
+                            <div>
+                            <div className="bt-skeleto...">
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "53.924602720891386%"
+-                                 height: "63.5463%"
++                                 animationDelay: "0ms"
+-                                 animation-delay: "0ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "46.501803284724225%"
+-                                 height: "54.8437%"
++                                 animationDelay: "50ms"
+-                                 animation-delay: "50ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "36.82854583843655%"
+-                                 height: "41.3734%"
++                                 animationDelay: "100ms"
+-                                 animation-delay: "100ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "40.07092957119123%"
+-                                 height: "47.2226%"
++                                 animationDelay: "150ms"
+-                                 animation-delay: "150ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "48.347950552900016%"
+-                                 height: "52.3741%"
++                                 animationDelay: "200ms"
+-                                 animation-delay: "200ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "48.054939630988585%"
+-                                 height: "30.8983%"
++                                 animationDelay: "250ms"
+-                                 animation-delay: "250ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "38.87654897168762%"
+-                                 height: "32.1638%"
++                                 animationDelay: "300ms"
+-                                 animation-delay: "300ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "52.135776410069866%"
+-                                 height: "38.4147%"
++                                 animationDelay: "350ms"
+-                                 animation-delay: "350ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "59.45026891532491%"
+-                                 height: "45.0118%"
++                                 animationDelay: "400ms"
+-                                 animation-delay: "400ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "47.93238764777239%"
+-                                 height: "42.706%"
++                                 animationDelay: "450ms"
+-                                 animation-delay: "450ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "44.087279226496605%"
+-                                 height: "31.099%"
++                                 animationDelay: "500ms"
+-                                 animation-delay: "500ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "37.859282989541036%"
+-                                 height: "61.371%"
++                                 animationDelay: "550ms"
+-                                 animation-delay: "550ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "41.12720577649142%"
+-                                 height: "42.4361%"
++                                 animationDelay: "600ms"
+-                                 animation-delay: "600ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "57.76991733818912%"
+-                                 height: "68.2841%"
++                                 animationDelay: "650ms"
+-                                 animation-delay: "650ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "56.4925116115603%"
+-                                 height: "69.7822%"
++                                 animationDelay: "700ms"
+-                                 animation-delay: "700ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "59.383991439378946%"
+-                                 height: "61.6531%"
++                                 animationDelay: "750ms"
+-                                 animation-delay: "750ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "34.3689921211481%"
+-                                 height: "67.7784%"
++                                 animationDelay: "800ms"
+-                                 animation-delay: "800ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "33.23134279511458%"
+-                                 height: "45.5652%"
++                                 animationDelay: "850ms"
+-                                 animation-delay: "850ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "64.07291809628234%"
+-                                 height: "53.5202%"
++                                 animationDelay: "900ms"
+-                                 animation-delay: "900ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "69.62614154706607%"
+-                                 height: "63.626%"
++                                 animationDelay: "950ms"
+-                                 animation-delay: "950ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "38.71759444944987%"
+-                                 height: "35.236%"
++                                 animationDelay: "1000ms"
+-                                 animation-delay: "1000ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "46.754816200910376%"
+-                                 height: "65.283%"
++                                 animationDelay: "1050ms"
+-                                 animation-delay: "1050ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "59.567422304140436%"
+-                                 height: "59.5343%"
++                                 animationDelay: "1100ms"
+-                                 animation-delay: "1100ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "52.2587888027883%"
+-                                 height: "58.453%"
++                                 animationDelay: "1150ms"
+-                                 animation-delay: "1150ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "51.256607682827706%"
+-                                 height: "44.7309%"
++                                 animationDelay: "1200ms"
+-                                 animation-delay: "1200ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "49.841172555887326%"
+-                                 height: "69.1551%"
++                                 animationDelay: "1250ms"
+-                                 animation-delay: "1250ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "37.080349244724665%"
+-                                 height: "57.298%"
++                                 animationDelay: "1300ms"
+-                                 animation-delay: "1300ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "55.0359819003954%"
+-                                 height: "59.6553%"
++                                 animationDelay: "1350ms"
+-                                 animation-delay: "1350ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "45.00266040548896%"
+-                                 height: "65.226%"
++                                 animationDelay: "1400ms"
+-                                 animation-delay: "1400ms"
+                                }}
+                              >
+                              <div
+                                className="bt-skeleton-candle"
+                                style={{
++                                 height: "31.183623218528197%"
+-                                 height: "37.6648%"
++                                 animationDelay: "1450ms"
+-                                 animation-delay: "1450ms"
+                                }}
+                              >
+                      ...
+              ...
+            ...
+src/app/(fullscreen)/backtesting/[sessionId]/page.tsx (3495:19) @ <unknown>
+
+
+  3493 |               <div className="bt-skeleton-candles">
+  3494 |                 {Array.from({ length: 30 }).map((_, i) => (
+> 3495 |                   <div 
+       |                   ^
+  3496 |                     key={i} 
+  3497 |                     className="bt-skeleton-candle"
+  3498 |                     style={{ 
+Call Stack
+22
+
+Show 18 ignore-listed frame(s)
+div
+<anonymous>
+<unknown>
+src/app/(fullscreen)/backtesting/[sessionId]/page.tsx (3495:19)
+Array.map
+<anonymous>
+FullscreenBacktesting
+src/app/(fullscreen)/backtesting/[sessionId]/page.tsx (3494:45)
