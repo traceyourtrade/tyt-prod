@@ -1241,7 +1241,7 @@ export default function FullscreenBacktesting({
       // Load window based on resolution (smaller for intraday, larger for daily+)
       // Users can scroll beyond this window to load more data dynamically
       const sessionFromDate = new Date(sessionData.fromDate);
-      const windowMonths = getWindowMonths(resolution);
+      const windowMonths = getWindowMonths(currentInterval);
       const windowStartDate = subMonths(sessionFromDate, windowMonths);
       const windowEndDate = addMonths(sessionFromDate, windowMonths);
       const fromTs = Math.floor(windowStartDate.getTime() / 1000);
