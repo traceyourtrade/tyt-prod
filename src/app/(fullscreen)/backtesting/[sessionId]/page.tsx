@@ -3855,11 +3855,12 @@ export default function FullscreenBacktesting({
                     {tradingState.openTrades.map((trade: any, index: number) => {
                       const tradeLotSize = trade.lotSize || lotSize;
                       const currentBar = allBars[currentBarIndex];
-                      const currentClose = currentBar?.close || trade.entry;
+                      const entryPrice = typeof trade.entry === 'number' ? trade.entry : 0;
+                      const currentClose = currentBar?.close || entryPrice;
                       // Using memoized contractSize for display
                       const tradePnl = trade.type === 'long' 
-                        ? (currentClose - trade.entry) * tradeLotSize * contractSize
-                        : (trade.entry - currentClose) * tradeLotSize * contractSize;
+                        ? (currentClose - entryPrice) * tradeLotSize * contractSize
+                        : (entryPrice - currentClose) * tradeLotSize * contractSize;
                       return (
                         <tr key={trade.id || index}>
                           <td className="bt-table-symbol">{sessionData?.symbol || 'N/A'}</td>
@@ -3869,14 +3870,14 @@ export default function FullscreenBacktesting({
                             </span>
                           </td>
                           <td className="bt-table-value">{tradeLotSize}</td>
-                          <td className="bt-table-value">{trade.entry.toFixed(decimalPlaces || 5)}</td>
+                          <td className="bt-table-value">{typeof trade.entry === 'number' ? trade.entry.toFixed(decimalPlaces || 5) : trade.entry || '-'}</td>
                           <td className="bt-table-value profit">
-                            {trade.target !== undefined 
+                            {typeof trade.target === 'number'
                               ? trade.target.toFixed(decimalPlaces || 5) 
                               : '-'}
                           </td>
                           <td className="bt-table-value loss">
-                            {trade.stopLoss !== undefined 
+                            {typeof trade.stopLoss === 'number'
                               ? trade.stopLoss.toFixed(decimalPlaces || 5) 
                               : '-'}
                           </td>
