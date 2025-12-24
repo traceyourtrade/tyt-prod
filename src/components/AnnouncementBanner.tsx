@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles, Wrench } from "lucide-react";
 
-const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || "";
+const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL;
 
 export default function AnnouncementBanner() {
     const [banner, setBanner] = useState<string | null>(null);
@@ -12,11 +12,12 @@ export default function AnnouncementBanner() {
 
     useEffect(() => {
         async function fetchBanner() {
-            if (!ADMIN_API_URL) return;
+            // Skip if no admin API URL configured
+            if (!ADMIN_API_URL || ADMIN_API_URL.trim() === '') return;
             
             try {
                 const res = await fetch(`${ADMIN_API_URL}/api/settings/banner`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (!res.ok) return; // Silently fail if endpoint not available
                 const data = await res.json();
                 
                 if (data.maintenanceMode) {
@@ -24,8 +25,8 @@ export default function AnnouncementBanner() {
                 } else if (data.active && data.banner) {
                     setBanner(data.banner);
                 }
-            } catch (error) {
-                console.error("Failed to fetch banner:", error);
+            } catch {
+                // Silently fail - banner is optional
             }
         }
         fetchBanner();
