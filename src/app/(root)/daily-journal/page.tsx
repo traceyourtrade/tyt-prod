@@ -988,7 +988,6 @@ const DailyJournal = () => {
                   { key: "stats", label: "Stats", icon: BarChart2 },
                   { key: "strategy", label: "Strategy", icon: Target },
                   { key: "executions", label: "Executions", icon: Activity },
-                  { key: "attachments", label: "Media", icon: ImageIcon },
                 ].map((tab) => (
                   <button
                     key={tab.key}
@@ -1252,70 +1251,6 @@ const DailyJournal = () => {
                 </>
               )}
 
-              {/* Attachments Tab */}
-              {mainTab === "attachments" && selectedTrade && (
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-xs text-muted-foreground block mb-2">Entry Screenshot</span>
-                    {selectedTrade.beforeURL ? (
-                      <div 
-                        className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group border border-border"
-                        onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
-                      >
-                        <img 
-                          src={selectedTrade.beforeURL} 
-                          alt="Entry" 
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Eye className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer transition-colors bg-muted/10">
-                        <Upload className="w-6 h-6 text-muted-foreground/40 mb-2" />
-                        <span className="text-xs text-muted-foreground">Upload Entry Screenshot</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(e, "before")}
-                        />
-                      </label>
-                    )}
-                  </div>
-
-                  <div>
-                    <span className="text-xs text-muted-foreground block mb-2">Exit Screenshot</span>
-                    {selectedTrade.afterURL ? (
-                      <div 
-                        className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group border border-border"
-                        onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
-                      >
-                        <img 
-                          src={selectedTrade.afterURL} 
-                          alt="Exit" 
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Eye className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center p-8 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer transition-colors bg-muted/10">
-                        <Upload className="w-6 h-6 text-muted-foreground/40 mb-2" />
-                        <span className="text-xs text-muted-foreground">Upload Exit Screenshot</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(e, "after")}
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </motion.div>
@@ -1484,7 +1419,6 @@ const DailyJournal = () => {
                     { key: "stats", label: "Stats", icon: BarChart2 },
                     { key: "strategy", label: "Strategy", icon: Target },
                     { key: "executions", label: "Exec", icon: Activity },
-                    { key: "attachments", label: "Media", icon: ImageIcon },
                   ].map((tab) => (
                     <button
                       key={tab.key}
@@ -1585,39 +1519,6 @@ const DailyJournal = () => {
                   </div>
                 )}
 
-                {/* Attachments Tab - Mobile */}
-                {mainTab === "attachments" && selectedTrade && (
-                  <div className="space-y-4">
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-2">Entry Screenshot</span>
-                      {selectedTrade.beforeURL ? (
-                        <div className="relative aspect-video rounded-xl overflow-hidden cursor-pointer border border-border" onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}>
-                          <img src={selectedTrade.beforeURL} alt="Entry" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer bg-muted/10">
-                          <Upload className="w-5 h-5 text-muted-foreground/40 mb-1" />
-                          <span className="text-xs text-muted-foreground">Upload</span>
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "before")} />
-                        </label>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-2">Exit Screenshot</span>
-                      {selectedTrade.afterURL ? (
-                        <div className="relative aspect-video rounded-xl overflow-hidden cursor-pointer border border-border" onClick={() => openLightbox(selectedTrade.afterURL!, "after")}>
-                          <img src={selectedTrade.afterURL} alt="Exit" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-border hover:border-primary/30 cursor-pointer bg-muted/10">
-                          <Upload className="w-5 h-5 text-muted-foreground/40 mb-1" />
-                          <span className="text-xs text-muted-foreground">Upload</span>
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "after")} />
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             </motion.div>
           </motion.div>
