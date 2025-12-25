@@ -214,6 +214,17 @@ export async function GET(req: NextRequest) {
           
           // Cache the response for future use
           try {
+            // Sanitize volume data - VPS sometimes returns malformed data
+            let safeVolume: number[] = [];
+            if (data.v && Array.isArray(data.v)) {
+              safeVolume = data.v
+                .map((v: unknown) => typeof v === 'number' ? v : parseFloat(String(v)))
+                .filter((v: number) => !isNaN(v) && isFinite(v));
+              if (safeVolume.length !== data.t.length) {
+                safeVolume = [];
+              }
+            }
+            
             const CachedBars = await getCachedBarsModel();
             await CachedBars.findOneAndUpdate(
               { market, symbol, resolution, fromTs, toTs },
@@ -228,7 +239,7 @@ export async function GET(req: NextRequest) {
                 h: data.h,
                 l: data.l,
                 c: data.c,
-                v: data.v || [],
+                v: safeVolume,
                 cachedAt: new Date(),
                 expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
               },
