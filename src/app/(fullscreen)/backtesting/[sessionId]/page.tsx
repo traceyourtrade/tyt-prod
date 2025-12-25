@@ -2769,10 +2769,18 @@ export default function FullscreenBacktesting({
         return;
       }
       
-      const currentRange = loadedRangeRef.current[resolution];
+      let currentRange = loadedRangeRef.current[resolution];
       if (!currentRange) {
-        setIsPlaying(false);
-        return;
+        // If no range exists, derive from the last bar's timestamp
+        const lastBar = bars[bars.length - 1];
+        if (lastBar) {
+          const lastBarTime = lastBar.time / 1000;
+          currentRange = { from: lastBarTime - (30 * 24 * 60 * 60), to: lastBarTime };
+          loadedRangeRef.current[resolution] = currentRange;
+        } else {
+          setIsPlaying(false);
+          return;
+        }
       }
       
       // Fetch 2 months of future data
@@ -2864,17 +2872,30 @@ export default function FullscreenBacktesting({
     
     // Check if we're at or near the end and need to fetch more data
     if (idx >= bars.length - 1) {
+      console.log('Skip forward: at end of loaded bars', { resolution, idx, barsLength: bars.length });
+      
       // Fetch more future data
       const session = sessionDataRef.current || sessionData;
       if (!session) {
+        console.log('Skip forward: no session data');
         setIsPlaying(false);
         return;
       }
       
-      const currentRange = loadedRangeRef.current[resolution];
+      let currentRange = loadedRangeRef.current[resolution];
       if (!currentRange) {
-        setIsPlaying(false);
-        return;
+        // If no range exists, derive from the last bar's timestamp
+        const lastBar = bars[bars.length - 1];
+        if (lastBar) {
+          const lastBarTime = lastBar.time / 1000;
+          currentRange = { from: lastBarTime - (30 * 24 * 60 * 60), to: lastBarTime };
+          loadedRangeRef.current[resolution] = currentRange;
+          console.log('Skip forward: created range from last bar', { lastBarTime, currentRange });
+        } else {
+          console.log('Skip forward: no range and no bars');
+          setIsPlaying(false);
+          return;
+        }
       }
       
       // Fetch 2 months of future data
