@@ -1879,7 +1879,10 @@ export default function FullscreenBacktesting({
         if (sessionData) {
           // If session has saved replay progress, use that
           if (sessionData.replayTimestamp && sessionData.replayTimestamp > 0) {
-            targetTimestamp = sessionData.replayTimestamp;
+            // replayTimestamp is stored in SECONDS, convert to milliseconds
+            targetTimestamp = sessionData.replayTimestamp < 946684800000 
+              ? sessionData.replayTimestamp * 1000 
+              : sessionData.replayTimestamp;
           } 
           // Otherwise use session start date
           else if (sessionData.fromDate) {
@@ -1889,7 +1892,17 @@ export default function FullscreenBacktesting({
               // If number is small (before year 2000 in ms), it's likely seconds
               targetTimestamp = fromDate < 946684800000 ? fromDate * 1000 : fromDate;
             } else {
-              targetTimestamp = new Date(fromDate).getTime();
+              // Try parsing as date string
+              const parsed = new Date(fromDate).getTime();
+              // If parsing fails or gives 1970, the string might be a numeric timestamp
+              if (isNaN(parsed) || parsed < 946684800000) {
+                const numericValue = parseInt(fromDate);
+                if (!isNaN(numericValue)) {
+                  targetTimestamp = numericValue < 946684800000 ? numericValue * 1000 : numericValue;
+                }
+              } else {
+                targetTimestamp = parsed;
+              }
             }
           }
         }
