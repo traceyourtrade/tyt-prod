@@ -120,39 +120,52 @@ export async function GET(req: NextRequest) {
     apiUrl.searchParams.set('from', String(fromTs));
     apiUrl.searchParams.set('userId', userId);
 
-    const barsResponse = await fetch(apiUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      cache: 'no-store'
-    });
-
-    let barsData = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
+    let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
     
-    if (barsResponse.ok) {
-      const data = await barsResponse.json();
+    try {
+      // Add timeout to prevent hanging (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       
-      if (data.s === 'ok' && data.t && Array.isArray(data.t)) {
-        const filteredIndices: number[] = [];
-        for (let i = 0; i < data.t.length; i++) {
-          if (data.t[i] <= toTs) {
-            filteredIndices.push(i);
-          }
-        }
+      const barsResponse = await fetch(apiUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+    
+      if (barsResponse.ok) {
+        const data = await barsResponse.json();
         
-        if (filteredIndices.length < data.t.length) {
-          data.t = filteredIndices.map(i => data.t[i]);
-          data.o = filteredIndices.map(i => data.o[i]);
-          data.h = filteredIndices.map(i => data.h[i]);
-          data.l = filteredIndices.map(i => data.l[i]);
-          data.c = filteredIndices.map(i => data.c[i]);
-          if (data.v) {
-            data.v = filteredIndices.map(i => data.v[i]);
+        if (data.s === 'ok' && data.t && Array.isArray(data.t)) {
+          const filteredIndices: number[] = [];
+          for (let i = 0; i < data.t.length; i++) {
+            if (data.t[i] <= toTs) {
+              filteredIndices.push(i);
+            }
           }
+          
+          if (filteredIndices.length < data.t.length) {
+            data.t = filteredIndices.map(i => data.t[i]);
+            data.o = filteredIndices.map(i => data.o[i]);
+            data.h = filteredIndices.map(i => data.h[i]);
+            data.l = filteredIndices.map(i => data.l[i]);
+            data.c = filteredIndices.map(i => data.c[i]);
+            if (data.v) {
+              data.v = filteredIndices.map(i => data.v[i]);
+            }
+          }
+          barsData = data;
         }
-        barsData = data;
       }
+    } catch (vpsError) {
+      // VPS connection failed - return session data with error message in bars
+      console.error('VPS fetch error:', vpsError);
+      barsData = { s: 'error', t: [], o: [], h: [], l: [], c: [], v: [], errmsg: 'Data server temporarily unavailable. Please try again.' };
     }
 
     return NextResponse.json({

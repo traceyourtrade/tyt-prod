@@ -718,6 +718,14 @@ export default function FullscreenBacktesting({
           const sessionResult = result.session;
           setSessionData(sessionResult);
           
+          // Check for VPS error
+          if (result.bars && result.bars.s === 'error') {
+            setLoadError(result.bars.errmsg || 'Data server temporarily unavailable. Please try again.');
+            setIsLoading(false);
+            setSessionLoading(false);
+            return;
+          }
+          
           // Process bars data if available
           if (result.bars && result.bars.s === 'ok' && result.bars.t && result.bars.t.length > 0) {
             const bars = result.bars.t.map((time: number, i: number) => ({
