@@ -710,9 +710,9 @@ const DailyJournal = () => {
           <div className="flex-1 overflow-hidden">
             {centerTab === "chart" && selectedTrade && (
               <div className="h-full relative bg-background p-4 sm:p-6 overflow-y-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 h-full">
+                <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto">
                   {/* Before Screenshot */}
-                  <div className="flex flex-col min-h-[300px] lg:min-h-0 lg:h-full">
+                  <div className="flex flex-col">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-amber-500" />
@@ -727,21 +727,21 @@ const DailyJournal = () => {
                         </button>
                       )}
                     </div>
-                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group">
+                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group min-h-[200px]">
                       {selectedTrade.beforeURL ? (
                         <>
                           <img
                             src={selectedTrade.beforeURL}
                             alt="Before trade screenshot"
-                            className="w-full h-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.02]"
+                            className="w-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.01]"
                             onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                         </>
                       ) : (
-                        <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-white/[0.03] transition-colors">
-                          <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4">
-                            <Upload className="w-7 h-7 text-muted-foreground/50" />
+                        <label className="flex flex-col items-center justify-center py-12 cursor-pointer hover:bg-white/[0.03] transition-colors">
+                          <div className="w-14 h-14 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-3">
+                            <Upload className="w-6 h-6 text-muted-foreground/50" />
                           </div>
                           <span className="text-sm font-medium text-muted-foreground mb-1">Upload Before Screenshot</span>
                           <span className="text-xs text-muted-foreground/60">Click to browse or drag & drop</span>
@@ -757,7 +757,7 @@ const DailyJournal = () => {
                   </div>
 
                   {/* After Screenshot */}
-                  <div className="flex flex-col min-h-[300px] lg:min-h-0 lg:h-full">
+                  <div className="flex flex-col">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${isProfit ? 'bg-profit' : 'bg-loss'}`} />
@@ -772,21 +772,21 @@ const DailyJournal = () => {
                         </button>
                       )}
                     </div>
-                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group">
+                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group min-h-[200px]">
                       {selectedTrade.afterURL ? (
                         <>
                           <img
                             src={selectedTrade.afterURL}
                             alt="After trade screenshot"
-                            className="w-full h-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.02]"
+                            className="w-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.01]"
                             onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                         </>
                       ) : (
-                        <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-white/[0.03] transition-colors">
-                          <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4">
-                            <Upload className="w-7 h-7 text-muted-foreground/50" />
+                        <label className="flex flex-col items-center justify-center py-12 cursor-pointer hover:bg-white/[0.03] transition-colors">
+                          <div className="w-14 h-14 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-3">
+                            <Upload className="w-6 h-6 text-muted-foreground/50" />
                           </div>
                           <span className="text-sm font-medium text-muted-foreground mb-1">Upload After Screenshot</span>
                           <span className="text-xs text-muted-foreground/60">Click to browse or drag & drop</span>
