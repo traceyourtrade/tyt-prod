@@ -5,12 +5,13 @@ import { fetchFromVps, isVpsSupported } from './vpsAdapter';
 
 export interface FetchOptions {
   userId?: string;
+  authToken?: string;
   skipCache?: boolean;
 }
 
 export async function fetchBars(request: BarRequest, options: FetchOptions = {}): Promise<BarResponse> {
   const { market, symbol, resolution, from, to } = request;
-  const { userId = '', skipCache = false } = options;
+  const { userId = '', authToken, skipCache = false } = options;
 
   console.log('[BarFetcher] Request:', { market, symbol, resolution, from, to });
 
@@ -41,27 +42,29 @@ export async function fetchBars(request: BarRequest, options: FetchOptions = {})
     if (polygonResult.success && polygonResult.bars.length > 0) {
       bars = polygonResult.bars;
       source = 'polygon';
-    } else if (isVpsSupported(market)) {
-      const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId);
-      if (vpsResult.success) {
+    } else {
+      console.log('[BarFetcher] Polygon failed/empty, falling back to VPS');
+      const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId, authToken);
+      if (vpsResult.success && vpsResult.bars.length > 0) {
         bars = vpsResult.bars;
         source = 'vps';
       }
     }
   } else if (isVpsSupported(market)) {
-    const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId);
+    const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId, authToken);
     if (vpsResult.success) {
       bars = vpsResult.bars;
       source = 'vps';
     }
   } else {
     const polygonResult = await fetchFromPolygon(symbol, market, resolution, from, to);
-    if (polygonResult.success) {
+    if (polygonResult.success && polygonResult.bars.length > 0) {
       bars = polygonResult.bars;
       source = 'polygon';
     } else {
-      const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId);
-      if (vpsResult.success) {
+      console.log('[BarFetcher] Polygon failed/empty, falling back to VPS');
+      const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId, authToken);
+      if (vpsResult.success && vpsResult.bars.length > 0) {
         bars = vpsResult.bars;
         source = 'vps';
       }

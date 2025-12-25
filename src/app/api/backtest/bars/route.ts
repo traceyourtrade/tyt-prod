@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
     const response = await fetchBars(
       { market, symbol, resolution, from: fromTs, to: toTs },
-      { userId }
+      { userId, authToken: token }
     );
 
     if (response.bars.length === 0) {

@@ -15,7 +15,8 @@ export async function fetchFromVps(
   resolution: string,
   fromTs: number,
   toTs: number,
-  userId: string
+  userId: string,
+  authToken?: string
 ): Promise<VpsFetchResult> {
   const mappedResolution = normalizeResolution(resolution);
 
@@ -29,11 +30,20 @@ export async function fetchFromVps(
 
   console.log('[VpsAdapter] Fetching:', { symbol, market, resolution: mappedResolution, fromTs, toTs });
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 180000);
+
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
     const response = await fetch(apiUrl.toString(), {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
+      headers,
+      cache: 'no-store',
+      signal: controller.signal
     });
 
     if (!response.ok) {
@@ -62,6 +72,8 @@ export async function fetchFromVps(
   } catch (error) {
     console.error('[VpsAdapter] Fetch error:', error);
     return { bars: [], source: 'vps', success: false, error: String(error) };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
