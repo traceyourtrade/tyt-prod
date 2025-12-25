@@ -177,9 +177,9 @@ export async function GET(req: NextRequest) {
     console.log('Cache MISS for with-data - fetching from VPS:', { market, symbol, resolution, fromTs, toTs });
     
     try {
-      // Add timeout to prevent hanging (60 seconds for initial load)
+      // Add timeout to prevent hanging (3 minutes for initial load - VPS can be very slow)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
       
       const barsResponse = await fetch(apiUrl.toString(), {
         method: 'GET',

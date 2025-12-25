@@ -101,9 +101,9 @@ export async function GET(req: NextRequest) {
 
     console.log('Cache MISS - fetching from VPS:', { market, symbol, resolution, from, to });
 
-    // Add timeout to VPS fetch
+    // Add timeout to VPS fetch (3 minutes - VPS can be very slow)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 180000);
 
     const response = await fetch(apiUrl.toString(), {
       method: 'GET',

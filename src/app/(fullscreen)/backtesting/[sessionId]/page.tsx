@@ -718,9 +718,17 @@ export default function FullscreenBacktesting({
           const sessionResult = result.session;
           setSessionData(sessionResult);
           
-          // Check for VPS error
+          // Check for VPS error or no data
           if (result.bars && result.bars.s === 'error') {
             setLoadError(result.bars.errmsg || 'Data server temporarily unavailable. Please try again.');
+            setIsLoading(false);
+            setSessionLoading(false);
+            return;
+          }
+          
+          // Check if VPS returned no data
+          if (!result.bars || result.bars.s === 'no_data' || !result.bars.t || result.bars.t.length === 0) {
+            setLoadError('No market data available for this date range. The data server may be slow - please wait and try again.');
             setIsLoading(false);
             setSessionLoading(false);
             return;
