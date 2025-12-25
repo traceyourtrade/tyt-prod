@@ -90,9 +90,11 @@ async function fetchFromPolygon(
     const data = await response.json();
 
     if (data.status !== 'OK' || !data.results || data.results.length === 0) {
-      console.log('No data from Polygon:', data.status, data.resultsCount);
+      console.log('No data from Polygon:', { status: data.status, resultsCount: data.resultsCount, ticker, fromDate, toDate });
       return null;
     }
+    
+    console.log('Polygon returned', data.results.length, 'bars for', ticker, 'from', fromDate, 'to', toDate);
 
     // Convert Polygon format to TradingView format
     // Polygon timestamps are in milliseconds, TradingView expects seconds
