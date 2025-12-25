@@ -1883,7 +1883,14 @@ export default function FullscreenBacktesting({
           } 
           // Otherwise use session start date
           else if (sessionData.fromDate) {
-            targetTimestamp = new Date(sessionData.fromDate).getTime();
+            // Handle both Unix timestamps (seconds) and date strings
+            const fromDate = sessionData.fromDate;
+            if (typeof fromDate === 'number') {
+              // If number is small (before year 2000 in ms), it's likely seconds
+              targetTimestamp = fromDate < 946684800000 ? fromDate * 1000 : fromDate;
+            } else {
+              targetTimestamp = new Date(fromDate).getTime();
+            }
           }
         }
         
