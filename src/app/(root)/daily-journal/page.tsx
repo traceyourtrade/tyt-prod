@@ -57,7 +57,6 @@ import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { SymbolLogo } from "@/components/ui/SymbolLogo";
 import QuickFillDropdown from "@/components/journal/QuickFillDropdown";
 import ShareTradeModal from "@/components/shared/ShareTradeModal";
-import TradeChart from "@/components/daily-journal/TradeChart";
 
 interface Trade {
   id?: string;
@@ -679,7 +678,7 @@ const DailyJournal = () => {
           <div className="flex-shrink-0 px-3 sm:px-6 py-2.5 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-gradient-to-b from-card/60 to-transparent backdrop-blur-sm">
             <div className="flex items-center gap-0.5 p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
               {[
-                { key: "chart", label: "Chart", icon: LineChart },
+                { key: "chart", label: "Screenshots", icon: ImageIcon },
                 { key: "notes", label: "Notes", icon: MessageSquare },
                 { key: "runningPnL", label: "P&L", icon: BarChart3 },
               ].map((tab) => (
@@ -705,38 +704,103 @@ const DailyJournal = () => {
               ))}
             </div>
 
-            {centerTab === "chart" && (
-              <div className="hidden sm:flex items-center gap-0.5 p-1 bg-white/[0.02] rounded-lg border border-white/[0.06] text-xs">
-                {["5y", "1y", "3m", "1m", "4h", "1h", "D"].map((tf) => (
-                  <button
-                    key={tf}
-                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all duration-200 ${
-                      tf === "4h"
-                        ? "bg-primary/20 text-primary font-semibold border border-primary/30"
-                        : "hover:bg-white/[0.06] text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tf}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Center Main Content */}
           <div className="flex-1 overflow-hidden">
             {centerTab === "chart" && selectedTrade && (
-              <div className="h-full relative bg-background">
-                <TradeChart
-                  symbol={selectedTrade.Item || selectedTrade.symbol || ""}
-                  date={selectedTrade.date?.split("T")[0] || new Date().toISOString().split("T")[0]}
-                  entryPrice={selectedTrade.entryPrice ? parseFloat(String(selectedTrade.entryPrice)) : undefined}
-                  exitPrice={selectedTrade.exitPrice ? parseFloat(String(selectedTrade.exitPrice)) : undefined}
-                  entryTime={selectedTrade.EntryTime}
-                  exitTime={selectedTrade.ExitTime}
-                  isLong={(selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")}
-                  interval="5min"
-                />
+              <div className="h-full relative bg-background p-4 sm:p-6 overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 h-full">
+                  {/* Before Screenshot */}
+                  <div className="flex flex-col min-h-[300px] lg:min-h-0 lg:h-full">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                        <span className="text-sm font-semibold text-foreground">Before Entry</span>
+                      </div>
+                      {selectedTrade.beforeURL && (
+                        <button
+                          onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
+                          className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] transition-all"
+                        >
+                          <Maximize2 className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group">
+                      {selectedTrade.beforeURL ? (
+                        <>
+                          <img
+                            src={selectedTrade.beforeURL}
+                            alt="Before trade screenshot"
+                            className="w-full h-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.02]"
+                            onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        </>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-white/[0.03] transition-colors">
+                          <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4">
+                            <Upload className="w-7 h-7 text-muted-foreground/50" />
+                          </div>
+                          <span className="text-sm font-medium text-muted-foreground mb-1">Upload Before Screenshot</span>
+                          <span className="text-xs text-muted-foreground/60">Click to browse or drag & drop</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, "before")}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* After Screenshot */}
+                  <div className="flex flex-col min-h-[300px] lg:min-h-0 lg:h-full">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${isProfit ? 'bg-profit' : 'bg-loss'}`} />
+                        <span className="text-sm font-semibold text-foreground">After Exit</span>
+                      </div>
+                      {selectedTrade.afterURL && (
+                        <button
+                          onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
+                          className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] transition-all"
+                        >
+                          <Maximize2 className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group">
+                      {selectedTrade.afterURL ? (
+                        <>
+                          <img
+                            src={selectedTrade.afterURL}
+                            alt="After trade screenshot"
+                            className="w-full h-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.02]"
+                            onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        </>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-white/[0.03] transition-colors">
+                          <div className="w-16 h-16 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-4">
+                            <Upload className="w-7 h-7 text-muted-foreground/50" />
+                          </div>
+                          <span className="text-sm font-medium text-muted-foreground mb-1">Upload After Screenshot</span>
+                          <span className="text-xs text-muted-foreground/60">Click to browse or drag & drop</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e, "after")}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
