@@ -1872,8 +1872,25 @@ export default function FullscreenBacktesting({
       function scrollChartToStartDate(chart: any, retryCount = 0) {
         if (hasScrolledToStartRef.current) return;
         
-        // Get the replay timestamp (should be set to fromDate position by bar loading logic)
-        const targetTimestamp = replayTimestampRef.current;
+        // Priority: sessionData.replayTimestamp (for resume) > sessionData.fromDate > replayTimestampRef
+        const sessionData = sessionDataRef.current;
+        let targetTimestamp: number | null = null;
+        
+        if (sessionData) {
+          // If session has saved replay progress, use that
+          if (sessionData.replayTimestamp && sessionData.replayTimestamp > 0) {
+            targetTimestamp = sessionData.replayTimestamp;
+          } 
+          // Otherwise use session start date
+          else if (sessionData.fromDate) {
+            targetTimestamp = new Date(sessionData.fromDate).getTime();
+          }
+        }
+        
+        // Last fallback to replayTimestampRef
+        if (!targetTimestamp || targetTimestamp <= 0) {
+          targetTimestamp = replayTimestampRef.current;
+        }
         
         // If timestamp not set yet, retry a few times with delay
         if ((!targetTimestamp || targetTimestamp <= 0) && retryCount < 5) {
