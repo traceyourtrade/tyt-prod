@@ -848,16 +848,20 @@ export default function FullscreenBacktesting({
       }
     };
     
-    // Background preload function for common timeframes
+    // Background preload function for common timeframes - runs ALL in parallel for faster cache warming
     const preloadCommonTimeframes = async (session: SessionData) => {
-      const commonTimeframes = ['5', '15', '60', '240'];
+      const allTimeframes = ['1', '5', '15', '30', '60', '120', '240', 'D'];
       const currentTf = currentIntervalRef.current;
       
-      for (const tf of commonTimeframes) {
-        if (tf === currentTf || barsCacheRef.current[tf]) continue;
-        
+      // Filter out already cached and current timeframe
+      const toPreload = allTimeframes.filter(tf => tf !== currentTf && !barsCacheRef.current[tf]);
+      if (toPreload.length === 0) return;
+      
+      console.log('Pre-warming cache for timeframes:', toPreload.join(', '));
+      
+      // Fetch ALL timeframes in parallel for maximum speed
+      const preloadPromises = toPreload.map(async (tf) => {
         try {
-          // Load window based on resolution (smaller for intraday, larger for daily+)
           const sessionFromDate = new Date(session.fromDate);
           const windowMonths = getWindowMonths(tf);
           const windowStartDate = subMonths(sessionFromDate, windowMonths);
@@ -881,14 +885,18 @@ export default function FullscreenBacktesting({
             barsCacheRef.current[tf] = bars;
             loadedRangeRef.current[tf] = { from: fromTs, to: toTs };
             console.log('Preloaded', bars.length, 'bars for timeframe', tf);
+            return { tf, success: true, count: bars.length };
           }
+          return { tf, success: false };
         } catch (e) {
-          // Silently fail preloading - non-critical
+          return { tf, success: false, error: e };
         }
-        
-        // Small delay between requests to avoid overwhelming the server
-        await new Promise(r => setTimeout(r, 500));
-      }
+      });
+      
+      // Wait for all to complete (don't block UI)
+      const results = await Promise.allSettled(preloadPromises);
+      const successCount = results.filter(r => r.status === 'fulfilled' && (r.value as any)?.success).length;
+      console.log(`Cache pre-warming complete: ${successCount}/${toPreload.length} timeframes cached`);
     };
     
     fetchSessionWithData();
