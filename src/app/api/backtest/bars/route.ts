@@ -218,17 +218,37 @@ export async function GET(req: NextRequest) {
         if (allBarsMap.size > 0) {
           // Sort by timestamp
           const mergedBars = Array.from(allBarsMap.values()).sort((a, b) => a.t - b.t);
-          console.log('Cache HIT (merged):', { market, symbol, resolution, barCount: mergedBars.length, fromDocs: cachedDocs.length });
           
-          return NextResponse.json({
-            s: 'ok',
-            t: mergedBars.map(b => b.t),
-            o: mergedBars.map(b => b.o),
-            h: mergedBars.map(b => b.h),
-            l: mergedBars.map(b => b.l),
-            c: mergedBars.map(b => b.c),
-            v: mergedBars.map(b => b.v)
-          });
+          // Check if cache covers the requested range adequately
+          // If we have very few bars (< 10) relative to the expected range, the cache likely doesn't cover enough
+          // In that case, fetch from Polygon to get the full historical data
+          const expectedBarsMinimum = 10;
+          const firstCachedTs = mergedBars[0]?.t || toTs;
+          const lastCachedTs = mergedBars[mergedBars.length - 1]?.t || fromTs;
+          
+          // If cache doesn't cover the start of requested range well, fetch from source
+          if (mergedBars.length < expectedBarsMinimum || firstCachedTs > fromTs + 3600) {
+            console.log('Cache partial coverage, fetching from source:', { 
+              market, symbol, resolution, 
+              cachedBars: mergedBars.length, 
+              requestedFrom: fromTs,
+              firstCachedTs,
+              gap: firstCachedTs - fromTs
+            });
+            // Continue to Polygon/VPS fetch below
+          } else {
+            console.log('Cache HIT (merged):', { market, symbol, resolution, barCount: mergedBars.length, fromDocs: cachedDocs.length });
+            
+            return NextResponse.json({
+              s: 'ok',
+              t: mergedBars.map(b => b.t),
+              o: mergedBars.map(b => b.o),
+              h: mergedBars.map(b => b.h),
+              l: mergedBars.map(b => b.l),
+              c: mergedBars.map(b => b.c),
+              v: mergedBars.map(b => b.v)
+            });
+          }
         }
       }
     } catch (cacheError) {
