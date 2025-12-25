@@ -2778,6 +2778,24 @@ export default function FullscreenBacktesting({
             rr: parseFloat(signedRR.toFixed(2)),
           }),
         });
+        
+        // Save progress immediately when trade closes (don't wait for auto-save)
+        const currentBar = allBars[currentBarIndexRef.current];
+        if (currentBar) {
+          const newBalance = (sessionDataRef.current?.currentBalance || 0) + pnl;
+          await fetch('/api/backtest-sessions', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: parsedSessionId,
+              progressPointer: currentBar.time,
+              currentBalance: newBalance,
+            }),
+          });
+          if (sessionDataRef.current) {
+            sessionDataRef.current = { ...sessionDataRef.current, progressPointer: currentBar.time, currentBalance: newBalance };
+          }
+        }
       } catch (error) {
         console.error("Failed to close trade:", error);
       }

@@ -193,8 +193,12 @@ export async function mergeBarsToCache(
     if (mergedBars.length === 0) return;
 
     const timestamps = mergedBars.map(b => Math.floor(b.time / 1000));
-    const minTs = Math.min(...timestamps);
-    const maxTs = Math.max(...timestamps);
+    let minTs = timestamps[0];
+    let maxTs = timestamps[0];
+    for (let i = 1; i < timestamps.length; i++) {
+      if (timestamps[i] < minTs) minTs = timestamps[i];
+      if (timestamps[i] > maxTs) maxTs = timestamps[i];
+    }
 
     await CachedBars.deleteMany({ market, symbol, resolution });
 

@@ -366,7 +366,8 @@ export default function BacktestingDashboard() {
     const to = new Date(session.toDate).getTime();
     const current = session.progressPointer;
     if (to === from) return 0;
-    return Math.min(100, Math.max(0, ((current - from) / (to - from)) * 100));
+    const progress = ((current - from) / (to - from)) * 100;
+    return Math.min(100, Math.max(0, progress));
   }, []);
 
   const formatTime = (minutes: number) => {
