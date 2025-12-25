@@ -126,9 +126,13 @@ const getWindowMonths = (resolution: string): number => {
   // Handle numeric resolutions (minutes) - any resolution < 1440 is intraday
   const numericRes = parseInt(resolution, 10);
   if (!isNaN(numericRes) && numericRes < 1440) {
-    // Very short timeframes (1-15 min): 1 month each side
-    if (numericRes <= 15) return 1;
-    // Medium timeframes (30-240 min): 2 months each side
+    // 1 min: very small window (0.25 months = 1 week each side) - VPS is slow
+    if (numericRes === 1) return 0.25;
+    // 5 min: smaller window (0.5 months = 2 weeks each side)
+    if (numericRes <= 5) return 0.5;
+    // 15-30 min: 1 month each side
+    if (numericRes <= 30) return 1;
+    // Medium timeframes (60-240 min): 2 months each side
     return 2;
   }
   // Daily, Weekly, Monthly: 8 months each side (16 months total)
