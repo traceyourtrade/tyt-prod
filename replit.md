@@ -52,4 +52,4 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Storage:** AWS S3 for image uploads.
 - **Email:** Nodemailer with Gmail.
 - **UI Libraries:** Material-UI, Framer Motion, Chart.js, Recharts.
-- **Market Data:** Twelve Data API (for backtesting historical candles).
+- **Market Data:** Polygon.io/Massive.com API (primary for FOREX backtesting - fast), VPS fallback (for other markets), Twelve Data API (legacy).

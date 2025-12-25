@@ -4,6 +4,113 @@ import { getUserModel } from '@/models/main/user.model';
 import { getCachedBarsModel } from '@/models/backtest/cachedBars.model';
 
 const VPS_API_URL = 'http://72.61.242.6:5001';
+const POLYGON_API_URL = 'https://api.polygon.io/v2/aggs/ticker';
+const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
+
+// Map TradingView resolution to Polygon timespan format
+function getPolygonTimespan(resolution: string): { multiplier: number; timespan: string } | null {
+  const resolutionMap: Record<string, { multiplier: number; timespan: string }> = {
+    '1': { multiplier: 1, timespan: 'minute' },
+    '5': { multiplier: 5, timespan: 'minute' },
+    '15': { multiplier: 15, timespan: 'minute' },
+    '30': { multiplier: 30, timespan: 'minute' },
+    '60': { multiplier: 1, timespan: 'hour' },
+    '120': { multiplier: 2, timespan: 'hour' },
+    '240': { multiplier: 4, timespan: 'hour' },
+    'D': { multiplier: 1, timespan: 'day' },
+    '1D': { multiplier: 1, timespan: 'day' },
+    'W': { multiplier: 1, timespan: 'week' },
+    '1W': { multiplier: 1, timespan: 'week' },
+    'M': { multiplier: 1, timespan: 'month' },
+    '1M': { multiplier: 1, timespan: 'month' },
+  };
+  return resolutionMap[resolution] || null;
+}
+
+// Convert symbol to Polygon forex ticker format (C:EURUSD)
+function toPolygonTicker(symbol: string, market: string): string | null {
+  if (market !== 'FOREX') return null;
+  
+  // Remove any existing prefixes or formatting
+  let clean = symbol.replace(/^(C:|FX:)/, '').replace(/[^A-Z]/gi, '').toUpperCase();
+  
+  // Common forex pair mappings
+  if (clean.length === 6) {
+    return `C:${clean}`;
+  }
+  
+  return null;
+}
+
+// Fetch data from Polygon API
+async function fetchFromPolygon(
+  symbol: string,
+  market: string,
+  resolution: string,
+  fromTs: number,
+  toTs: number
+): Promise<{ s: string; t?: number[]; o?: number[]; h?: number[]; l?: number[]; c?: number[]; v?: number[] } | null> {
+  if (!POLYGON_API_KEY) {
+    console.log('Polygon API key not configured');
+    return null;
+  }
+
+  const ticker = toPolygonTicker(symbol, market);
+  if (!ticker) {
+    console.log('Symbol not supported by Polygon:', { symbol, market });
+    return null;
+  }
+
+  const timespan = getPolygonTimespan(resolution);
+  if (!timespan) {
+    console.log('Resolution not supported by Polygon:', resolution);
+    return null;
+  }
+
+  // Convert timestamps to dates for Polygon API
+  const fromDate = new Date(fromTs * 1000).toISOString().split('T')[0];
+  const toDate = new Date(toTs * 1000).toISOString().split('T')[0];
+
+  const url = `${POLYGON_API_URL}/${ticker}/range/${timespan.multiplier}/${timespan.timespan}/${fromDate}/${toDate}?adjusted=true&sort=asc&limit=50000&apiKey=${POLYGON_API_KEY}`;
+
+  console.log('Fetching from Polygon:', { ticker, resolution, fromDate, toDate });
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      console.error('Polygon API error:', response.status, response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+      console.log('No data from Polygon:', data.status, data.resultsCount);
+      return null;
+    }
+
+    // Convert Polygon format to TradingView format
+    // Polygon timestamps are in milliseconds, TradingView expects seconds
+    const bars = data.results;
+    return {
+      s: 'ok',
+      t: bars.map((b: { t: number }) => Math.floor(b.t / 1000)),
+      o: bars.map((b: { o: number }) => b.o),
+      h: bars.map((b: { h: number }) => b.h),
+      l: bars.map((b: { l: number }) => b.l),
+      c: bars.map((b: { c: number }) => b.c),
+      v: bars.map((b: { v?: number }) => b.v || 0)
+    };
+  } catch (error) {
+    console.error('Polygon fetch error:', error);
+    return null;
+  }
+}
 
 async function getUserFromToken(token: string) {
   const User = await getUserModel();
@@ -40,7 +147,32 @@ export async function GET(req: NextRequest) {
     }
 
     const toTs = parseInt(to, 10);
-    const fromTs = from ? parseInt(from, 10) : 0;
+    
+    // Calculate default fromTs based on resolution when not provided
+    // This ensures Polygon gets a sensible date range, not 1970-01-01
+    let fromTs: number;
+    if (from) {
+      fromTs = parseInt(from, 10);
+    } else {
+      // Default data windows by resolution (in seconds)
+      const defaultWindows: Record<string, number> = {
+        '1': 7 * 24 * 60 * 60,       // 1 week for 1-minute
+        '5': 14 * 24 * 60 * 60,      // 2 weeks for 5-minute
+        '15': 30 * 24 * 60 * 60,     // 1 month for 15-minute
+        '30': 30 * 24 * 60 * 60,     // 1 month for 30-minute
+        '60': 60 * 24 * 60 * 60,     // 2 months for 1-hour
+        '120': 60 * 24 * 60 * 60,    // 2 months for 2-hour
+        '240': 60 * 24 * 60 * 60,    // 2 months for 4-hour
+        'D': 365 * 24 * 60 * 60,     // 1 year for daily
+        '1D': 365 * 24 * 60 * 60,    // 1 year for daily
+        'W': 3 * 365 * 24 * 60 * 60, // 3 years for weekly
+        '1W': 3 * 365 * 24 * 60 * 60,
+        'M': 5 * 365 * 24 * 60 * 60, // 5 years for monthly
+        '1M': 5 * 365 * 24 * 60 * 60,
+      };
+      const windowSize = defaultWindows[resolution] || 30 * 24 * 60 * 60; // Default 1 month
+      fromTs = toTs - windowSize;
+    }
 
     // Check cache first for instant response - find ANY overlapping cached data
     try {
@@ -119,35 +251,60 @@ export async function GET(req: NextRequest) {
       apiUrl.searchParams.set('from', from);
     }
 
-    console.log('Cache MISS - fetching from VPS:', { market, symbol, resolution, from, to });
+    console.log('Cache MISS - fetching data:', { market, symbol, resolution, from, to });
 
-    // Add timeout to VPS fetch (3 minutes - VPS can be very slow)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 180000);
-
-    const response = await fetch(apiUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      cache: 'no-store',
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      console.error('VPS API error:', response.status, response.statusText);
-      return NextResponse.json({ s: "no_data" });
+    // Try Polygon API first (fast) for FOREX, fall back to VPS (slow)
+    let data: { s: string; t?: number[]; o?: number[]; h?: number[]; l?: number[]; c?: number[]; v?: number[] } | null = null;
+    
+    if (market === 'FOREX') {
+      data = await fetchFromPolygon(symbol, market, resolution, fromTs, toTs);
+      if (data) {
+        console.log('Got data from Polygon:', { barCount: data.t?.length || 0 });
+      }
     }
 
-    const data = await response.json();
+    // Fall back to VPS if Polygon didn't return data
+    if (!data) {
+      console.log('Falling back to VPS:', { market, symbol, resolution });
+      
+      // Add timeout to VPS fetch (3 minutes - VPS can be very slow)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
+
+      try {
+        const response = await fetch(apiUrl.toString(), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          cache: 'no-store',
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.error('VPS API error:', response.status, response.statusText);
+          return NextResponse.json({ s: "no_data" });
+        }
+
+        data = await response.json();
+      } catch (vpsError) {
+        clearTimeout(timeoutId);
+        console.error('VPS fetch error:', vpsError);
+        return NextResponse.json({ s: "no_data" });
+      }
+    }
+    
+    if (!data) {
+      return NextResponse.json({ s: "no_data" });
+    }
     
     // Cache the response for future use
     // MongoDB has a 16MB BSON document limit - each bar ~50 bytes, so limit to ~100k bars safely
     const MAX_CACHED_BARS = 100000;
-    if (data.s === 'ok' && data.t && data.t.length > 0) {
+    if (data.s === 'ok' && data.t && data.o && data.h && data.l && data.c && data.t.length > 0) {
       try {
         // Limit bars to cache if dataset is too large
         const barsToCache = data.t.length > MAX_CACHED_BARS ? MAX_CACHED_BARS : data.t.length;
@@ -193,14 +350,14 @@ export async function GET(req: NextRequest) {
     
     // Only filter out bars AFTER the 'to' date - keep all historical data before 'to'
     // This allows users to see historical context while starting playback at their 'from' date
-    if (data.s === 'ok' && data.t && Array.isArray(data.t)) {
-      const toTs = parseInt(to, 10);
+    if (data.s === 'ok' && data.t && data.o && data.h && data.l && data.c && Array.isArray(data.t)) {
+      const toTimestamp = parseInt(to, 10);
       
       // Find indices of bars up to (and including) the 'to' date
       const filteredIndices: number[] = [];
       for (let i = 0; i < data.t.length; i++) {
         const barTime = data.t[i];
-        if (barTime <= toTs) {
+        if (barTime <= toTimestamp) {
           filteredIndices.push(i);
         }
       }
@@ -210,19 +367,27 @@ export async function GET(req: NextRequest) {
         console.log('Filtering future bars:', {
           originalCount: data.t.length,
           filteredCount: filteredIndices.length,
-          toTs,
+          toTimestamp,
           firstBarTime: data.t[0],
           lastBarTime: data.t[data.t.length - 1]
         });
         
+        // Capture arrays for safe access in map
+        const tArr = data.t;
+        const oArr = data.o;
+        const hArr = data.h;
+        const lArr = data.l;
+        const cArr = data.c;
+        const vArr = data.v;
+        
         // Rebuild arrays with only filtered data
-        data.t = filteredIndices.map(i => data.t[i]);
-        data.o = filteredIndices.map(i => data.o[i]);
-        data.h = filteredIndices.map(i => data.h[i]);
-        data.l = filteredIndices.map(i => data.l[i]);
-        data.c = filteredIndices.map(i => data.c[i]);
-        if (data.v) {
-          data.v = filteredIndices.map(i => data.v[i]);
+        data.t = filteredIndices.map(i => tArr[i]);
+        data.o = filteredIndices.map(i => oArr[i]);
+        data.h = filteredIndices.map(i => hArr[i]);
+        data.l = filteredIndices.map(i => lArr[i]);
+        data.c = filteredIndices.map(i => cArr[i]);
+        if (vArr) {
+          data.v = filteredIndices.map(i => vArr[i]);
         }
       }
     }
