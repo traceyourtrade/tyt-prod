@@ -1936,12 +1936,23 @@ export default function FullscreenBacktesting({
           hasScrolledToStartRef.current = true;
           console.log('Scrolled chart to session start date:', new Date(targetTimestamp).toISOString());
           
-          // TradingView may auto-fit after our scroll, so re-scroll after a delay
-          // This ensures the view stays at the correct position
+          // TradingView may auto-fit after our scroll, so re-scroll after delays
+          // Using requestAnimationFrame ensures we scroll after TradingView's render cycle
           if (!forceScroll && retryCount === 0) {
-            setTimeout(() => scrollChartToStartDate(chart, 0, true), 300);
-            setTimeout(() => scrollChartToStartDate(chart, 0, true), 800);
-            setTimeout(() => scrollChartToStartDate(chart, 0, true), 1500);
+            const doScroll = () => {
+              try {
+                chart.setVisibleRange({ from, to });
+              } catch (e) {}
+            };
+            // Multiple attempts using both requestAnimationFrame and setTimeout
+            requestAnimationFrame(() => {
+              doScroll();
+              requestAnimationFrame(doScroll);
+            });
+            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 500);
+            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 1000);
+            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 2000);
+            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 3000);
           }
         } catch (e) {
           console.warn('Could not scroll chart to start date:', e);
