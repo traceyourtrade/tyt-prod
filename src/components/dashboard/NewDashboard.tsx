@@ -68,8 +68,41 @@ const NewDashboard = () => {
   const dateRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
   
-  const { selectedAccounts, loading, accounts, setAccounts } = useAccountDetails();
+  const { selectedAccounts, loading, accounts, setAccounts, updateAccView } = useAccountDetails();
   const { currency, exchangeRate } = useCurrencyStore();
+
+  const getDateRangeFilter = useCallback(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (dateRange) {
+      case "Today":
+        return { from: today, to: now };
+      case "This week": {
+        const dayOfWeek = today.getDay();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - dayOfWeek);
+        return { from: startOfWeek, to: now };
+      }
+      case "This month": {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { from: startOfMonth, to: now };
+      }
+      case "Last 30 days": {
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        return { from: thirtyDaysAgo, to: now };
+      }
+      case "Last 90 days": {
+        const ninetyDaysAgo = new Date(today);
+        ninetyDaysAgo.setDate(today.getDate() - 90);
+        return { from: ninetyDaysAgo, to: now };
+      }
+      case "All time":
+      default:
+        return { from: new Date(0), to: now };
+    }
+  }, [dateRange]);
 
   useEffect(() => {
     setAccounts();
@@ -91,15 +124,20 @@ const NewDashboard = () => {
   const allTrades = useMemo(() => {
     if (!selectedAccounts || !Array.isArray(selectedAccounts)) return [];
     const trades: (TradeData & { accountId: string })[] = [];
+    const { from, to } = getDateRangeFilter();
+    
     (selectedAccounts as unknown as AccountData[]).forEach((account) => {
       if (account?.tradeData && Array.isArray(account.tradeData)) {
         account.tradeData.forEach((trade) => {
-          trades.push({ ...trade, accountId: account._id });
+          const tradeDate = new Date(trade.date);
+          if (tradeDate >= from && tradeDate <= to) {
+            trades.push({ ...trade, accountId: account._id });
+          }
         });
       }
     });
     return trades;
-  }, [selectedAccounts]);
+  }, [selectedAccounts, getDateRangeFilter]);
 
   const stats = useMemo(() => {
     if (allTrades.length === 0) {
@@ -406,22 +444,39 @@ const NewDashboard = () => {
               )}
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              {selectedAccount?.name || selectedAccount?.brokerName || "All accounts"}
+              {selectedAccounts?.length === accounts?.length 
+                ? "All accounts" 
+                : selectedAccounts?.length === 1 
+                  ? (selectedAccount?.name || selectedAccount?.brokerName || "1 account")
+                  : `${selectedAccounts?.length || 0} accounts`}
               <ChevronDown className="w-3 h-3" />
             </button>
             {isAccountOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 p-1">
-                <button className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted text-foreground">
-                  All accounts
-                </button>
-                {(accounts as unknown as AccountData[] | undefined)?.map((account) => (
-                  <button
-                    key={account._id}
-                    className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted text-foreground"
-                  >
-                    {account.name || account.brokerName || account._id}
-                  </button>
-                ))}
+              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-xl z-50 p-1 max-h-64 overflow-y-auto">
+                {(accounts as unknown as ({ accountName?: string; checked?: boolean } & AccountData)[] | undefined)?.map((account) => {
+                  const isSelected = account.checked === true;
+                  return (
+                    <button
+                      key={account._id}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2",
+                        isSelected ? "bg-primary/10 text-primary" : "hover:bg-muted text-foreground"
+                      )}
+                      onClick={() => {
+                        if (account.accountName) {
+                          updateAccView(account.accountName);
+                        }
+                        setIsAccountOpen(false);
+                      }}
+                    >
+                      <span className={cn(
+                        "w-2 h-2 rounded-full",
+                        isSelected ? "bg-emerald-500" : "bg-muted-foreground/30"
+                      )} />
+                      {account.name || account.brokerName || account.accountName || account._id}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -822,10 +877,10 @@ const NewDashboard = () => {
                     <span className="text-[10px] text-muted-foreground">{day.date}</span>
                     {day.trades > 0 && (
                       <>
-                        <span className="font-semibold text-xs">
-                          {day.pnl >= 0 ? '' : '-'}${Math.abs(Math.round(day.pnl / 1000))}K
+                        <span className="font-semibold text-[10px]">
+                          {formatCurrencyValue(day.pnl, currency, exchangeRate)}
                         </span>
-                        <span className="text-[9px] text-muted-foreground">{day.trades} trades</span>
+                        <span className="text-[9px] text-muted-foreground">{day.trades} trade{day.trades !== 1 ? 's' : ''}</span>
                       </>
                     )}
                   </>
