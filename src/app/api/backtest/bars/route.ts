@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getUserModel } from '@/models/main/user.model';
+import { getCachedBarsModel } from '@/models/backtest/cachedBars.model';
 
 const VPS_API_URL = 'http://72.61.242.6:5001';
 
@@ -38,10 +39,46 @@ export async function GET(req: NextRequest) {
       }, { status: 400 });
     }
 
+    const toTs = parseInt(to, 10);
+    const fromTs = from ? parseInt(from, 10) : 0;
+
+    // Check cache first for instant response
+    try {
+      const CachedBars = await getCachedBarsModel();
+      const cached = await CachedBars.findOne({
+        market,
+        symbol,
+        resolution,
+        fromTs: { $lte: fromTs },
+        toTs: { $gte: toTs }
+      }).lean();
+
+      if (cached && cached.t && cached.t.length > 0) {
+        console.log('Cache HIT:', { market, symbol, resolution, barCount: cached.t.length });
+        
+        // Filter to requested range
+        const filteredIndices: number[] = [];
+        for (let i = 0; i < cached.t.length; i++) {
+          if (cached.t[i] >= fromTs && cached.t[i] <= toTs) {
+            filteredIndices.push(i);
+          }
+        }
+        
+        return NextResponse.json({
+          s: 'ok',
+          t: filteredIndices.map(i => cached.t[i]),
+          o: filteredIndices.map(i => cached.o[i]),
+          h: filteredIndices.map(i => cached.h[i]),
+          l: filteredIndices.map(i => cached.l[i]),
+          c: filteredIndices.map(i => cached.c[i]),
+          v: filteredIndices.map(i => cached.v[i])
+        });
+      }
+    } catch (cacheError) {
+      console.warn('Cache lookup failed:', cacheError);
+    }
+
     // Map TradingView resolution formats to VPS API expected formats
-    // TradingView uses: 1, 5, 15, 60, 1D, 1W, 1M
-    // VPS API expects: D for daily, W for weekly, M for monthly (without the "1" prefix)
-    // Minute resolutions pass through as-is (1, 5, 15, 60 etc.)
     const resolutionMap: Record<string, string> = {
       '1D': 'D',
       '1W': 'W', 
@@ -59,15 +96,11 @@ export async function GET(req: NextRequest) {
       apiUrl.searchParams.set('from', from);
     }
 
-    console.log('Bars API request:', {
-      originalResolution: resolution,
-      mappedResolution,
-      symbol,
-      market,
-      from,
-      to,
-      fullUrl: apiUrl.toString()
-    });
+    console.log('Cache MISS - fetching from VPS:', { market, symbol, resolution, from, to });
+
+    // Add timeout to VPS fetch
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     const response = await fetch(apiUrl.toString(), {
       method: 'GET',
@@ -75,8 +108,11 @@ export async function GET(req: NextRequest) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.error('VPS API error:', response.status, response.statusText);
@@ -84,6 +120,35 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await response.json();
+    
+    // Cache the response for future use (async, don't wait)
+    if (data.s === 'ok' && data.t && data.t.length > 0) {
+      try {
+        const CachedBars = await getCachedBarsModel();
+        await CachedBars.findOneAndUpdate(
+          { market, symbol, resolution, fromTs, toTs },
+          {
+            market,
+            symbol,
+            resolution,
+            fromTs,
+            toTs,
+            t: data.t,
+            o: data.o,
+            h: data.h,
+            l: data.l,
+            c: data.c,
+            v: data.v || [],
+            cachedAt: new Date(),
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          },
+          { upsert: true }
+        );
+        console.log('Cached bars:', { market, symbol, resolution, barCount: data.t.length });
+      } catch (cacheError) {
+        console.warn('Failed to cache bars:', cacheError);
+      }
+    }
     
     // Only filter out bars AFTER the 'to' date - keep all historical data before 'to'
     // This allows users to see historical context while starting playback at their 'from' date

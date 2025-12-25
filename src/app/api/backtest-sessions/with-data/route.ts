@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getUserModel } from '@/models/main/user.model';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
+import { getCachedBarsModel } from '@/models/backtest/cachedBars.model';
 
 const VPS_API_URL = 'http://72.61.242.6:5001';
 
@@ -122,10 +123,60 @@ export async function GET(req: NextRequest) {
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
     
+    // Check MongoDB cache first for instant response
     try {
-      // Add timeout to prevent hanging (30 seconds)
+      const CachedBars = await getCachedBarsModel();
+      const cached = await CachedBars.findOne({
+        market,
+        symbol,
+        resolution,
+        fromTs: { $lte: fromTs },
+        toTs: { $gte: toTs }
+      }).lean();
+
+      if (cached && cached.t && cached.t.length > 0) {
+        console.log('Cache HIT for with-data:', { market, symbol, resolution, barCount: cached.t.length });
+        
+        // Filter to requested range
+        const filteredIndices: number[] = [];
+        for (let i = 0; i < cached.t.length; i++) {
+          if (cached.t[i] >= fromTs && cached.t[i] <= toTs) {
+            filteredIndices.push(i);
+          }
+        }
+        
+        barsData = {
+          s: 'ok',
+          t: filteredIndices.map(i => cached.t[i]),
+          o: filteredIndices.map(i => cached.o[i]),
+          h: filteredIndices.map(i => cached.h[i]),
+          l: filteredIndices.map(i => cached.l[i]),
+          c: filteredIndices.map(i => cached.c[i]),
+          v: filteredIndices.map(i => cached.v[i])
+        };
+
+        return NextResponse.json({
+          success: true,
+          session: sessionData,
+          bars: barsData,
+          resolution: resolution,
+          cached: true
+        }, {
+          headers: {
+            'Cache-Control': 'private, max-age=30'
+          }
+        });
+      }
+    } catch (cacheError) {
+      console.warn('Cache lookup failed:', cacheError);
+    }
+    
+    console.log('Cache MISS for with-data - fetching from VPS:', { market, symbol, resolution, fromTs, toTs });
+    
+    try {
+      // Add timeout to prevent hanging (60 seconds for initial load)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
       
       const barsResponse = await fetch(apiUrl.toString(), {
         method: 'GET',
@@ -160,6 +211,33 @@ export async function GET(req: NextRequest) {
             }
           }
           barsData = data;
+          
+          // Cache the response for future use
+          try {
+            const CachedBars = await getCachedBarsModel();
+            await CachedBars.findOneAndUpdate(
+              { market, symbol, resolution, fromTs, toTs },
+              {
+                market,
+                symbol,
+                resolution,
+                fromTs,
+                toTs,
+                t: data.t,
+                o: data.o,
+                h: data.h,
+                l: data.l,
+                c: data.c,
+                v: data.v || [],
+                cachedAt: new Date(),
+                expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+              },
+              { upsert: true }
+            );
+            console.log('Cached bars for future use:', { market, symbol, resolution, barCount: data.t.length });
+          } catch (cacheError) {
+            console.warn('Failed to cache bars:', cacheError);
+          }
         }
       }
     } catch (vpsError) {
