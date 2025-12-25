@@ -235,16 +235,17 @@ const CalendarPopup = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
         setShowTr();
-        document.body.classList.remove("no-scroll");
       }
     };
 
     if (showTr) {
+      document.body.style.overflow = "hidden";
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.body.style.overflow = "";
     };
   }, [showTr, setShowTr]);
 
@@ -361,7 +362,6 @@ const CalendarPopup = () => {
 
   const closePopup = () => {
     setShowTr();
-    document.body.classList.remove("no-scroll");
   };
 
   const StatCard = ({ icon, label, value, valueColor = "text-white", iconBg = "bg-white/5" }: { 
