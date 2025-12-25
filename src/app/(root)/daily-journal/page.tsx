@@ -491,8 +491,8 @@ const DailyJournal = () => {
   return (
     <div className="h-screen bg-background overflow-hidden flex flex-col">
       {/* Top Header Bar */}
-      <div className="flex-shrink-0 border-b border-border bg-card/80 backdrop-blur-xl">
-        <div className="h-[2px] bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500" />
+      <div className="flex-shrink-0 border-b border-white/[0.06] bg-gradient-to-b from-card/95 to-card/80 backdrop-blur-2xl">
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
         
         <div className="px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
           {/* Left: Trade Navigation */}
@@ -506,20 +506,20 @@ const DailyJournal = () => {
               <Layers className="w-4 h-4 text-muted-foreground" />
             </button>
 
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <button
                 onClick={() => navigateTrade("prev")}
-                className="p-1.5 sm:p-2 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all"
+                className="p-1.5 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
               >
                 <ChevronLeft className="w-4 h-4 text-muted-foreground" />
               </button>
-              <div className="px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-muted/30 border border-border">
-                <span className="text-xs sm:text-sm font-medium text-foreground">{currentTradeNumber}</span>
-                <span className="text-xs sm:text-sm text-muted-foreground">/{filteredTrades.length}</span>
+              <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] min-w-[56px] text-center">
+                <span className="text-xs sm:text-sm font-semibold text-foreground tabular-nums">{currentTradeNumber}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground/60">/{filteredTrades.length}</span>
               </div>
               <button
                 onClick={() => navigateTrade("next")}
-                className="p-1.5 sm:p-2 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all"
+                className="p-1.5 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
               >
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -582,9 +582,9 @@ const DailyJournal = () => {
             <button
               onClick={handleSave}
               disabled={isDemo || isSaving}
-              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium text-xs sm:text-sm transition-all disabled:opacity-50"
+              className="group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-semibold text-xs sm:text-sm transition-all duration-300 disabled:opacity-50 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
             >
-              <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
               <span className="hidden sm:inline">{isSaving ? "Saving..." : "Save"}</span>
             </button>
           </div>
@@ -597,25 +597,25 @@ const DailyJournal = () => {
         <motion.div
           initial={false}
           animate={{ width: isLeftPanelCollapsed ? 0 : 280 }}
-          className="hidden md:block flex-shrink-0 border-r border-border bg-card overflow-hidden"
+          className="hidden md:block flex-shrink-0 border-r border-white/[0.06] bg-gradient-to-b from-card to-background overflow-hidden"
         >
           <div className="w-[280px] h-full flex flex-col">
             {/* Search */}
-            <div className="p-4 border-b border-border">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+            <div className="p-4 border-b border-white/[0.06]">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary/70 transition-colors" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search trades..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-muted/30 border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all duration-200"
                 />
               </div>
             </div>
 
             {/* Trade List */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide">
+            <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1">
               {filteredTrades.map((trade, idx) => {
                 const isSelected = (trade.id || trade._id) === (selectedTrade?.id || selectedTrade?._id);
                 const tradeProfit = trade.Profit >= 0;
@@ -626,30 +626,33 @@ const DailyJournal = () => {
                       setSelectedTrade(trade);
                       setSelectedTradeIndex(idx);
                     }}
-                    className={`w-full p-4 text-left border-b border-border/30 transition-all ${
+                    className={`w-full p-3 text-left rounded-xl transition-all duration-200 ${
                       isSelected 
-                        ? "bg-gradient-to-r from-primary/10 to-transparent border-l-2 border-l-primary" 
-                        : "hover:bg-muted/30"
+                        ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border border-primary/30 shadow-lg shadow-primary/5" 
+                        : "hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06]"
                     }`}
-                    whileHover={{ x: isSelected ? 0 : 4 }}
+                    whileHover={{ scale: isSelected ? 1 : 1.01 }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <SymbolLogo symbol={trade.Item || trade.symbol || ""} size="sm" />
+                        <div className={`relative ${isSelected ? 'ring-2 ring-primary/30 ring-offset-1 ring-offset-background rounded-lg' : ''}`}>
+                          <SymbolLogo symbol={trade.Item || trade.symbol || ""} size="sm" />
+                        </div>
                         <div>
-                          <span className="font-medium text-foreground text-sm">{trade.Item || trade.symbol}</span>
+                          <span className={`font-semibold text-sm ${isSelected ? 'text-foreground' : 'text-foreground/90'}`}>{trade.Item || trade.symbol}</span>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[10px] text-muted-foreground">{formatDate(trade.date)}</span>
+                            <span className="text-[10px] text-muted-foreground/70">{formatDate(trade.date)}</span>
                             {trade.strategy && (
                               <>
                                 <span className="text-muted-foreground/30">·</span>
-                                <span className="text-[10px] text-muted-foreground">{trade.strategy}</span>
+                                <span className="text-[10px] text-primary/70">{trade.strategy}</span>
                               </>
                             )}
                           </div>
                         </div>
                       </div>
-                      <span className={`text-sm font-semibold ${tradeProfit ? "text-profit" : "text-loss"}`}>
+                      <span className={`text-sm font-bold tabular-nums ${tradeProfit ? "text-profit" : "text-loss"}`}>
                         {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit * exchangeRate, currency)}
                       </span>
                     </div>
@@ -673,8 +676,8 @@ const DailyJournal = () => {
         {/* Center Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Center Tab Bar */}
-          <div className="flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 border-b border-border flex items-center justify-between gap-2 bg-card/50">
-            <div className="flex items-center gap-1 p-1 bg-muted/20 rounded-xl border border-border">
+          <div className="flex-shrink-0 px-3 sm:px-6 py-2.5 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-gradient-to-b from-card/60 to-transparent backdrop-blur-sm">
+            <div className="flex items-center gap-0.5 p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
               {[
                 { key: "chart", label: "Chart", icon: LineChart },
                 { key: "notes", label: "Notes", icon: MessageSquare },
@@ -683,27 +686,34 @@ const DailyJournal = () => {
                 <button
                   key={tab.key}
                   onClick={() => setCenterTab(tab.key as typeof centerTab)}
-                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
                     centerTab === tab.key
-                      ? "bg-muted/50 text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-white/[0.08] text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   }`}
                 >
-                  <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <tab.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${centerTab === tab.key ? 'text-primary' : ''}`} />
                   <span className="hidden xs:inline">{tab.label}</span>
+                  {centerTab === tab.key && (
+                    <motion.div
+                      layoutId="centerTabIndicator"
+                      className="absolute inset-0 bg-white/[0.08] rounded-lg -z-10"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                    />
+                  )}
                 </button>
               ))}
             </div>
 
             {centerTab === "chart" && (
-              <div className="hidden sm:flex items-center gap-1 text-xs">
+              <div className="hidden sm:flex items-center gap-0.5 p-1 bg-white/[0.02] rounded-lg border border-white/[0.06] text-xs">
                 {["5y", "1y", "3m", "1m", "4h", "1h", "D"].map((tf) => (
                   <button
                     key={tf}
-                    className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all ${
+                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md transition-all duration-200 ${
                       tf === "4h"
-                        ? "bg-primary/20 text-primary font-medium"
-                        : "bg-muted/30 hover:bg-muted/50 text-muted-foreground"
+                        ? "bg-primary/20 text-primary font-semibold border border-primary/30"
+                        : "hover:bg-white/[0.06] text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {tf}
@@ -904,12 +914,12 @@ const DailyJournal = () => {
         <motion.div
           initial={false}
           animate={{ width: isRightPanelCollapsed ? 0 : 340 }}
-          className="hidden lg:block flex-shrink-0 border-l border-border bg-card overflow-hidden"
+          className="hidden lg:block flex-shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-card to-background overflow-hidden"
         >
           <div className="w-[340px] h-full flex flex-col">
             {/* Right Panel Tabs */}
-            <div className="flex-shrink-0 p-4 border-b border-border">
-              <div className="flex gap-1 p-1 bg-muted/20 rounded-xl border border-border">
+            <div className="flex-shrink-0 p-4 border-b border-white/[0.06]">
+              <div className="flex gap-0.5 p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
                 {[
                   { key: "stats", label: "Stats", icon: BarChart2 },
                   { key: "strategy", label: "Strategy", icon: Target },
@@ -919,13 +929,13 @@ const DailyJournal = () => {
                   <button
                     key={tab.key}
                     onClick={() => setMainTab(tab.key as typeof mainTab)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all ${
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                       mainTab === tab.key
-                        ? "bg-muted/50 text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-white/[0.08] text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                     }`}
                   >
-                    <tab.icon className="w-3.5 h-3.5" />
+                    <tab.icon className={`w-3.5 h-3.5 ${mainTab === tab.key ? 'text-primary' : ''}`} />
                     <span className="hidden xl:inline">{tab.label}</span>
                   </button>
                 ))}
@@ -933,25 +943,26 @@ const DailyJournal = () => {
             </div>
 
             {/* Right Panel Content */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3">
               {/* Stats Tab */}
               {mainTab === "stats" && selectedTrade && metrics && (
                 <>
                   {/* Hero P&L Card */}
-                  <div className={`p-5 rounded-2xl border ${isProfit ? "bg-profit/5 border-profit/20" : "bg-loss/5 border-loss/20"}`}>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Net P&L</span>
+                  <div className={`relative p-5 rounded-2xl border overflow-hidden ${isProfit ? "bg-gradient-to-br from-profit/10 via-profit/5 to-transparent border-profit/25" : "bg-gradient-to-br from-loss/10 via-loss/5 to-transparent border-loss/25"}`}>
+                    <div className={`absolute top-0 left-0 right-0 h-[1px] ${isProfit ? 'bg-gradient-to-r from-transparent via-profit/50 to-transparent' : 'bg-gradient-to-r from-transparent via-loss/50 to-transparent'}`} />
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Net P&L</span>
                     <div className="flex items-baseline gap-2 mt-2">
-                      <span className={`text-3xl font-bold ${isProfit ? "text-profit" : "text-loss"}`}>
+                      <span className={`text-4xl font-bold tabular-nums tracking-tight ${isProfit ? "text-profit" : "text-loss"}`}>
                         {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
                       </span>
                     </div>
                   </div>
 
                   {/* Trade Info Grid */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Side</span>
-                      <p className={`text-sm font-semibold mt-1 ${
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Side</span>
+                      <p className={`text-sm font-bold mt-1.5 ${
                         (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
                           ? "text-profit"
                           : "text-loss"
@@ -959,31 +970,31 @@ const DailyJournal = () => {
                         {selectedTrade.Type || selectedTrade.side || "--"}
                       </p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Quantity</span>
-                      <p className="text-sm font-semibold text-foreground mt-1">{selectedTrade.quantity || "--"}</p>
+                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Quantity</span>
+                      <p className="text-sm font-bold text-foreground mt-1.5">{selectedTrade.quantity || "--"}</p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Pips</span>
-                      <p className="text-sm font-semibold text-primary mt-1">{metrics.pips}</p>
+                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Pips</span>
+                      <p className="text-sm font-bold text-primary mt-1.5">{metrics.pips}</p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-muted/20 border border-border">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Return/Pip</span>
-                      <p className="text-sm font-semibold text-foreground mt-1">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
+                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Return/Pip</span>
+                      <p className="text-sm font-bold text-foreground mt-1.5">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
                     </div>
                   </div>
 
                   {/* Additional Stats */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {[
                       { label: "Fees", value: formatCompactCurrency((selectedTrade.fees || 0) * exchangeRate, currency) },
                       { label: "Swap", value: formatCompactCurrency((selectedTrade.swap || 0) * exchangeRate, currency) },
                       { label: "Net ROI", value: `${metrics.netROI > 0 ? "+" : ""}${isFinite(metrics.netROI) ? metrics.netROI.toFixed(2) : "0"}%`, color: metrics.netROI >= 0 ? "text-profit" : "text-loss" },
                       { label: "Gross P&L", value: formatCompactCurrency(metrics.grossPnL * exchangeRate, currency), color: metrics.grossPnL >= 0 ? "text-profit" : "text-loss" },
                     ].map((item) => (
-                      <div key={item.label} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-muted/20 border border-border">
-                        <span className="text-xs text-muted-foreground">{item.label}</span>
-                        <span className={`text-sm font-semibold ${item.color || "text-foreground"}`}>{item.value}</span>
+                      <div key={item.label} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
+                        <span className="text-xs text-muted-foreground/80">{item.label}</span>
+                        <span className={`text-sm font-bold tabular-nums ${item.color || "text-foreground"}`}>{item.value}</span>
                       </div>
                     ))}
                   </div>
@@ -997,20 +1008,20 @@ const DailyJournal = () => {
                   )}
 
                   {/* Trade Rating */}
-                  <div className="p-4 rounded-xl bg-muted/20 border border-border">
-                    <span className="text-xs text-muted-foreground block mb-3">Trade Rating</span>
-                    <div className="flex gap-2">
+                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">Trade Rating</span>
+                    <div className="flex gap-1.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           onClick={() => handleRatingChange(star)}
-                          className="transition-transform hover:scale-110"
+                          className="transition-all duration-200 hover:scale-110 active:scale-95"
                         >
                           <Star
-                            className={`w-6 h-6 ${
+                            className={`w-7 h-7 transition-colors duration-200 ${
                               (journalData.tradeRating || 0) >= star
-                                ? "text-amber-400 fill-amber-400"
-                                : "text-muted-foreground/30"
+                                ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]"
+                                : "text-white/10 hover:text-white/20"
                             }`}
                           />
                         </button>
@@ -1019,8 +1030,8 @@ const DailyJournal = () => {
                   </div>
 
                   {/* Sentiment */}
-                  <div className="p-4 rounded-xl bg-muted/20 border border-border">
-                    <span className="text-xs text-muted-foreground block mb-3">How did this trade feel?</span>
+                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">How did this trade feel?</span>
                     <div className="grid grid-cols-3 gap-2">
                       {[
                         { key: "poor", label: "Poor", icon: TrendingDown, color: "loss" },
@@ -1032,18 +1043,18 @@ const DailyJournal = () => {
                           <button
                             key={s.key}
                             onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
-                            className={`p-3 rounded-xl border transition-all ${
+                            className={`p-3 rounded-xl border transition-all duration-200 ${
                               isSelected
                                 ? s.color === "profit" 
-                                  ? "bg-profit/10 border-profit/30 text-profit"
+                                  ? "bg-profit/15 border-profit/40 text-profit shadow-lg shadow-profit/10"
                                   : s.color === "loss"
-                                  ? "bg-loss/10 border-loss/30 text-loss"
-                                  : "bg-amber-500/10 border-amber-500/30 text-amber-500"
-                                : "bg-muted/20 border-border text-muted-foreground hover:border-primary/30"
+                                  ? "bg-loss/15 border-loss/40 text-loss shadow-lg shadow-loss/10"
+                                  : "bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-lg shadow-amber-500/10"
+                                : "bg-white/[0.02] border-white/[0.06] text-muted-foreground/70 hover:bg-white/[0.05] hover:border-white/[0.12] hover:text-foreground"
                             }`}
                           >
-                            <s.icon className="w-5 h-5 mx-auto mb-1.5" />
-                            <span className="text-xs font-medium">{s.label}</span>
+                            <s.icon className={`w-5 h-5 mx-auto mb-1.5 ${isSelected ? '' : 'opacity-60'}`} />
+                            <span className="text-xs font-semibold">{s.label}</span>
                           </button>
                         );
                       })}
