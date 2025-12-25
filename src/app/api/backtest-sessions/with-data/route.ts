@@ -216,14 +216,19 @@ export async function GET(req: NextRequest) {
           barsData = data;
           
           // Cache the response for future use
+          // MongoDB has a 16MB BSON document limit - each bar ~50 bytes, so limit to ~100k bars safely
+          const MAX_CACHED_BARS = 100000;
           try {
+            const barsToCache = data.t.length > MAX_CACHED_BARS ? MAX_CACHED_BARS : data.t.length;
+            
             // Sanitize volume data - VPS sometimes returns malformed data
             let safeVolume: number[] = [];
             if (data.v && Array.isArray(data.v)) {
               safeVolume = data.v
+                .slice(0, barsToCache)
                 .map((v: unknown) => typeof v === 'number' ? v : parseFloat(String(v)))
                 .filter((v: number) => !isNaN(v) && isFinite(v));
-              if (safeVolume.length !== data.t.length) {
+              if (safeVolume.length !== barsToCache) {
                 safeVolume = [];
               }
             }
@@ -237,18 +242,18 @@ export async function GET(req: NextRequest) {
                 resolution,
                 fromTs,
                 toTs,
-                t: data.t,
-                o: data.o,
-                h: data.h,
-                l: data.l,
-                c: data.c,
+                t: data.t.slice(0, barsToCache),
+                o: data.o.slice(0, barsToCache),
+                h: data.h.slice(0, barsToCache),
+                l: data.l.slice(0, barsToCache),
+                c: data.c.slice(0, barsToCache),
                 v: safeVolume,
                 cachedAt: new Date(),
                 expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
               },
               { upsert: true }
             );
-            console.log('Cached bars for future use:', { market, symbol, resolution, barCount: data.t.length });
+            console.log('Cached bars for future use:', { market, symbol, resolution, barCount: barsToCache });
           } catch (cacheError) {
             console.warn('Failed to cache bars:', cacheError);
           }
