@@ -2750,13 +2750,90 @@ export default function FullscreenBacktesting({
     }
   }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId, contractSize, sessionData?.symbol]);
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     // Use ref for latest bars to avoid stale closure issues
     const bars = allBarsRef.current;
     const idx = currentBarIndexRef.current;
+    const resolution = currentIntervalRef.current;
     
-    if (!bars || bars.length === 0 || idx >= bars.length - 1) {
+    if (!bars || bars.length === 0) {
       setIsPlaying(false);
+      return;
+    }
+    
+    // Check if we're at the end and need to fetch more data
+    if (idx >= bars.length - 1) {
+      const session = sessionDataRef.current || sessionData;
+      if (!session) {
+        setIsPlaying(false);
+        return;
+      }
+      
+      const currentRange = loadedRangeRef.current[resolution];
+      if (!currentRange) {
+        setIsPlaying(false);
+        return;
+      }
+      
+      // Fetch 2 months of future data
+      const currentToDate = new Date(currentRange.to * 1000);
+      const newToDate = addMonths(currentToDate, 2);
+      const fetchFrom = currentRange.to;
+      const fetchTo = Math.floor(newToDate.getTime() / 1000);
+      
+      const market = session.market || 'FOREX';
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${session.symbol}&resolution=${resolution}&to=${fetchTo}&from=${fetchFrom}`;
+      
+      console.log('Fetching more future bars for auto-play:', { resolution, fetchFrom, fetchTo });
+      
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+          const newBars = data.t.map((time: number, i: number) => ({
+            time: time * 1000,
+            open: data.o[i],
+            high: data.h[i],
+            low: data.l[i],
+            close: data.c[i],
+            volume: data.v?.[i] || 0,
+          }));
+          
+          // Merge with existing bars
+          const existingBars = barsCacheRef.current[resolution] || [];
+          const allTimestamps = new Set(existingBars.map((b: any) => b.time));
+          const uniqueNewBars = newBars.filter((b: any) => !allTimestamps.has(b.time));
+          const mergedBars = [...existingBars, ...uniqueNewBars].sort((a, b) => a.time - b.time);
+          
+          console.log(`Merged bars: ${existingBars.length} + ${uniqueNewBars.length} = ${mergedBars.length}`);
+          
+          barsCacheRef.current[resolution] = mergedBars;
+          loadedRangeRef.current[resolution] = {
+            from: currentRange.from,
+            to: fetchTo
+          };
+          
+          // Update allBars and continue to next bar
+          if (resolution === currentIntervalRef.current) {
+            allBarsRef.current = mergedBars;
+            setAllBars(mergedBars);
+            
+            const nextBar = mergedBars[idx + 1];
+            if (nextBar && onRealtimeCallbackRef.current) {
+              onRealtimeCallbackRef.current({ ...nextBar, time: nextBar.time });
+            }
+            
+            setCurrentBarIndex(idx + 1, mergedBars);
+          }
+        } else {
+          console.log('No more future data available');
+          setIsPlaying(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch more bars:', error);
+        setIsPlaying(false);
+      }
       return;
     }
     
@@ -2772,15 +2849,101 @@ export default function FullscreenBacktesting({
     
     // Pass bars to update replayTimestamp correctly during playback
     setCurrentBarIndex(idx + 1, bars);
-  }, []);
+  }, [sessionData]);
 
   // Handle forward with skip duration - skips multiple candles based on time
-  const handleSkipForward = useCallback(() => {
+  const handleSkipForward = useCallback(async () => {
     const bars = allBarsRef.current;
     const idx = currentBarIndexRef.current;
+    const resolution = currentIntervalRef.current;
     
-    if (!bars || bars.length === 0 || idx >= bars.length - 1) {
+    if (!bars || bars.length === 0) {
       setIsPlaying(false);
+      return;
+    }
+    
+    // Check if we're at or near the end and need to fetch more data
+    if (idx >= bars.length - 1) {
+      // Fetch more future data
+      const session = sessionDataRef.current || sessionData;
+      if (!session) {
+        setIsPlaying(false);
+        return;
+      }
+      
+      const currentRange = loadedRangeRef.current[resolution];
+      if (!currentRange) {
+        setIsPlaying(false);
+        return;
+      }
+      
+      // Fetch 2 months of future data
+      const currentToDate = new Date(currentRange.to * 1000);
+      const newToDate = addMonths(currentToDate, 2);
+      const fetchFrom = currentRange.to;
+      const fetchTo = Math.floor(newToDate.getTime() / 1000);
+      
+      const market = session.market || 'FOREX';
+      const apiUrl = `/api/backtest/bars?market=${market}&symbol=${session.symbol}&resolution=${resolution}&to=${fetchTo}&from=${fetchFrom}`;
+      
+      console.log('Fetching more future bars for skip forward:', { resolution, fetchFrom, fetchTo });
+      
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data && data.s === 'ok' && data.t && data.t.length > 0) {
+          const newBars = data.t.map((time: number, i: number) => ({
+            time: time * 1000,
+            open: data.o[i],
+            high: data.h[i],
+            low: data.l[i],
+            close: data.c[i],
+            volume: data.v?.[i] || 0,
+          }));
+          
+          // Merge with existing bars
+          const existingBars = barsCacheRef.current[resolution] || [];
+          const allTimestamps = new Set(existingBars.map((b: any) => b.time));
+          const uniqueNewBars = newBars.filter((b: any) => !allTimestamps.has(b.time));
+          const mergedBars = [...existingBars, ...uniqueNewBars].sort((a, b) => a.time - b.time);
+          
+          console.log(`Merged bars: ${existingBars.length} + ${uniqueNewBars.length} = ${mergedBars.length}`);
+          
+          barsCacheRef.current[resolution] = mergedBars;
+          loadedRangeRef.current[resolution] = {
+            from: currentRange.from,
+            to: fetchTo
+          };
+          
+          // Update allBars if this is the current resolution
+          if (resolution === currentIntervalRef.current) {
+            allBarsRef.current = mergedBars;
+            setAllBars(mergedBars);
+            
+            // Now skip forward on the new bars
+            const candlesToSkip = getCandlesToSkip();
+            const newIndex = Math.min(idx + candlesToSkip, mergedBars.length - 1);
+            
+            if (onRealtimeCallbackRef.current) {
+              for (let i = idx + 1; i <= newIndex; i++) {
+                const bar = mergedBars[i];
+                if (bar) {
+                  onRealtimeCallbackRef.current({ ...bar, time: bar.time });
+                }
+              }
+            }
+            
+            setCurrentBarIndex(newIndex, mergedBars);
+          }
+        } else {
+          console.log('No more future data available');
+          setIsPlaying(false);
+        }
+      } catch (error) {
+        console.error('Failed to fetch more bars:', error);
+        setIsPlaying(false);
+      }
       return;
     }
     
@@ -2801,7 +2964,7 @@ export default function FullscreenBacktesting({
     }
     
     setCurrentBarIndex(newIndex, bars);
-  }, [getCandlesToSkip]);
+  }, [getCandlesToSkip, sessionData]);
   
   // Handle backward with skip duration
   const handleSkipBackward = useCallback(() => {
