@@ -220,20 +220,30 @@ export async function GET(req: NextRequest) {
           const mergedBars = Array.from(allBarsMap.values()).sort((a, b) => a.t - b.t);
           
           // Check if cache covers the requested range adequately
-          // If we have very few bars (< 10) relative to the expected range, the cache likely doesn't cover enough
-          // In that case, fetch from Polygon to get the full historical data
+          // Calculate expected range duration and compare with actual cached coverage
           const expectedBarsMinimum = 10;
           const firstCachedTs = mergedBars[0]?.t || toTs;
           const lastCachedTs = mergedBars[mergedBars.length - 1]?.t || fromTs;
+          const requestedDuration = toTs - fromTs;
+          const cachedDuration = lastCachedTs - firstCachedTs;
           
-          // If cache doesn't cover the start of requested range well, fetch from source
-          if (mergedBars.length < expectedBarsMinimum || firstCachedTs > fromTs + 3600) {
+          // If cache covers less than 50% of requested range OR has very few bars, fetch from source
+          // Also fetch if there's a significant gap at the start of the range
+          const coverageRatio = requestedDuration > 0 ? cachedDuration / requestedDuration : 0;
+          const hasGapAtStart = firstCachedTs > fromTs + 3600; // Gap of more than 1 hour at start
+          const hasGapAtEnd = lastCachedTs < toTs - 3600; // Gap of more than 1 hour at end
+          
+          if (mergedBars.length < expectedBarsMinimum || coverageRatio < 0.5 || hasGapAtStart || hasGapAtEnd) {
             console.log('Cache partial coverage, fetching from source:', { 
               market, symbol, resolution, 
               cachedBars: mergedBars.length, 
               requestedFrom: fromTs,
+              requestedTo: toTs,
               firstCachedTs,
-              gap: firstCachedTs - fromTs
+              lastCachedTs,
+              coverageRatio: coverageRatio.toFixed(2),
+              hasGapAtStart,
+              hasGapAtEnd
             });
             // Continue to Polygon/VPS fetch below
           } else {
