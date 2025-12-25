@@ -123,52 +123,71 @@ export async function GET(req: NextRequest) {
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
     
-    // Check MongoDB cache first for instant response
+    // Check MongoDB cache first for instant response - find ANY overlapping cached data
     try {
       const CachedBars = await getCachedBarsModel();
-      const cached = await CachedBars.findOne({
+      
+      // Find all cached documents that might have overlapping data
+      const cachedDocs = await CachedBars.find({
         market,
         symbol,
         resolution,
-        fromTs: { $lte: fromTs },
-        toTs: { $gte: toTs }
+        // At least some overlap: cached range overlaps with requested range
+        $or: [
+          { fromTs: { $lte: toTs }, toTs: { $gte: fromTs } },
+        ]
       }).lean();
 
-      if (cached && cached.t && cached.t.length > 0) {
-        console.log('Cache HIT for with-data:', { market, symbol, resolution, barCount: cached.t.length });
+      if (cachedDocs && cachedDocs.length > 0) {
+        // Merge all cached bars that fall within requested range
+        const allBarsMap = new Map<number, { t: number; o: number; h: number; l: number; c: number; v: number }>();
         
-        // Filter to requested range
-        const filteredIndices: number[] = [];
-        for (let i = 0; i < cached.t.length; i++) {
-          if (cached.t[i] >= fromTs && cached.t[i] <= toTs) {
-            filteredIndices.push(i);
+        for (const cached of cachedDocs) {
+          if (!cached.t || cached.t.length === 0) continue;
+          const hasValidVolume = cached.v && cached.v.length === cached.t.length;
+          
+          for (let i = 0; i < cached.t.length; i++) {
+            const timestamp = cached.t[i];
+            if (timestamp >= fromTs && timestamp <= toTs && !allBarsMap.has(timestamp)) {
+              allBarsMap.set(timestamp, {
+                t: timestamp,
+                o: cached.o[i],
+                h: cached.h[i],
+                l: cached.l[i],
+                c: cached.c[i],
+                v: hasValidVolume ? cached.v[i] : 0
+              });
+            }
           }
         }
         
-        // Handle volume array - may be empty if original data was malformed
-        const hasValidVolume = cached.v && cached.v.length === cached.t.length;
-        
-        barsData = {
-          s: 'ok',
-          t: filteredIndices.map(i => cached.t[i]),
-          o: filteredIndices.map(i => cached.o[i]),
-          h: filteredIndices.map(i => cached.h[i]),
-          l: filteredIndices.map(i => cached.l[i]),
-          c: filteredIndices.map(i => cached.c[i]),
-          v: hasValidVolume ? filteredIndices.map(i => cached.v[i]) : filteredIndices.map(() => 0)
-        };
+        if (allBarsMap.size > 0) {
+          // Sort by timestamp
+          const mergedBars = Array.from(allBarsMap.values()).sort((a, b) => a.t - b.t);
+          console.log('Cache HIT for with-data (merged):', { market, symbol, resolution, barCount: mergedBars.length, fromDocs: cachedDocs.length });
+          
+          barsData = {
+            s: 'ok',
+            t: mergedBars.map(b => b.t),
+            o: mergedBars.map(b => b.o),
+            h: mergedBars.map(b => b.h),
+            l: mergedBars.map(b => b.l),
+            c: mergedBars.map(b => b.c),
+            v: mergedBars.map(b => b.v)
+          };
 
-        return NextResponse.json({
-          success: true,
-          session: sessionData,
-          bars: barsData,
-          resolution: resolution,
-          cached: true
-        }, {
-          headers: {
-            'Cache-Control': 'private, max-age=30'
-          }
-        });
+          return NextResponse.json({
+            success: true,
+            session: sessionData,
+            bars: barsData,
+            resolution: resolution,
+            cached: true
+          }, {
+            headers: {
+              'Cache-Control': 'private, max-age=30'
+            }
+          });
+        }
       }
     } catch (cacheError) {
       console.warn('Cache lookup failed:', cacheError);
