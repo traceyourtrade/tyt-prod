@@ -64,6 +64,9 @@ export async function GET(req: NextRequest) {
           }
         }
         
+        // Handle volume array - may be empty if original data was malformed
+        const hasValidVolume = cached.v && cached.v.length === cached.t.length;
+        
         return NextResponse.json({
           s: 'ok',
           t: filteredIndices.map(i => cached.t[i]),
@@ -71,7 +74,7 @@ export async function GET(req: NextRequest) {
           h: filteredIndices.map(i => cached.h[i]),
           l: filteredIndices.map(i => cached.l[i]),
           c: filteredIndices.map(i => cached.c[i]),
-          v: filteredIndices.map(i => cached.v[i])
+          v: hasValidVolume ? filteredIndices.map(i => cached.v[i]) : filteredIndices.map(() => 0)
         });
       }
     } catch (cacheError) {
