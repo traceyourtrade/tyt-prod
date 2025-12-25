@@ -1011,21 +1011,33 @@ const DailyJournal = () => {
               {mainTab === "stats" && selectedTrade && metrics && (
                 <>
                   {/* Hero P&L Card */}
-                  <div className={`relative p-5 rounded-2xl border overflow-hidden ${isProfit ? "bg-gradient-to-br from-profit/10 via-profit/5 to-transparent border-profit/25" : "bg-gradient-to-br from-loss/10 via-loss/5 to-transparent border-loss/25"}`}>
+                  <div className={`relative p-3.5 rounded-xl border overflow-hidden ${isProfit ? "bg-gradient-to-br from-profit/10 via-profit/5 to-transparent border-profit/25" : "bg-gradient-to-br from-loss/10 via-loss/5 to-transparent border-loss/25"}`}>
                     <div className={`absolute top-0 left-0 right-0 h-[1px] ${isProfit ? 'bg-gradient-to-r from-transparent via-profit/50 to-transparent' : 'bg-gradient-to-r from-transparent via-loss/50 to-transparent'}`} />
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Net P&L</span>
-                    <div className="flex items-baseline gap-2 mt-2">
-                      <span className={`text-4xl font-bold tabular-nums tracking-tight ${isProfit ? "text-profit" : "text-loss"}`}>
+                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Net P&L</span>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className={`text-2xl font-bold tabular-nums tracking-tight ${isProfit ? "text-profit" : "text-loss"}`}>
                         {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
                       </span>
                     </div>
                   </div>
 
+                  {/* Entry/Exit Times */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Entry</span>
+                      <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.EntryTime || selectedTrade.time)}</p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Exit</span>
+                      <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.ExitTime)}</p>
+                    </div>
+                  </div>
+
                   {/* Trade Info Grid */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Side</span>
-                      <p className={`text-sm font-bold mt-1.5 ${
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Side</span>
+                      <p className={`text-xs font-bold mt-1 ${
                         (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
                           ? "text-profit"
                           : "text-loss"
@@ -1033,31 +1045,31 @@ const DailyJournal = () => {
                         {selectedTrade.Type || selectedTrade.side || "--"}
                       </p>
                     </div>
-                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Quantity</span>
-                      <p className="text-sm font-bold text-foreground mt-1.5">{selectedTrade.quantity || "--"}</p>
+                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Quantity</span>
+                      <p className="text-xs font-bold text-foreground mt-1">{selectedTrade.quantity || selectedTrade.Size || "--"}</p>
                     </div>
-                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Pips</span>
-                      <p className="text-sm font-bold text-primary mt-1.5">{metrics.pips}</p>
+                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Pips</span>
+                      <p className="text-xs font-bold text-primary mt-1">{metrics.pips}</p>
                     </div>
-                    <div className="group p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider font-medium">Return/Pip</span>
-                      <p className="text-sm font-bold text-foreground mt-1.5">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
+                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Return/Pip</span>
+                      <p className="text-xs font-bold text-foreground mt-1">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
                     </div>
                   </div>
 
                   {/* Additional Stats */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {[
                       { label: "Fees", value: formatCompactCurrency((selectedTrade.fees || 0) * exchangeRate, currency) },
                       { label: "Swap", value: formatCompactCurrency((selectedTrade.swap || 0) * exchangeRate, currency) },
                       { label: "Net ROI", value: `${metrics.netROI > 0 ? "+" : ""}${isFinite(metrics.netROI) ? metrics.netROI.toFixed(2) : "0"}%`, color: metrics.netROI >= 0 ? "text-profit" : "text-loss" },
                       { label: "Gross P&L", value: formatCompactCurrency(metrics.grossPnL * exchangeRate, currency), color: metrics.grossPnL >= 0 ? "text-profit" : "text-loss" },
                     ].map((item) => (
-                      <div key={item.label} className="flex items-center justify-between py-2.5 px-3.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
-                        <span className="text-xs text-muted-foreground/80">{item.label}</span>
-                        <span className={`text-sm font-bold tabular-nums ${item.color || "text-foreground"}`}>{item.value}</span>
+                      <div key={item.label} className="flex items-center justify-between py-2 px-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
+                        <span className="text-[10px] text-muted-foreground/70">{item.label}</span>
+                        <span className={`text-xs font-bold tabular-nums ${item.color || "text-foreground"}`}>{item.value}</span>
                       </div>
                     ))}
                   </div>
@@ -1071,9 +1083,9 @@ const DailyJournal = () => {
                   )}
 
                   {/* Trade Rating */}
-                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">Trade Rating</span>
-                    <div className="flex gap-1.5">
+                  <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider block mb-2">Trade Rating</span>
+                    <div className="flex gap-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
@@ -1081,9 +1093,9 @@ const DailyJournal = () => {
                           className="transition-all duration-200 hover:scale-110 active:scale-95"
                         >
                           <Star
-                            className={`w-7 h-7 transition-colors duration-200 ${
+                            className={`w-5 h-5 transition-colors duration-200 ${
                               (journalData.tradeRating || 0) >= star
-                                ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]"
+                                ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.4)]"
                                 : "text-white/10 hover:text-white/20"
                             }`}
                           />
@@ -1093,9 +1105,9 @@ const DailyJournal = () => {
                   </div>
 
                   {/* Sentiment */}
-                  <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">How did this trade feel?</span>
-                    <div className="grid grid-cols-3 gap-2">
+                  <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider block mb-2">How did this trade feel?</span>
+                    <div className="grid grid-cols-3 gap-1.5">
                       {[
                         { key: "poor", label: "Poor", icon: TrendingDown, color: "loss" },
                         { key: "okay", label: "Okay", icon: Activity, color: "amber-500" },
@@ -1106,18 +1118,18 @@ const DailyJournal = () => {
                           <button
                             key={s.key}
                             onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
-                            className={`p-3 rounded-xl border transition-all duration-200 ${
+                            className={`p-2 rounded-lg border transition-all duration-200 ${
                               isSelected
                                 ? s.color === "profit" 
-                                  ? "bg-profit/15 border-profit/40 text-profit shadow-lg shadow-profit/10"
+                                  ? "bg-profit/15 border-profit/40 text-profit shadow-sm shadow-profit/10"
                                   : s.color === "loss"
-                                  ? "bg-loss/15 border-loss/40 text-loss shadow-lg shadow-loss/10"
-                                  : "bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-lg shadow-amber-500/10"
+                                  ? "bg-loss/15 border-loss/40 text-loss shadow-sm shadow-loss/10"
+                                  : "bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-sm shadow-amber-500/10"
                                 : "bg-white/[0.02] border-white/[0.06] text-muted-foreground/70 hover:bg-white/[0.05] hover:border-white/[0.12] hover:text-foreground"
                             }`}
                           >
-                            <s.icon className={`w-5 h-5 mx-auto mb-1.5 ${isSelected ? '' : 'opacity-60'}`} />
-                            <span className="text-xs font-semibold">{s.label}</span>
+                            <s.icon className={`w-4 h-4 mx-auto mb-1 ${isSelected ? '' : 'opacity-60'}`} />
+                            <span className="text-[10px] font-semibold">{s.label}</span>
                           </button>
                         );
                       })}
