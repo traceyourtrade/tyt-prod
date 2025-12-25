@@ -1869,8 +1869,10 @@ export default function FullscreenBacktesting({
       }
       
       // Function to scroll chart to the session's start date
-      function scrollChartToStartDate(chart: any, retryCount = 0) {
-        if (hasScrolledToStartRef.current) return;
+      // Uses multiple attempts with delays because TradingView may auto-fit after initial render
+      function scrollChartToStartDate(chart: any, retryCount = 0, forceScroll = false) {
+        // Skip if already scrolled, unless forcing re-scroll
+        if (hasScrolledToStartRef.current && !forceScroll) return;
         
         // Priority: sessionData.replayTimestamp (for resume) > sessionData.fromDate > replayTimestampRef
         const sessionData = sessionDataRef.current;
@@ -1914,7 +1916,7 @@ export default function FullscreenBacktesting({
         
         // If timestamp not set yet, retry a few times with delay
         if ((!targetTimestamp || targetTimestamp <= 0) && retryCount < 5) {
-          setTimeout(() => scrollChartToStartDate(chart, retryCount + 1), 500);
+          setTimeout(() => scrollChartToStartDate(chart, retryCount + 1, forceScroll), 500);
           return;
         }
         
@@ -1924,7 +1926,7 @@ export default function FullscreenBacktesting({
         }
         
         try {
-          // Calculate visible range: show ~100 bars before and after the target
+          // Calculate visible range: show ~50 bars before and after the target
           const intervalMs = getIntervalMs(currentIntervalRef.current);
           const barsToShow = 50;
           const from = (targetTimestamp - (intervalMs * barsToShow)) / 1000;
@@ -1933,6 +1935,14 @@ export default function FullscreenBacktesting({
           chart.setVisibleRange({ from, to });
           hasScrolledToStartRef.current = true;
           console.log('Scrolled chart to session start date:', new Date(targetTimestamp).toISOString());
+          
+          // TradingView may auto-fit after our scroll, so re-scroll after a delay
+          // This ensures the view stays at the correct position
+          if (!forceScroll && retryCount === 0) {
+            setTimeout(() => scrollChartToStartDate(chart, 0, true), 300);
+            setTimeout(() => scrollChartToStartDate(chart, 0, true), 800);
+            setTimeout(() => scrollChartToStartDate(chart, 0, true), 1500);
+          }
         } catch (e) {
           console.warn('Could not scroll chart to start date:', e);
         }
