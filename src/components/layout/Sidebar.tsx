@@ -27,7 +27,17 @@ import {
   ChevronDown,
   Command,
   Zap,
+  Crown,
+  Clock,
 } from "lucide-react"
+
+interface SubscriptionStatus {
+  hasAccess: boolean
+  isSubscribed: boolean
+  isOnTrial: boolean
+  trialDaysLeft: number
+  status: 'subscribed' | 'trial' | 'expired' | 'none'
+}
 
 interface SidebarProps {
   collapsed: boolean
@@ -39,6 +49,7 @@ interface SidebarProps {
     email: string
     initials: string
   }
+  paymentUrl?: string
 }
 
 const tradingItems = [
@@ -75,10 +86,31 @@ export function Sidebar({
   onToggle, 
   onAddTrades, 
   onLogout,
-  user 
+  user,
+  paymentUrl = "https://traceyourtrade.in/pricing"
 }: SidebarProps) {
   const pathname = usePathname()
   const [backtestingOpen, setBacktestingOpen] = React.useState(false)
+  const [subscriptionStatus, setSubscriptionStatus] = React.useState<SubscriptionStatus | null>(null)
+  const [isLoadingSubscription, setIsLoadingSubscription] = React.useState(true)
+
+  React.useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const response = await fetch('/api/subscription/status')
+        if (response.ok) {
+          const data = await response.json()
+          setSubscriptionStatus(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscription status:', error)
+      } finally {
+        setIsLoadingSubscription(false)
+      }
+    }
+
+    fetchSubscriptionStatus()
+  }, [])
 
   React.useEffect(() => {
     if (pathname.startsWith('/backtesting')) {
@@ -418,7 +450,87 @@ export function Sidebar({
             ))}
           </div>
 
-          {/* Premium User Card */}
+          {/* Go Pro / Subscription Status */}
+          {!isLoadingSubscription && (
+            <div className="px-2 pb-2">
+              {subscriptionStatus?.isSubscribed ? (
+                <motion.div 
+                  className={cn(
+                    "relative rounded-xl overflow-hidden",
+                    collapsed && "p-1"
+                  )}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/20 via-[#4EBF94]/5 to-transparent" />
+                  <div className="absolute inset-0 border border-[#4EBF94]/20 rounded-xl" />
+                  <div className={cn(
+                    "relative flex items-center gap-2 p-2.5",
+                    collapsed && "justify-center"
+                  )}>
+                    <Crown className="h-4 w-4 text-[#4EBF94] flex-shrink-0" />
+                    {!collapsed && (
+                      <span className="text-[11px] font-medium text-[#4EBF94]">Pro Member</span>
+                    )}
+                  </div>
+                </motion.div>
+              ) : subscriptionStatus?.isOnTrial ? (
+                <motion.a
+                  href={paymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "relative block rounded-xl overflow-hidden cursor-pointer group",
+                    collapsed && "p-1"
+                  )}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent group-hover:from-amber-500/30 group-hover:via-orange-500/20 transition-all duration-200" />
+                  <div className="absolute inset-0 border border-amber-500/30 rounded-xl" />
+                  <div className={cn(
+                    "relative flex items-center gap-2 p-2.5",
+                    collapsed && "justify-center"
+                  )}>
+                    <Clock className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                    {!collapsed && (
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-medium text-amber-400">Trial: {subscriptionStatus.trialDaysLeft} days left</p>
+                        <p className="text-[9px] text-white/40">Upgrade to Pro</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.a>
+              ) : (
+                <motion.a
+                  href={paymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "relative block rounded-xl overflow-hidden cursor-pointer group",
+                    collapsed && "p-1"
+                  )}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/10 to-transparent group-hover:from-purple-500/30 group-hover:via-blue-500/20 transition-all duration-200" />
+                  <div className="absolute inset-0 border border-purple-500/30 rounded-xl" />
+                  <div className={cn(
+                    "relative flex items-center gap-2 p-2.5",
+                    collapsed && "justify-center"
+                  )}>
+                    <Crown className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                    {!collapsed && (
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-medium text-purple-400">Go Pro</p>
+                        <p className="text-[9px] text-white/40">Unlock all features</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.a>
+              )}
+            </div>
+          )}
+
+          {/* User Card */}
           <div className="p-2 pt-0">
             {user && (
               <motion.div 

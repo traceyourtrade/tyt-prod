@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { getUserModel } from "@/models/main/user.model";
-import { getNoteModel } from "@/models/main/notes.model"; // assuming Notes is a model too
+import { getNoteModel } from "@/models/main/notes.model";
+import { activateTrial } from "@/lib/subscription";
 import nodemailer from "nodemailer"
 export async function POST(req: Request) {
   try {
@@ -50,6 +51,9 @@ export async function POST(req: Request) {
     );
 
     // ✅ Create user and notes documents
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+
     const user = new User({
       uniqueId,
       email,
@@ -59,6 +63,12 @@ export async function POST(req: Request) {
       cpassword,
       countryCode,
       country,
+      subscription: {
+        isSubscribed: false,
+        trialEndsAt,
+        trialUsed: true,
+        subscriptionStatus: 'pending'
+      }
     });
 
     const notes = new Notes({

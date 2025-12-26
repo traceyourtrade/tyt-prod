@@ -37,6 +37,16 @@ export interface IUserNotification {
   date?: string;
 }
 
+export interface IUserSubscription {
+  isSubscribed: boolean;
+  subscriptionId?: string;
+  subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired';
+  subscriptionExpiry?: Date;
+  trialEndsAt?: Date;
+  trialUsed: boolean;
+  razorpayCustomerId?: string;
+}
+
 export interface IUser extends Document {
   uniqueId: string;
   fullName: string;
@@ -58,6 +68,7 @@ export interface IUser extends Document {
   accounts: IUserAccount[];
   otherData: IOtherData;
   notifications: IUserNotification[];
+  subscription: IUserSubscription;
   
   // Methods
   generateAuthToken(): Promise<string>;
@@ -181,7 +192,20 @@ const userSchema = new Schema<IUser>({
       notify: { type: String, required: true },
       date: { type: String }
     }
-  ]
+  ],
+  subscription: {
+    isSubscribed: { type: Boolean, default: false },
+    subscriptionId: { type: String },
+    subscriptionStatus: { 
+      type: String, 
+      enum: ['active', 'cancelled', 'halted', 'pending', 'expired'],
+      default: 'pending'
+    },
+    subscriptionExpiry: { type: Date },
+    trialEndsAt: { type: Date },
+    trialUsed: { type: Boolean, default: false },
+    razorpayCustomerId: { type: String }
+  }
 });
 
 // 🔒 Hash passwords before save
@@ -290,7 +314,7 @@ userSchema.methods.updateAccountBalance = async function (
   newBalance: number
 ): Promise<IUserAccount | null> {
   try {
-    const account = this.accounts.find(acc => acc.accountId === accountId);
+    const account = this.accounts.find((acc: IUserAccount) => acc.accountId === accountId);
     if (account) {
       account.accountBalance = newBalance;
       await this.save();

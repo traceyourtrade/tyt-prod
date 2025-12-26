@@ -23,6 +23,16 @@ export interface AuthResponse {
   error?: string;
 }
 
+export interface UserSubscriptionData {
+  isSubscribed: boolean;
+  subscriptionId?: string;
+  subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired';
+  subscriptionExpiry?: Date;
+  trialEndsAt?: Date;
+  trialUsed: boolean;
+  razorpayCustomerId?: string;
+}
+
 export interface UserData {
   isEmailVerified: boolean;
   uniqueId: string;
@@ -33,6 +43,7 @@ export interface UserData {
   cpassword: string;
   countryCode: string;
   country: string;
+  subscription?: UserSubscriptionData;
 }
 
 export interface NotesData {

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserModel } from "@/models/main/user.model";
 import { getNoteModel } from "@/models/main/notes.model";
 import { GoogleAuthRequest, UserData, NotesData } from "@/types/auth";
+import { activateTrial } from "@/lib/subscription";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -79,6 +80,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const uniqueId = await generateUniqueCode();
 
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+
       const userData: UserData = {
         isEmailVerified: true,
         uniqueId,
@@ -89,6 +93,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         cpassword,
         countryCode,
         country,
+        subscription: {
+          isSubscribed: false,
+          trialEndsAt,
+          trialUsed: true,
+          subscriptionStatus: 'pending'
+        }
       };
 
       const notesData: NotesData = {
