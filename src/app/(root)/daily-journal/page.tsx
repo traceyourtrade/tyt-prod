@@ -1182,10 +1182,10 @@ const DailyJournal = () => {
         {/* Right Panel - Stats/Strategy/Executions/Attachments */}
         <motion.div
           initial={false}
-          animate={{ width: isRightPanelCollapsed ? 0 : 340 }}
+          animate={{ width: isRightPanelCollapsed ? 0 : 300 }}
           className="hidden lg:block flex-shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-card to-background overflow-hidden"
         >
-          <div className="w-[340px] h-full flex flex-col">
+          <div className="w-[300px] h-full flex flex-col">
             {/* Right Panel Tabs */}
             <div className="flex-shrink-0 p-4 border-b border-white/[0.06]">
               <div className="flex gap-0.5 p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
