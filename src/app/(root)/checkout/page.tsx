@@ -205,8 +205,8 @@ export default function CheckoutPage() {
 
       const currentPrice = getCurrentPrice();
       const planDescription = billingPeriod === 'yearly' 
-        ? `Pro Subscription - Yearly ($${currentPrice.toFixed(2)}/year)`
-        : `Pro Subscription - Monthly ($${currentPrice.toFixed(2)}/month)`;
+        ? `Pro Subscription - Yearly (₹${currentPrice}/year)`
+        : `Pro Subscription - Monthly (₹${currentPrice}/month)`;
 
       const options = {
         key: data.keyId,
@@ -411,21 +411,21 @@ export default function CheckoutPage() {
                       <>
                         <div className="flex items-baseline justify-center gap-2">
                           <span className="text-lg text-muted-foreground line-through">
-                            ${getOriginalPrice().toFixed(2)}
+                            ₹{Math.round(getOriginalPrice())}
                           </span>
                           <span className="text-3xl font-bold text-emerald-400">
-                            ${getCurrentPrice().toFixed(2)}
+                            ₹{Math.round(getCurrentPrice())}
                           </span>
                         </div>
                         <p className="text-xs text-emerald-400 font-medium mt-1">
-                          You save ${appliedCoupon.discountAmount.toFixed(2)}!
+                          You save ₹{Math.round(appliedCoupon.discountAmount)}!
                         </p>
                       </>
                     ) : (
                       <>
                         <div className="flex items-baseline justify-center gap-1">
                           <span className="text-3xl font-bold text-foreground">
-                            ${billingPeriod === 'monthly' ? monthlyPrice.toFixed(2) : yearlyMonthlyPrice.toFixed(2)}
+                            ₹{billingPeriod === 'monthly' ? monthlyPrice : yearlyMonthlyPrice}
                           </span>
                           <span className="text-muted-foreground text-sm">/mo</span>
                         </div>
@@ -433,10 +433,10 @@ export default function CheckoutPage() {
                         {billingPeriod === 'yearly' ? (
                           <div className="mt-1 space-y-0.5">
                             <p className="text-xs text-emerald-400 font-medium">
-                              ${yearlyPrice.toFixed(2)}/year — Save ${(monthlyPrice * 12 - yearlyPrice).toFixed(2)}
+                              ₹{yearlyPrice}/year — Save ₹{monthlyPrice * 12 - yearlyPrice}
                             </p>
                             <p className="text-[10px] text-muted-foreground">
-                              That's only ${dailyPrice}/day
+                              That's only ₹{dailyPrice}/day
                             </p>
                           </div>
                         ) : (

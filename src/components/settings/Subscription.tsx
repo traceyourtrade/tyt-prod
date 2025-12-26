@@ -6,9 +6,12 @@ import { faCrown, faCheck, faStar } from "@fortawesome/free-solid-svg-icons";
 const Subscription = () => {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
 
+  const monthlyPrice = 849;
+  const yearlyPrice = 8199;
+  const yearlyMonthlyPrice = Math.round(yearlyPrice / 12);
+  
   const plans = [
-    { name: "Basic", price: billing === "monthly" ? 699 : 599, features: ["Unlimited trades", "Basic analytics", "Email support"] },
-    { name: "Premium", price: billing === "monthly" ? 1299 : 1199, features: ["Everything in Basic", "Advanced analytics", "Priority support", "API access", "Custom reports"], popular: true }
+    { name: "Pro", price: billing === "monthly" ? monthlyPrice : yearlyMonthlyPrice, features: ["Unlimited trades", "Advanced analytics", "AI-powered insights", "Playbook builder", "Prop firm mode", "Priority support"], popular: true }
   ];
 
   return (
@@ -47,7 +50,7 @@ const Subscription = () => {
             billing === "yearly" ? "bg-white dark:bg-[#262626] text-gray-900 dark:text-white shadow-sm" : "text-gray-500"
           }`}
         >
-          Yearly <span className="text-emerald-500 text-xs">-15%</span>
+          Yearly <span className="text-emerald-500 text-xs">-20%</span>
         </button>
       </div>
 
