@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import SubscriptionGate from "@/components/subscription/SubscriptionGate";
 import { 
   BarChart3, 
   Clock, 
@@ -396,6 +397,10 @@ export default function BacktestingDashboard() {
   };
 
   return (
+    <SubscriptionGate 
+      featureName="Backtesting" 
+      featureDescription="Practice trading on historical data with our full-screen TradingView-powered backtesting module."
+    >
     <div className="min-h-screen p-4 sm:p-6 bg-background">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         
@@ -1231,5 +1236,6 @@ export default function BacktestingDashboard() {
         )}
       </AnimatePresence>
     </div>
+    </SubscriptionGate>
   );
 }

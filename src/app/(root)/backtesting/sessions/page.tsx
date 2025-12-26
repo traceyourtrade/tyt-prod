@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { BarChart3, ChevronDown, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SubscriptionGate from "@/components/subscription/SubscriptionGate";
 import { useBacktestAnalytics, type Session, type Trade } from '@/hooks/backtesting/useBacktestAnalytics';
 import {
   ProfitAndLossChart,
@@ -117,6 +118,10 @@ export default function BacktestingSessionsPage() {
   }
 
   return (
+    <SubscriptionGate 
+      featureName="Backtesting" 
+      featureDescription="Practice trading on historical data with our full-screen TradingView-powered backtesting module."
+    >
     <div className="min-h-screen p-4 sm:p-6 bg-background">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
@@ -272,5 +277,6 @@ export default function BacktestingSessionsPage() {
         )}
       </div>
     </div>
+    </SubscriptionGate>
   );
 }
