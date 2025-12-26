@@ -516,17 +516,31 @@ export function Sidebar({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/10 to-transparent group-hover:from-purple-500/30 group-hover:via-blue-500/20 transition-all duration-200" />
-                  <div className="absolute inset-0 border border-purple-500/30 rounded-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 opacity-90" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                  </div>
+                  <div className="absolute inset-[1px] rounded-[11px] bg-gradient-to-br from-white/10 to-transparent" />
                   <div className={cn(
-                    "relative flex items-center gap-2 p-2.5",
-                    collapsed && "justify-center"
+                    "relative flex items-center gap-2.5 p-3",
+                    collapsed && "justify-center p-2"
                   )}>
-                    <Crown className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-white/30 rounded-lg blur-sm animate-pulse" />
+                      <div className="relative w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <Crown className="h-4 w-4 text-white drop-shadow-lg" />
+                      </div>
+                    </div>
                     {!collapsed && (
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-medium text-purple-400">Go Pro</p>
-                        <p className="text-[9px] text-white/40">Unlock all features</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[12px] font-bold text-white drop-shadow-sm">Go Pro</p>
+                          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[8px] font-bold text-white uppercase tracking-wider">
+                            20% off
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-white/70">Unlock all features</p>
                       </div>
                     )}
                   </div>
