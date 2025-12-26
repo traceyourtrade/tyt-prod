@@ -50,7 +50,6 @@ import {
   Sparkles,
   PanelRightOpen,
   PanelRightClose,
-  X,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
