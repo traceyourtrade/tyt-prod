@@ -87,6 +87,11 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  
+  const monthlyPrice = 9.49;
+  const yearlyPrice = monthlyPrice * 12 * 0.8;
+  const yearlyMonthlyPrice = yearlyPrice / 12;
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -138,6 +143,7 @@ export default function CheckoutPage() {
       const response = await fetch("/api/razorpay/create-subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billingPeriod }),
       });
 
       const data = await response.json();
@@ -146,11 +152,15 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Failed to create subscription");
       }
 
+      const planDescription = billingPeriod === 'yearly' 
+        ? `Pro Subscription - Yearly ($${yearlyPrice.toFixed(2)}/year)`
+        : `Pro Subscription - Monthly ($${monthlyPrice}/month)`;
+
       const options = {
         key: data.keyId,
         subscription_id: data.subscriptionId,
         name: "ProJournX",
-        description: "Pro Subscription - Monthly",
+        description: planDescription,
         handler: function (response: any) {
           router.push("/dashboard?payment=success");
         },
@@ -302,12 +312,49 @@ export default function CheckoutPage() {
                   )}
 
                   <div className="text-center mb-8">
-                    <p className="text-sm text-muted-foreground mb-2">Monthly Subscription</p>
+                    <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-muted/50 mb-4">
+                      <button
+                        onClick={() => setBillingPeriod('monthly')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          billingPeriod === 'monthly'
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        Monthly
+                      </button>
+                      <button
+                        onClick={() => setBillingPeriod('yearly')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                          billingPeriod === 'yearly'
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        Yearly
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                          billingPeriod === 'yearly' ? 'bg-white/20' : 'bg-emerald-500/20 text-emerald-400'
+                        }`}>
+                          -20%
+                        </span>
+                      </button>
+                    </div>
+                    
                     <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-5xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">₹849</span>
+                      <span className="text-5xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                        ${billingPeriod === 'monthly' ? monthlyPrice.toFixed(2) : yearlyMonthlyPrice.toFixed(2)}
+                      </span>
                       <span className="text-muted-foreground text-lg">/month</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">Billed monthly. Cancel anytime.</p>
+                    
+                    {billingPeriod === 'yearly' && (
+                      <p className="text-sm text-emerald-400 mt-2">
+                        ${yearlyPrice.toFixed(2)}/year (Save ${(monthlyPrice * 12 - yearlyPrice).toFixed(2)})
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {billingPeriod === 'monthly' ? 'Billed monthly.' : 'Billed annually.'} Cancel anytime.
+                    </p>
                   </div>
 
                   <div className="space-y-3 mb-8">

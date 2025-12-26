@@ -26,9 +26,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const body = await request.json().catch(() => ({}));
+    const billingPeriod = body.billingPeriod || 'monthly';
+
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    const planId = process.env.RAZORPAY_PLAN_ID;
+    const monthlyPlanId = process.env.RAZORPAY_PLAN_ID;
+    const yearlyPlanId = process.env.RAZORPAY_PLAN_ID_YEARLY || monthlyPlanId;
+
+    const planId = billingPeriod === 'yearly' ? yearlyPlanId : monthlyPlanId;
 
     if (!keyId || !keySecret || !planId) {
       return NextResponse.json({ error: "Razorpay not configured" }, { status: 500 });
@@ -38,12 +44,13 @@ export async function POST(request: NextRequest) {
 
     const subscriptionData = {
       plan_id: planId,
-      total_count: 120,
+      total_count: billingPeriod === 'yearly' ? 10 : 120,
       quantity: 1,
       customer_notify: 1,
       notes: {
         email: user.email,
-        userId: user.uniqueId
+        userId: user.uniqueId,
+        billingPeriod: billingPeriod
       }
     };
 
