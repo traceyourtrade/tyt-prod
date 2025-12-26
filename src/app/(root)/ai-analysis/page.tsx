@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts"
 import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore"
+import SubscriptionGate from "@/components/subscription/SubscriptionGate"
 import {
   BrainCircuit,
   TrendingUp,
@@ -86,6 +87,10 @@ export default function AIAnalysisPage() {
   }
 
   return (
+    <SubscriptionGate 
+      featureName="AI Analysis" 
+      featureDescription="Get advanced statistical insights including streak analysis, risk metrics, time patterns, and AI-powered recommendations."
+    >
     <div className="min-h-screen bg-background">
       <div className="relative overflow-hidden rounded-2xl border border-border bg-card/50 backdrop-blur-xl mb-6">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-purple-500/5" />
@@ -157,6 +162,7 @@ export default function AIAnalysisPage() {
         </motion.div>
       </AnimatePresence>
     </div>
+    </SubscriptionGate>
   )
 }
 

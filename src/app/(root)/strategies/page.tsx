@@ -1,4 +1,5 @@
 import StrategyMain from "@/components/strategy/StrategyMain"
+import SubscriptionGate from "@/components/subscription/SubscriptionGate"
 
 export const metadata = {
   title: 'Strategies',
@@ -6,8 +7,13 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <StrategyMain />
-    </main>
+    <SubscriptionGate 
+      featureName="Strategies" 
+      featureDescription="Get detailed strategy analytics, compare performance across strategies, and optimize your trading approach."
+    >
+      <main className="min-h-screen bg-background text-foreground">
+        <StrategyMain />
+      </main>
+    </SubscriptionGate>
   )
 }

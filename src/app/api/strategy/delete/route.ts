@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { verifyProAccess } from '@/lib/subscription';
 
-// Import DELETE handler functions
 import { 
     deleteStrategyHandler
 } from '../../../../lib/api-handlers/strategiesHandlers';
@@ -14,6 +14,11 @@ export async function DELETE(req: NextRequest) {
 
         if (!token || !userId) {
             return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+        }
+
+        const { hasAccess, error } = await verifyProAccess(userId);
+        if (!hasAccess) {
+            return NextResponse.json({ error: error || "Pro subscription required" }, { status: 403 });
         }
 
         const body = await req.json();

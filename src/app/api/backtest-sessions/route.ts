@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
 import { getUserModel } from '@/models/main/user.model';
+import { getSubscriptionStatus } from '@/lib/subscription';
 
 async function getUserFromToken(token: string) {
   const User = await getUserModel();
@@ -21,6 +22,11 @@ export async function GET(req: NextRequest) {
     const user = await getUserFromToken(token);
     if (!user) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const subscriptionStatus = getSubscriptionStatus(user);
+    if (!subscriptionStatus.hasAccess) {
+      return NextResponse.json({ error: "Pro subscription required" }, { status: 403 });
     }
 
     const BacktestSession = await getBacktestSessionsModel();
@@ -69,6 +75,11 @@ export async function POST(req: NextRequest) {
     const user = await getUserFromToken(token);
     if (!user) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const subscriptionStatus = getSubscriptionStatus(user);
+    if (!subscriptionStatus.hasAccess) {
+      return NextResponse.json({ error: "Pro subscription required" }, { status: 403 });
     }
 
     const body = await req.json();
@@ -137,6 +148,11 @@ export async function PATCH(req: NextRequest) {
     const user = await getUserFromToken(token);
     if (!user) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const subscriptionStatus = getSubscriptionStatus(user);
+    if (!subscriptionStatus.hasAccess) {
+      return NextResponse.json({ error: "Pro subscription required" }, { status: 403 });
     }
 
     const body = await req.json();

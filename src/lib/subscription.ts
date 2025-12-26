@@ -102,3 +102,21 @@ export function cancelSubscription(user: IUser): void {
     user.subscription.subscriptionStatus = 'cancelled';
   }
 }
+
+export async function verifyProAccess(uniqueId: string): Promise<{ hasAccess: boolean; error?: string }> {
+  try {
+    const { getUserModel } = await import("@/models/main/user.model");
+    const User = await getUserModel();
+    const user = await User.findOne({ uniqueId });
+    
+    if (!user) {
+      return { hasAccess: false, error: "User not found" };
+    }
+    
+    const status = getSubscriptionStatus(user);
+    return { hasAccess: status.hasAccess };
+  } catch (error) {
+    console.error("Error verifying pro access:", error);
+    return { hasAccess: false, error: "Failed to verify subscription" };
+  }
+}

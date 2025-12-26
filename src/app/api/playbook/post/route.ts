@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createPlaybookHandler, updatePlaybookStatsHandler } from '@/lib/api-handlers/playbookHandlers';
+import { verifyProAccess } from '@/lib/subscription';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +11,11 @@ export async function POST(req: NextRequest) {
 
     if (!token || !userId) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const { hasAccess, error } = await verifyProAccess(userId);
+    if (!hasAccess) {
+      return NextResponse.json({ error: error || "Pro subscription required" }, { status: 403 });
     }
 
     const body = await req.json();

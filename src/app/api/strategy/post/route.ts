@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { verifyProAccess } from '@/lib/subscription';
 
-// Import POST handler functions
 import { 
     addStrategyHandler,
     uploadStrategyImageHandler
@@ -15,6 +15,11 @@ export async function POST(req: NextRequest) {
 
         if (!token || !userId) {
             return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+        }
+
+        const { hasAccess, error } = await verifyProAccess(userId);
+        if (!hasAccess) {
+            return NextResponse.json({ error: error || "Pro subscription required" }, { status: 403 });
         }
 
         // For form data (file upload), handle differently
