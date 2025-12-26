@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { getUserModel } from "@/models/main/user.model";
+import { getCouponByCode } from "../validate-coupon/route";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +29,15 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const billingPeriod = body.billingPeriod || 'monthly';
+    const couponCode = body.couponCode || null;
+    
+    let offerId: string | null = null;
+    if (couponCode) {
+      const coupon = getCouponByCode(couponCode);
+      if (coupon && coupon.validFor.includes(billingPeriod) && coupon.offerId) {
+        offerId = coupon.offerId;
+      }
+    }
 
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -42,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
 
-    const subscriptionData = {
+    const subscriptionData: any = {
       plan_id: planId,
       total_count: billingPeriod === 'yearly' ? 10 : 120,
       quantity: 1,
@@ -53,6 +63,10 @@ export async function POST(request: NextRequest) {
         billingPeriod: billingPeriod
       }
     };
+
+    if (offerId) {
+      subscriptionData.offer_id = offerId;
+    }
 
     const response = await fetch("https://api.razorpay.com/v1/subscriptions", {
       method: "POST",

@@ -19,7 +19,9 @@ import {
   Target,
   LineChart,
   Clock,
-  Users
+  Users,
+  Tag,
+  X
 } from "lucide-react";
 import Link from "next/link";
 
@@ -36,6 +38,18 @@ interface SubscriptionStatus {
   trialDaysLeft: number;
   status: 'subscribed' | 'trial' | 'expired' | 'none';
   email?: string;
+}
+
+interface CouponData {
+  valid: boolean;
+  code: string;
+  offerId: string | null;
+  discountType: 'percentage' | 'flat';
+  discountValue: number;
+  discountAmount: number;
+  originalPrice: number;
+  finalPrice: number;
+  description: string;
 }
 
 const features = [
@@ -55,10 +69,26 @@ export default function CheckoutPage() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
+  
   const monthlyPrice = 9.49;
   const yearlyPrice = monthlyPrice * 12 * 0.8;
   const yearlyMonthlyPrice = yearlyPrice / 12;
   const dailyPrice = (yearlyPrice / 365).toFixed(2);
+
+  const getCurrentPrice = () => {
+    if (appliedCoupon) {
+      return appliedCoupon.finalPrice;
+    }
+    return billingPeriod === 'yearly' ? yearlyPrice : monthlyPrice;
+  };
+
+  const getOriginalPrice = () => {
+    return billingPeriod === 'yearly' ? yearlyPrice : monthlyPrice;
+  };
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -96,6 +126,56 @@ export default function CheckoutPage() {
     fetchStatus();
   }, [router]);
 
+  useEffect(() => {
+    if (appliedCoupon) {
+      setAppliedCoupon(null);
+      setCouponCode("");
+      setCouponError(null);
+    }
+  }, [billingPeriod]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError(null);
+
+    try {
+      const response = await fetch("/api/razorpay/validate-coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          couponCode: couponCode.trim(), 
+          billingPeriod 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setCouponError(data.error || "Invalid coupon code");
+        setAppliedCoupon(null);
+      } else {
+        setAppliedCoupon(data);
+        setCouponError(null);
+      }
+    } catch (err) {
+      setCouponError("Failed to validate coupon");
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError(null);
+  };
+
   const handlePayment = async () => {
     setLoading(true);
     setError(null);
@@ -110,7 +190,10 @@ export default function CheckoutPage() {
       const response = await fetch("/api/razorpay/create-subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billingPeriod }),
+        body: JSON.stringify({ 
+          billingPeriod,
+          couponCode: appliedCoupon?.code || null
+        }),
       });
 
       const data = await response.json();
@@ -119,9 +202,10 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Failed to create subscription");
       }
 
+      const currentPrice = getCurrentPrice();
       const planDescription = billingPeriod === 'yearly' 
-        ? `Pro Subscription - Yearly ($${yearlyPrice.toFixed(2)}/year)`
-        : `Pro Subscription - Monthly ($${monthlyPrice}/month)`;
+        ? `Pro Subscription - Yearly ($${currentPrice.toFixed(2)}/year)`
+        : `Pro Subscription - Monthly ($${currentPrice.toFixed(2)}/month)`;
 
       const options = {
         key: data.keyId,
@@ -322,26 +406,96 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="text-center mb-4">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-3xl font-bold text-foreground">
-                        ${billingPeriod === 'monthly' ? monthlyPrice.toFixed(2) : yearlyMonthlyPrice.toFixed(2)}
-                      </span>
-                      <span className="text-muted-foreground text-sm">/mo</span>
-                    </div>
-                    
-                    {billingPeriod === 'yearly' ? (
-                      <div className="mt-1 space-y-0.5">
-                        <p className="text-xs text-emerald-400 font-medium">
-                          ${yearlyPrice.toFixed(2)}/year — Save ${(monthlyPrice * 12 - yearlyPrice).toFixed(2)}
+                    {appliedCoupon ? (
+                      <>
+                        <div className="flex items-baseline justify-center gap-2">
+                          <span className="text-lg text-muted-foreground line-through">
+                            ${getOriginalPrice().toFixed(2)}
+                          </span>
+                          <span className="text-3xl font-bold text-emerald-400">
+                            ${getCurrentPrice().toFixed(2)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-emerald-400 font-medium mt-1">
+                          You save ${appliedCoupon.discountAmount.toFixed(2)}!
                         </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          That's only ${dailyPrice}/day
-                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-baseline justify-center gap-1">
+                          <span className="text-3xl font-bold text-foreground">
+                            ${billingPeriod === 'monthly' ? monthlyPrice.toFixed(2) : yearlyMonthlyPrice.toFixed(2)}
+                          </span>
+                          <span className="text-muted-foreground text-sm">/mo</span>
+                        </div>
+                        
+                        {billingPeriod === 'yearly' ? (
+                          <div className="mt-1 space-y-0.5">
+                            <p className="text-xs text-emerald-400 font-medium">
+                              ${yearlyPrice.toFixed(2)}/year — Save ${(monthlyPrice * 12 - yearlyPrice).toFixed(2)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              That's only ${dailyPrice}/day
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Billed monthly
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-3.5 w-3.5 text-emerald-400" />
+                          <span className="text-xs font-medium text-emerald-400">
+                            {appliedCoupon.code}
+                          </span>
+                          <span className="text-[10px] text-emerald-400/70">
+                            ({appliedCoupon.description})
+                          </span>
+                        </div>
+                        <button
+                          onClick={handleRemoveCoupon}
+                          className="p-1 rounded-full hover:bg-emerald-500/20 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5 text-emerald-400" />
+                        </button>
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Billed monthly
-                      </p>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <input
+                              type="text"
+                              value={couponCode}
+                              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                              placeholder="Coupon code"
+                              className="w-full pl-8 pr-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500/50 transition-colors"
+                              onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                            />
+                          </div>
+                          <button
+                            onClick={handleApplyCoupon}
+                            disabled={couponLoading || !couponCode.trim()}
+                            className="px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {couponLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              "Apply"
+                            )}
+                          </button>
+                        </div>
+                        {couponError && (
+                          <p className="text-[10px] text-red-400">{couponError}</p>
+                        )}
+                      </div>
                     )}
                   </div>
 
