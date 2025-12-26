@@ -74,10 +74,11 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   
-  const monthlyPrice = 9.49;
-  const yearlyPrice = monthlyPrice * 12 * 0.8;
-  const yearlyMonthlyPrice = yearlyPrice / 12;
-  const dailyPrice = (yearlyPrice / 365).toFixed(2);
+  const monthlyPrice = 849;
+  const yearlyPrice = 8199;
+  const yearlyMonthlyPrice = Math.round(yearlyPrice / 12);
+  const dailyPrice = Math.round(yearlyPrice / 365);
+  const currencySymbol = "₹";
 
   const getCurrentPrice = () => {
     if (appliedCoupon) {

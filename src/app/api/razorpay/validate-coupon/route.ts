@@ -21,7 +21,7 @@ const VALID_COUPONS: CouponConfig[] = [
     offerId: process.env.RAZORPAY_OFFER_WELCOME20 || "", 
     discountType: "percentage",
     discountValue: 20,
-    maxDiscount: 50,
+    maxDiscount: 500,
     description: "20% off your first subscription",
     validFor: ["monthly", "yearly"],
   },
@@ -29,8 +29,8 @@ const VALID_COUPONS: CouponConfig[] = [
     code: "YEARLY50",
     offerId: process.env.RAZORPAY_OFFER_YEARLY50 || "",
     discountType: "flat",
-    discountValue: 50,
-    description: "$50 off yearly plan",
+    discountValue: 500,
+    description: "₹500 off yearly plan",
     validFor: ["yearly"],
   },
   {
@@ -87,8 +87,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This coupon has expired" }, { status: 400 });
     }
 
-    const monthlyPrice = 9.49;
-    const yearlyPrice = monthlyPrice * 12 * 0.8;
+    const monthlyPrice = 849;
+    const yearlyPrice = 8199;
     const basePrice = billingPeriod === 'yearly' ? yearlyPrice : monthlyPrice;
     
     let discountAmount: number;
