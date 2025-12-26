@@ -569,29 +569,29 @@ export default function RootLayout({
               href={checkoutUrl}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "relative block rounded-xl cursor-pointer group isolate",
+                "relative block rounded-xl cursor-pointer group overflow-hidden",
                 !isExpanded && "rounded-lg"
               )}
             >
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500" />
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/30 to-transparent" />
-              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#1a1f2e] to-[#0f1218]" />
+              <div className="absolute inset-0 rounded-xl border border-[#4EBF94]/40 group-hover:border-[#4EBF94]/60 transition-colors" />
+              <div className="absolute top-0 right-0 w-20 h-20 bg-[#4EBF94]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#4EBF94]/20 transition-colors" />
               <div className={cn(
                 "relative flex items-center gap-3 p-3",
                 !isExpanded && "justify-center p-2"
               )}>
-                <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ring-1 ring-white/30">
-                  <Crown className="h-4 w-4 text-white" />
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4EBF94]/20 to-[#4EBF94]/5 flex items-center justify-center flex-shrink-0 border border-[#4EBF94]/30">
+                  <Crown className="h-4 w-4 text-[#4EBF94]" />
                 </div>
                 {isExpanded && (
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-[12px] font-bold text-white">Go Pro</p>
-                      <span className="px-1.5 py-0.5 rounded bg-white/25 text-[8px] font-bold text-white">
-                        SAVE 20%
+                      <p className="text-[12px] font-semibold text-white">Go Pro</p>
+                      <span className="px-1.5 py-0.5 rounded-full bg-[#4EBF94]/20 text-[8px] font-medium text-[#4EBF94] border border-[#4EBF94]/30">
+                        20% OFF
                       </span>
                     </div>
-                    <p className="text-[10px] text-white/70 mt-0.5">Unlock all features</p>
+                    <p className="text-[10px] text-white/50 mt-0.5">Unlock all features</p>
                   </div>
                 )}
               </div>
