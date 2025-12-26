@@ -569,21 +569,29 @@ export default function RootLayout({
               href={checkoutUrl}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "relative block rounded-lg overflow-hidden cursor-pointer group",
-                isExpanded && "rounded-xl"
+                "relative block rounded-xl cursor-pointer group isolate",
+                !isExpanded && "rounded-lg"
               )}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/10 to-transparent group-hover:from-purple-500/30 group-hover:via-blue-500/20 transition-all duration-200" />
-              <div className="absolute inset-0 border border-purple-500/30 rounded-lg" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/30 to-transparent" />
+              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
               <div className={cn(
-                "relative flex items-center gap-2 p-2",
-                !isExpanded && "justify-center p-1.5"
+                "relative flex items-center gap-3 p-3",
+                !isExpanded && "justify-center p-2"
               )}>
-                <Crown className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ring-1 ring-white/30">
+                  <Crown className="h-4 w-4 text-white" />
+                </div>
                 {isExpanded && (
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-purple-400">Go Pro</p>
-                    <p className="text-[9px] text-muted-foreground">Unlock all features</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[12px] font-bold text-white">Go Pro</p>
+                      <span className="px-1.5 py-0.5 rounded bg-white/25 text-[8px] font-bold text-white">
+                        SAVE 20%
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-white/70 mt-0.5">Unlock all features</p>
                   </div>
                 )}
               </div>
