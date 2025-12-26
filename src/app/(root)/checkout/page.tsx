@@ -205,14 +205,14 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-background overflow-y-auto relative">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/3 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 px-4 py-8 md:py-12">
+      <div className="relative z-10 px-4 py-6 md:py-8 pb-12">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
