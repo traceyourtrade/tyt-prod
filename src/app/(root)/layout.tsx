@@ -146,7 +146,7 @@ export default function RootLayout({
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
 
   const { profileData, setAccounts } = useAccountDetails();
-  const paymentUrl = "https://www.projournx.com/pricing";
+  const checkoutUrl = "/checkout";
   const { setAddTrades, setAddAcc } = calendarPopUp();
 
   useEffect(() => {
@@ -541,10 +541,9 @@ export default function RootLayout({
               </div>
             </div>
           ) : subscriptionStatus?.isOnTrial ? (
-            <a
-              href={paymentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={checkoutUrl}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 "relative block rounded-lg overflow-hidden cursor-pointer group",
                 isExpanded && "rounded-xl"
@@ -564,12 +563,11 @@ export default function RootLayout({
                   </div>
                 )}
               </div>
-            </a>
+            </Link>
           ) : (
-            <a
-              href={paymentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href={checkoutUrl}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 "relative block rounded-lg overflow-hidden cursor-pointer group",
                 isExpanded && "rounded-xl"
@@ -589,7 +587,7 @@ export default function RootLayout({
                   </div>
                 )}
               </div>
-            </a>
+            </Link>
           )}
         </div>
 
