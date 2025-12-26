@@ -50,6 +50,7 @@ import {
   Sparkles,
   PanelRightOpen,
   PanelRightClose,
+  X,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { formatCompactNumber } from "@/utils/formatNumber";
@@ -94,6 +95,13 @@ interface JournalData {
   tradeRating?: number;
   tradeNotes?: string;
   dailyNotes?: string;
+  reasonForEntry?: string;
+  setupValidation?: string;
+  exitRationale?: string;
+  emotionalState?: string;
+  mistakes?: string;
+  whatWentWell?: string;
+  improvements?: string;
 }
 
 interface Template {
@@ -169,6 +177,7 @@ const DailyJournal = () => {
   const [mainTab, setMainTab] = useState<"stats" | "strategy" | "executions" | "attachments">("stats");
   const [centerTab, setCenterTab] = useState<"chart" | "notes" | "runningPnL">("chart");
   const [notesTab, setNotesTab] = useState<"trade" | "daily">("trade");
+  const [journalTab, setJournalTab] = useState<"narrative" | "psychology" | "lessons">("narrative");
 
   const existingStrategies: string[] = (profileData?.otherData?.strategy || []).filter((s: string) => s && s !== "Select");
 
@@ -800,6 +809,204 @@ const DailyJournal = () => {
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Journaling Tabs Section */}
+                <div className="mt-6 space-y-4">
+                  {/* Tab Headers */}
+                  <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+                    {[
+                      { key: "narrative", label: "Trade Narrative", icon: FileText },
+                      { key: "psychology", label: "Psychology", icon: Heart },
+                      { key: "lessons", label: "Lessons", icon: Zap },
+                    ].map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setJournalTab(tab.key as typeof journalTab)}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                          journalTab === tab.key
+                            ? "bg-white/[0.08] text-foreground border border-white/[0.1]"
+                            : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                        }`}
+                      >
+                        <tab.icon className={`w-3.5 h-3.5 ${journalTab === tab.key ? 'text-primary' : ''}`} />
+                        <span className="hidden sm:inline">{tab.label}</span>
+                        <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Trade Narrative Tab */}
+                  {journalTab === "narrative" && (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
+                          Reason for Entry
+                        </label>
+                        <textarea
+                          value={journalData.reasonForEntry || ""}
+                          onChange={(e) => setJournalData((prev) => ({ ...prev, reasonForEntry: e.target.value }))}
+                          placeholder="What made you take this trade? What signals did you see?"
+                          rows={3}
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        />
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
+                          Setup Validation
+                        </label>
+                        <textarea
+                          value={journalData.setupValidation || ""}
+                          onChange={(e) => setJournalData((prev) => ({ ...prev, setupValidation: e.target.value }))}
+                          placeholder="Did the setup match your playbook? What confirmations were present?"
+                          rows={3}
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        />
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
+                          Exit Rationale
+                        </label>
+                        <textarea
+                          value={journalData.exitRationale || ""}
+                          onChange={(e) => setJournalData((prev) => ({ ...prev, exitRationale: e.target.value }))}
+                          placeholder="Why did you exit? Was it your target, stop loss, or a manual decision?"
+                          rows={3}
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Psychology Tab */}
+                  {journalTab === "psychology" && (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
+                          Emotional State During Trade
+                        </label>
+                        <textarea
+                          value={journalData.emotionalState || ""}
+                          onChange={(e) => setJournalData((prev) => ({ ...prev, emotionalState: e.target.value }))}
+                          placeholder="How were you feeling before, during, and after the trade?"
+                          rows={3}
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        />
+                      </div>
+
+                      {/* Quick Sentiment */}
+                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">
+                          Trade Sentiment
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { key: "great", label: "Great", icon: TrendingUp, color: "profit" },
+                            { key: "okay", label: "Okay", icon: Activity, color: "amber-500" },
+                            { key: "poor", label: "Poor", icon: TrendingDown, color: "loss" },
+                          ].map((s) => {
+                            const isSelected = journalData.sentiment === s.key;
+                            return (
+                              <button
+                                key={s.key}
+                                onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
+                                className={`p-3 rounded-xl border transition-all duration-200 ${
+                                  isSelected
+                                    ? s.color === "profit" 
+                                      ? "bg-profit/15 border-profit/40 text-profit shadow-sm"
+                                      : s.color === "loss"
+                                      ? "bg-loss/15 border-loss/40 text-loss shadow-sm"
+                                      : "bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-sm"
+                                    : "bg-white/[0.02] border-white/[0.06] text-muted-foreground/70 hover:bg-white/[0.05] hover:border-white/[0.12]"
+                                }`}
+                              >
+                                <s.icon className={`w-5 h-5 mx-auto mb-1 ${isSelected ? '' : 'opacity-60'}`} />
+                                <span className="text-xs font-medium block">{s.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Quick Tags */}
+                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">
+                          Quick Tags
+                        </label>
+                        {journalData.tags && journalData.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {journalData.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                onClick={() => handleRemoveTag(tag)}
+                                className="px-2.5 py-1 bg-primary/15 text-primary text-xs font-medium rounded-lg cursor-pointer hover:bg-primary/25 transition-colors flex items-center gap-1"
+                              >
+                                {tag}
+                                <X className="w-3 h-3" />
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1.5">
+                          {commonTags.filter(t => !journalData.tags?.includes(t)).slice(0, 8).map((tag) => (
+                            <button
+                              key={tag}
+                              onClick={() => handleAddTag(tag)}
+                              className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] text-muted-foreground hover:text-foreground text-xs font-medium rounded-lg transition-colors border border-white/[0.06]"
+                            >
+                              + {tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lessons Tab */}
+                  {journalTab === "lessons" && (
+                    <div className="space-y-3">
+                      <div className="p-4 rounded-xl bg-loss/5 border border-loss/20 hover:border-loss/30 transition-colors">
+                        <label className="text-[10px] text-loss/80 uppercase tracking-wider font-medium block mb-2">
+                          Mistakes Made
+                        </label>
+                        <textarea
+                          value={journalData.mistakes || ""}
+                          onChange={(e) => setJournalData((prev) => ({ ...prev, mistakes: e.target.value }))}
+                          placeholder="What mistakes did you make? What would you do differently?"
+                          rows={3}
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        />
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-profit/5 border border-profit/20 hover:border-profit/30 transition-colors">
+                        <label className="text-[10px] text-profit/80 uppercase tracking-wider font-medium block mb-2">
+                          What Went Well
+                        </label>
+                        <textarea
+                          value={journalData.whatWentWell || ""}
+                          onChange={(e) => setJournalData((prev) => ({ ...prev, whatWentWell: e.target.value }))}
+                          placeholder="What did you do right? What should you repeat?"
+                          rows={3}
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        />
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 hover:border-primary/30 transition-colors">
+                        <label className="text-[10px] text-primary/80 uppercase tracking-wider font-medium block mb-2">
+                          Improvements for Next Time
+                        </label>
+                        <textarea
+                          value={journalData.improvements || ""}
+                          onChange={(e) => setJournalData((prev) => ({ ...prev, improvements: e.target.value }))}
+                          placeholder="What will you focus on improving in your next trade?"
+                          rows={3}
+                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
