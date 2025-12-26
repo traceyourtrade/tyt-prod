@@ -17,7 +17,9 @@ import {
   Sparkles,
   Star,
   Target,
-  LineChart
+  LineChart,
+  Clock,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 
@@ -37,48 +39,12 @@ interface SubscriptionStatus {
 }
 
 const features = [
-  { 
-    icon: BarChart3, 
-    title: "Advanced Analytics", 
-    description: "Deep insights into your trading patterns",
-    gradient: "from-blue-500 to-cyan-400"
-  },
-  { 
-    icon: Brain, 
-    title: "AI Trade Analysis", 
-    description: "Smart pattern recognition & suggestions",
-    gradient: "from-purple-500 to-pink-400"
-  },
-  { 
-    icon: Target, 
-    title: "Prop Firm Mode", 
-    description: "Track challenge progress & drawdown",
-    gradient: "from-amber-500 to-orange-400"
-  },
-  { 
-    icon: LineChart, 
-    title: "Performance Reports", 
-    description: "Detailed metrics & equity curves",
-    gradient: "from-emerald-500 to-teal-400"
-  },
-  { 
-    icon: Zap, 
-    title: "Unlimited Trades", 
-    description: "Log all your trades without limits",
-    gradient: "from-yellow-500 to-amber-400"
-  },
-  { 
-    icon: Sparkles, 
-    title: "Playbook Builder", 
-    description: "Create your winning strategy playbook",
-    gradient: "from-rose-500 to-pink-400"
-  },
-];
-
-const trustBadges = [
-  { icon: Shield, text: "Secure Payment" },
-  { icon: Lock, text: "256-bit Encryption" },
-  { icon: Star, text: "Cancel Anytime" },
+  { icon: BarChart3, title: "Advanced Analytics", gradient: "from-blue-500 to-cyan-400" },
+  { icon: Brain, title: "AI Trade Analysis", gradient: "from-purple-500 to-pink-400" },
+  { icon: Target, title: "Prop Firm Mode", gradient: "from-amber-500 to-orange-400" },
+  { icon: LineChart, title: "Performance Reports", gradient: "from-emerald-500 to-teal-400" },
+  { icon: Zap, title: "Unlimited Trades", gradient: "from-yellow-500 to-amber-400" },
+  { icon: Sparkles, title: "Playbook Builder", gradient: "from-rose-500 to-pink-400" },
 ];
 
 export default function CheckoutPage() {
@@ -87,11 +53,12 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
   
   const monthlyPrice = 9.49;
   const yearlyPrice = monthlyPrice * 12 * 0.8;
   const yearlyMonthlyPrice = yearlyPrice / 12;
+  const dailyPrice = (yearlyPrice / 365).toFixed(2);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -192,8 +159,8 @@ export default function CheckoutPage() {
   if (checkingStatus) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
           <p className="text-muted-foreground text-sm">Loading...</p>
         </div>
       </div>
@@ -205,119 +172,134 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-y-auto relative">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/3 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-background overflow-y-auto">
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/3 w-[400px] h-[400px] bg-emerald-500/[0.03] rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/3 w-[300px] h-[300px] bg-teal-500/[0.03] rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 px-4 py-6 md:py-8 pb-12">
-        <div className="max-w-6xl mx-auto">
+      <div className="relative z-10 px-4 py-4">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-6"
           >
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+              className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
             >
-              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm">Back to Dashboard</span>
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back</span>
             </Link>
           </motion.div>
 
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 mb-6 shadow-lg shadow-emerald-500/25"
-            >
-              <Crown className="h-10 w-10 text-white" />
-            </motion.div>
-            
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl font-bold text-foreground mb-4"
-            >
-              Upgrade to <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Pro</span>
-            </motion.h1>
-            
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-lg text-muted-foreground max-w-xl mx-auto"
-            >
-              Join thousands of traders who use ProJournX to improve their trading performance
-            </motion.p>
-          </div>
+          <div className="grid lg:grid-cols-5 gap-6 items-start">
+            <div className="lg:col-span-3 space-y-5">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <Crown className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground">
+                    Upgrade to <span className="text-emerald-400">Pro</span>
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Unlock your full trading potential
+                  </p>
+                </div>
+              </motion.div>
 
-          <div className="grid lg:grid-cols-3 gap-8 items-start">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="lg:col-span-2"
-            >
-              <div className="grid sm:grid-cols-2 gap-4">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
+              >
+                <Users className="h-4 w-4 text-emerald-400" />
+                <p className="text-xs text-emerald-400">
+                  <span className="font-semibold">2,847 traders</span> upgraded this month
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+              >
                 {features.map((feature, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
-                    className="group relative rounded-xl overflow-hidden"
+                    className="flex items-center gap-2.5 p-3 rounded-lg bg-card/50 border border-border/50 backdrop-blur-sm"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm" />
-                    <div className="absolute inset-0 border border-border/50 rounded-xl" />
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-white/[0.02] to-transparent" />
-                    
-                    <div className="relative p-5 flex items-start gap-4">
-                      <div className={`flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg`}>
-                        <feature.icon className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground mb-1">{feature.title}</h3>
-                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${feature.gradient} flex items-center justify-center flex-shrink-0`}>
+                      <feature.icon className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground truncate">{feature.title}</span>
+                  </div>
+                ))}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="p-4 rounded-xl bg-gradient-to-r from-zinc-900/80 to-zinc-800/80 border border-white/[0.06] backdrop-blur-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    HP
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-semibold text-foreground">Himanshu P.</span>
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        ))}
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      "ProJournX Pro helped me identify my best setups. My win rate improved from 42% to 67% in just 2 months."
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
 
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="lg:sticky lg:top-8"
+              transition={{ delay: 0.25 }}
+              className="lg:col-span-2 lg:sticky lg:top-4"
             >
               <div className="relative rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent" />
-                <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-2xl" />
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-teal-500/5" />
+                <div className="absolute inset-0 border border-emerald-500/20 rounded-2xl" />
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400" />
                 
-                <div className="relative p-6 md:p-8">
+                <div className="relative p-5">
                   {subscriptionStatus?.isOnTrial && (
-                    <div className="mb-6 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                      <p className="text-amber-400 text-sm text-center font-medium">
+                    <div className="mb-4 p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-amber-400" />
+                      <p className="text-amber-400 text-xs font-medium">
                         Trial ends in {subscriptionStatus.trialDaysLeft} days
                       </p>
                     </div>
                   )}
 
-                  <div className="text-center mb-8">
-                    <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-muted/50 mb-4">
+                  <div className="flex justify-center mb-4">
+                    <div className="inline-flex items-center p-0.5 rounded-lg bg-muted/60 border border-border/50">
                       <button
                         onClick={() => setBillingPeriod('monthly')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                           billingPeriod === 'monthly'
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                            ? 'bg-white/10 text-foreground shadow-sm'
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
@@ -325,63 +307,69 @@ export default function CheckoutPage() {
                       </button>
                       <button
                         onClick={() => setBillingPeriod('yearly')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
                           billingPeriod === 'yearly'
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                            ? 'bg-emerald-500/20 text-emerald-400 shadow-sm'
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
                         Yearly
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                          billingPeriod === 'yearly' ? 'bg-white/20' : 'bg-emerald-500/20 text-emerald-400'
-                        }`}>
+                        <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-[10px] text-white font-bold">
                           -20%
                         </span>
                       </button>
                     </div>
-                    
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-5xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                        ${billingPeriod === 'monthly' ? monthlyPrice.toFixed(2) : yearlyMonthlyPrice.toFixed(2)}
-                      </span>
-                      <span className="text-muted-foreground text-lg">/month</span>
-                    </div>
-                    
-                    {billingPeriod === 'yearly' && (
-                      <p className="text-sm text-emerald-400 mt-2">
-                        ${yearlyPrice.toFixed(2)}/year (Save ${(monthlyPrice * 12 - yearlyPrice).toFixed(2)})
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {billingPeriod === 'monthly' ? 'Billed monthly.' : 'Billed annually.'} Cancel anytime.
-                    </p>
                   </div>
 
-                  <div className="space-y-3 mb-8">
-                    {["Full access to all features", "AI-powered trade insights", "Priority support", "Regular updates"].map(
+                  <div className="text-center mb-4">
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-3xl font-bold text-foreground">
+                        ${billingPeriod === 'monthly' ? monthlyPrice.toFixed(2) : yearlyMonthlyPrice.toFixed(2)}
+                      </span>
+                      <span className="text-muted-foreground text-sm">/mo</span>
+                    </div>
+                    
+                    {billingPeriod === 'yearly' ? (
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-xs text-emerald-400 font-medium">
+                          ${yearlyPrice.toFixed(2)}/year — Save ${(monthlyPrice * 12 - yearlyPrice).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          That's only ${dailyPrice}/day
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Billed monthly
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    {["Full access to all Pro features", "AI-powered trade analysis", "Priority support", "Regular updates"].map(
                       (item, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <Check className="h-3 w-3 text-emerald-400" />
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="h-2.5 w-2.5 text-emerald-400" />
                           </div>
-                          <span className="text-sm text-foreground">{item}</span>
+                          <span className="text-xs text-foreground">{item}</span>
                         </div>
                       )
                     )}
                   </div>
 
                   {error && (
-                    <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                      <p className="text-red-400 text-sm text-center">{error}</p>
+                    <div className="mb-4 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                      <p className="text-red-400 text-xs text-center">{error}</p>
                     </div>
                   )}
 
                   <motion.button
                     onClick={handlePayment}
                     disabled={loading}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
                   >
                     {loading ? (
                       <>
@@ -391,21 +379,29 @@ export default function CheckoutPage() {
                     ) : (
                       <>
                         <TrendingUp className="h-4 w-4" />
-                        Start Pro Subscription
+                        Start Pro Now
                       </>
                     )}
                   </motion.button>
 
-                  <div className="mt-6 flex items-center justify-center gap-4">
-                    {trustBadges.map((badge, index) => (
-                      <div key={index} className="flex items-center gap-1.5 text-muted-foreground">
-                        <badge.icon className="h-3.5 w-3.5" />
-                        <span className="text-xs">{badge.text}</span>
+                  <div className="mt-4 pt-3 border-t border-border/30">
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Shield className="h-3 w-3" />
+                        <span className="text-[10px]">Secure</span>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Lock className="h-3 w-3" />
+                        <span className="text-[10px]">Encrypted</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Star className="h-3 w-3" />
+                        <span className="text-[10px]">Cancel anytime</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <p className="text-xs text-center text-muted-foreground mt-6">
+                  <p className="text-[10px] text-center text-muted-foreground mt-3">
                     By subscribing, you agree to our{" "}
                     <Link href="/terms" className="text-emerald-400 hover:underline">Terms</Link>
                     {" "}and{" "}
@@ -415,14 +411,17 @@ export default function CheckoutPage() {
               </div>
 
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="mt-6 p-4 rounded-xl bg-card/50 border border-border/50 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="mt-3 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20"
               >
-                <p className="text-sm text-muted-foreground">
-                  Powered by <span className="font-medium text-foreground">Razorpay</span>
-                </p>
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                  <p className="text-xs text-amber-300">
+                    <span className="font-semibold">Limited offer:</span> Lock in this price before it increases
+                  </p>
+                </div>
               </motion.div>
             </motion.div>
           </div>
