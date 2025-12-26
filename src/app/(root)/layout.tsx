@@ -146,7 +146,7 @@ export default function RootLayout({
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
 
   const { profileData, setAccounts } = useAccountDetails();
-  const paymentUrl = "https://traceyourtrade.in/pricing";
+  const paymentUrl = "https://www.projournx.com/pricing";
   const { setAddTrades, setAddAcc } = calendarPopUp();
 
   useEffect(() => {
