@@ -96,15 +96,21 @@ export function Sidebar({
 
   React.useEffect(() => {
     const fetchSubscriptionStatus = async () => {
+      console.log('[Sidebar] Fetching subscription status...')
       try {
         const response = await fetch('/api/subscription/status')
+        console.log('[Sidebar] Subscription status response:', response.status)
         if (response.ok) {
           const data = await response.json()
+          console.log('[Sidebar] Subscription data:', data)
           setSubscriptionStatus(data)
+        } else {
+          console.log('[Sidebar] Subscription API error:', response.status)
         }
       } catch (error) {
-        console.error('Failed to fetch subscription status:', error)
+        console.error('[Sidebar] Failed to fetch subscription status:', error)
       } finally {
+        console.log('[Sidebar] Setting isLoadingSubscription to false')
         setIsLoadingSubscription(false)
       }
     }
@@ -451,8 +457,7 @@ export function Sidebar({
           </div>
 
           {/* Go Pro / Subscription Status */}
-          {!isLoadingSubscription && (
-            <div className="px-2 pb-2">
+          <div className="px-2 pb-2">
               {subscriptionStatus?.isSubscribed ? (
                 <motion.div 
                   className={cn(
@@ -527,8 +532,7 @@ export function Sidebar({
                   </div>
                 </motion.a>
               )}
-            </div>
-          )}
+          </div>
 
           {/* User Card */}
           <div className="p-2 pt-0">

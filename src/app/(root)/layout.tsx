@@ -44,7 +44,17 @@ import {
   CandlestickChart,
   Search,
   Gift,
+  Crown,
+  Clock,
 } from "lucide-react";
+
+interface SubscriptionStatus {
+  hasAccess: boolean;
+  isSubscribed: boolean;
+  isOnTrial: boolean;
+  trialDaysLeft: number;
+  status: 'subscribed' | 'trial' | 'expired' | 'none';
+}
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
@@ -133,12 +143,29 @@ export default function RootLayout({
   const [backtestingOpen, setBacktestingOpen] = useState<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
 
   const { profileData, setAccounts } = useAccountDetails();
+  const paymentUrl = "https://traceyourtrade.in/pricing";
   const { setAddTrades, setAddAcc } = calendarPopUp();
 
   useEffect(() => {
     setAccounts();
+  }, []);
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const response = await fetch('/api/subscription/status');
+        if (response.ok) {
+          const data = await response.json();
+          setSubscriptionStatus(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscription status:', error);
+      }
+    };
+    fetchSubscriptionStatus();
   }, []);
 
   useEffect(() => {
@@ -492,6 +519,78 @@ export default function RootLayout({
           {bottomNavItems.map((item) => (
             <NavItem key={item.name} item={item} showLabel={isExpanded} />
           ))}
+        </div>
+
+        {/* Go Pro / Subscription Status */}
+        <div className={cn("px-2 pb-2", !isExpanded && "px-1")}>
+          {subscriptionStatus?.isSubscribed ? (
+            <div className={cn(
+              "relative rounded-lg overflow-hidden",
+              isExpanded && "rounded-xl"
+            )}>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/20 via-[#4EBF94]/5 to-transparent" />
+              <div className="absolute inset-0 border border-[#4EBF94]/20 rounded-lg" />
+              <div className={cn(
+                "relative flex items-center gap-2 p-2",
+                !isExpanded && "justify-center p-1.5"
+              )}>
+                <Crown className="h-4 w-4 text-[#4EBF94] flex-shrink-0" />
+                {isExpanded && (
+                  <span className="text-[11px] font-medium text-[#4EBF94]">Pro Member</span>
+                )}
+              </div>
+            </div>
+          ) : subscriptionStatus?.isOnTrial ? (
+            <a
+              href={paymentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "relative block rounded-lg overflow-hidden cursor-pointer group",
+                isExpanded && "rounded-xl"
+              )}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent group-hover:from-amber-500/30 group-hover:via-orange-500/20 transition-all duration-200" />
+              <div className="absolute inset-0 border border-amber-500/30 rounded-lg" />
+              <div className={cn(
+                "relative flex items-center gap-2 p-2",
+                !isExpanded && "justify-center p-1.5"
+              )}>
+                <Clock className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                {isExpanded && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-amber-400">Trial: {subscriptionStatus.trialDaysLeft} days left</p>
+                    <p className="text-[9px] text-muted-foreground">Upgrade to Pro</p>
+                  </div>
+                )}
+              </div>
+            </a>
+          ) : (
+            <a
+              href={paymentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "relative block rounded-lg overflow-hidden cursor-pointer group",
+                isExpanded && "rounded-xl"
+              )}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/10 to-transparent group-hover:from-purple-500/30 group-hover:via-blue-500/20 transition-all duration-200" />
+              <div className="absolute inset-0 border border-purple-500/30 rounded-lg" />
+              <div className={cn(
+                "relative flex items-center gap-2 p-2",
+                !isExpanded && "justify-center p-1.5"
+              )}>
+                <Crown className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                {isExpanded && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-purple-400">Go Pro</p>
+                    <p className="text-[9px] text-muted-foreground">Unlock all features</p>
+                  </div>
+                )}
+              </div>
+            </a>
+          )}
         </div>
 
         {/* Premium User Card */}
