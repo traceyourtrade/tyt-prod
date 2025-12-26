@@ -457,7 +457,7 @@ export function Sidebar({
           </div>
 
           {/* Go Pro / Subscription Status */}
-          <div className="px-2 pb-2">
+          <div className="px-2 pb-2 overflow-hidden">
               {subscriptionStatus?.isSubscribed ? (
                 <motion.div 
                   className={cn(
@@ -510,37 +510,31 @@ export function Sidebar({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
-                    "relative block rounded-xl overflow-hidden cursor-pointer group",
+                    "relative block rounded-xl cursor-pointer group isolate",
                     collapsed && "p-1"
                   )}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 opacity-90" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-700" />
-                  </div>
-                  <div className="absolute inset-[1px] rounded-[11px] bg-gradient-to-br from-white/10 to-transparent" />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500" />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-black/30 to-transparent" />
+                  <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
                   <div className={cn(
-                    "relative flex items-center gap-2.5 p-3",
+                    "relative flex items-center gap-3 p-3",
                     collapsed && "justify-center p-2"
                   )}>
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-white/30 rounded-lg blur-sm animate-pulse" />
-                      <div className="relative w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Crown className="h-4 w-4 text-white drop-shadow-lg" />
-                      </div>
+                    <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ring-1 ring-white/30">
+                      <Crown className="h-5 w-5 text-white" />
                     </div>
                     {!collapsed && (
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-[12px] font-bold text-white drop-shadow-sm">Go Pro</p>
-                          <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[8px] font-bold text-white uppercase tracking-wider">
-                            20% off
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-white">Go Pro</p>
+                          <span className="px-1.5 py-0.5 rounded bg-white/25 text-[9px] font-bold text-white">
+                            SAVE 20%
                           </span>
                         </div>
-                        <p className="text-[10px] text-white/70">Unlock all features</p>
+                        <p className="text-xs text-white/70 mt-0.5">Unlock all features</p>
                       </div>
                     )}
                   </div>
