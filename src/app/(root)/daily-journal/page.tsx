@@ -501,45 +501,45 @@ const DailyJournal = () => {
       <div className="flex-shrink-0 border-b border-white/[0.06] bg-gradient-to-b from-card/95 to-card/80 backdrop-blur-2xl">
         <div className="h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
         
-        <div className="px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2">
+        <div className="px-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
           {/* Left: Trade Navigation */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink overflow-hidden">
             {/* Mobile Trade List Toggle */}
             <button
               onClick={() => setIsMobileTradeListOpen(true)}
-              className="md:hidden p-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all"
+              className="md:hidden p-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border transition-all flex-shrink-0"
               aria-label="Open trade list"
             >
               <Layers className="w-4 h-4 text-muted-foreground" />
             </button>
 
-            <div className="flex items-center gap-0.5 sm:gap-1">
+            <div className="flex items-center gap-0.5 flex-shrink-0">
               <button
                 onClick={() => navigateTrade("prev")}
-                className="p-1.5 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
+                className="p-1 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
               >
-                <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
               </button>
-              <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] min-w-[56px] text-center">
-                <span className="text-xs sm:text-sm font-semibold text-foreground tabular-nums">{currentTradeNumber}</span>
-                <span className="text-xs sm:text-sm text-muted-foreground/60">/{filteredTrades.length}</span>
+              <div className="px-2 sm:px-4 py-1 sm:py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] min-w-[40px] sm:min-w-[56px] text-center">
+                <span className="text-[10px] sm:text-sm font-semibold text-foreground tabular-nums">{currentTradeNumber}</span>
+                <span className="text-[10px] sm:text-sm text-muted-foreground/60">/{filteredTrades.length}</span>
               </div>
               <button
                 onClick={() => navigateTrade("next")}
-                className="p-1.5 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
+                className="p-1 sm:p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-200"
               >
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
               </button>
             </div>
 
-            {/* Current Trade Info - Hide date on mobile */}
+            {/* Current Trade Info */}
             {selectedTrade && (
-              <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-border">
+              <div className="flex items-center gap-1.5 sm:gap-3 pl-1.5 sm:pl-4 border-l border-border min-w-0 overflow-hidden">
                 <SymbolLogo symbol={selectedTrade.Item || selectedTrade.symbol || ""} size="sm" />
-                <div>
+                <div className="min-w-0 overflow-hidden">
                   <div className="flex items-center gap-1 sm:gap-2">
-                    <span className="font-semibold text-foreground text-sm">{selectedTrade.Item || selectedTrade.symbol}</span>
-                    <span className={`hidden sm:inline px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                    <span className="font-semibold text-foreground text-xs sm:text-sm truncate max-w-[60px] sm:max-w-none">{selectedTrade.Item || selectedTrade.symbol}</span>
+                    <span className={`hidden sm:inline px-2 py-0.5 rounded text-[10px] font-semibold uppercase flex-shrink-0 ${
                       selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy"
                         ? "bg-profit/10 text-profit"
                         : "bg-loss/10 text-loss"
@@ -550,7 +550,7 @@ const DailyJournal = () => {
                   <span className="hidden sm:block text-xs text-muted-foreground">{formatDate(selectedTrade.date)}</span>
                 </div>
                 {/* Mobile P&L Badge */}
-                <span className={`sm:hidden text-sm font-bold ${isProfit ? "text-profit" : "text-loss"}`}>
+                <span className={`sm:hidden text-xs font-bold flex-shrink-0 ${isProfit ? "text-profit" : "text-loss"}`}>
                   {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
                 </span>
               </div>
@@ -558,7 +558,7 @@ const DailyJournal = () => {
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
             {/* Mobile Stats Toggle */}
             <button
               onClick={() => setIsMobileStatsOpen(true)}
@@ -589,10 +589,10 @@ const DailyJournal = () => {
             <button
               onClick={handleSave}
               disabled={isDemo || isSaving}
-              className="group flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-semibold text-xs sm:text-sm transition-all duration-300 disabled:opacity-50 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+              className="group flex items-center gap-1 sm:gap-2 px-2 sm:px-5 py-1.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-semibold text-[10px] sm:text-sm transition-all duration-300 disabled:opacity-50 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
             >
-              <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline">{isSaving ? "Saving..." : "Save"}</span>
+              <Save className="w-3 h-3 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
+              <span className="hidden xs:inline sm:inline">{isSaving ? "..." : "Save"}</span>
             </button>
           </div>
         </div>
@@ -683,8 +683,8 @@ const DailyJournal = () => {
         {/* Center Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Center Tab Bar */}
-          <div className="flex-shrink-0 px-3 sm:px-6 py-2.5 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-gradient-to-b from-card/60 to-transparent backdrop-blur-sm">
-            <div className="flex items-center gap-0.5 p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
+          <div className="flex-shrink-0 px-2 sm:px-6 py-2 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-gradient-to-b from-card/60 to-transparent backdrop-blur-sm overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-0.5 p-0.5 sm:p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
               {[
                 { key: "chart", label: "Screenshots", icon: ImageIcon },
                 { key: "notes", label: "Notes", icon: MessageSquare },
@@ -693,14 +693,14 @@ const DailyJournal = () => {
                 <button
                   key={tab.key}
                   onClick={() => setCenterTab(tab.key as typeof centerTab)}
-                  className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  className={`relative flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                     centerTab === tab.key
                       ? "bg-white/[0.08] text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   }`}
                 >
-                  <tab.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${centerTab === tab.key ? 'text-primary' : ''}`} />
-                  <span className="hidden xs:inline">{tab.label}</span>
+                  <tab.icon className={`w-3 h-3 sm:w-4 sm:h-4 ${centerTab === tab.key ? 'text-primary' : ''}`} />
+                  <span className="hidden sm:inline">{tab.label}</span>
                   {centerTab === tab.key && (
                     <motion.div
                       layoutId="centerTabIndicator"
@@ -711,7 +711,6 @@ const DailyJournal = () => {
                 </button>
               ))}
             </div>
-
           </div>
 
           {/* Center Main Content */}
