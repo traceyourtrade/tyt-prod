@@ -1644,38 +1644,26 @@ export default function FullscreenBacktesting({
         onHistoryCallback(bars, { noData: bars.length === 0 });
       },
       subscribeBars: (symbolInfo: any, resolution: string, onRealtimeCallback: any) => {
-        const targetResolution = currentIntervalRef.current;
-        console.log('subscribeBars called for resolution:', resolution, 'target:', targetResolution, 'callback exists:', !!onRealtimeCallback);
+        console.log('subscribeBars called for resolution:', resolution, 'callback exists:', !!onRealtimeCallback);
         
         // Store callback in map - TradingView may subscribe to multiple resolutions
         realtimeCallbacksRef.current.set(resolution, onRealtimeCallback);
         
-        // Also update the main callback ref if this is the target resolution
-        if (resolution === targetResolution) {
-          console.log('Setting main callback for target resolution:', resolution);
-          subscribedResolutionRef.current = resolution;
-          onRealtimeCallbackRef.current = onRealtimeCallback;
-        }
+        // ALWAYS update the main callback ref - TradingView may only call subscribeBars once
+        // and we need to use that callback for our replay system
+        subscribedResolutionRef.current = resolution;
+        onRealtimeCallbackRef.current = onRealtimeCallback;
       },
       unsubscribeBars: (subscriberUID: string) => {
-        // TradingView calls unsubscribe for the OLD resolution BEFORE subscribing to the new one
+        // For replay mode, we DON'T clear the callback on unsubscribe
+        // TradingView may only call subscribeBars once, and we need to keep using that callback
         // The subscriberUID contains the resolution, e.g., "GBPUSD_5" or "GBPUSD_60"
         const unsubResolution = subscriberUID?.split('_').pop() || '';
-        const targetResolution = currentIntervalRef.current;
+        console.log('unsubscribeBars called (ignoring for replay):', { subscriberUID, unsubResolution });
         
-        console.log('unsubscribeBars called:', { subscriberUID, unsubResolution, targetResolution });
-        
-        // Remove from callbacks map
+        // Remove from callbacks map but DON'T clear the main callback
         realtimeCallbacksRef.current.delete(unsubResolution);
-        
-        // Only clear main callback if unsubscribing from the TARGET resolution
-        if (unsubResolution === targetResolution) {
-          console.log('Clearing main callback for target resolution:', unsubResolution);
-          onRealtimeCallbackRef.current = null;
-          subscribedResolutionRef.current = null;
-        } else {
-          console.log('Ignoring unsubscribe for non-target resolution:', unsubResolution);
-        }
+        // Keep onRealtimeCallbackRef.current intact for replay
       },
       getMarks: (symbolInfo: any, from: number, to: number, onDataCallback: any) => {
         onDataCallback([]);
