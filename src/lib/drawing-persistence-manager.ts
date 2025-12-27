@@ -159,8 +159,8 @@ export function captureDrawings(chart: any): SavedDrawing[] {
  * Restores drawings to a TradingView chart
  * Returns the number of successfully restored drawings
  * 
- * CRITICAL: Our bar data uses MILLISECONDS, but TradingView's getPoints() returns SECONDS.
- * When restoring, we must convert seconds back to milliseconds to match our bar timestamps.
+ * NOTE: TradingView's createMultipointShape accepts timestamps in SECONDS (same as getPoints())
+ * We store in seconds, so we pass directly without conversion.
  */
 export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
   let restoredCount = 0;
@@ -172,13 +172,8 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
         continue;
       }
       
-      // CRITICAL: Convert point times from seconds to milliseconds
-      // Our bars use milliseconds, so shapes must also use milliseconds to match bar positions
-      const pointsInMs = drawing.points.map(pt => ({
-        ...pt,
-        time: pt.time * 1000  // Convert seconds to milliseconds
-      }));
-      
+      // TradingView's createMultipointShape expects timestamps in SECONDS
+      // Same format as getPoints() returns - no conversion needed
       const shapeOptions = {
         shape: drawing.name,
         overrides: drawing.overrides || {},
@@ -189,11 +184,11 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
       };
       
       console.log('[DrawingManager] Restoring:', drawing.name, 
-        'original (seconds):', drawing.points.map(p => ({ time: p.time, price: p.price.toFixed(5) })),
-        'converted (ms):', pointsInMs.map(p => ({ time: p.time, price: p.price.toFixed(5) }))
+        'points (seconds):', drawing.points.map(p => ({ time: p.time, price: typeof p.price === 'number' ? p.price.toFixed(5) : p.price }))
       );
       
-      chart.createMultipointShape(pointsInMs, shapeOptions);
+      // Pass points directly in seconds - TradingView handles the conversion internally
+      chart.createMultipointShape(drawing.points, shapeOptions);
       restoredCount++;
     } catch (e) {
       console.warn('[DrawingManager] Could not restore drawing:', drawing.name, e);
