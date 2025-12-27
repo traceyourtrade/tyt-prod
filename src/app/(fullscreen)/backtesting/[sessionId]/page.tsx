@@ -1924,14 +1924,15 @@ export default function FullscreenBacktesting({
       if (!hasLoadedLayoutRef.current) {
         hasLoadedLayoutRef.current = true;
         loadSavedLayout().then(() => {
-          // After layout loads, scroll chart to session start date
-          scrollChartToStartDate(chart);
+          // After layout loads, scroll chart to session start date (ONLY on first load)
+          if (!hasScrolledToStartRef.current) {
+            scrollChartToStartDate(chart);
+          }
         });
       } else {
         // Already loaded layout - just enable auto-save immediately
         initialRestoreCompleteRef.current = true;
-        // Scroll to start date if not done yet
-        scrollChartToStartDate(chart);
+        // DO NOT scroll here - user may have moved the chart and we don't want to reset their view
       }
       
       // Function to scroll chart to the session's start date
@@ -2002,23 +2003,14 @@ export default function FullscreenBacktesting({
           hasScrolledToStartRef.current = true;
           console.log('Scrolled chart to session start date:', new Date(targetTimestamp).toISOString());
           
-          // TradingView may auto-fit after our scroll, so re-scroll after delays
-          // Using requestAnimationFrame ensures we scroll after TradingView's render cycle
+          // One quick re-scroll after initial render to counter TradingView's auto-fit
+          // But DON'T keep re-scrolling - this prevents user from moving the chart
           if (!forceScroll && retryCount === 0) {
-            const doScroll = () => {
+            requestAnimationFrame(() => {
               try {
                 chart.setVisibleRange({ from, to });
               } catch (e) {}
-            };
-            // Multiple attempts using both requestAnimationFrame and setTimeout
-            requestAnimationFrame(() => {
-              doScroll();
-              requestAnimationFrame(doScroll);
             });
-            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 500);
-            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 1000);
-            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 2000);
-            setTimeout(() => { doScroll(); requestAnimationFrame(doScroll); }, 3000);
           }
         } catch (e) {
           console.warn('Could not scroll chart to start date:', e);
