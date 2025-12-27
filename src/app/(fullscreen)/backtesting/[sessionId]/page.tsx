@@ -770,14 +770,10 @@ export default function FullscreenBacktesting({
             
             // Cache bars for this resolution and track loaded range
             barsCacheRef.current[result.resolution] = bars;
-            // Calculate window based on resolution (smaller for intraday, larger for daily+)
-            const sessionFromDate = new Date(sessionResult.fromDate);
-            const windowMonths = getWindowMonths(result.resolution);
-            const windowStartDate = subMonths(sessionFromDate, windowMonths);
-            const windowEndDate = addMonths(sessionFromDate, windowMonths);
-            const fromTs = Math.floor(windowStartDate.getTime() / 1000);
-            const toTs = Math.floor(windowEndDate.getTime() / 1000);
-            loadedRangeRef.current[result.resolution] = { from: fromTs, to: toTs };
+            // Track the actual loaded data range (10 years history to session end)
+            const firstBarTs = bars.length > 0 ? bars[0].time / 1000 : 0;
+            const lastBarTs = bars.length > 0 ? bars[bars.length - 1].time / 1000 : 0;
+            loadedRangeRef.current[result.resolution] = { from: firstBarTs, to: lastBarTs };
             lastSessionKeyRef.current = `${sessionResult.symbol}-${sessionResult.market}-${sessionResult.fromDate}-${sessionResult.toDate}`;
             
             // Signal that data is ready for layout restoration
@@ -787,11 +783,14 @@ export default function FullscreenBacktesting({
             setAllBars(bars);
             
             // Calculate initial bar index
+            // If session has trades with progress, resume from there
+            // Otherwise, start at the replay start timestamp (session fromDate)
             let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
             const sessionHasTrades = sessionResult.trades && sessionResult.trades.length > 0;
             const targetTs = sessionHasTrades ? sessionResult.progressPointer : null;
             
             if (targetTs) {
+              // Resume from progress pointer (where user left off)
               for (let i = bars.length - 1; i >= 0; i--) {
                 if (bars[i].time <= targetTs) {
                   newIndex = i;
@@ -799,10 +798,16 @@ export default function FullscreenBacktesting({
                 }
               }
             } else {
-              const fromTimestamp = new Date(sessionResult.fromDate).getTime();
+              // Use replayStartTs from API (session.fromDate in seconds)
+              // This is where playback should begin - user sees all history before this
+              const replayStartTimestamp = result.replayStartTs ? result.replayStartTs * 1000 : new Date(sessionResult.fromDate).getTime();
+              console.log('Setting initial bar index to replay start:', { replayStartTs: result.replayStartTs, replayStartTimestamp, barsCount: bars.length });
+              
+              // Find the first bar at or after the replay start
               for (let i = 0; i < bars.length; i++) {
-                if (bars[i].time >= fromTimestamp) {
+                if (bars[i].time >= replayStartTimestamp) {
                   newIndex = i;
+                  console.log('Found replay start bar at index:', newIndex, 'time:', new Date(bars[i].time).toISOString());
                   break;
                 }
               }

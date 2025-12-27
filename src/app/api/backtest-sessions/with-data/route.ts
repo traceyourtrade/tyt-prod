@@ -37,7 +37,7 @@ function toPolygonTicker(symbol: string, market: string): string | null {
   return null;
 }
 
-// Fetch data from Polygon API
+// Fetch data from Polygon API with pagination for large date ranges
 async function fetchFromPolygon(
   symbol: string,
   market: string,
@@ -65,40 +65,75 @@ async function fetchFromPolygon(
   const fromDate = new Date(fromTs * 1000).toISOString().split('T')[0];
   const toDate = new Date(toTs * 1000).toISOString().split('T')[0];
 
-  const url = `${POLYGON_API_URL}/${ticker}/range/${timespan.multiplier}/${timespan.timespan}/${fromDate}/${toDate}?adjusted=true&sort=asc&limit=50000&apiKey=${POLYGON_API_KEY}`;
+  const initialUrl = `${POLYGON_API_URL}/${ticker}/range/${timespan.multiplier}/${timespan.timespan}/${fromDate}/${toDate}?adjusted=true&sort=asc&limit=50000&apiKey=${POLYGON_API_KEY}`;
 
   console.log('with-data: Fetching from Polygon:', { ticker, resolution, fromDate, toDate });
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
-    });
+    const allBars: { t: number; o: number; h: number; l: number; c: number; v: number }[] = [];
+    let nextUrl: string | null = initialUrl;
+    let pageCount = 0;
+    const maxPages = 20; // Safety limit: 20 pages * 50000 = 1M bars max
+    
+    while (nextUrl && pageCount < maxPages) {
+      pageCount++;
+      const response = await fetch(nextUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store'
+      });
 
-    if (!response.ok) {
-      console.error('Polygon API error:', response.status, response.statusText);
+      if (!response.ok) {
+        console.error('Polygon API error:', response.status, response.statusText);
+        break;
+      }
+
+      const data = await response.json();
+
+      if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+        if (allBars.length === 0) {
+          console.log('No data from Polygon:', { status: data.status, resultsCount: data.resultsCount, ticker, fromDate, toDate });
+          return null;
+        }
+        break;
+      }
+
+      // Add bars from this page
+      for (const b of data.results) {
+        allBars.push({
+          t: Math.floor(b.t / 1000),
+          o: b.o,
+          h: b.h,
+          l: b.l,
+          c: b.c,
+          v: b.v || 0
+        });
+      }
+      
+      console.log(`with-data: Polygon page ${pageCount}: got ${data.results.length} bars, total: ${allBars.length}`);
+
+      // Check for next page
+      if (data.next_url) {
+        nextUrl = `${data.next_url}&apiKey=${POLYGON_API_KEY}`;
+      } else {
+        nextUrl = null;
+      }
+    }
+    
+    if (allBars.length === 0) {
       return null;
     }
 
-    const data = await response.json();
+    console.log('with-data: Polygon total bars fetched:', allBars.length, 'for', ticker, 'in', pageCount, 'pages');
 
-    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
-      console.log('No data from Polygon:', { status: data.status, resultsCount: data.resultsCount, ticker, fromDate, toDate });
-      return null;
-    }
-
-    console.log('with-data: Polygon returned', data.results.length, 'bars for', ticker);
-
-    const bars = data.results;
     return {
       s: 'ok',
-      t: bars.map((b: { t: number }) => Math.floor(b.t / 1000)),
-      o: bars.map((b: { o: number }) => b.o),
-      h: bars.map((b: { h: number }) => b.h),
-      l: bars.map((b: { l: number }) => b.l),
-      c: bars.map((b: { c: number }) => b.c),
-      v: bars.map((b: { v?: number }) => b.v || 0)
+      t: allBars.map(b => b.t),
+      o: allBars.map(b => b.o),
+      h: allBars.map(b => b.h),
+      l: allBars.map(b => b.l),
+      c: allBars.map(b => b.c),
+      v: allBars.map(b => b.v)
     };
   } catch (error) {
     console.error('Polygon fetch error:', error);
@@ -169,19 +204,29 @@ export async function GET(req: NextRequest) {
     const market = sessionData.market;
     const symbol = sessionData.symbol;
     
-    // Use the session's actual date range for data fetching
-    // This ensures we respect the user's chosen date range
+    // Load ALL historical data from market start (10 years) up to session's toDate
+    // This gives users full historical context for technical analysis
+    // Replay will start from session.fromDate and play through session.toDate
     const sessionFromDate = new Date(sessionData.fromDate);
     const sessionToDate = new Date(sessionData.toDate);
     
-    const fromTs = Math.floor(sessionFromDate.getTime() / 1000);
+    // Data range: 10 years ago to session's end date
+    const tenYearsAgo = new Date();
+    tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+    
+    const fromTs = Math.floor(tenYearsAgo.getTime() / 1000);
     const toTs = Math.floor(sessionToDate.getTime() / 1000);
     
-    console.log('with-data: Using session date range:', {
-      fromDate: sessionData.fromDate,
-      toDate: sessionData.toDate,
+    // The replay start point (where user starts playing from)
+    const replayStartTs = Math.floor(sessionFromDate.getTime() / 1000);
+    
+    console.log('with-data: Loading historical data range:', {
+      dataFrom: tenYearsAgo.toISOString(),
+      dataTo: sessionData.toDate,
+      replayStartFrom: sessionData.fromDate,
       fromTs,
-      toTs
+      toTs,
+      replayStartTs
     });
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
@@ -227,29 +272,72 @@ export async function GET(req: NextRequest) {
         if (allBarsMap.size > 0) {
           // Sort by timestamp
           const mergedBars = Array.from(allBarsMap.values()).sort((a, b) => a.t - b.t);
-          console.log('Cache HIT for with-data (merged):', { market, symbol, resolution, barCount: mergedBars.length, fromDocs: cachedDocs.length });
+          const earliestCachedTs = mergedBars[0]?.t || 0;
+          const latestCachedTs = mergedBars[mergedBars.length - 1]?.t || 0;
           
-          barsData = {
-            s: 'ok',
-            t: mergedBars.map(b => b.t),
-            o: mergedBars.map(b => b.o),
-            h: mergedBars.map(b => b.h),
-            l: mergedBars.map(b => b.l),
-            c: mergedBars.map(b => b.c),
-            v: mergedBars.map(b => b.v)
+          // Check if cached data covers enough history (at least 5 years back from replay start)
+          // AND has enough bars to be meaningful (not sparse/gappy coverage)
+          const fiveYearsBeforeReplay = replayStartTs - (5 * 365 * 24 * 60 * 60);
+          const hasEarlyEnoughData = earliestCachedTs <= fiveYearsBeforeReplay;
+          
+          // Minimum bar counts expected for different resolutions (accounting for forex weekends)
+          const minBarsForResolution: Record<string, number> = {
+            '1': 100000,    // 1min: ~2 years minimum
+            '5': 20000,     // 5min: ~2 years minimum  
+            '15': 10000,    // 15min: ~3 years minimum
+            '30': 5000,     // 30min: ~3 years minimum
+            '60': 10000,    // 1H: ~5 years minimum (120 bars/week * 52 weeks * 5 years = ~31,000)
+            '120': 5000,    // 2H: ~5 years minimum
+            '240': 2500,    // 4H: ~5 years minimum
+            'D': 1000,      // Daily: ~4 years minimum
+            '1D': 1000,
+            'W': 200,       // Weekly: ~4 years minimum
+            '1W': 200,
           };
-
-          return NextResponse.json({
-            success: true,
-            session: sessionData,
-            bars: barsData,
-            resolution: resolution,
-            cached: true
-          }, {
-            headers: {
-              'Cache-Control': 'private, max-age=30'
-            }
+          const minBars = minBarsForResolution[resolution] || 5000;
+          const hasEnoughBars = mergedBars.length >= minBars;
+          const cacheCoversEnoughHistory = hasEarlyEnoughData && hasEnoughBars;
+          
+          console.log('Cache HIT for with-data (merged):', { 
+            market, symbol, resolution, 
+            barCount: mergedBars.length,
+            minBars,
+            hasEnoughBars,
+            fromDocs: cachedDocs.length,
+            earliestCachedDate: new Date(earliestCachedTs * 1000).toISOString(),
+            latestCachedDate: new Date(latestCachedTs * 1000).toISOString(),
+            fiveYearsBeforeReplay: new Date(fiveYearsBeforeReplay * 1000).toISOString(),
+            hasEarlyEnoughData,
+            cacheCoversEnoughHistory
           });
+          
+          // If cache doesn't have enough historical data, don't use it - fetch fresh
+          if (cacheCoversEnoughHistory) {
+            barsData = {
+              s: 'ok',
+              t: mergedBars.map(b => b.t),
+              o: mergedBars.map(b => b.o),
+              h: mergedBars.map(b => b.h),
+              l: mergedBars.map(b => b.l),
+              c: mergedBars.map(b => b.c),
+              v: mergedBars.map(b => b.v)
+            };
+
+            return NextResponse.json({
+              success: true,
+              session: sessionData,
+              bars: barsData,
+              resolution: resolution,
+              replayStartTs: replayStartTs,
+              cached: true
+            }, {
+              headers: {
+                'Cache-Control': 'private, max-age=30'
+              }
+            });
+          } else {
+            console.log('Cache does not cover enough history - fetching from Polygon');
+          }
         }
       }
     } catch (cacheError) {
@@ -370,7 +458,8 @@ export async function GET(req: NextRequest) {
       success: true,
       session: sessionData,
       bars: barsData,
-      resolution: resolution
+      resolution: resolution,
+      replayStartTs: replayStartTs
     }, {
       headers: {
         'Cache-Control': 'private, max-age=30'
