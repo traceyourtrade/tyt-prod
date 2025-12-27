@@ -1880,13 +1880,18 @@ export default function FullscreenBacktesting({
               lastSavedDrawingsCountRef.current = storedDrawingCount;
               console.log('Stored drawing count (from payload):', storedDrawingCount);
               
-              // Delay to allow shapes to fully render
-              await new Promise(resolve => setTimeout(resolve, 3000));
-              
-              // Poll actual shape count from the chart to verify restore success
-              const actualShapes = chart.getAllShapes();
-              const actualCount = actualShapes.length;
-              console.log('Actual restored shape count:', actualCount);
+              // Poll for shapes with retries - TradingView may take a moment to render shapes
+              let actualCount = 0;
+              for (let attempt = 0; attempt < 5; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const actualShapes = chart.getAllShapes();
+                actualCount = actualShapes.length;
+                console.log(`Shape check attempt ${attempt + 1}: found ${actualCount} shapes`);
+                if (actualCount >= storedDrawingCount) {
+                  console.log('All shapes restored successfully');
+                  break;
+                }
+              }
               
               // Use the higher of stored vs actual count for safety
               if (actualCount > lastSavedDrawingsCountRef.current) {
@@ -1894,8 +1899,6 @@ export default function FullscreenBacktesting({
               }
               
               // Enable auto-saves now that restore is complete
-              // We cleared existing studies and restored saved state, so enable autosave
-              // This allows users to save layouts with deleted indicators (empty studies array)
               initialRestoreCompleteRef.current = true;
               console.log('Initial restore complete, auto-saves now enabled');
             }
