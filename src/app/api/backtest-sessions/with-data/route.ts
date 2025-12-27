@@ -5,6 +5,83 @@ import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.mod
 import { getCachedBarsModel } from '@/models/backtest/cachedBars.model';
 
 const POLYGON_API_URL = 'https://api.polygon.io/v2/aggs/ticker';
+
+// Anomaly detection: Filter out bars with impossible price spreads
+// Returns filtered bars and list of anomalies for UI notification
+interface AnomalyInfo {
+  timestamp: number;
+  reason: string;
+  spread: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+function detectAndFilterAnomalies(
+  t: number[], o: number[], h: number[], l: number[], c: number[], v: number[],
+  symbol: string
+): { 
+  filtered: { t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[] };
+  anomalies: AnomalyInfo[];
+} {
+  const anomalies: AnomalyInfo[] = [];
+  const validIndices: number[] = [];
+  
+  // Symbol-specific thresholds (absolute max spread in one bar)
+  const maxSpreadThresholds: Record<string, number> = {
+    'XAUUSD': 300,  // Gold: $300 max spread per bar
+    'XAGUSD': 5,    // Silver: $5 max spread
+    'DEFAULT': 0.10 // Default: 10% of price
+  };
+  
+  const threshold = maxSpreadThresholds[symbol] || maxSpreadThresholds['DEFAULT'];
+  const usePercentage = !maxSpreadThresholds[symbol];
+  
+  for (let i = 0; i < t.length; i++) {
+    const spread = h[i] - l[i];
+    const priceLevel = (h[i] + l[i]) / 2;
+    const spreadPercent = (spread / priceLevel) * 100;
+    
+    // Check for anomaly: absolute threshold for known symbols, or >10% spread for others
+    const isAnomaly = usePercentage 
+      ? spreadPercent > 10 
+      : spread > threshold;
+    
+    if (isAnomaly) {
+      anomalies.push({
+        timestamp: t[i],
+        reason: `Extreme spread: $${spread.toFixed(2)} (${spreadPercent.toFixed(1)}%)`,
+        spread,
+        open: o[i],
+        high: h[i],
+        low: l[i],
+        close: c[i]
+      });
+      console.log('Filtered anomalous bar:', {
+        time: new Date(t[i] * 1000).toISOString(),
+        symbol,
+        spread: spread.toFixed(2),
+        spreadPercent: spreadPercent.toFixed(1) + '%',
+        o: o[i], h: h[i], l: l[i], c: c[i]
+      });
+    } else {
+      validIndices.push(i);
+    }
+  }
+  
+  return {
+    filtered: {
+      t: validIndices.map(i => t[i]),
+      o: validIndices.map(i => o[i]),
+      h: validIndices.map(i => h[i]),
+      l: validIndices.map(i => l[i]),
+      c: validIndices.map(i => c[i]),
+      v: validIndices.map(i => v[i] || 0)
+    },
+    anomalies
+  };
+}
 const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
 
 // Map TradingView resolution to Polygon timespan format
@@ -348,14 +425,32 @@ export async function GET(req: NextRequest) {
           
           // If cache doesn't have enough historical data, don't use it - fetch fresh
           if (cacheCoversEnoughHistory) {
-            barsData = {
-              s: 'ok',
+            // Apply anomaly detection to filter corrupted bars
+            const rawBars = {
               t: mergedBars.map(b => b.t),
               o: mergedBars.map(b => b.o),
               h: mergedBars.map(b => b.h),
               l: mergedBars.map(b => b.l),
               c: mergedBars.map(b => b.c),
               v: mergedBars.map(b => b.v)
+            };
+            
+            const { filtered, anomalies } = detectAndFilterAnomalies(
+              rawBars.t, rawBars.o, rawBars.h, rawBars.l, rawBars.c, rawBars.v, symbol
+            );
+            
+            if (anomalies.length > 0) {
+              console.log('Filtered anomalies from cached data:', {
+                symbol,
+                anomalyCount: anomalies.length,
+                originalBars: rawBars.t.length,
+                filteredBars: filtered.t.length
+              });
+            }
+            
+            barsData = {
+              s: 'ok',
+              ...filtered
             };
 
             return NextResponse.json({
@@ -364,7 +459,8 @@ export async function GET(req: NextRequest) {
               bars: barsData,
               resolution: resolution,
               replayStartTs: replayStartTs,
-              cached: true
+              cached: true,
+              anomaliesFiltered: anomalies.length
             }, {
               headers: {
                 'Cache-Control': 'private, max-age=30'
@@ -433,17 +529,26 @@ export async function GET(req: NextRequest) {
           }
         }
         
+        // Apply anomaly detection to filter corrupted bars from fresh data
+        const { filtered: cleanedData, anomalies } = detectAndFilterAnomalies(
+          data.t, data.o, data.h, data.l, data.c, data.v || [], symbol
+        );
+        
+        if (anomalies.length > 0) {
+          console.log('Filtered anomalies from fresh Polygon data:', {
+            symbol,
+            anomalyCount: anomalies.length,
+            originalBars: data.t.length,
+            filteredBars: cleanedData.t.length
+          });
+        }
+        
         barsData = {
           s: 'ok',
-          t: data.t,
-          o: data.o,
-          h: data.h,
-          l: data.l,
-          c: data.c,
-          v: data.v || []
+          ...cleanedData
         };
         
-        // Cache the response for future use
+        // Cache the response for future use (store raw data, filter on read)
         const MAX_CACHED_BARS = 100000;
         try {
           const barsToCache = data.t.length > MAX_CACHED_BARS ? MAX_CACHED_BARS : data.t.length;
