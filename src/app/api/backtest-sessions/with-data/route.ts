@@ -73,9 +73,9 @@ async function fetchFromPolygon(
     const allBars: { t: number; o: number; h: number; l: number; c: number; v: number }[] = [];
     let nextUrl: string | null = initialUrl;
     let pageCount = 0;
-    const maxPages = 20; // Safety limit: 20 pages * 50000 = 1M bars max
     
-    while (nextUrl && pageCount < maxPages) {
+    // Fetch all available pages until no more data
+    while (nextUrl) {
       pageCount++;
       const response = await fetch(nextUrl, {
         method: 'GET',
@@ -164,6 +164,7 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const sessionId = searchParams.get('sessionId');
     const resolution = searchParams.get('resolution') || '60';
+    const forceRefresh = searchParams.get('forceRefresh') === 'true';
 
     if (!sessionId) {
       return NextResponse.json({ success: false, error: "Missing sessionId" }, { status: 400 });
@@ -230,6 +231,17 @@ export async function GET(req: NextRequest) {
     });
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
+    
+    // If forceRefresh, delete existing cache for this symbol/resolution first
+    if (forceRefresh) {
+      try {
+        const CachedBars = await getCachedBarsModel();
+        await CachedBars.deleteMany({ market, symbol, resolution });
+        console.log('Force refresh: Cleared cache for', { market, symbol, resolution });
+      } catch (err) {
+        console.error('Error clearing cache:', err);
+      }
+    }
     
     // Check MongoDB cache first for instant response - find ANY overlapping cached data
     try {
