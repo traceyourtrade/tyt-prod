@@ -861,13 +861,24 @@ export default function FullscreenBacktesting({
       
       console.log('Pre-warming cache for timeframes:', toPreload.join(', '));
       
+      // Determine anchor: replay position > progress pointer > session start
+      const replayTs = replayTimestampRef.current;
+      let anchorDate: Date;
+      if (replayTs > 0) {
+        anchorDate = new Date(replayTs);
+      } else if (session.progressPointer) {
+        anchorDate = new Date(session.progressPointer);
+      } else {
+        anchorDate = new Date(session.fromDate);
+      }
+      console.log('Preload anchor date:', anchorDate.toISOString());
+      
       // Fetch ALL timeframes in parallel for maximum speed
       const preloadPromises = toPreload.map(async (tf) => {
         try {
-          const sessionFromDate = new Date(session.fromDate);
           const windowMonths = getWindowMonths(tf);
-          const windowStartDate = subMonths(sessionFromDate, windowMonths);
-          const windowEndDate = addMonths(sessionFromDate, windowMonths);
+          const windowStartDate = subMonths(anchorDate, windowMonths);
+          const windowEndDate = addMonths(anchorDate, windowMonths);
           const fromTs = Math.floor(windowStartDate.getTime() / 1000);
           const toTs = Math.floor(windowEndDate.getTime() / 1000);
           const apiUrl = `/api/backtest/bars?market=${session.market || 'FOREX'}&symbol=${session.symbol}&resolution=${tf}&to=${toTs}&from=${fromTs}`;
@@ -966,11 +977,24 @@ export default function FullscreenBacktesting({
     console.log('Fetching bars for resolution:', resolution);
     
     try {
-      // Load window based on resolution (smaller for intraday, larger for daily+)
-      const sessionFromDate = new Date(fromDate);
+      // Determine anchor timestamp: replay position > progress pointer > session start
+      const replayTs = replayTimestampRef.current;
+      let anchorDate: Date;
+      if (replayTs > 0) {
+        anchorDate = new Date(replayTs);
+        console.log('Using replay timestamp as anchor:', anchorDate.toISOString());
+      } else if (session.progressPointer) {
+        anchorDate = new Date(session.progressPointer);
+        console.log('Using progress pointer as anchor:', anchorDate.toISOString());
+      } else {
+        anchorDate = new Date(fromDate);
+        console.log('Using session fromDate as anchor:', anchorDate.toISOString());
+      }
+      
+      // Load window centered on anchor (NOT session start)
       const windowMonths = getWindowMonths(resolution);
-      const windowStartDate = subMonths(sessionFromDate, windowMonths);
-      const windowEndDate = addMonths(sessionFromDate, windowMonths);
+      const windowStartDate = subMonths(anchorDate, windowMonths);
+      const windowEndDate = addMonths(anchorDate, windowMonths);
       const fromTs = Math.floor(windowStartDate.getTime() / 1000);
       const toTs = Math.floor(windowEndDate.getTime() / 1000);
       const market = session.market || 'FOREX';
