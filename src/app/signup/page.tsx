@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Phone, Lock, ArrowRight, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X } from "lucide-react";
+import { User, Mail, Phone, Lock, ArrowRight, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X, Sparkles, Shield, TrendingUp, Star, Gift } from "lucide-react";
 
 type CountryCode = { country: string; code: string };
 
@@ -74,8 +74,8 @@ const SignUp: React.FC = () => {
   ];
 
   const [selectedCode, setSelectedCode] = useState<CountryCode>({
-    code: "+1",
-    country: "United States",
+    code: "+91",
+    country: "India",
   });
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -196,95 +196,154 @@ const SignUp: React.FC = () => {
   const strengthColors = ["bg-red-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
 
   return (
-    <div className="min-h-screen w-full flex">
-      {/* Left Side - Immersive Visual */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-black overflow-hidden">
-        {/* Animated mesh gradient background */}
+    <div className="min-h-screen w-full flex bg-[#050508]">
+      {/* Left Side - Conversion-focused Visual */}
+      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
+        {/* Animated gradient mesh - Using green/emerald for growth & money psychology */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#2d1f5e_0%,_transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#1e3a5f_0%,_transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#1a1a2e_0%,_transparent_70%)]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#071018] to-[#050508]" />
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_50%_at_20%_30%,rgba(16,185,129,0.12),transparent)]" />
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_60%_50%_at_80%_70%,rgba(139,92,246,0.1),transparent)]" />
+          <div className="absolute bottom-0 left-1/2 w-full h-full bg-[radial-gradient(ellipse_50%_30%_at_50%_100%,rgba(6,182,212,0.08),transparent)]" />
         </div>
-        
-        {/* Floating orbs */}
+
+        {/* Floating geometric elements */}
         <motion.div
-          animate={{ 
-            y: [0, -40, 0],
-            x: [0, 30, 0],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/3 right-1/4 w-72 h-72 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-600/20 blur-3xl"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+          className="absolute top-16 right-16 w-40 h-40 border border-emerald-500/20 rounded-full"
         />
         <motion.div
-          animate={{ 
-            y: [0, 30, 0],
-            x: [0, -20, 0],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-1/3 left-1/4 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/15 to-cyan-600/15 blur-3xl"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+          className="absolute top-24 right-24 w-56 h-56 border border-violet-500/10 rounded-full"
         />
         <motion.div
-          animate={{ 
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-gradient-to-br from-emerald-500/10 to-teal-600/10 blur-3xl"
+          animate={{ y: [0, -25, 0], scale: [1, 1.05, 1] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-32 left-16 w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-2xl blur-sm"
+        />
+        <motion.div
+          animate={{ y: [0, 20, 0], x: [0, -15, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute top-1/4 right-1/3 w-16 h-16 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-xl blur-sm"
         />
 
-        {/* Content overlay */}
-        <div className="relative z-10 flex flex-col justify-between h-full p-12">
+        {/* Grid overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between h-full p-12 xl:p-16">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="flex items-center gap-3"
           >
-            <Image
-              width={48}
-              height={48}
-              src="/images/logo-dark.png"
-              alt="ProJournX"
-              className="w-12 h-12 object-contain"
-              unoptimized
-            />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-semibold text-white">ProJournX</span>
           </motion.div>
 
-          {/* Center content */}
+          {/* Main content */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="space-y-6"
+            className="space-y-8"
           >
-            <h1 className="text-5xl xl:text-6xl font-light text-white leading-tight">
-              Start your
-              <br />
-              <span className="font-semibold bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                journey
-              </span>
-            </h1>
-            <p className="text-lg text-white/50 max-w-sm leading-relaxed">
-              Join thousands of traders who trust ProJournX to build consistency and maximize their returns.
+            {/* Free trial badge - Creates urgency */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30"
+            >
+              <Gift className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm font-medium text-emerald-400">5-day free trial - No credit card required</span>
+            </motion.div>
+            
+            <div className="space-y-4">
+              <h1 className="text-5xl xl:text-6xl font-bold text-white leading-[1.1]">
+                Transform your
+                <br />
+                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                  trading results
+                </span>
+              </h1>
+            </div>
+            
+            <p className="text-lg text-white/50 max-w-md leading-relaxed">
+              Join 10,000+ traders who use ProJournX to track, analyze, and improve their trading performance.
             </p>
+
+            {/* Benefits list - Green checkmarks for positive psychology */}
+            <div className="space-y-4">
+              {[
+                "Track every trade with precision analytics",
+                "AI-powered pattern recognition",
+                "Detailed performance insights & reports",
+                "Backtesting with TradingView charts",
+              ].map((feature, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + i * 0.1 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <span className="text-white/70">{feature}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Social proof - Trust signals */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex items-center gap-4 pt-4"
+            >
+              <div className="flex -space-x-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-white/5 border-2 border-[#050508] flex items-center justify-center"
+                  >
+                    <User className="w-4 h-4 text-white/40" />
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm text-white/50">Loved by 10,000+ traders</p>
+              </div>
+            </motion.div>
           </motion.div>
 
-          {/* Bottom features */}
+          {/* Trust badges */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="space-y-4"
+            transition={{ duration: 0.6, delay: 0.9 }}
+            className="flex items-center gap-8"
           >
             {[
-              "Track every trade with precision",
-              "AI-powered pattern recognition",
-              "Real-time performance analytics",
-            ].map((feature, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
-                <span className="text-white/60 text-sm">{feature}</span>
+              { icon: Shield, label: "Bank-level security" },
+              { icon: Sparkles, label: "AI-powered insights" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-2 text-white/40">
+                <item.icon className="w-4 h-4" />
+                <span className="text-sm">{item.label}</span>
               </div>
             ))}
           </motion.div>
@@ -292,42 +351,40 @@ const SignUp: React.FC = () => {
       </div>
 
       {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-[#0a0a0f] p-6 sm:p-8 lg:p-12 overflow-y-auto">
+      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-8 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md my-8"
+          className="w-full max-w-[420px] py-8"
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex justify-center mb-8">
-            <Image
-              width={48}
-              height={48}
-              src="/images/logo-dark.png"
-              alt="ProJournX"
-              className="w-12 h-12 object-contain"
-              unoptimized
-            />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-semibold text-white">ProJournX</span>
+            </div>
           </div>
 
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-semibold text-white mb-2">Create account</h2>
-            <p className="text-white/40">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-white mb-2">Create your account</h2>
+            <p className="text-white/50">
               Already have an account?{" "}
-              <Link href="/login" className="text-violet-400 hover:text-violet-300 transition-colors">
+              <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
                 Sign in
               </Link>
             </p>
           </div>
 
-          {/* Google Button */}
+          {/* Google Button - Primary action */}
           <motion.button
             onClick={() => signUpWithGoogle()}
-            whileHover={{ scale: 1.01 }}
+            whileHover={{ scale: 1.01, y: -1 }}
             whileTap={{ scale: 0.99 }}
-            className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-white text-gray-900 font-medium hover:bg-gray-100 transition-colors mb-6"
+            className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-white text-gray-900 font-semibold hover:bg-gray-50 transition-all shadow-lg shadow-white/5 mb-6"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -340,18 +397,18 @@ const SignUp: React.FC = () => {
 
           {/* Divider */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-white/30 uppercase tracking-wider">or</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <span className="text-xs text-white/30 uppercase tracking-widest font-medium">or</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </div>
 
           {/* Form */}
-          <form onSubmit={postSignUp} className="space-y-5">
+          <form onSubmit={postSignUp} className="space-y-4">
             {/* Full Name */}
-            <div className="space-y-2">
-              <label className="text-sm text-white/60">Full name</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-white/70">Full name</label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                 <input
                   type="text"
                   name="fullName"
@@ -360,16 +417,16 @@ const SignUp: React.FC = () => {
                   onChange={setLoginVal}
                   required
                   autoComplete="name"
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-violet-500/50 focus:bg-white/[0.07] transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
               </div>
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
-              <label className="text-sm text-white/60">Email address</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-white/70">Email address</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                 <input
                   type="email"
                   name="email"
@@ -378,21 +435,21 @@ const SignUp: React.FC = () => {
                   onChange={setLoginVal}
                   required
                   autoComplete="email"
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-violet-500/50 focus:bg-white/[0.07] transition-all"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
               </div>
             </div>
 
             {/* Phone */}
-            <div className="space-y-2">
-              <label className="text-sm text-white/60">Phone number</label>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-white/70">Phone number</label>
               <div className="flex gap-2">
                 {/* Country Code Dropdown */}
                 <div className="relative" ref={dropdownRef}>
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-1.5 px-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/[0.07] transition-all min-w-[100px]"
+                    className="flex items-center gap-1.5 px-3 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white hover:bg-white/[0.05] transition-all min-w-[90px]"
                   >
                     <span className="text-sm">{selectedCode.code}</span>
                     <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -405,7 +462,7 @@ const SignUp: React.FC = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -8, scale: 0.96 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute z-50 top-full left-0 mt-2 w-72 bg-[#12121a] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+                        className="absolute z-50 top-full left-0 mt-2 w-72 bg-[#0a0a12] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
                       >
                         <div className="p-2">
                           <div className="relative">
@@ -415,7 +472,7 @@ const SignUp: React.FC = () => {
                               placeholder="Search country..."
                               value={search}
                               onChange={(e) => setSearch(e.target.value)}
-                              className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 outline-none focus:border-violet-500/50"
+                              className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 outline-none focus:border-emerald-500/50"
                             />
                           </div>
                         </div>
@@ -438,8 +495,8 @@ const SignUp: React.FC = () => {
                 </div>
 
                 {/* Phone Input */}
-                <div className="relative flex-1">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+                <div className="relative flex-1 group">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                   <input
                     type="tel"
                     name="phone"
@@ -448,17 +505,17 @@ const SignUp: React.FC = () => {
                     onChange={setLoginVal}
                     required
                     autoComplete="tel"
-                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-violet-500/50 focus:bg-white/[0.07] transition-all"
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-emerald-500/20 transition-all"
                   />
                 </div>
               </div>
             </div>
 
             {/* Password */}
-            <div className="space-y-2">
-              <label className="text-sm text-white/60">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-white/70">Password</label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -467,7 +524,7 @@ const SignUp: React.FC = () => {
                   onChange={setLoginVal}
                   required
                   autoComplete="new-password"
-                  className="w-full pl-12 pr-12 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-violet-500/50 focus:bg-white/[0.07] transition-all"
+                  className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
                 <button
                   type="button"
@@ -480,7 +537,7 @@ const SignUp: React.FC = () => {
               
               {/* Password Strength */}
               {signUpData.password && (
-                <div className="space-y-2">
+                <div className="space-y-2 pt-1">
                   <div className="flex gap-1">
                     {[0, 1, 2, 3].map((i) => (
                       <div
@@ -499,10 +556,10 @@ const SignUp: React.FC = () => {
             </div>
 
             {/* Confirm Password */}
-            <div className="space-y-2">
-              <label className="text-sm text-white/60">Confirm password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-white/70">Confirm password</label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                 <input
                   type={showConPassword ? "text" : "password"}
                   name="cpassword"
@@ -511,7 +568,7 @@ const SignUp: React.FC = () => {
                   onChange={setLoginVal}
                   required
                   autoComplete="new-password"
-                  className="w-full pl-12 pr-12 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-violet-500/50 focus:bg-white/[0.07] transition-all"
+                  className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder:text-white/25 outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] focus:ring-2 focus:ring-emerald-500/20 transition-all"
                 />
                 <button
                   type="button"
@@ -524,7 +581,7 @@ const SignUp: React.FC = () => {
               
               {/* Password Match Indicator */}
               {signUpData.cpassword && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-1">
                   {passwordsMatch ? (
                     <>
                       <Check className="w-4 h-4 text-emerald-400" />
@@ -551,36 +608,43 @@ const SignUp: React.FC = () => {
               </motion.div>
             )}
 
-            {/* Submit */}
+            {/* Submit - Green for positive action */}
             <motion.button
               type="submit"
               disabled={isLoading}
-              whileHover={{ scale: 1.01 }}
+              whileHover={{ scale: 1.01, y: -1 }}
               whileTap={{ scale: 0.99 }}
-              className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold hover:shadow-lg hover:shadow-emerald-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  Create account
+                  Start free trial
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </motion.button>
+
+            {/* Trust message */}
+            <p className="text-center text-xs text-white/30 pt-2">
+              No credit card required. Cancel anytime.
+            </p>
           </form>
 
           {/* Footer */}
-          <p className="text-center text-sm text-white/30 mt-8">
-            By continuing, you agree to our{" "}
-            <Link href="/terms" className="text-white/50 hover:text-white/70 transition-colors">
-              Terms
-            </Link>{" "}
-            &{" "}
-            <Link href="/privacy" className="text-white/50 hover:text-white/70 transition-colors">
-              Privacy Policy
-            </Link>
-          </p>
+          <div className="mt-8 pt-6 border-t border-white/[0.06]">
+            <p className="text-center text-sm text-white/30">
+              By creating an account, you agree to our{" "}
+              <Link href="/terms" className="text-white/50 hover:text-white/70 transition-colors">
+                Terms
+              </Link>{" "}
+              &{" "}
+              <Link href="/privacy" className="text-white/50 hover:text-white/70 transition-colors">
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
         </motion.div>
       </div>
     </div>
