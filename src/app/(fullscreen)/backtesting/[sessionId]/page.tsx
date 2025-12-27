@@ -893,9 +893,15 @@ export default function FullscreenBacktesting({
       // Fetch ALL timeframes in parallel for maximum speed
       const preloadPromises = toPreload.map(async (tf) => {
         try {
-          const windowMonths = getWindowMonths(tf);
-          const windowStartDate = subMonths(anchorDate, windowMonths);
-          const windowEndDate = addMonths(anchorDate, windowMonths);
+          // CRITICAL: Polygon API returns earliest 50k bars from requested range
+          // So we need to request a SMALLER window that's biased to include the anchor
+          // For intraday: 1 month back, 1 month forward (will definitely include anchor)
+          // For daily+: 5 years back, 5 years forward
+          const isIntraday = !['D', 'W', 'M'].includes(tf);
+          const monthsBack = isIntraday ? 1 : 60;  // 1 month for intraday, 5 years for daily
+          const monthsForward = isIntraday ? 1 : 60;
+          const windowStartDate = subMonths(anchorDate, monthsBack);
+          const windowEndDate = addMonths(anchorDate, monthsForward);
           const fromTs = Math.floor(windowStartDate.getTime() / 1000);
           const toTs = Math.floor(windowEndDate.getTime() / 1000);
           const apiUrl = `/api/backtest/bars?market=${session.market || 'FOREX'}&symbol=${session.symbol}&resolution=${tf}&to=${toTs}&from=${fromTs}`;
@@ -1008,10 +1014,15 @@ export default function FullscreenBacktesting({
         console.log('Using session fromDate as anchor:', anchorDate.toISOString());
       }
       
-      // Load window centered on anchor (NOT session start)
-      const windowMonths = getWindowMonths(resolution);
-      const windowStartDate = subMonths(anchorDate, windowMonths);
-      const windowEndDate = addMonths(anchorDate, windowMonths);
+      // CRITICAL: Polygon API returns earliest 50k bars from requested range
+      // So we need to request a SMALLER window that's biased to include the anchor
+      // For intraday: 1 month back, 1 month forward (will definitely include anchor)
+      // For daily+: 5 years back, 5 years forward
+      const isIntraday = !['D', 'W', 'M'].includes(resolution);
+      const monthsBack = isIntraday ? 1 : 60;  // 1 month for intraday, 5 years for daily
+      const monthsForward = isIntraday ? 1 : 60;
+      const windowStartDate = subMonths(anchorDate, monthsBack);
+      const windowEndDate = addMonths(anchorDate, monthsForward);
       const fromTs = Math.floor(windowStartDate.getTime() / 1000);
       const toTs = Math.floor(windowEndDate.getTime() / 1000);
       const market = session.market || 'FOREX';
@@ -1337,10 +1348,15 @@ export default function FullscreenBacktesting({
         console.log('fetchAllHistory using session fromDate as anchor:', anchorDate.toISOString());
       }
       
-      // Load window centered on anchor (NOT always session start)
-      const windowMonths = getWindowMonths(currentInterval);
-      const windowStartDate = subMonths(anchorDate, windowMonths);
-      const windowEndDate = addMonths(anchorDate, windowMonths);
+      // CRITICAL: Polygon API returns earliest 50k bars from requested range
+      // So we need to request a SMALLER window that's biased to include the anchor
+      // For intraday: 1 month back, 1 month forward (will definitely include anchor)
+      // For daily+: 5 years back, 5 years forward
+      const isIntraday = !['D', 'W', 'M'].includes(currentInterval);
+      const monthsBack = isIntraday ? 1 : 60;  // 1 month for intraday, 5 years for daily
+      const monthsForward = isIntraday ? 1 : 60;
+      const windowStartDate = subMonths(anchorDate, monthsBack);
+      const windowEndDate = addMonths(anchorDate, monthsForward);
       const fromTs = Math.floor(windowStartDate.getTime() / 1000);
       const toTs = Math.floor(windowEndDate.getTime() / 1000);
       
