@@ -2814,8 +2814,20 @@ export default function FullscreenBacktesting({
     const bars = allBarsRef.current;
     const idx = currentBarIndexRef.current;
     const resolution = currentIntervalRef.current;
+    const hasCallback = !!onRealtimeCallbackRef.current;
+    const subscribedRes = subscribedResolutionRef.current;
+    
+    console.log('handleNext called:', { 
+      idx, 
+      barsLength: bars?.length, 
+      resolution, 
+      hasCallback,
+      subscribedRes,
+      isAtEnd: idx >= (bars?.length || 0) - 1
+    });
     
     if (!bars || bars.length === 0) {
+      console.log('handleNext: no bars, stopping playback');
       setIsPlaying(false);
       return;
     }
