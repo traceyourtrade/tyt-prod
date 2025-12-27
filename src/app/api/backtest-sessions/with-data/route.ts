@@ -308,7 +308,30 @@ export async function GET(req: NextRequest) {
           };
           const minBars = minBarsForResolution[resolution] || 5000;
           const hasEnoughBars = mergedBars.length >= minBars;
-          const cacheCoversEnoughHistory = hasEarlyEnoughData && hasEnoughBars;
+          
+          // Check for large gaps in data (more than 7 days = 604800 seconds)
+          // This catches cases where we have early and late data but missing months in between
+          let hasLargeGaps = false;
+          let largestGapDays = 0;
+          const maxGapAllowed = 7 * 24 * 60 * 60; // 7 days in seconds (forex closes on weekends)
+          // Scan entire dataset for gaps - sample every 10th bar for efficiency
+          for (let i = 1; i < mergedBars.length; i += 10) {
+            const gap = mergedBars[i].t - mergedBars[Math.max(0, i-10)].t;
+            const gapDays = gap / 86400;
+            if (gapDays > largestGapDays) largestGapDays = gapDays;
+            if (gap > maxGapAllowed * 10) { // 70 days gap when sampling every 10th bar
+              hasLargeGaps = true;
+              console.log('Detected large gap in cached data:', {
+                fromDate: new Date(mergedBars[Math.max(0, i-10)].t * 1000).toISOString(),
+                toDate: new Date(mergedBars[i].t * 1000).toISOString(),
+                gapDays: Math.round(gapDays)
+              });
+              break;
+            }
+          }
+          console.log('Gap check result:', { hasLargeGaps, largestGapDays: Math.round(largestGapDays) });
+          
+          const cacheCoversEnoughHistory = hasEarlyEnoughData && hasEnoughBars && !hasLargeGaps;
           
           console.log('Cache HIT for with-data (merged):', { 
             market, symbol, resolution, 
