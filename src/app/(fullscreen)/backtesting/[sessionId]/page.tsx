@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import "./backtesting.css";
 import { widget as TradingViewWidget } from "../../../../../public/charting_library";
 import { makeApiRequest, parseFullSymbol } from "@/lib/custom-datafeed/helpers";
+import * as DrawingManager from "@/lib/drawing-persistence-manager";
 
 type MarketType = 'FOREX' | 'CRYPTO' | 'INDIAN_INDICES' | 'INDIAN_STOCK';
 
@@ -564,32 +565,12 @@ export default function FullscreenBacktesting({
     currentIntervalRef.current = tf;
     
     // Capture current drawings BEFORE resolution change for potential restoration
+    // Using DrawingManager ensures timestamps are validated and in correct seconds format
     if (tvWidgetRef.current) {
       try {
         const chart = tvWidgetRef.current.activeChart();
-        const allShapes = chart.getAllShapes();
-        const drawings: any[] = [];
-        
-        for (const shape of allShapes) {
-          try {
-            const shapeObj = chart.getShapeById(shape.id);
-            if (shapeObj) {
-              const points = shapeObj.getPoints();
-              const properties = shapeObj.getProperties();
-              drawings.push({
-                name: shape.name,
-                points: points,
-                overrides: properties,
-                lock: false
-              });
-            }
-          } catch (e) {
-            // Skip shapes that can't be serialized
-          }
-        }
-        
-        pendingDrawingsRef.current = drawings;
-        console.log('Captured', drawings.length, 'drawings before resolution change');
+        pendingDrawingsRef.current = DrawingManager.captureDrawings(chart);
+        console.log('Captured', pendingDrawingsRef.current.length, 'drawings before resolution change');
       } catch (e) {
         console.warn('Could not capture drawings before resolution change:', e);
       }
@@ -652,26 +633,10 @@ export default function FullscreenBacktesting({
             try {
               const innerChart = tvWidgetRef.current?.activeChart();
               if (innerChart && pendingDrawingsRef.current.length > 0) {
-                const currentShapes = innerChart.getAllShapes();
-                if (currentShapes.length === 0) {
+                const currentShapes = DrawingManager.getShapeCount(innerChart);
+                if (currentShapes === 0) {
                   console.log('Drawings lost during resolution change, restoring', pendingDrawingsRef.current.length, 'drawings');
-                  for (const drawing of pendingDrawingsRef.current) {
-                    try {
-                      if (drawing.name && drawing.points && drawing.points.length > 0) {
-                        // Points are in seconds - pass directly to createMultipointShape
-                        innerChart.createMultipointShape(drawing.points, {
-                          shape: drawing.name,
-                          overrides: drawing.overrides || {},
-                          lock: drawing.lock || false,
-                          disableSelection: false,
-                          disableSave: false,
-                          disableUndo: false,
-                        });
-                      }
-                    } catch (restoreError) {
-                      console.warn('Could not restore drawing:', drawing.name, restoreError);
-                    }
-                  }
+                  DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
                 }
                 pendingDrawingsRef.current = [];
               }
@@ -1491,26 +1456,10 @@ export default function FullscreenBacktesting({
                   try {
                     const chart = tvWidgetRef.current?.activeChart();
                     if (chart && pendingDrawingsRef.current.length > 0) {
-                      const currentShapes = chart.getAllShapes();
-                      if (currentShapes.length === 0) {
+                      const currentShapes = DrawingManager.getShapeCount(chart);
+                      if (currentShapes === 0) {
                         console.log('Drawings lost during resolution change (slow path), restoring', pendingDrawingsRef.current.length, 'drawings');
-                        for (const drawing of pendingDrawingsRef.current) {
-                          try {
-                            if (drawing.name && drawing.points && drawing.points.length > 0) {
-                              // Points are in seconds - pass directly to createMultipointShape
-                              chart.createMultipointShape(drawing.points, {
-                                shape: drawing.name,
-                                overrides: drawing.overrides || {},
-                                lock: drawing.lock || false,
-                                disableSelection: false,
-                                disableSave: false,
-                                disableUndo: false,
-                              });
-                            }
-                          } catch (restoreError) {
-                            console.warn('Could not restore drawing:', drawing.name, restoreError);
-                          }
-                        }
+                        DrawingManager.restoreDrawings(chart, pendingDrawingsRef.current);
                       }
                       pendingDrawingsRef.current = [];
                     }
@@ -1848,33 +1797,13 @@ export default function FullscreenBacktesting({
                   console.warn('Could not clear existing studies:', e);
                 }
                 
-                // New format - restore drawings manually
-                // TradingView expects time in SECONDS - getPoints() returns seconds, createMultipointShape expects seconds
-                // Our bar data uses milliseconds internally but TradingView's shape API is seconds-based
-                console.log('Using new format - restoring', savedData.drawings.length, 'drawings');
-                let restoredCount = 0;
-                for (const drawing of savedData.drawings) {
-                  try {
-                    if (drawing.name && drawing.points && drawing.points.length > 0) {
-                      // Points are already in seconds (from getPoints()) - pass them directly
-                      // DO NOT convert to milliseconds as createMultipointShape expects seconds
-                      const shapeOptions: any = {
-                        shape: drawing.name,
-                        overrides: drawing.overrides || {},
-                        lock: drawing.lock || false,
-                        disableSelection: false,
-                        disableSave: false,
-                        disableUndo: false,
-                      };
-                      console.log('Creating shape:', drawing.name, 'with points (seconds):', drawing.points);
-                      chart.createMultipointShape(drawing.points, shapeOptions);
-                      restoredCount++;
-                    }
-                  } catch (drawingError) {
-                    console.warn('Could not restore drawing:', drawing.name, drawingError);
-                  }
-                }
-                console.log('Restored', restoredCount, 'of', savedData.drawings.length, 'drawings');
+                // Validate payload and restore drawings using DrawingManager
+                // This validates timestamps are in seconds and filters invalid drawings
+                const validatedPayload = DrawingManager.validatePayload(savedData);
+                console.log('Validated payload:', validatedPayload.drawings.length, 'valid drawings');
+                
+                // Restore drawings using the manager (handles seconds-based timestamps correctly)
+                const restoredCount = DrawingManager.restoreDrawings(chart, validatedPayload.drawings);
                 
                 // Restore studies/indicators - DEDUPLICATE to prevent accumulation
                 if (savedData.studies && Array.isArray(savedData.studies)) {
@@ -2119,27 +2048,8 @@ export default function FullscreenBacktesting({
         }
         
         try {
-          // Get all shapes (drawings) on the chart
-          const allShapes = chart.getAllShapes();
-          const drawings: any[] = [];
-          
-          for (const shape of allShapes) {
-            try {
-              const shapeObj = chart.getShapeById(shape.id);
-              if (shapeObj) {
-                const points = shapeObj.getPoints();
-                const properties = shapeObj.getProperties();
-                drawings.push({
-                  name: shape.name,
-                  points: points,
-                  overrides: properties,
-                  lock: false
-                });
-              }
-            } catch (e) {
-              // Skip shapes that can't be serialized
-            }
-          }
+          // Use DrawingManager to capture all valid drawings (validates timestamps are in seconds)
+          const drawings = DrawingManager.captureDrawings(chart);
           
           // Get all studies (indicators) on the chart - DEDUPLICATE by name
           const allStudies = chart.getAllStudies();
