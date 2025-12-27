@@ -658,7 +658,13 @@ export default function FullscreenBacktesting({
                   for (const drawing of pendingDrawingsRef.current) {
                     try {
                       if (drawing.name && drawing.points && drawing.points.length > 0) {
-                        innerChart.createMultipointShape(drawing.points, {
+                        // Convert timestamps from seconds to milliseconds if needed
+                        const convertedPoints = drawing.points.map((pt: any) => {
+                          const timeValue = pt.time;
+                          const isSeconds = timeValue < 4102444800; // Before year 2100 in seconds
+                          return { ...pt, time: isSeconds ? timeValue * 1000 : timeValue };
+                        });
+                        innerChart.createMultipointShape(convertedPoints, {
                           shape: drawing.name,
                           overrides: drawing.overrides || {},
                           lock: drawing.lock || false,
@@ -1496,7 +1502,13 @@ export default function FullscreenBacktesting({
                         for (const drawing of pendingDrawingsRef.current) {
                           try {
                             if (drawing.name && drawing.points && drawing.points.length > 0) {
-                              chart.createMultipointShape(drawing.points, {
+                              // Convert timestamps from seconds to milliseconds if needed
+                              const convertedPoints = drawing.points.map((pt: any) => {
+                                const timeValue = pt.time;
+                                const isSeconds = timeValue < 4102444800; // Before year 2100 in seconds
+                                return { ...pt, time: isSeconds ? timeValue * 1000 : timeValue };
+                              });
+                              chart.createMultipointShape(convertedPoints, {
                                 shape: drawing.name,
                                 overrides: drawing.overrides || {},
                                 lock: drawing.lock || false,
@@ -1852,6 +1864,19 @@ export default function FullscreenBacktesting({
                 for (const drawing of savedData.drawings) {
                   try {
                     if (drawing.name && drawing.points && drawing.points.length > 0) {
+                      // CRITICAL FIX: TradingView saves points with time in SECONDS,
+                      // but our bars use MILLISECONDS. Convert to match bar timestamps.
+                      const convertedPoints = drawing.points.map((pt: any) => {
+                        // If time looks like seconds (< year 2100 in seconds = 4102444800),
+                        // it needs to be converted to milliseconds
+                        const timeValue = pt.time;
+                        const isSeconds = timeValue < 4102444800000 / 1000; // Before year 2100 in seconds
+                        return {
+                          ...pt,
+                          time: isSeconds ? timeValue * 1000 : timeValue
+                        };
+                      });
+                      
                       const shapeOptions: any = {
                         shape: drawing.name,
                         overrides: drawing.overrides || {},
@@ -1860,7 +1885,8 @@ export default function FullscreenBacktesting({
                         disableSave: false,
                         disableUndo: false,
                       };
-                      chart.createMultipointShape(drawing.points, shapeOptions);
+                      console.log('Creating shape:', drawing.name, 'with converted points:', convertedPoints);
+                      chart.createMultipointShape(convertedPoints, shapeOptions);
                       restoredCount++;
                     }
                   } catch (drawingError) {
