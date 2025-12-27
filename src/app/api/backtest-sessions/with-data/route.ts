@@ -4,7 +4,6 @@ import { getUserModel } from '@/models/main/user.model';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
 import { getCachedBarsModel } from '@/models/backtest/cachedBars.model';
 
-const VPS_API_URL = 'http://72.61.242.6:5001';
 const POLYGON_API_URL = 'https://api.polygon.io/v2/aggs/ticker';
 const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
 
@@ -170,23 +169,21 @@ export async function GET(req: NextRequest) {
     const market = sessionData.market;
     const symbol = sessionData.symbol;
     
-    // Resolution-based window sizing for faster initial loads
-    // Intraday: smaller windows, Daily+: larger windows
+    // Resolution-based window sizing - Polygon is fast, so we can load more data
     const getWindowMonths = (res: string): number => {
-      // Handle numeric resolutions (minutes) - any resolution < 1440 is intraday
       const numericRes = parseInt(res, 10);
       if (!isNaN(numericRes) && numericRes < 1440) {
-        // 1 min: very small window (0.25 months = 1 week each side) - VPS is slow
-        if (numericRes === 1) return 0.25;
-        // 5 min: smaller window (0.5 months = 2 weeks each side)
-        if (numericRes <= 5) return 0.5;
-        // 15-30 min: 1 month each side
-        if (numericRes <= 30) return 1;
-        // Medium timeframes (60-240 min): 2 months each side
-        return 2;
+        // 1 min: 2 months each side (4 months total)
+        if (numericRes === 1) return 2;
+        // 5 min: 3 months each side (6 months total)
+        if (numericRes <= 5) return 3;
+        // 15-30 min: 4 months each side (8 months total)
+        if (numericRes <= 30) return 4;
+        // 1H-4H timeframes: 6 months each side (12 months total)
+        return 6;
       }
-      // Daily, Weekly, Monthly: 8 months each side (16 months total)
-      return 8;
+      // Daily, Weekly, Monthly: 12 months each side (24 months total)
+      return 12;
     };
     
     const windowMonths = getWindowMonths(resolution);
@@ -210,21 +207,6 @@ export async function GET(req: NextRequest) {
     
     const fromTs = Math.floor(windowStartDate.getTime() / 1000);
     const toTs = Math.floor(windowEndDate.getTime() / 1000);
-
-    const resolutionMap: Record<string, string> = {
-      '1D': 'D',
-      '1W': 'W',
-      '1M': 'M',
-    };
-    const mappedResolution = resolutionMap[resolution] || resolution;
-
-    const apiUrl = new URL(`${VPS_API_URL}/api/bars`);
-    apiUrl.searchParams.set('market', market);
-    apiUrl.searchParams.set('symbol', symbol);
-    apiUrl.searchParams.set('resolution', mappedResolution);
-    apiUrl.searchParams.set('to', String(toTs));
-    apiUrl.searchParams.set('from', String(fromTs));
-    apiUrl.searchParams.set('userId', userId);
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
     
@@ -303,37 +285,26 @@ export async function GET(req: NextRequest) {
     try {
       let data: { s: string; t?: number[]; o?: number[]; h?: number[]; l?: number[]; c?: number[]; v?: number[] } | null = null;
       
-      // Try Polygon API first for FOREX (fast)
+      // Fetch from Polygon API (FOREX only)
       if (market === 'FOREX') {
         data = await fetchFromPolygon(symbol, market, resolution, fromTs, toTs);
-      }
-      
-      // Fall back to VPS if Polygon didn't return data
-      if (!data) {
-        console.log('with-data: Falling back to VPS:', { market, symbol, resolution });
         
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 180000);
-        
-        try {
-          const barsResponse = await fetch(apiUrl.toString(), {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            cache: 'no-store',
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-        
-          if (barsResponse.ok) {
-            data = await barsResponse.json();
-          }
-        } catch (vpsError) {
-          clearTimeout(timeoutId);
-          console.error('VPS fetch error:', vpsError);
+        if (!data) {
+          console.log('No data returned from Polygon:', { market, symbol, resolution });
+          barsData = { 
+            s: 'error', 
+            t: [], o: [], h: [], l: [], c: [], v: [], 
+            errmsg: 'Failed to fetch FOREX data from Polygon. Please try again.' 
+          };
         }
+      } else {
+        // Non-FOREX markets not supported
+        console.log('Non-FOREX market not supported:', { market, symbol });
+        barsData = { 
+          s: 'error', 
+          t: [], o: [], h: [], l: [], c: [], v: [], 
+          errmsg: `Market type "${market}" is not currently supported. Only FOREX is available.` 
+        };
       }
     
       if (data && data.s === 'ok' && data.t && data.o && data.h && data.l && data.c && Array.isArray(data.t)) {
