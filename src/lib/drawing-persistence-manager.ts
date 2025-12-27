@@ -142,6 +142,9 @@ export function captureDrawings(chart: any): SavedDrawing[] {
 /**
  * Restores drawings to a TradingView chart
  * Returns the number of successfully restored drawings
+ * 
+ * CRITICAL: Our bar data uses MILLISECONDS, but TradingView's getPoints() returns SECONDS.
+ * When restoring, we must convert seconds back to milliseconds to match our bar timestamps.
  */
 export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
   let restoredCount = 0;
@@ -153,7 +156,13 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
         continue;
       }
       
-      // Points are already in seconds - pass directly to TradingView
+      // CRITICAL: Convert point times from seconds to milliseconds
+      // Our bars use milliseconds, so shapes must also use milliseconds to match bar positions
+      const pointsInMs = drawing.points.map(pt => ({
+        ...pt,
+        time: pt.time * 1000  // Convert seconds to milliseconds
+      }));
+      
       const shapeOptions = {
         shape: drawing.name,
         overrides: drawing.overrides || {},
@@ -164,13 +173,11 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
       };
       
       console.log('[DrawingManager] Restoring:', drawing.name, 
-        'points:', drawing.points.map(p => ({ 
-          time: new Date(p.time * 1000).toISOString(), 
-          price: p.price.toFixed(5) 
-        }))
+        'original (seconds):', drawing.points.map(p => ({ time: p.time, price: p.price.toFixed(5) })),
+        'converted (ms):', pointsInMs.map(p => ({ time: p.time, price: p.price.toFixed(5) }))
       );
       
-      chart.createMultipointShape(drawing.points, shapeOptions);
+      chart.createMultipointShape(pointsInMs, shapeOptions);
       restoredCount++;
     } catch (e) {
       console.warn('[DrawingManager] Could not restore drawing:', drawing.name, e);
