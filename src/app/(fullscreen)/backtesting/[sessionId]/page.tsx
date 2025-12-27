@@ -120,10 +120,20 @@ const addMonths = (date: Date, months: number): Date => {
   return result;
 };
 
-// Fetch ALL available historical data - 10 years back for comprehensive analysis
+// Resolution-based window sizing - larger for higher timeframes, centered on session date
 const getWindowMonths = (resolution: string): number => {
-  // All resolutions get 10 years (120 months) of data each side
-  // Polygon API is fast and will return all available data
+  const numericRes = parseInt(resolution, 10);
+  if (!isNaN(numericRes) && numericRes < 1440) {
+    // 1 min: 3 months each side (6 months total)
+    if (numericRes === 1) return 3;
+    // 5 min: 6 months each side (12 months total)
+    if (numericRes <= 5) return 6;
+    // 15-30 min: 12 months each side (24 months total)
+    if (numericRes <= 30) return 12;
+    // 1H-4H: 24 months each side (48 months total)
+    return 24;
+  }
+  // Daily, Weekly, Monthly: 120 months (10 years) each side for full history
   return 120;
 };
 
