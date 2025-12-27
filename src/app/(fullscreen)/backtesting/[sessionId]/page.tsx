@@ -658,13 +658,8 @@ export default function FullscreenBacktesting({
                   for (const drawing of pendingDrawingsRef.current) {
                     try {
                       if (drawing.name && drawing.points && drawing.points.length > 0) {
-                        // Convert timestamps from seconds to milliseconds if needed
-                        const convertedPoints = drawing.points.map((pt: any) => {
-                          const timeValue = pt.time;
-                          const isSeconds = timeValue < 4102444800; // Before year 2100 in seconds
-                          return { ...pt, time: isSeconds ? timeValue * 1000 : timeValue };
-                        });
-                        innerChart.createMultipointShape(convertedPoints, {
+                        // Points are in seconds - pass directly to createMultipointShape
+                        innerChart.createMultipointShape(drawing.points, {
                           shape: drawing.name,
                           overrides: drawing.overrides || {},
                           lock: drawing.lock || false,
@@ -1502,13 +1497,8 @@ export default function FullscreenBacktesting({
                         for (const drawing of pendingDrawingsRef.current) {
                           try {
                             if (drawing.name && drawing.points && drawing.points.length > 0) {
-                              // Convert timestamps from seconds to milliseconds if needed
-                              const convertedPoints = drawing.points.map((pt: any) => {
-                                const timeValue = pt.time;
-                                const isSeconds = timeValue < 4102444800; // Before year 2100 in seconds
-                                return { ...pt, time: isSeconds ? timeValue * 1000 : timeValue };
-                              });
-                              chart.createMultipointShape(convertedPoints, {
+                              // Points are in seconds - pass directly to createMultipointShape
+                              chart.createMultipointShape(drawing.points, {
                                 shape: drawing.name,
                                 overrides: drawing.overrides || {},
                                 lock: drawing.lock || false,
@@ -1859,24 +1849,15 @@ export default function FullscreenBacktesting({
                 }
                 
                 // New format - restore drawings manually
+                // TradingView expects time in SECONDS - getPoints() returns seconds, createMultipointShape expects seconds
+                // Our bar data uses milliseconds internally but TradingView's shape API is seconds-based
                 console.log('Using new format - restoring', savedData.drawings.length, 'drawings');
                 let restoredCount = 0;
                 for (const drawing of savedData.drawings) {
                   try {
                     if (drawing.name && drawing.points && drawing.points.length > 0) {
-                      // CRITICAL FIX: TradingView saves points with time in SECONDS,
-                      // but our bars use MILLISECONDS. Convert to match bar timestamps.
-                      const convertedPoints = drawing.points.map((pt: any) => {
-                        // If time looks like seconds (< year 2100 in seconds = 4102444800),
-                        // it needs to be converted to milliseconds
-                        const timeValue = pt.time;
-                        const isSeconds = timeValue < 4102444800000 / 1000; // Before year 2100 in seconds
-                        return {
-                          ...pt,
-                          time: isSeconds ? timeValue * 1000 : timeValue
-                        };
-                      });
-                      
+                      // Points are already in seconds (from getPoints()) - pass them directly
+                      // DO NOT convert to milliseconds as createMultipointShape expects seconds
                       const shapeOptions: any = {
                         shape: drawing.name,
                         overrides: drawing.overrides || {},
@@ -1885,8 +1866,8 @@ export default function FullscreenBacktesting({
                         disableSave: false,
                         disableUndo: false,
                       };
-                      console.log('Creating shape:', drawing.name, 'with converted points:', convertedPoints);
-                      chart.createMultipointShape(convertedPoints, shapeOptions);
+                      console.log('Creating shape:', drawing.name, 'with points (seconds):', drawing.points);
+                      chart.createMultipointShape(drawing.points, shapeOptions);
                       restoredCount++;
                     }
                   } catch (drawingError) {
