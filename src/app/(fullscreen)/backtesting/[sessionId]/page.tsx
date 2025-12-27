@@ -1244,56 +1244,86 @@ export default function FullscreenBacktesting({
     const cachedBars = barsCacheRef.current[currentInterval];
     if (cachedBars && cachedBars.length > 0) {
       const savedTimestamp = targetTimestampRef.current;
-      targetTimestampRef.current = null;
       
-      setAllBars(cachedBars);
-      let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
-      // Use replayTimestamp if available, otherwise use saved progress
-      // Only use progressPointer if session has actual trades (user made progress worth resuming)
-      const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
-      const targetTs = replayTimestampRef.current > 0 
-        ? replayTimestampRef.current 
-        : (savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null));
-      if (targetTs) {
-        // Find the last bar whose time <= target timestamp
-        let foundIndex = -1;
-        for (let i = cachedBars.length - 1; i >= 0; i--) {
-          if (cachedBars[i].time <= targetTs) {
-            foundIndex = i;
-            break;
+      // CRITICAL: Check if replay timestamp is within cached bar range
+      // If not, we need to invalidate cache and fetch fresh data centered on replay position
+      const replayTs = replayTimestampRef.current;
+      if (replayTs > 0) {
+        const firstBarTime = cachedBars[0].time;
+        const lastBarTime = cachedBars[cachedBars.length - 1].time;
+        if (replayTs < firstBarTime || replayTs > lastBarTime) {
+          console.log('Replay timestamp outside cached range, invalidating cache for', currentInterval);
+          console.log('Replay:', new Date(replayTs).toISOString(), 'Cached:', new Date(firstBarTime).toISOString(), '-', new Date(lastBarTime).toISOString());
+          // Delete the cached bars so fetchAllHistory runs with correct anchor
+          delete barsCacheRef.current[currentInterval];
+          delete loadedRangeRef.current[currentInterval];
+          // Don't return - fall through to fetchAllHistory
+        } else {
+          // Replay timestamp is within range - use cache
+          targetTimestampRef.current = null;
+          setAllBars(cachedBars);
+          let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
+          // Find the last bar whose time <= target timestamp
+          for (let i = cachedBars.length - 1; i >= 0; i--) {
+            if (cachedBars[i].time <= replayTs) {
+              newIndex = i;
+              break;
+            }
           }
-        }
-        if (foundIndex >= 0) {
-          newIndex = foundIndex;
+          const shouldPreserveTimestamp = Object.keys(barsCacheRef.current).length > 0;
+          setCurrentBarIndex(newIndex, cachedBars, shouldPreserveTimestamp);
+          return;
         }
       } else {
-        // For fresh sessions with no saved progress, start at the 'from' date
-        const fromTimestamp = new Date(fromDate).getTime();
-        for (let i = 0; i < cachedBars.length; i++) {
-          if (cachedBars[i].time >= fromTimestamp) {
-            newIndex = i;
-            break;
+        // No replay timestamp - use cache with saved progress or session start
+        targetTimestampRef.current = null;
+        setAllBars(cachedBars);
+        let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
+        const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
+        const targetTs = savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null);
+        if (targetTs) {
+          for (let i = cachedBars.length - 1; i >= 0; i--) {
+            if (cachedBars[i].time <= targetTs) {
+              newIndex = i;
+              break;
+            }
+          }
+        } else {
+          const fromTimestamp = new Date(fromDate).getTime();
+          for (let i = 0; i < cachedBars.length; i++) {
+            if (cachedBars[i].time >= fromTimestamp) {
+              newIndex = i;
+              break;
+            }
           }
         }
+        setCurrentBarIndex(newIndex, cachedBars, false);
+        return;
       }
-      // Preserve timestamp during resolution changes (when explicitly triggered via handleTimeframeChange)
-      // isChangingResolutionRef is set before this path is reached via handleTimeframeChange
-      // For initial loads (replayTimestamp=0), always update the timestamp
-      const shouldPreserveTimestamp = replayTimestampRef.current > 0 && Object.keys(barsCacheRef.current).length > 0;
-      setCurrentBarIndex(newIndex, cachedBars, shouldPreserveTimestamp);
-      return;
     }
     
     const fetchAllHistory = async () => {
       const savedTimestamp = targetTimestampRef.current;
       targetTimestampRef.current = null;
       
-      // Load window based on resolution (smaller for intraday, larger for daily+)
-      // Users can scroll beyond this window to load more data dynamically
-      const sessionFromDate = new Date(sessionData.fromDate);
+      // Determine anchor: replay position > progress pointer > session start
+      const replayTs = replayTimestampRef.current;
+      let anchorDate: Date;
+      if (replayTs > 0) {
+        anchorDate = new Date(replayTs);
+        console.log('fetchAllHistory using replay timestamp as anchor:', anchorDate.toISOString());
+      } else if (sessionData.progressPointer) {
+        anchorDate = new Date(sessionData.progressPointer);
+        console.log('fetchAllHistory using progress pointer as anchor:', anchorDate.toISOString());
+      } else {
+        anchorDate = new Date(sessionData.fromDate);
+        console.log('fetchAllHistory using session fromDate as anchor:', anchorDate.toISOString());
+      }
+      
+      // Load window centered on anchor (NOT always session start)
       const windowMonths = getWindowMonths(currentInterval);
-      const windowStartDate = subMonths(sessionFromDate, windowMonths);
-      const windowEndDate = addMonths(sessionFromDate, windowMonths);
+      const windowStartDate = subMonths(anchorDate, windowMonths);
+      const windowEndDate = addMonths(anchorDate, windowMonths);
       const fromTs = Math.floor(windowStartDate.getTime() / 1000);
       const toTs = Math.floor(windowEndDate.getTime() / 1000);
       
