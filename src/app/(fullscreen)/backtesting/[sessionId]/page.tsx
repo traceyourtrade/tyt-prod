@@ -596,7 +596,30 @@ export default function FullscreenBacktesting({
     
     // Check if we have cached bars for this resolution
     const cachedBars = barsCacheRef.current[tf];
+    
+    // CRITICAL: Validate cache contains the replay timestamp before using fast path
+    // If replay timestamp is outside cached range, we must use slow path to fetch correct data
+    let useFastPath = false;
     if (cachedBars && cachedBars.length > 0 && tvWidgetRef.current) {
+      if (currentReplayTs > 0) {
+        const firstBarTime = cachedBars[0].time;
+        const lastBarTime = cachedBars[cachedBars.length - 1].time;
+        if (currentReplayTs >= firstBarTime && currentReplayTs <= lastBarTime) {
+          useFastPath = true;
+        } else {
+          console.log('Fast path BLOCKED: replay timestamp outside cached range for', tf);
+          console.log('Replay:', new Date(currentReplayTs).toISOString(), 
+            'Cache:', new Date(firstBarTime).toISOString(), '-', new Date(lastBarTime).toISOString());
+          // Invalidate this cache entry so slow path fetches fresh data
+          delete barsCacheRef.current[tf];
+          delete loadedRangeRef.current[tf];
+        }
+      } else {
+        useFastPath = true; // No replay timestamp = initial load, use cache
+      }
+    }
+    
+    if (useFastPath && cachedBars) {
       // Fast path: use cached data and setResolution
       // Set flag to prevent data fetch effect from re-fetching
       isChangingResolutionRef.current = true;
@@ -605,19 +628,13 @@ export default function FullscreenBacktesting({
       setShowTimeframeDropdown(false);
       
       // Find the new bar index based on replay timestamp
-      // Use <= to find the last bar at or before the replay timestamp
       let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
       if (currentReplayTs > 0) {
-        // Find the last bar whose time <= replayTimestamp
-        let foundIndex = -1;
         for (let i = cachedBars.length - 1; i >= 0; i--) {
           if (cachedBars[i].time <= currentReplayTs) {
-            foundIndex = i;
+            newIndex = i;
             break;
           }
-        }
-        if (foundIndex >= 0) {
-          newIndex = foundIndex;
         }
       }
       // Preserve timestamp during timeframe switch to prevent drift
