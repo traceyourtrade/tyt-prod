@@ -333,6 +333,7 @@ export default function FullscreenBacktesting({
   const widgetInitializedRef = useRef<boolean>(false); // Track if widget has been created
   const fetchingResolutionsRef = useRef<Set<string>>(new Set()); // Track in-flight resolution fetches
   const dataReadyForLayoutRef = useRef<boolean>(false); // Signal when bars are loaded and ready for layout restoration
+  const isUnmountingRef = useRef<boolean>(false); // Track if component is unmounting to prevent empty saves
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -2047,6 +2048,12 @@ export default function FullscreenBacktesting({
           return;
         }
         
+        // Block auto-saves during unmount - chart is being destroyed and will return 0 drawings
+        if (isUnmountingRef.current) {
+          console.log('Skipping auto-save: component unmounting');
+          return;
+        }
+        
         try {
           // Use DrawingManager to capture all valid drawings (validates timestamps are in seconds)
           const drawings = DrawingManager.captureDrawings(chart);
@@ -2270,102 +2277,23 @@ export default function FullscreenBacktesting({
     });
 
     return () => {
+      // Mark as unmounting to prevent auto-save from overwriting with empty data
+      isUnmountingRef.current = true;
+      
       if (tvWidgetRef.current) {
         // Skip save during resolution changes - widget is kept alive and drawings may be temporarily unavailable
         if (isChangingResolutionRef.current) {
           console.log('Skipping cleanup save: resolution change in progress');
+          isUnmountingRef.current = false; // Reset since we're not actually unmounting
           return;
         }
         
-        try {
-          const widget = tvWidgetRef.current;
-          // Check if widget is still valid before saving
-          // Also verify internal state is intact (tradingViewApi may be null during cleanup)
-          if (widget && typeof widget.activeChart === 'function') {
-            let chartInstance;
-            try {
-              chartInstance = widget.activeChart();
-            } catch (chartError) {
-              // Widget may be in an invalid state during cleanup
-              console.log('Could not access chart during cleanup:', chartError);
-              return;
-            }
-            if (chartInstance) {
-              // Use new format - extract drawings and studies
-              const allShapes = chartInstance.getAllShapes();
-              const drawings: any[] = [];
-              
-              for (const shape of allShapes) {
-                try {
-                  const shapeObj = chartInstance.getShapeById(shape.id);
-                  if (shapeObj) {
-                    const points = shapeObj.getPoints();
-                    const properties = shapeObj.getProperties();
-                    drawings.push({
-                      name: shape.name,
-                      points: points,
-                      overrides: properties,
-                      lock: false
-                    });
-                  }
-                } catch (e) {
-                  // Skip shapes that can't be serialized
-                }
-              }
-              
-              const allStudies = chartInstance.getAllStudies();
-              const studies: any[] = [];
-              
-              for (const study of allStudies) {
-                try {
-                  const studyObj = chartInstance.getStudyById(study.id);
-                  if (studyObj) {
-                    const inputs = studyObj.getInputValues();
-                    studies.push({
-                      name: study.name,
-                      inputs: inputs,
-                      forceOverlay: false,
-                      lock: false,
-                      overrides: {}
-                    });
-                  }
-                } catch (e) {
-                  // Skip studies that can't be serialized
-                }
-              }
-              
-              if (drawings.length > 0 || studies.length > 0) {
-                const savedData = {
-                  drawings,
-                  studies,
-                  interval: currentInterval,
-                  timestamp: Date.now()
-                };
-                
-                const layoutData = {
-                  id: `session_${sessionId}_default`,
-                  name: 'Auto-saved Layout',
-                  symbol: symbol,
-                  resolution: currentInterval,
-                  content: JSON.stringify(savedData)
-                };
-                
-                saveChartLayout(sessionId, layoutData);
-                console.log('Chart saved before unmount:', drawings.length, 'drawings,', studies.length, 'studies');
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error saving chart before unmount:', error);
-        }
-        // Only destroy widget on true unmount (page navigation)
-        // Skip destruction during timeframe changes - widget should stay alive
-        if (isChangingResolutionRef.current) {
-          console.log('Cleanup: Skipping widget destruction - resolution change in progress');
-          return;
-        }
+        // IMPORTANT: Skip cleanup save entirely - the chart is in an unstable state during unmount
+        // Auto-save has already saved the data, and trying to capture here often returns 0 drawings
+        // which would overwrite the good data
+        console.log('Cleanup: Skipping save during unmount - relying on auto-save data');
         
-        // This is true unmount (leaving page) - safe to destroy
+        // This is true unmount (leaving page) - destroy widget
         try {
           tvWidgetRef.current.remove();
         } catch (e) {
