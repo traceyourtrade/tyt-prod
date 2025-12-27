@@ -169,17 +169,20 @@ export async function GET(req: NextRequest) {
     const market = sessionData.market;
     const symbol = sessionData.symbol;
     
-    // Fetch ALL available historical data - no time limit
-    // Start from 10 years ago to capture all available Polygon data
-    const historicalStartDate = new Date();
-    historicalStartDate.setFullYear(historicalStartDate.getFullYear() - 10);
+    // Use the session's actual date range for data fetching
+    // This ensures we respect the user's chosen date range
+    const sessionFromDate = new Date(sessionData.fromDate);
+    const sessionToDate = new Date(sessionData.toDate);
     
-    // End at current date or 1 year into future for session flexibility
-    const historicalEndDate = new Date();
-    historicalEndDate.setFullYear(historicalEndDate.getFullYear() + 1);
+    const fromTs = Math.floor(sessionFromDate.getTime() / 1000);
+    const toTs = Math.floor(sessionToDate.getTime() / 1000);
     
-    const fromTs = Math.floor(historicalStartDate.getTime() / 1000);
-    const toTs = Math.floor(historicalEndDate.getTime() / 1000);
+    console.log('with-data: Using session date range:', {
+      fromDate: sessionData.fromDate,
+      toDate: sessionData.toDate,
+      fromTs,
+      toTs
+    });
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
     
