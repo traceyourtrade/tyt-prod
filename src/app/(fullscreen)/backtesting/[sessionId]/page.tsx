@@ -640,29 +640,36 @@ export default function FullscreenBacktesting({
       // Preserve timestamp during timeframe switch to prevent drift
       setCurrentBarIndex(newIndex, cachedBars, true);
       
-      // Use TradingView's setResolution for instant switch
+      // Use TradingView's setSymbol + setResolution to force fresh subscription
+      // This ensures we get a new onRealtimeCallback for the new resolution
       try {
         const chart = tvWidgetRef.current.activeChart();
-        // Force chart to re-request data from datafeed for new resolution
-        chart.resetData();
-        chart.setResolution(tf, () => {
-          // Restore drawings if they were lost during resolution change
-          setTimeout(() => {
-            try {
-              const innerChart = tvWidgetRef.current?.activeChart();
-              if (innerChart && pendingDrawingsRef.current.length > 0) {
-                const currentShapes = DrawingManager.getShapeCount(innerChart);
-                if (currentShapes === 0) {
-                  console.log('Drawings lost during resolution change, restoring', pendingDrawingsRef.current.length, 'drawings');
-                  DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+        const baseSymbol = sessionData?.symbol || 'EUR/USD';
+        // Append resolution suffix to force TradingView to treat this as a new symbol
+        // This triggers a fresh subscription cycle (resolveSymbol -> getBars -> subscribeBars)
+        const symbolWithSuffix = `${baseSymbol}#tf_${tf}`;
+        console.log('Switching to symbol with resolution suffix:', symbolWithSuffix);
+        
+        chart.setSymbol(symbolWithSuffix, () => {
+          chart.setResolution(tf, () => {
+            // Restore drawings if they were lost during resolution change
+            setTimeout(() => {
+              try {
+                const innerChart = tvWidgetRef.current?.activeChart();
+                if (innerChart && pendingDrawingsRef.current.length > 0) {
+                  const currentShapes = DrawingManager.getShapeCount(innerChart);
+                  if (currentShapes === 0) {
+                    console.log('Drawings lost during resolution change, restoring', pendingDrawingsRef.current.length, 'drawings');
+                    DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                  }
+                  pendingDrawingsRef.current = [];
                 }
-                pendingDrawingsRef.current = [];
+              } catch (e) {
+                console.warn('Error checking/restoring drawings:', e);
               }
-            } catch (e) {
-              console.warn('Error checking/restoring drawings:', e);
-            }
-            isChangingResolutionRef.current = false;
-          }, 500); // Small delay to ensure chart has finished loading
+              isChangingResolutionRef.current = false;
+            }, 500); // Small delay to ensure chart has finished loading
+          });
         });
       } catch (e) {
         isChangingResolutionRef.current = false;
@@ -1471,31 +1478,36 @@ export default function FullscreenBacktesting({
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
             try {
               const chart = tvWidgetRef.current.activeChart();
+              const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
+              const symbolWithSuffix = `${baseSymbol}#tf_${currentInterval}`;
+              console.log('Slow path: switching to symbol with resolution suffix:', symbolWithSuffix);
+              
               // Add small delay to ensure cache is fully synchronized before TradingView queries
               await new Promise(resolve => setTimeout(resolve, 50));
-              // Force chart to re-request data from datafeed for new resolution
-              chart.resetData();
-              chart.setResolution(currentInterval, () => {
-                // Restore drawings if they were lost during resolution change
-                setTimeout(() => {
-                  try {
-                    const chart = tvWidgetRef.current?.activeChart();
-                    if (chart && pendingDrawingsRef.current.length > 0) {
-                      const currentShapes = DrawingManager.getShapeCount(chart);
-                      if (currentShapes === 0) {
-                        console.log('Drawings lost during resolution change (slow path), restoring', pendingDrawingsRef.current.length, 'drawings');
-                        DrawingManager.restoreDrawings(chart, pendingDrawingsRef.current);
+              // Force fresh subscription by changing symbol
+              chart.setSymbol(symbolWithSuffix, () => {
+                chart.setResolution(currentInterval, () => {
+                  // Restore drawings if they were lost during resolution change
+                  setTimeout(() => {
+                    try {
+                      const chart = tvWidgetRef.current?.activeChart();
+                      if (chart && pendingDrawingsRef.current.length > 0) {
+                        const currentShapes = DrawingManager.getShapeCount(chart);
+                        if (currentShapes === 0) {
+                          console.log('Drawings lost during resolution change (slow path), restoring', pendingDrawingsRef.current.length, 'drawings');
+                          DrawingManager.restoreDrawings(chart, pendingDrawingsRef.current);
+                        }
+                        pendingDrawingsRef.current = [];
                       }
-                      pendingDrawingsRef.current = [];
+                    } catch (e) {
+                      console.warn('Error checking/restoring drawings:', e);
                     }
-                  } catch (e) {
-                    console.warn('Error checking/restoring drawings:', e);
-                  }
-                  isChangingResolutionRef.current = false;
-                }, 500);
+                    isChangingResolutionRef.current = false;
+                  }, 500);
+                });
               });
             } catch (e) {
-              console.log('setResolution error:', e);
+              console.log('setSymbol/setResolution error:', e);
               isChangingResolutionRef.current = false;
             }
           } else {
@@ -1542,10 +1554,13 @@ export default function FullscreenBacktesting({
         }), 0);
       },
       resolveSymbol: (symbolName: string, onSymbolResolvedCallback: any) => {
+        // Strip resolution suffix if present (format: "SYMBOL#tf_60")
+        // This allows us to force fresh subscriptions by changing the symbol
+        const baseSymbol = symbolName.split('#tf_')[0];
         const symbolInfo = {
-          ticker: symbolName,
-          name: symbolName,
-          description: symbolName,
+          ticker: symbolName, // Keep full name for TradingView's internal tracking
+          name: baseSymbol, // Display name without suffix
+          description: baseSymbol,
           type: "forex",
           session: "24x7",
           timezone: "Etc/UTC",
