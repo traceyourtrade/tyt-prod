@@ -1575,9 +1575,26 @@ export default function FullscreenBacktesting({
           barCount: barsForResolution?.length || 0
         });
         
-        if (!barsForResolution || barsForResolution.length === 0) {
+        // CRITICAL: Validate cached bars contain the replay timestamp
+        // If replay timestamp is outside cached range, we need fresh data
+        let validCache = barsForResolution && barsForResolution.length > 0;
+        if (validCache && replayTs > 0) {
+          const firstBarTime = barsForResolution[0].time;
+          const lastBarTime = barsForResolution[barsForResolution.length - 1].time;
+          if (replayTs < firstBarTime || replayTs > lastBarTime) {
+            console.log('getBars: Replay timestamp outside cached range, invalidating for', resolution);
+            console.log('Replay:', new Date(replayTs).toISOString(), 
+              'Cache:', new Date(firstBarTime).toISOString(), '-', new Date(lastBarTime).toISOString());
+            // Invalidate this cache - it's stale for the current replay position
+            delete barsCacheRef.current[resolution];
+            delete loadedRangeRef.current[resolution];
+            validCache = false;
+          }
+        }
+        
+        if (!validCache) {
           // No data for this resolution yet - queue callback and trigger fetch
-          console.log('No bars for resolution', resolution, '- queuing callback and triggering fetch');
+          console.log('No valid bars for resolution', resolution, '- queuing callback and triggering fetch');
           if (!pendingCallbacksRef.current[resolution]) {
             pendingCallbacksRef.current[resolution] = [];
           }
