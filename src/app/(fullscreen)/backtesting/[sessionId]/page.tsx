@@ -686,6 +686,11 @@ export default function FullscreenBacktesting({
   useEffect(() => {
     allBarsRef.current = allBars;
   }, [allBars]);
+  
+  // Keep currentIntervalRef in sync with currentInterval - critical for replay functionality
+  useEffect(() => {
+    currentIntervalRef.current = currentInterval;
+  }, [currentInterval]);
 
   // Boolean flag for widget effect - only triggers when bars go from empty to having data
   const hasBarsData = allBars.length > 0;
