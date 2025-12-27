@@ -1,5 +1,9 @@
 import { IUser } from "@/models/main/user.model";
 
+const ADMIN_EMAILS = [
+  "himanshuparwal123@gmail.com"
+];
+
 export interface SubscriptionStatus {
   hasAccess: boolean;
   isSubscribed: boolean;
@@ -9,6 +13,16 @@ export interface SubscriptionStatus {
 }
 
 export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
+  if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    return {
+      hasAccess: true,
+      isSubscribed: true,
+      isOnTrial: false,
+      trialDaysLeft: 0,
+      status: 'subscribed'
+    };
+  }
+
   const now = new Date();
   
   if (user.subscription?.isSubscribed && user.subscription?.subscriptionStatus === 'active') {
