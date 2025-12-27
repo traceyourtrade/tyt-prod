@@ -729,8 +729,12 @@ export default function FullscreenBacktesting({
         setIsLoading(true);
         dataReadyForLayoutRef.current = false; // Reset data-ready signal for fresh load
         
+        // Check URL for forceRefresh parameter to clear cache and refetch
+        const urlParams = new URLSearchParams(window.location.search);
+        const forceRefresh = urlParams.get('forceRefresh') === 'true';
+        
         // Use combined endpoint that fetches session + bars in one request
-        const res = await fetch(`/api/backtest-sessions/with-data?sessionId=${sessionId}&resolution=${currentIntervalRef.current}`);
+        const res = await fetch(`/api/backtest-sessions/with-data?sessionId=${sessionId}&resolution=${currentIntervalRef.current}${forceRefresh ? '&forceRefresh=true' : ''}`);
         const result = await res.json();
         
         if (result.success && result.session) {
