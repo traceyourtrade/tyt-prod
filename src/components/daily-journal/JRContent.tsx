@@ -66,7 +66,7 @@ interface JRContentProps {
 const JRContent = ({ dailyData }: JRContentProps) => {
   const { currency, exchangeRate } = useCurrencyStore();
   const userId = Cookies.get("userId") || "";
-  const tokenn = Cookies.get("Trace Your Trades") || "";
+  const tokenn = Cookies.get("ProJournX") || "";
 
   const { setAccounts, profileData } = useAccountDetails();
   const { setCurrentUrl } = useDataStore();

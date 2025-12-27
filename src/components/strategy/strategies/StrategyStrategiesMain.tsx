@@ -70,7 +70,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
   const [selectedStrategy, setSelectedStrategy] = useState<CombinedData & { name: string } | null>(null);
   const [error, setError] = useState("");
 
-  const tokenn = Cookies.get("Trace Your Trades");
+  const tokenn = Cookies.get("ProJournX");
 
   const getShortForm = (name: string) =>
     name

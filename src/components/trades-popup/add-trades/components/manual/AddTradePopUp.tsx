@@ -31,7 +31,7 @@ interface Entry {
 }
 
 const AddTradePopUp = () => {
-  const tokenn = Cookies.get("Trace Your Trades");
+  const tokenn = Cookies.get("ProJournX");
   const params = useParams();
   const userId = params.userId as string;
 

@@ -63,7 +63,7 @@ const CalendarPopup = () => {
   const { setAlertBoxG } = notifications();
   const { selectedAccounts } = useModeFilteredAccounts();
   const { bkurl } = useDataStore();
-  const tokenn = Cookies.get("Trace Your Trades");
+  const tokenn = Cookies.get("ProJournX");
   const popupRef = useRef<HTMLDivElement>(null);
 
   const formatDate = (dateString: string): string => {

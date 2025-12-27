@@ -1,4 +1,4 @@
-# Trading Journal Application
+# ProJournX - Trading Journal Application
 
 ## Overview
 This Next.js 16 trading journal application helps users track trades, analyze performance, and maintain a trading notebook. It features a premium dashboard, a "Prop Firm Mode" for challenge tracking, and AI-powered pattern detection to build a "playbook" of profitable setups. The goal is to provide a comprehensive tool for traders to monitor and improve their strategies.

@@ -157,9 +157,9 @@ const SignUp: React.FC = () => {
       const data = await res.json();
 
       if (res.status === 200) {
-        Cookies.set("Trace Your Trades", data.message, {
+        Cookies.set("ProJournX", data.message, {
           expires: 5,
-          domain: ".traceyourtrade.com",
+          domain: ".projournx.com",
           path: "/",
         });
 

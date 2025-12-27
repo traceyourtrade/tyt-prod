@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const mailOptions = {
       from: process.env.MAIL,
       to: email,
-      subject: "Email Verification: Trace Your Trade",
+      subject: "Email Verification: ProJournX",
       html: `
         <div style="width:95vw; height:80vh; margin:10px auto; display:flex; flex-direction:column; align-items:center; justify-content:center;">
           <h1 style="font-size:18px;">Click to verify your email</h1>

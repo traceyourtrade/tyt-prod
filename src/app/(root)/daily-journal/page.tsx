@@ -146,7 +146,7 @@ const getTemplateColor = (color: string) => {
 const DailyJournal = () => {
   const { selectedAccounts, setAccounts, profileData } = useAccountDetails();
   const { currency, exchangeRate } = useCurrencyStore();
-  const tokenn = Cookies.get("Trace Your Trades") || "";
+  const tokenn = Cookies.get("ProJournX") || "";
 
   const [trades, setTrades] = useState<Trade[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);

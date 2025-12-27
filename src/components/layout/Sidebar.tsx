@@ -87,7 +87,7 @@ export function Sidebar({
   onAddTrades, 
   onLogout,
   user,
-  paymentUrl = "https://traceyourtrade.in/pricing"
+  paymentUrl = "https://projournx.com/pricing"
 }: SidebarProps) {
   const pathname = usePathname()
   const [backtestingOpen, setBacktestingOpen] = React.useState(false)
