@@ -1639,20 +1639,25 @@ export default function FullscreenBacktesting({
         onRealtimeCallbackRef.current = onRealtimeCallback;
       },
       unsubscribeBars: (subscriberUID: string) => {
-        // TradingView calls unsubscribe for the OLD resolution AFTER subscribing to the new one
-        // We need to ignore late unsubscribe calls that don't match the current subscription
+        // TradingView calls unsubscribe for the OLD resolution BEFORE subscribing to the new one
+        // We need to ignore unsubscribe calls for old resolutions when we've already switched
         // The subscriberUID contains the resolution, e.g., "GBPUSD_5" or "GBPUSD_60"
         const unsubResolution = subscriberUID?.split('_').pop() || '';
-        const currentResolution = subscribedResolutionRef.current;
         
-        console.log('unsubscribeBars called:', { subscriberUID, unsubResolution, currentResolution });
+        // Use currentIntervalRef (updated immediately in handleTimeframeChange) 
+        // NOT subscribedResolutionRef (updated async by TradingView)
+        const targetResolution = currentIntervalRef.current;
         
-        // Only clear callback if unsubscribing from the currently subscribed resolution
-        if (unsubResolution === currentResolution || !currentResolution) {
+        console.log('unsubscribeBars called:', { subscriberUID, unsubResolution, targetResolution });
+        
+        // Only clear callback if unsubscribing from the TARGET resolution we want to be on
+        // If user switched from 1M to 1H, unsubscribe("1") should be ignored since targetResolution is "60"
+        if (unsubResolution === targetResolution) {
+          console.log('Clearing callback for current resolution:', unsubResolution);
           onRealtimeCallbackRef.current = null;
           subscribedResolutionRef.current = null;
         } else {
-          console.log('Ignoring stale unsubscribe for old resolution:', unsubResolution);
+          console.log('Ignoring stale unsubscribe for old resolution:', unsubResolution, '(target is', targetResolution + ')');
         }
       },
       getMarks: (symbolInfo: any, from: number, to: number, onDataCallback: any) => {
