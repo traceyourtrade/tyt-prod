@@ -606,6 +606,12 @@ export default function FullscreenBacktesting({
       // Fast path: use cached data and setResolution
       // Set flag to prevent data fetch effect from re-fetching
       isChangingResolutionRef.current = true;
+      
+      // CRITICAL: Update refs immediately (before async state updates)
+      // This ensures handleNext uses correct bars/interval during timeframe switch
+      allBarsRef.current = cachedBars;
+      currentIntervalRef.current = tf;
+      
       setAllBars(cachedBars);
       setCurrentInterval(tf);
       setShowTimeframeDropdown(false);
@@ -652,6 +658,8 @@ export default function FullscreenBacktesting({
       }
     } else {
       // Slow path: need to fetch from API - flag will be reset after fetch completes
+      // Update ref immediately for consistency
+      currentIntervalRef.current = tf;
       setCurrentInterval(tf);
       setShowTimeframeDropdown(false);
     }
@@ -1625,7 +1633,7 @@ export default function FullscreenBacktesting({
         onHistoryCallback(bars, { noData: bars.length === 0 });
       },
       subscribeBars: (symbolInfo: any, resolution: string, onRealtimeCallback: any) => {
-        console.log('subscribeBars called for resolution:', resolution);
+        console.log('subscribeBars called for resolution:', resolution, 'callback exists:', !!onRealtimeCallback);
         // Store both the callback AND which resolution it's for
         subscribedResolutionRef.current = resolution;
         onRealtimeCallbackRef.current = onRealtimeCallback;
@@ -2879,6 +2887,8 @@ export default function FullscreenBacktesting({
         ...nextBar,
         time: nextBar.time,
       });
+    } else if (nextBar && !onRealtimeCallbackRef.current) {
+      console.warn('handleNext: onRealtimeCallbackRef is null, cannot push bar to chart. subscribedResolution:', subscribedResolutionRef.current, 'currentInterval:', currentIntervalRef.current);
     }
     
     // Pass bars to update replayTimestamp correctly during playback
