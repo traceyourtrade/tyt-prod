@@ -100,8 +100,24 @@ export function captureDrawings(chart: any): SavedDrawing[] {
         const shapeObj = chart.getShapeById(shape.id);
         if (!shapeObj) continue;
         
-        const points = shapeObj.getPoints();
+        const rawPoints = shapeObj.getPoints();
         const properties = shapeObj.getProperties();
+        
+        // Log RAW points to debug timestamp format
+        console.log('[DrawingManager] RAW getPoints() for', shape.name, ':', 
+          JSON.stringify(rawPoints.map((p: any) => ({ time: p.time, price: p.price })))
+        );
+        
+        // Check if points are in milliseconds (>10 billion) and convert to seconds
+        const points = rawPoints.map((pt: any) => {
+          let time = pt.time;
+          // If timestamp > year 2200 in seconds, it's likely milliseconds
+          if (time > 7258118400) {  // Year 2200 in seconds
+            console.log('[DrawingManager] Converting milliseconds to seconds:', time, '->', Math.floor(time / 1000));
+            time = Math.floor(time / 1000);
+          }
+          return { ...pt, time, price: pt.price };
+        });
         
         // Validate that points are in seconds format
         const validPoints = points.filter((pt: DrawingPoint) => isValidPoint(pt));
