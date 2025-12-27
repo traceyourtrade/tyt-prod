@@ -169,44 +169,17 @@ export async function GET(req: NextRequest) {
     const market = sessionData.market;
     const symbol = sessionData.symbol;
     
-    // Resolution-based window sizing - Polygon is fast, so we can load more data
-    const getWindowMonths = (res: string): number => {
-      const numericRes = parseInt(res, 10);
-      if (!isNaN(numericRes) && numericRes < 1440) {
-        // 1 min: 2 months each side (4 months total)
-        if (numericRes === 1) return 2;
-        // 5 min: 3 months each side (6 months total)
-        if (numericRes <= 5) return 3;
-        // 15-30 min: 4 months each side (8 months total)
-        if (numericRes <= 30) return 4;
-        // 1H-4H timeframes: 6 months each side (12 months total)
-        return 6;
-      }
-      // Daily, Weekly, Monthly: 12 months each side (24 months total)
-      return 12;
-    };
+    // Fetch ALL available historical data - no time limit
+    // Start from 10 years ago to capture all available Polygon data
+    const historicalStartDate = new Date();
+    historicalStartDate.setFullYear(historicalStartDate.getFullYear() - 10);
     
-    const windowMonths = getWindowMonths(resolution);
-    const sessionFromDate = new Date(sessionData.fromDate);
+    // End at current date or 1 year into future for session flexibility
+    const historicalEndDate = new Date();
+    historicalEndDate.setFullYear(historicalEndDate.getFullYear() + 1);
     
-    // Calculate window start date
-    const windowStartDate = new Date(sessionFromDate);
-    const startOriginalDay = windowStartDate.getDate();
-    windowStartDate.setMonth(windowStartDate.getMonth() - windowMonths);
-    if (windowStartDate.getDate() !== startOriginalDay) {
-      windowStartDate.setDate(0);
-    }
-    
-    // Calculate window end date
-    const windowEndDate = new Date(sessionFromDate);
-    const endOriginalDay = windowEndDate.getDate();
-    windowEndDate.setMonth(windowEndDate.getMonth() + windowMonths);
-    if (windowEndDate.getDate() !== endOriginalDay) {
-      windowEndDate.setDate(0);
-    }
-    
-    const fromTs = Math.floor(windowStartDate.getTime() / 1000);
-    const toTs = Math.floor(windowEndDate.getTime() / 1000);
+    const fromTs = Math.floor(historicalStartDate.getTime() / 1000);
+    const toTs = Math.floor(historicalEndDate.getTime() / 1000);
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
     
