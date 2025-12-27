@@ -331,6 +331,7 @@ export default function FullscreenBacktesting({
   const allBarsRef = useRef<any[]>([]); // Ref for bars data to avoid widget recreation on data changes
   const widgetInitializedRef = useRef<boolean>(false); // Track if widget has been created
   const fetchingResolutionsRef = useRef<Set<string>>(new Set()); // Track in-flight resolution fetches
+  const dataReadyForLayoutRef = useRef<boolean>(false); // Signal when bars are loaded and ready for layout restoration
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -728,6 +729,7 @@ export default function FullscreenBacktesting({
       try {
         setSessionLoading(true);
         setIsLoading(true);
+        dataReadyForLayoutRef.current = false; // Reset data-ready signal for fresh load
         
         // Use combined endpoint that fetches session + bars in one request
         const res = await fetch(`/api/backtest-sessions/with-data?sessionId=${sessionId}&resolution=${currentIntervalRef.current}`);
@@ -779,6 +781,10 @@ export default function FullscreenBacktesting({
             const toTs = Math.floor(windowEndDate.getTime() / 1000);
             loadedRangeRef.current[result.resolution] = { from: fromTs, to: toTs };
             lastSessionKeyRef.current = `${sessionResult.symbol}-${sessionResult.market}-${sessionResult.fromDate}-${sessionResult.toDate}`;
+            
+            // Signal that data is ready for layout restoration
+            dataReadyForLayoutRef.current = true;
+            console.log('Data ready signal set (from with-data endpoint) - layout can now restore safely');
             
             setAllBars(bars);
             
@@ -1402,6 +1408,10 @@ export default function FullscreenBacktesting({
           barsCacheRef.current[currentInterval] = bars;
           loadedRangeRef.current[currentInterval] = { from: fromTs, to: toTs };
           
+          // Signal that data is ready for layout restoration
+          dataReadyForLayoutRef.current = true;
+          console.log('Data ready signal set - layout can now restore safely');
+          
           setAllBars(bars);
           
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
@@ -1792,7 +1802,24 @@ export default function FullscreenBacktesting({
       
       const loadSavedLayout = async () => {
         try {
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // CRITICAL: Wait for data to be fully loaded before restoring drawings
+          // Otherwise TradingView aligns drawings against placeholder data and they shift
+          console.log('Waiting for data to be ready before restoring layout...');
+          let waitTime = 0;
+          const maxWait = 15000; // Max 15 seconds
+          const pollInterval = 100;
+          while (!dataReadyForLayoutRef.current && waitTime < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, pollInterval));
+            waitTime += pollInterval;
+          }
+          if (!dataReadyForLayoutRef.current) {
+            console.warn('Data not ready after 15s - proceeding anyway');
+          } else {
+            console.log('Data ready after', waitTime, 'ms - restoring layout');
+          }
+          // Additional small delay to ensure TradingView has processed the bars
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
           const data = await loadChartLayouts(sessionId);
           if (data.chartLayouts && data.chartLayouts.length > 0) {
             hadSavedLayout = true; // Mark that we found prior content
