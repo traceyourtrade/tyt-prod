@@ -304,6 +304,9 @@ export default function FullscreenBacktesting({
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tvWidgetRef = useRef<any>(null);
+  // Store callbacks per resolution - TradingView may subscribe to multiple resolutions
+  const realtimeCallbacksRef = useRef<Map<string, any>>(new Map());
+  // Legacy single callback ref - will be set to the callback for current resolution
   const onRealtimeCallbackRef = useRef<any>(null);
   const subscribedResolutionRef = useRef<string | null>(null); // Track which resolution is subscribed
   const autoPlayIntervalRef = useRef<any>(null);
@@ -611,6 +614,14 @@ export default function FullscreenBacktesting({
       // This ensures handleNext uses correct bars/interval during timeframe switch
       allBarsRef.current = cachedBars;
       currentIntervalRef.current = tf;
+      
+      // Try to get callback for new resolution from our map
+      const cachedCallback = realtimeCallbacksRef.current.get(tf);
+      if (cachedCallback) {
+        console.log('Found cached callback for resolution:', tf);
+        onRealtimeCallbackRef.current = cachedCallback;
+        subscribedResolutionRef.current = tf;
+      }
       
       setAllBars(cachedBars);
       setCurrentInterval(tf);
@@ -1633,31 +1644,37 @@ export default function FullscreenBacktesting({
         onHistoryCallback(bars, { noData: bars.length === 0 });
       },
       subscribeBars: (symbolInfo: any, resolution: string, onRealtimeCallback: any) => {
-        console.log('subscribeBars called for resolution:', resolution, 'callback exists:', !!onRealtimeCallback);
-        // Store both the callback AND which resolution it's for
-        subscribedResolutionRef.current = resolution;
-        onRealtimeCallbackRef.current = onRealtimeCallback;
+        const targetResolution = currentIntervalRef.current;
+        console.log('subscribeBars called for resolution:', resolution, 'target:', targetResolution, 'callback exists:', !!onRealtimeCallback);
+        
+        // Store callback in map - TradingView may subscribe to multiple resolutions
+        realtimeCallbacksRef.current.set(resolution, onRealtimeCallback);
+        
+        // Also update the main callback ref if this is the target resolution
+        if (resolution === targetResolution) {
+          console.log('Setting main callback for target resolution:', resolution);
+          subscribedResolutionRef.current = resolution;
+          onRealtimeCallbackRef.current = onRealtimeCallback;
+        }
       },
       unsubscribeBars: (subscriberUID: string) => {
         // TradingView calls unsubscribe for the OLD resolution BEFORE subscribing to the new one
-        // We need to ignore unsubscribe calls for old resolutions when we've already switched
         // The subscriberUID contains the resolution, e.g., "GBPUSD_5" or "GBPUSD_60"
         const unsubResolution = subscriberUID?.split('_').pop() || '';
-        
-        // Use currentIntervalRef (updated immediately in handleTimeframeChange) 
-        // NOT subscribedResolutionRef (updated async by TradingView)
         const targetResolution = currentIntervalRef.current;
         
         console.log('unsubscribeBars called:', { subscriberUID, unsubResolution, targetResolution });
         
-        // Only clear callback if unsubscribing from the TARGET resolution we want to be on
-        // If user switched from 1M to 1H, unsubscribe("1") should be ignored since targetResolution is "60"
+        // Remove from callbacks map
+        realtimeCallbacksRef.current.delete(unsubResolution);
+        
+        // Only clear main callback if unsubscribing from the TARGET resolution
         if (unsubResolution === targetResolution) {
-          console.log('Clearing callback for current resolution:', unsubResolution);
+          console.log('Clearing main callback for target resolution:', unsubResolution);
           onRealtimeCallbackRef.current = null;
           subscribedResolutionRef.current = null;
         } else {
-          console.log('Ignoring stale unsubscribe for old resolution:', unsubResolution, '(target is', targetResolution + ')');
+          console.log('Ignoring unsubscribe for non-target resolution:', unsubResolution);
         }
       },
       getMarks: (symbolInfo: any, from: number, to: number, onDataCallback: any) => {
