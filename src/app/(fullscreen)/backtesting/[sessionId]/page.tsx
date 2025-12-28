@@ -2613,32 +2613,44 @@ export default function FullscreenBacktesting({
         
         // CRITICAL: Force TradingView to reload data with correct filtering
         // TradingView caches data internally and won't call getBars when switching back
-        // to a resolution it already had. resetData() forces a fresh getBars call.
+        // to a resolution it already had. We use setSymbol with a unique suffix to force
+        // TradingView to treat this as a new symbol and call getBars fresh.
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
-              console.log('Forcing chart reload after native button click');
-              innerChart.resetData();
+              const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
+              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}_${Date.now()}`;
               
-              // After reset, scroll to replay position and reset price scale
-              setTimeout(() => {
-                try {
-                  const replayTs = replayTimestampRef.current;
-                  if (innerChart && replayTs > 0) {
-                    const resolutionMinutes = intervalToMinutes(newInterval);
-                    const barMs = resolutionMinutes * 60 * 1000;
-                    const visibleFrom = (replayTs - barMs * 60) / 1000;
-                    const visibleTo = (replayTs + barMs * 20) / 1000;
-                    innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                    
-                    try {
-                      innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                    } catch (e) {}
-                  }
-                } catch (e) {}
-                isChangingResolutionRef.current = false;
-              }, 300);
+              console.log('Forcing complete chart reload with symbol:', symbolWithSuffix);
+              
+              // Set the anchor AGAIN right before triggering getBars
+              // This ensures it's available when TradingView calls getBars
+              const currentAnchor = replayTimestampRef.current;
+              if (currentAnchor > 0) {
+                pendingAnchorTimestampRef.current = currentAnchor;
+              }
+              
+              innerChart.setSymbol(symbolWithSuffix, () => {
+                // After symbol change, scroll to replay position and reset price scale
+                setTimeout(() => {
+                  try {
+                    const replayTs = replayTimestampRef.current;
+                    if (innerChart && replayTs > 0) {
+                      const resolutionMinutes = intervalToMinutes(newInterval);
+                      const barMs = resolutionMinutes * 60 * 1000;
+                      const visibleFrom = (replayTs - barMs * 60) / 1000;
+                      const visibleTo = (replayTs + barMs * 20) / 1000;
+                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                      
+                      try {
+                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                      } catch (e) {}
+                    }
+                  } catch (e) {}
+                  isChangingResolutionRef.current = false;
+                }, 300);
+              });
             } else {
               isChangingResolutionRef.current = false;
             }
