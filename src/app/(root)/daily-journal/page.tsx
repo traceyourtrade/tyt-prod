@@ -1088,28 +1088,28 @@ const DailyJournal = () => {
                     <div className="space-y-2">
                       <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider px-0.5">Rules Compliance</span>
                       <div className="space-y-1">
-                        {strategyRules.slice(0, 4).map((rule, idx) => (
+                        {strategyRules.slice(0, 4).map((rule: { id: string; text: string }, idx) => (
                           <div 
-                            key={idx} 
+                            key={rule.id || idx} 
                             className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors cursor-pointer"
                             onClick={() => {
                               setRulesCompliance(prev => ({
                                 ...prev,
-                                [rule]: prev[rule] === true ? false : prev[rule] === false ? undefined : true
+                                [rule.id]: prev[rule.id] === true ? false : prev[rule.id] === false ? undefined : true
                               }));
                             }}
                           >
                             <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
-                              rulesCompliance[rule] === true 
+                              rulesCompliance[rule.id] === true 
                                 ? "bg-profit/20 text-profit border border-profit/30"
-                                : rulesCompliance[rule] === false 
+                                : rulesCompliance[rule.id] === false 
                                 ? "bg-loss/20 text-loss border border-loss/30"
                                 : "bg-white/[0.05] border border-white/[0.1]"
                             }`}>
-                              {rulesCompliance[rule] === true && <Check className="w-3 h-3" />}
-                              {rulesCompliance[rule] === false && <X className="w-3 h-3" />}
+                              {rulesCompliance[rule.id] === true && <Check className="w-3 h-3" />}
+                              {rulesCompliance[rule.id] === false && <X className="w-3 h-3" />}
                             </div>
-                            <span className="text-[10px] text-foreground truncate">{rule}</span>
+                            <span className="text-[10px] text-foreground truncate">{rule.text}</span>
                           </div>
                         ))}
                         {strategyRules.length > 4 && (
