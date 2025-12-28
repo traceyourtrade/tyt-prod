@@ -1,6 +1,6 @@
 "use client"
 
-import { Target, Zap, TrendingUp, TrendingDown, Shield, Calendar, Clock, AlertTriangle, Trophy, Flame } from "lucide-react"
+import { Target, Zap, TrendingUp, Shield, Calendar, Clock, AlertTriangle, Trophy, Flame, DollarSign, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PropFirmHeroCardProps {
@@ -18,8 +18,8 @@ interface PropFirmHeroCardProps {
 
 function CircularProgress({ 
   progress, 
-  size = 140, 
-  strokeWidth = 10, 
+  size = 100, 
+  strokeWidth = 8, 
   type = "profit" 
 }: { 
   progress: number
@@ -34,21 +34,21 @@ function CircularProgress({
 
   const getGradientColors = () => {
     if (type === "profit") {
-      if (progress >= 80) return { start: "#22C55E", end: "#16A34A" }
-      if (progress >= 50) return { start: "#F59E0B", end: "#D97706" }
-      return { start: "#F59E0B", end: "#EA580C" }
+      if (progress >= 80) return { start: "#10B981", end: "#059669", glow: "rgba(16,185,129,0.4)" }
+      if (progress >= 50) return { start: "#F59E0B", end: "#D97706", glow: "rgba(245,158,11,0.4)" }
+      return { start: "#3B82F6", end: "#2563EB", glow: "rgba(59,130,246,0.4)" }
     } else {
-      if (progress >= 85) return { start: "#EF4444", end: "#DC2626" }
-      if (progress >= 60) return { start: "#F59E0B", end: "#EA580C" }
-      return { start: "#22C55E", end: "#16A34A" }
+      if (progress >= 85) return { start: "#EF4444", end: "#DC2626", glow: "rgba(239,68,68,0.5)" }
+      if (progress >= 60) return { start: "#F59E0B", end: "#EA580C", glow: "rgba(245,158,11,0.4)" }
+      return { start: "#10B981", end: "#059669", glow: "rgba(16,185,129,0.3)" }
     }
   }
 
   const colors = getGradientColors()
-  const gradientId = `gradient-${type}-${progress}`
+  const gradientId = `gradient-${type}-${Math.random().toString(36).substr(2, 9)}`
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="transform -rotate-90">
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
@@ -63,7 +63,7 @@ function CircularProgress({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-gray-200 dark:text-white/5"
+          className="text-white/[0.06]"
         />
         <circle
           cx={size / 2}
@@ -77,15 +77,15 @@ function CircularProgress({
           strokeDashoffset={offset}
           className="transition-all duration-1000 ease-out"
           style={{
-            filter: `drop-shadow(0 0 8px ${colors.start}40)`
+            filter: `drop-shadow(0 0 6px ${colors.glow})`
           }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
+        <span className="text-2xl font-bold text-white tabular-nums">
           {cappedProgress.toFixed(0)}%
         </span>
-        <span className="text-xs text-gray-500 dark:text-white/50 uppercase tracking-wider">
+        <span className="text-[10px] text-white/50 uppercase tracking-wider font-medium">
           {type === "profit" ? "Target" : "DD Used"}
         </span>
       </div>
@@ -109,43 +109,47 @@ export default function PropFirmHeroCard({
     switch (status) {
       case "completed":
         return {
-          label: "Challenge Complete",
+          label: "Funded",
           icon: Trophy,
-          bgClass: "from-emerald-500/10 via-emerald-600/5 to-transparent dark:from-emerald-500/20 dark:via-emerald-600/10",
-          borderClass: "border-emerald-500/30",
-          glowClass: "shadow-emerald-500/10 dark:shadow-emerald-500/20",
-          textClass: "text-emerald-600 dark:text-emerald-400",
-          dotClass: "bg-emerald-500 dark:bg-emerald-400"
+          bgGradient: "from-emerald-500/15 via-emerald-600/5 to-transparent",
+          borderColor: "border-emerald-500/30",
+          badgeBg: "bg-emerald-500/20",
+          badgeBorder: "border-emerald-500/40",
+          textColor: "text-emerald-400",
+          dotColor: "bg-emerald-400"
         }
       case "breached":
         return {
-          label: "Challenge Failed",
+          label: "Failed",
           icon: AlertTriangle,
-          bgClass: "from-red-500/10 via-red-600/5 to-transparent dark:from-red-500/20 dark:via-red-600/10",
-          borderClass: "border-red-500/30",
-          glowClass: "shadow-red-500/10 dark:shadow-red-500/20",
-          textClass: "text-red-600 dark:text-red-400",
-          dotClass: "bg-red-500 dark:bg-red-400"
+          bgGradient: "from-red-500/15 via-red-600/5 to-transparent",
+          borderColor: "border-red-500/30",
+          badgeBg: "bg-red-500/20",
+          badgeBorder: "border-red-500/40",
+          textColor: "text-red-400",
+          dotColor: "bg-red-400"
         }
       case "at_risk":
         return {
           label: "At Risk",
           icon: Flame,
-          bgClass: "from-amber-500/10 via-orange-600/5 to-transparent dark:from-amber-500/20 dark:via-orange-600/10",
-          borderClass: "border-amber-500/30",
-          glowClass: "shadow-amber-500/10 dark:shadow-amber-500/20",
-          textClass: "text-amber-600 dark:text-amber-400",
-          dotClass: "bg-amber-500 dark:bg-amber-400 animate-pulse"
+          bgGradient: "from-amber-500/15 via-orange-600/5 to-transparent",
+          borderColor: "border-amber-500/30",
+          badgeBg: "bg-amber-500/20",
+          badgeBorder: "border-amber-500/40",
+          textColor: "text-amber-400",
+          dotColor: "bg-amber-400 animate-pulse"
         }
       default:
         return {
           label: "Active",
           icon: Zap,
-          bgClass: "from-amber-500/5 via-amber-600/[0.02] to-transparent dark:from-amber-500/10 dark:via-amber-600/5",
-          borderClass: "border-amber-500/20",
-          glowClass: "shadow-amber-500/5 dark:shadow-amber-500/10",
-          textClass: "text-amber-600 dark:text-amber-400",
-          dotClass: "bg-amber-500 dark:bg-amber-400"
+          bgGradient: "from-amber-500/10 via-amber-600/5 to-transparent",
+          borderColor: "border-amber-500/20",
+          badgeBg: "bg-amber-500/15",
+          badgeBorder: "border-amber-500/30",
+          textColor: "text-amber-400",
+          dotColor: "bg-amber-400"
         }
     }
   }
@@ -156,122 +160,118 @@ export default function PropFirmHeroCard({
     ? Math.floor((new Date().getTime() - new Date(challengeStartDate).getTime()) / (1000 * 60 * 60 * 24))
     : 0
 
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`
+    return `$${value.toLocaleString()}`
+  }
+
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl border backdrop-blur-xl",
-      "bg-white/80 dark:bg-transparent",
+      "relative rounded-2xl border backdrop-blur-xl overflow-hidden",
       "bg-gradient-to-br",
-      statusConfig.bgClass,
-      statusConfig.borderClass,
-      "shadow-xl",
-      statusConfig.glowClass
+      statusConfig.bgGradient,
+      statusConfig.borderColor
     )}>
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4wMyIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBzdHJva2Utb3BhY2l0eT0iMC4wMyIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50" />
+      {/* Subtle grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] opacity-50" />
       
-      <div className="relative p-6 md:p-8">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-8">
-          <div className="flex-1 space-y-6">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center",
-                  "bg-gradient-to-br from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10",
-                  "border border-amber-500/20"
-                )}>
-                  <Target className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Prop Firm Challenge</h2>
-                  <p className="text-sm text-gray-500 dark:text-white/50">Track your progress towards funding</p>
-                </div>
-              </div>
-              
-              <div className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full",
-                "bg-gray-100 dark:bg-white/5 border",
-                statusConfig.borderClass
-              )}>
-                <div className={cn("w-2 h-2 rounded-full", statusConfig.dotClass)} />
-                <StatusIcon className={cn("w-4 h-4", statusConfig.textClass)} />
-                <span className={cn("text-sm font-medium", statusConfig.textClass)}>
-                  {statusConfig.label}
-                </span>
-              </div>
+      <div className="relative p-5">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center">
+              <Target className="w-5 h-5 text-amber-400" />
             </div>
+            <div>
+              <h2 className="text-base font-bold text-white">Prop Firm Challenge</h2>
+              <p className="text-xs text-white/50">Track your progress towards funding</p>
+            </div>
+          </div>
+          
+          <div className={cn(
+            "flex items-center gap-2 px-3 py-1.5 rounded-full border",
+            statusConfig.badgeBg,
+            statusConfig.badgeBorder
+          )}>
+            <div className={cn("w-1.5 h-1.5 rounded-full", statusConfig.dotColor)} />
+            <StatusIcon className={cn("w-3.5 h-3.5", statusConfig.textColor)} />
+            <span className={cn("text-xs font-semibold", statusConfig.textColor)}>
+              {statusConfig.label}
+            </span>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <Shield className="w-3.5 h-3.5" />
-                  Starting Balance
-                </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
-                  ${startingBalance.toLocaleString()}
-                </p>
+        {/* Main Content Grid */}
+        <div className="flex flex-col lg:flex-row gap-5">
+          {/* Stats Grid */}
+          <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
+              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
+                <Shield className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">Starting</span>
               </div>
-              
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5 overflow-hidden">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">Current Equity</span>
-                </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums truncate">
-                  ${currentEquity.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                </p>
-                <p className={cn(
-                  "text-xs font-medium mt-1",
-                  currentProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-                )}>
-                  {currentProfit >= 0 ? "+" : ""}{((currentProfit / startingBalance) * 100).toFixed(2)}%
-                </p>
+              <p className="text-lg font-bold text-white tabular-nums truncate">
+                {formatCurrency(startingBalance)}
+              </p>
+            </div>
+            
+            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
+              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
+                <TrendingUp className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">Current</span>
               </div>
-              
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Days Active
-                </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
-                  {daysActive}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-white/40 mt-1">
-                  days
-                </p>
+              <p className="text-lg font-bold text-white tabular-nums truncate">
+                {formatCurrency(currentEquity)}
+              </p>
+              <p className={cn(
+                "text-[10px] font-semibold mt-0.5",
+                currentProfit >= 0 ? "text-emerald-400" : "text-red-400"
+              )}>
+                {currentProfit >= 0 ? "+" : ""}{((currentProfit / startingBalance) * 100).toFixed(2)}%
+              </p>
+            </div>
+            
+            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
+              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
+                <Calendar className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">Days</span>
               </div>
-              
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5 overflow-hidden">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">Profit/Loss</span>
-                </div>
-                <p className={cn(
-                  "text-xl font-bold tabular-nums truncate",
-                  currentProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-                )}>
-                  {currentProfit >= 0 ? "+" : ""}${Math.abs(currentProfit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                </p>
+              <p className="text-lg font-bold text-white tabular-nums">
+                {daysActive}
+              </p>
+              <p className="text-[10px] text-white/40 mt-0.5">active</p>
+            </div>
+            
+            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
+              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
+                <Activity className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">P&L</span>
               </div>
+              <p className={cn(
+                "text-lg font-bold tabular-nums truncate",
+                currentProfit >= 0 ? "text-emerald-400" : "text-red-400"
+              )}>
+                {currentProfit >= 0 ? "+" : ""}{formatCurrency(Math.abs(currentProfit))}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-8 lg:gap-12">
+          {/* Progress Circles */}
+          <div className="flex items-center justify-center gap-6 lg:gap-8 py-2">
             <div className="text-center">
-              <CircularProgress progress={profitProgress} type="profit" />
-              <div className="mt-3 space-y-1">
-                <p className="text-xs text-gray-500 dark:text-white/50">Profit Target</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  ${profitTargetValue.toLocaleString()}
-                </p>
+              <CircularProgress progress={profitProgress} type="profit" size={100} />
+              <div className="mt-2">
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">Profit Target</p>
+                <p className="text-sm font-bold text-white">{formatCurrency(profitTargetValue)}</p>
               </div>
             </div>
             
             <div className="text-center">
-              <CircularProgress progress={drawdownProgress} type="drawdown" />
-              <div className="mt-3 space-y-1">
-                <p className="text-xs text-gray-500 dark:text-white/50">Max Drawdown</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  ${maxDrawdownValue.toLocaleString()}
-                </p>
+              <CircularProgress progress={drawdownProgress} type="drawdown" size={100} />
+              <div className="mt-2">
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">Max DD</p>
+                <p className="text-sm font-bold text-white">{formatCurrency(maxDrawdownValue)}</p>
               </div>
             </div>
           </div>
