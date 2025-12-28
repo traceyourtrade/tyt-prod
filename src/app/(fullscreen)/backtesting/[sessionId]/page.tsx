@@ -2576,24 +2576,15 @@ export default function FullscreenBacktesting({
             if (innerChart) {
               console.log('Forcing chart reload after native button click');
               
-              // Capture current visible range BEFORE reload to preserve zoom
-              let savedVisibleRange: { from: number; to: number } | null = null;
-              try {
-                const currentRange = innerChart.getVisibleRange();
-                if (currentRange && currentRange.from && currentRange.to) {
-                  // Calculate relative offset from replay position
-                  const replayTs = replayTimestampRef.current;
-                  if (replayTs > 0) {
-                    const rangeMidpoint = (currentRange.from + currentRange.to) / 2;
-                    const rangeWidth = currentRange.to - currentRange.from;
-                    // For new timeframe, keep similar time window
-                    savedVisibleRange = {
-                      from: (replayTs / 1000) - (rangeWidth * 0.3),
-                      to: (replayTs / 1000) + (rangeWidth * 0.1)
-                    };
-                  }
-                }
-              } catch (e) {}
+              // IMPORTANT: Ensure the correct callback is set for the new resolution
+              // This is needed because resetData may not trigger subscribeBars again
+              const cachedCallback = realtimeCallbacksRef.current.get(newInterval);
+              if (cachedCallback) {
+                onRealtimeCallbackRef.current = cachedCallback;
+                subscribedResolutionRef.current = newInterval;
+                callbacksReadyRef.current = true;
+                console.log('Restored callback for resolution:', newInterval);
+              }
               
               // Just reset data - TradingView will call getBars again with correct position
               innerChart.resetData();
