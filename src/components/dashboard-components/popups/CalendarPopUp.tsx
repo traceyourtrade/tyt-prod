@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import html2canvas from "html2canvas";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import Cookies from "js-cookie";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
@@ -12,19 +12,12 @@ import {
   faChevronLeft, 
   faChevronRight, 
   faXmark,
-  faPlus,
-  faTrophy,
-  faChartLine,
-  faPercent,
-  faCoins,
-  faSkullCrossbones,
-  faScaleBalanced
+  faPlus
 } from "@fortawesome/free-solid-svg-icons";
 
 import calendarPopUp from "@/store/calendarPopUp";
 import notifications from "@/store/notifications";
 import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
-import { useDataStore } from "@/store/store";
 
 
 interface Trade {
@@ -62,7 +55,6 @@ const CalendarPopup = () => {
   const { showTr, setShowTr, dataDate, setDateHard, setAddTrades, setShowEditTradePopUp, setEditTradeData } = calendarPopUp();
   const { setAlertBoxG } = notifications();
   const { selectedAccounts } = useModeFilteredAccounts();
-  const { bkurl } = useDataStore();
   const tokenn = Cookies.get("ProJournX");
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -115,6 +107,8 @@ const CalendarPopup = () => {
   const grossWins = dataToday.filter(t => t.Profit > 0).reduce((a, t) => a + t.Profit, 0);
   const grossLosses = Math.abs(dataToday.filter(t => t.Profit < 0).reduce((a, t) => a + t.Profit, 0));
   const profitFactor = grossLosses > 0 ? (grossWins / grossLosses).toFixed(2) : grossWins > 0 ? "∞" : "0.00";
+  const avgWin = wins > 0 ? (grossWins / wins).toFixed(2) : "0.00";
+  const avgLoss = losses > 0 ? (grossLosses / losses).toFixed(2) : "0.00";
 
   const GraphComp = () => {
     let cumulativeSum = 0;
@@ -130,99 +124,53 @@ const CalendarPopup = () => {
       }),
     ];
 
-    const calculateOffset = (data: ChartData[]): string => {
-      const values = data.map(d => d.value);
-      const minValue = Math.min(...values);
-      const maxValue = Math.max(...values);
-
-      if (minValue >= 0) return "0%";
-      if (maxValue <= 0) return "100%";
-
-      return `${(maxValue / (maxValue - minValue)) * 100}%`;
-    };
-
-    const zeroOffset = calculateOffset(data);
-
-    const checkValueStatus = (data: ChartData[]): string | boolean => {
-      const hasPositive = data.some(d => d.value > 0);
-      const hasNegative = data.some(d => d.value < 0);
-
-      if (hasPositive && hasNegative) return "both";
-      if (hasPositive) return true;
-      if (hasNegative) return false;
-
-      return "both";
-    };
-
-    const status = checkValueStatus(data);
-
-    const getGradientId = (): string => {
-      if (status === "both") return "mixedGradient";
-      if (status === true) return "positiveGradient";
-      if (status === false) return "negativeGradient";
-      return "";
-    };
+    const isPositive = grossPnL >= 0;
+    const strokeColor = isPositive ? "#10b981" : "#ef4444";
 
     return (
       <div className="w-full h-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
             <defs>
-              <linearGradient id="mixedGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                <stop offset={zeroOffset} stopColor="#10b981" stopOpacity={0.05} />
-                <stop offset={zeroOffset} stopColor="#ef4444" stopOpacity={0.05} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
-              </linearGradient>
-
-              <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
-              </linearGradient>
-
-              <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity={0.05} />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity={0.4} />
+              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={strokeColor} stopOpacity={0.2} />
+                <stop offset="100%" stopColor={strokeColor} stopOpacity={0} />
               </linearGradient>
             </defs>
-
-            <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" vertical={false} />
             <XAxis 
               dataKey="time" 
-              stroke="rgba(255, 255, 255, 0.2)" 
-              tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10 }}
+              stroke="transparent"
+              tick={{ fill: "rgba(255, 255, 255, 0.3)", fontSize: 9 }}
               axisLine={false}
               tickLine={false}
+              interval="preserveStartEnd"
             />
             <YAxis
-              stroke="rgba(255, 255, 255, 0.2)"
-              tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10 }}
-              tickFormatter={(value) => value < 0 ? `-$${Math.abs(value)}` : `$${value}`}
+              stroke="transparent"
+              tick={{ fill: "rgba(255, 255, 255, 0.3)", fontSize: 9 }}
+              tickFormatter={(value) => `$${value}`}
               axisLine={false}
               tickLine={false}
+              width={40}
             />
-
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: "rgba(12, 12, 12, 0.95)", 
+                backgroundColor: "rgba(0, 0, 0, 0.9)", 
                 color: "white", 
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "12px",
-                backdropFilter: "blur(16px)",
-                padding: "10px 14px",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "8px",
+                padding: "8px 12px",
+                fontSize: "12px"
               }}
-              labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 11 }}
+              labelStyle={{ color: "rgba(255,255,255,0.5)", fontSize: 10 }}
               formatter={(value: number) => [`$${value.toFixed(2)}`, 'P&L']}
             />
-
             <Area
               type="monotone"
               dataKey="value"
-              stroke={status === true ? "#10b981" : status === false ? "#ef4444" : "#8b5cf6"}
+              stroke={strokeColor}
               strokeWidth={2}
-              fill={`url(#${getGradientId()})`}
-              fillOpacity={1}
+              fill="url(#chartGradient)"
               isAnimationActive={true}
             />
           </AreaChart>
@@ -364,70 +312,48 @@ const CalendarPopup = () => {
     setShowTr();
   };
 
-  const StatCard = ({ icon, label, value, valueColor = "text-white", iconBg = "bg-white/5" }: { 
-    icon: any; 
-    label: string; 
-    value: string; 
-    valueColor?: string;
-    iconBg?: string;
-  }) => (
-    <div className="group relative bg-gradient-to-br from-white/[0.04] to-transparent rounded-xl p-3 border border-white/[0.06] hover:border-white/[0.12] hover:from-white/[0.06] transition-all duration-300">
-      <div className="flex items-center gap-2.5">
-        <div className={`w-8 h-8 ${iconBg} rounded-lg flex items-center justify-center flex-shrink-0 border border-white/[0.04]`}>
-          <FontAwesomeIcon icon={icon} className="text-white/60 text-xs" />
-        </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-[9px] uppercase tracking-wider text-gray-500 font-medium truncate">{label}</span>
-          <span className={`text-base font-bold ${valueColor} truncate`}>{value}</span>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-all duration-300 ${showTr ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+    <div className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-all duration-300 ${showTr ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
       {dataToday.length === 0 ? (
         <div 
           ref={popupRef} 
-          className="w-full max-w-2xl bg-gradient-to-b from-[#161616] to-[#0c0c0c] rounded-3xl flex flex-col items-center justify-center p-8 border border-white/[0.06] shadow-2xl min-h-[400px] relative overflow-hidden"
+          className="w-full max-w-md bg-[#141414] rounded-2xl flex flex-col items-center justify-center p-8 border border-white/[0.08] shadow-2xl min-h-[320px] relative"
         >
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          
           <button
             onClick={closePopup}
-            className="absolute top-4 right-4 w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
+            className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
           >
-            <FontAwesomeIcon icon={faXmark} className="text-gray-400 hover:text-white" />
+            <FontAwesomeIcon icon={faXmark} className="text-gray-400 hover:text-white text-sm" />
           </button>
 
-          <div className="flex flex-row items-center gap-3 mb-4">
+          <div className="flex items-center gap-2 mb-6">
             <button
               onClick={subtractOneDay}
-              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
+              className="w-7 h-7 rounded-md bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
             >
               <FontAwesomeIcon icon={faChevronLeft} className="text-gray-400 text-xs" />
             </button>
-            <span className="text-gray-400 text-sm font-medium">{formatDate(dataDate)}</span>
+            <span className="text-gray-300 text-sm font-medium px-2">{formatDate(dataDate)}</span>
             <button
               onClick={addOneDay}
-              className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
+              className="w-7 h-7 rounded-md bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
             >
               <FontAwesomeIcon icon={faChevronRight} className="text-gray-400 text-xs" />
             </button>
           </div>
 
-          <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 border border-white/[0.04]">
-            <img src="/favicon.png" alt="logo" className="w-12 h-12 opacity-60" />
+          <div className="w-16 h-16 rounded-xl bg-white/[0.05] flex items-center justify-center mb-4">
+            <img src="/favicon.png" alt="logo" className="w-10 h-10 opacity-50" />
           </div>
           
-          <p className="text-gray-500 text-sm font-medium mb-6">No trades recorded for this day</p>
+          <p className="text-gray-500 text-sm mb-5">No trades recorded for this day</p>
           
           <button
             onClick={() => {
               closePopup();
               setTimeout(() => setAddTrades(), 300);
             }}
-            className="group flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/20"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <FontAwesomeIcon icon={faPlus} className="text-xs" />
             Add Trade
@@ -437,179 +363,175 @@ const CalendarPopup = () => {
         <div 
           ref={popupRef} 
           id="trade-details"
-          className="w-full max-w-5xl max-h-[90vh] bg-gradient-to-b from-[#151515] to-[#0a0a0a] rounded-2xl md:rounded-3xl flex flex-col border border-white/[0.06] shadow-2xl overflow-hidden"
+          className="w-full max-w-4xl max-h-[85vh] bg-[#111111] rounded-xl flex flex-col border border-white/[0.08] shadow-2xl overflow-hidden"
         >
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
-          
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.04] gap-3">
-            <div className="flex items-center justify-between sm:justify-start gap-3 md:gap-4">
-              <h2 className="text-base md:text-lg font-bold text-white tracking-tight">Trade Details</h2>
-              <div className="flex items-center gap-1.5 md:gap-2">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold text-white">Daily Summary</h2>
+              <div className="flex items-center gap-1">
                 <button
                   onClick={subtractOneDay}
-                  className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
+                  className="w-7 h-7 rounded-md hover:bg-white/[0.08] flex items-center justify-center transition-colors"
                 >
-                  <FontAwesomeIcon icon={faChevronLeft} className="text-gray-400 text-[10px]" />
+                  <FontAwesomeIcon icon={faChevronLeft} className="text-gray-400 text-xs" />
                 </button>
-                <div className="px-2 md:px-3 py-1 md:py-1.5 bg-white/[0.04] rounded-lg border border-white/[0.04]">
-                  <span className="text-gray-300 text-[10px] md:text-xs font-medium">{formatDate(dataDate)}</span>
-                </div>
+                <span className="text-gray-300 text-sm font-medium px-2 min-w-[100px] text-center">{formatDate(dataDate)}</span>
                 <button
                   onClick={addOneDay}
-                  className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
+                  className="w-7 h-7 rounded-md hover:bg-white/[0.08] flex items-center justify-center transition-colors"
                 >
-                  <FontAwesomeIcon icon={faChevronRight} className="text-gray-400 text-[10px]" />
+                  <FontAwesomeIcon icon={faChevronRight} className="text-gray-400 text-xs" />
                 </button>
               </div>
-              <button
-                onClick={closePopup}
-                className="w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-red-500/20 flex items-center justify-center transition-all duration-200 group sm:hidden border border-white/[0.04]"
-              >
-                <FontAwesomeIcon icon={faXmark} className="text-gray-400 group-hover:text-red-400 text-xs" />
-              </button>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className={`px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl ${grossPnL >= 0 ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
-                <span className={`text-[11px] md:text-sm font-bold ${grossPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {grossPnL >= 0 ? '+' : ''}${Math.abs(grossPnL).toFixed(0)}
-                </span>
-              </div>
-              
-              <div className="px-2 md:px-3 py-1.5 md:py-2 bg-white/[0.04] rounded-xl border border-white/[0.04]">
-                <span className="text-gray-400 text-[10px] md:text-xs font-medium">{dataToday.length}</span>
-              </div>
-
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleShare}
-                className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
+                className="w-8 h-8 rounded-lg hover:bg-white/[0.08] flex items-center justify-center transition-colors"
+                title="Share"
               >
-                <FontAwesomeIcon icon={faShareNodes} className="text-gray-400 hover:text-white text-[10px] md:text-sm" />
+                <FontAwesomeIcon icon={faShareNodes} className="text-gray-400 text-sm" />
               </button>
-
               <button
                 onClick={closePopup}
-                className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/[0.04] hover:bg-red-500/20 flex items-center justify-center transition-all duration-200 group hidden sm:flex border border-white/[0.04]"
+                className="w-8 h-8 rounded-lg hover:bg-white/[0.08] flex items-center justify-center transition-colors"
               >
-                <FontAwesomeIcon icon={faXmark} className="text-gray-400 group-hover:text-red-400 text-[10px] md:text-sm" />
+                <FontAwesomeIcon icon={faXmark} className="text-gray-400 text-sm" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 md:p-6">
-            <div className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-5 mb-4 md:mb-6">
-              <div className="w-full md:col-span-5 bg-gradient-to-br from-white/[0.03] to-transparent rounded-xl md:rounded-2xl p-3 md:p-4 border border-white/[0.06] h-36 md:h-48">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-medium">Cumulative P&L</span>
-                  <div className={`px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg text-[9px] md:text-[10px] font-semibold ${grossPnL >= 0 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/15 text-red-400 border border-red-500/20'}`}>
-                    {grossPnL >= 0 ? '+' : ''}{grossPnL.toFixed(2)}
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {/* Two-Column Stats Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-5">
+              {/* Left: Main P&L Card with Chart */}
+              <div className="lg:col-span-2 bg-[#181818] rounded-xl p-5 border border-white/[0.04]">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Net P&L</p>
+                    <p className={`text-3xl font-bold ${grossPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {grossPnL >= 0 ? '+' : '-'}${Math.abs(grossPnL).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-md text-xs font-medium ${grossPnL >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
+                    {dataToday.length} trade{dataToday.length !== 1 ? 's' : ''}
                   </div>
                 </div>
-                <div className="h-24 md:h-36">
+                <div className="h-32">
                   <GraphComp />
                 </div>
               </div>
 
-              <div className="w-full md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
-                <StatCard 
-                  icon={faChartLine} 
-                  label="Gross P&L" 
-                  value={`$${grossPnL.toFixed(2)}`}
-                  valueColor={grossPnL >= 0 ? "text-emerald-400" : "text-red-400"}
-                  iconBg={grossPnL >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
-                />
-                <StatCard 
-                  icon={faTrophy} 
-                  label="Winners" 
-                  value={wins.toString()}
-                  valueColor="text-emerald-400"
-                  iconBg="bg-emerald-500/10"
-                />
-                <StatCard 
-                  icon={faCoins} 
-                  label="Commissions" 
-                  value={`$${totalCommissions.toFixed(2)}`}
-                  valueColor="text-amber-400"
-                  iconBg="bg-amber-500/10"
-                />
-                <StatCard 
-                  icon={faPercent} 
-                  label="Win Rate" 
-                  value={`${winRate}%`}
-                  valueColor={parseFloat(winRate) >= 50 ? "text-emerald-400" : "text-red-400"}
-                  iconBg={parseFloat(winRate) >= 50 ? "bg-emerald-500/10" : "bg-red-500/10"}
-                />
-                <StatCard 
-                  icon={faSkullCrossbones} 
-                  label="Losers" 
-                  value={losses.toString()}
-                  valueColor="text-red-400"
-                  iconBg="bg-red-500/10"
-                />
-                <StatCard 
-                  icon={faScaleBalanced} 
-                  label="Profit Factor" 
-                  value={profitFactor.toString()}
-                  valueColor={parseFloat(profitFactor) >= 1 || profitFactor === "∞" ? "text-emerald-400" : "text-red-400"}
-                  iconBg="bg-purple-500/10"
-                />
+              {/* Right: KPI Grid */}
+              <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {/* Win Rate */}
+                <div className="bg-[#181818] rounded-xl p-4 border border-white/[0.04]">
+                  <p className="text-xs text-gray-500 mb-1">Win Rate</p>
+                  <p className={`text-xl font-bold ${parseFloat(winRate) >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {winRate}%
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{wins}W / {losses}L</p>
+                </div>
+
+                {/* Profit Factor */}
+                <div className="bg-[#181818] rounded-xl p-4 border border-white/[0.04]">
+                  <p className="text-xs text-gray-500 mb-1">Profit Factor</p>
+                  <p className={`text-xl font-bold ${parseFloat(profitFactor) >= 1 || profitFactor === "∞" ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {profitFactor}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Ratio</p>
+                </div>
+
+                {/* Avg Win */}
+                <div className="bg-[#181818] rounded-xl p-4 border border-white/[0.04]">
+                  <p className="text-xs text-gray-500 mb-1">Avg Win</p>
+                  <p className="text-xl font-bold text-emerald-400">${avgWin}</p>
+                  <p className="text-xs text-gray-500 mt-1">{wins} trades</p>
+                </div>
+
+                {/* Avg Loss */}
+                <div className="bg-[#181818] rounded-xl p-4 border border-white/[0.04]">
+                  <p className="text-xs text-gray-500 mb-1">Avg Loss</p>
+                  <p className="text-xl font-bold text-red-400">${avgLoss}</p>
+                  <p className="text-xs text-gray-500 mt-1">{losses} trades</p>
+                </div>
+
+                {/* Winners */}
+                <div className="bg-[#181818] rounded-xl p-4 border border-white/[0.04]">
+                  <p className="text-xs text-gray-500 mb-1">Gross Profit</p>
+                  <p className="text-xl font-bold text-emerald-400">+${grossWins.toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 mt-1">{wins} winners</p>
+                </div>
+
+                {/* Commissions */}
+                <div className="bg-[#181818] rounded-xl p-4 border border-white/[0.04]">
+                  <p className="text-xs text-gray-500 mb-1">Commissions</p>
+                  <p className="text-xl font-bold text-amber-400">${totalCommissions.toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 mt-1">Total fees</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-white/[0.03] to-transparent rounded-xl md:rounded-2xl border border-white/[0.06] overflow-hidden">
-              <div className="overflow-x-auto scrollbar-thin">
+            {/* Trades Table */}
+            <div className="bg-[#181818] rounded-xl border border-white/[0.04] overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/[0.04]">
+                <h3 className="text-sm font-medium text-white">Trades</h3>
+              </div>
+              <div className="overflow-x-auto">
                 <table className="w-full min-w-[500px]">
                   <thead>
-                    <tr className="border-b border-white/[0.06]">
-                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Time</th>
-                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Symbol</th>
-                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Side</th>
-                      <th className="px-3 md:px-5 py-3 md:py-4 text-left text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Net P&L</th>
-                      <th className="px-3 md:px-5 py-3 md:py-4 text-center text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-semibold whitespace-nowrap">Actions</th>
+                    <tr className="border-b border-white/[0.04]">
+                      <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wide text-gray-500 font-medium">Time</th>
+                      <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wide text-gray-500 font-medium">Symbol</th>
+                      <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wide text-gray-500 font-medium">Side</th>
+                      <th className="px-4 py-3 text-right text-[11px] uppercase tracking-wide text-gray-500 font-medium">P&L</th>
+                      <th className="px-4 py-3 text-center text-[11px] uppercase tracking-wide text-gray-500 font-medium">Actions</th>
                     </tr>
                   </thead>
-
                   <tbody>
                     {dataToday.map((data, index) => (
                       <tr 
                         key={index} 
-                        className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors duration-150 group"
+                        className={`${index % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'} hover:bg-white/[0.03] transition-colors`}
                       >
-                        <td className="px-3 md:px-5 py-3 md:py-4">
-                          <span className="text-gray-300 text-xs md:text-sm font-medium whitespace-nowrap">{data.OpenTime}</span>
+                        <td className="px-4 py-3">
+                          <span className="text-gray-300 text-sm">{data.OpenTime}</span>
                         </td>
-                        <td className="px-3 md:px-5 py-3 md:py-4">
-                          <span className="inline-flex items-center px-2.5 md:px-3 py-1 md:py-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg text-[10px] md:text-xs font-semibold border border-emerald-500/20">
-                            {data.Item}
-                          </span>
+                        <td className="px-4 py-3">
+                          <span className="text-white text-sm font-medium">{data.Item}</span>
                         </td>
-                        <td className="px-3 md:px-5 py-3 md:py-4">
-                          <span className={`inline-flex items-center px-2 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-semibold border ${
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                             data.Type?.toLowerCase() === 'buy' 
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                              : 'bg-red-500/10 text-red-400 border-red-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-400' 
+                              : 'bg-red-500/10 text-red-400'
                           }`}>
                             {data.Type?.toLowerCase() === 'buy' ? 'Long' : 'Short'}
                           </span>
                         </td>
-                        <td className="px-3 md:px-5 py-3 md:py-4">
-                          <span className={`text-xs md:text-sm font-bold whitespace-nowrap ${data.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                            {data.Profit >= 0 ? '+' : ''}{data.Profit < 0 ? `-$${Math.abs(data.Profit).toFixed(2)}` : `$${data.Profit.toFixed(2)}`}
+                        <td className="px-4 py-3 text-right">
+                          <span className={`text-sm font-semibold ${data.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                            {data.Profit >= 0 ? '+' : '-'}${Math.abs(data.Profit).toFixed(2)}
                           </span>
                         </td>
-                        <td className="px-3 md:px-5 py-3 md:py-4">
-                          <div className="flex items-center justify-center gap-1.5 md:gap-2">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1">
                             <button 
                               onClick={() => handleEdit(data)}
-                              className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-emerald-500/30"
+                              className="w-7 h-7 rounded-md hover:bg-white/[0.08] flex items-center justify-center transition-colors"
+                              title="Edit"
                             >
-                              <FontAwesomeIcon icon={faPenToSquare} className="text-gray-400 hover:text-emerald-400 text-[10px] md:text-xs" />
+                              <FontAwesomeIcon icon={faPenToSquare} className="text-gray-400 hover:text-white text-xs" />
                             </button>
                             <button 
                               onClick={() => confirmDelete(data.id)}
-                              className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-white/[0.04] hover:bg-red-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-red-500/30"
+                              className="w-7 h-7 rounded-md hover:bg-red-500/10 flex items-center justify-center transition-colors"
+                              title="Delete"
                             >
-                              <FontAwesomeIcon icon={faTrashCan} className="text-gray-400 hover:text-red-400 text-[10px] md:text-xs" />
+                              <FontAwesomeIcon icon={faTrashCan} className="text-gray-400 hover:text-red-400 text-xs" />
                             </button>
                           </div>
                         </td>
