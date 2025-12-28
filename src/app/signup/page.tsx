@@ -224,8 +224,8 @@ const SignUp: React.FC = () => {
       {/* Grid overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.015)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-      {/* Left Side - Conversion-focused Visual */}
-      <div className="hidden lg:flex lg:w-[55%] relative z-10">
+      {/* Left Side - Conversion-focused Visual (hidden to center the card) */}
+      <div className="hidden relative z-10">
         {/* Floating geometric elements */}
         <motion.div
           animate={{ rotate: 360 }}
@@ -356,8 +356,8 @@ const SignUp: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Side - Glass Card Form */}
-      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-8 relative z-10 overflow-y-auto">
+      {/* Center - Glass Card Form */}
+      <div className="w-full flex items-center justify-center p-6 sm:p-8 relative z-10 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -374,8 +374,8 @@ const SignUp: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-transparent rounded-2xl pointer-events-none" />
               
               <div className="relative z-10">
-                {/* Mobile logo */}
-                <div className="lg:hidden flex justify-center mb-5">
+                {/* Logo */}
+                <div className="flex justify-center mb-5">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
                       <TrendingUp className="w-4 h-4 text-white" />

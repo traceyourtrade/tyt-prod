@@ -94,8 +94,8 @@ export default function LoginPage() {
       {/* Grid overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
-      {/* Left Side - Premium Visual */}
-      <div className="hidden lg:flex lg:w-[55%] relative z-10">
+      {/* Left Side - Premium Visual (hidden to center the card) */}
+      <div className="hidden relative z-10">
         {/* Floating geometric shapes */}
         <motion.div
           animate={{ rotate: 360 }}
@@ -196,8 +196,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side - Glass Card Form */}
-      <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-10 relative z-10">
+      {/* Center - Glass Card Form */}
+      <div className="w-full flex items-center justify-center p-6 sm:p-10 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -214,8 +214,8 @@ export default function LoginPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-transparent rounded-2xl pointer-events-none" />
               
               <div className="relative z-10">
-                {/* Mobile logo */}
-                <div className="lg:hidden flex justify-center mb-6">
+                {/* Logo */}
+                <div className="flex justify-center mb-6">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
                       <TrendingUp className="w-4 h-4 text-white" />
