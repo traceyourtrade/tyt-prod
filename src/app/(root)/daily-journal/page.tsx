@@ -608,7 +608,7 @@ const DailyJournal = () => {
                 </div>
                 {/* Mobile P&L Badge */}
                 <span className={`sm:hidden text-xs font-bold flex-shrink-0 ${isProfit ? "text-profit" : "text-loss"}`}>
-                  {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
+                  {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
                 </span>
               </div>
             )}
@@ -799,7 +799,7 @@ const DailyJournal = () => {
                                     {trade.Item || trade.symbol}
                                   </span>
                                   <span className={`text-sm font-bold tabular-nums flex-shrink-0 ${tradeProfit ? "text-profit" : "text-loss"}`}>
-                                    {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit * exchangeRate, currency)}
+                                    {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit, currency, exchangeRate)}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -845,14 +845,11 @@ const DailyJournal = () => {
           {selectedTrade && metrics && (
             <div className="flex-shrink-0 px-4 sm:px-6 py-3 border-b border-white/[0.06] bg-gradient-to-r from-card/80 via-card/60 to-card/80 backdrop-blur-xl">
               <div className="flex items-center justify-between gap-4 flex-wrap">
-                {/* P&L Hero */}
+                {/* P&L Display */}
                 <div className="flex items-center gap-4">
-                  <div className={`px-4 py-2 rounded-xl ${isProfit ? 'bg-profit/10 border border-profit/20' : 'bg-loss/10 border border-loss/20'}`}>
-                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider block">Net P&L</span>
-                    <span className={`text-xl font-bold tabular-nums ${isProfit ? 'text-profit' : 'text-loss'}`}>
-                      {isProfit ? '+' : ''}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
-                    </span>
-                  </div>
+                  <span className={`text-2xl font-bold tabular-nums ${isProfit ? 'text-profit' : 'text-loss'}`}>
+                    {isProfit ? '+' : ''}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
+                  </span>
                   
                   {/* Quick Stats */}
                   <div className="hidden sm:flex items-center gap-3">
@@ -1217,8 +1214,8 @@ const DailyJournal = () => {
 
                   {/* Costs (Compact) */}
                   <div className="flex gap-2 text-[10px]">
-                    <span className="text-muted-foreground/50">Fees: <span className="text-foreground">{formatCompactCurrency((selectedTrade.fees || 0) * exchangeRate, currency)}</span></span>
-                    <span className="text-muted-foreground/50">Swap: <span className="text-foreground">{formatCompactCurrency((selectedTrade.swap || 0) * exchangeRate, currency)}</span></span>
+                    <span className="text-muted-foreground/50">Fees: <span className="text-foreground">{formatCompactCurrency(selectedTrade.fees || 0, currency, exchangeRate)}</span></span>
+                    <span className="text-muted-foreground/50">Swap: <span className="text-foreground">{formatCompactCurrency(selectedTrade.swap || 0, currency, exchangeRate)}</span></span>
                   </div>
 
                   {/* Divider */}
@@ -1428,7 +1425,7 @@ const DailyJournal = () => {
                           </div>
                         </div>
                         <span className={`text-sm font-semibold ${tradeProfit ? "text-profit" : "text-loss"}`}>
-                          {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit * exchangeRate, currency)}
+                          {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit, currency, exchangeRate)}
                         </span>
                       </div>
                     </button>
@@ -1492,7 +1489,7 @@ const DailyJournal = () => {
                       <span className="text-xs text-muted-foreground uppercase tracking-wider">Net P&L</span>
                       <div className="mt-1">
                         <span className={`text-2xl font-bold ${isProfit ? "text-profit" : "text-loss"}`}>
-                          {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
+                          {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
                         </span>
                       </div>
                     </div>
