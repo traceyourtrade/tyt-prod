@@ -68,12 +68,13 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "relative rounded-xl overflow-hidden",
-        "bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-800/40",
-        "border border-white/[0.08]",
+        "bg-card border border-border",
+        "dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-zinc-900/60 dark:to-zinc-800/40",
+        "dark:border-white/[0.08]",
         "backdrop-blur-xl"
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] via-transparent to-teal-500/[0.02] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.01] via-transparent to-teal-500/[0.01] dark:from-amber-500/[0.02] dark:to-teal-500/[0.02] pointer-events-none" />
       
       <div className="relative p-3 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
@@ -86,8 +87,8 @@ export default function PerformanceByMonth({ data, initialBalance }: Props) {
               <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-semibold text-white truncate">Performance by Month</h3>
-              <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">Monthly breakdown of your returns</p>
+              <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">Performance by Month</h3>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Monthly breakdown of your returns</p>
             </div>
           </div>
           

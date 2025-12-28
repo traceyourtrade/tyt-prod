@@ -32,13 +32,14 @@ export default function PerformanceByDay({ data }: Props) {
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "relative rounded-xl overflow-hidden",
-        "bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-800/40",
-        "border border-white/[0.08]",
+        "bg-card border border-border",
+        "dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-zinc-900/60 dark:to-zinc-800/40",
+        "dark:border-white/[0.08]",
         "backdrop-blur-xl"
       )}
     >
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.03] via-transparent to-rose-500/[0.03] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.02] via-transparent to-rose-500/[0.02] dark:from-violet-500/[0.03] dark:to-rose-500/[0.03] pointer-events-none" />
       
       <div className="relative p-5">
         {/* Header */}
@@ -51,10 +52,10 @@ export default function PerformanceByDay({ data }: Props) {
             <Calendar className="w-5 h-5 text-violet-400" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-white">Performance by Day</h3>
+            <h3 className="text-base font-semibold text-foreground">Performance by Day</h3>
             {bestDay && bestDay.totalTrades > 0 && (
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Best day: <span className="text-emerald-400">{bestDay.day}</span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Best day: <span className="text-emerald-500">{bestDay.day}</span>
               </p>
             )}
           </div>

@@ -31,11 +31,12 @@ function FrequencyCard({
   return (
     <div className={cn(
       "relative rounded-xl overflow-hidden p-4",
-      "bg-white/[0.02] border border-white/[0.06]",
-      "hover:bg-white/[0.04] transition-all duration-200"
+      "bg-muted/30 border border-border",
+      "dark:bg-white/[0.02] dark:border-white/[0.06]",
+      "hover:bg-muted/50 dark:hover:bg-white/[0.04] transition-all duration-200"
     )}>
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-zinc-300 text-sm">{title}</h4>
+        <h4 className="font-medium text-foreground text-sm">{title}</h4>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] text-zinc-500 uppercase tracking-wide">Avg</span>
           <span className={cn("font-bold text-sm", color)}>{avg.toFixed(2)}</span>
@@ -115,13 +116,14 @@ export default function TradeFrequencyCharts({
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "relative rounded-xl overflow-hidden",
-        "bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-800/40",
-        "border border-white/[0.08]",
+        "bg-card border border-border",
+        "dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-zinc-900/60 dark:to-zinc-800/40",
+        "dark:border-white/[0.08]",
         "backdrop-blur-xl"
       )}
     >
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/[0.02] via-transparent to-pink-500/[0.02] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/[0.01] via-transparent to-pink-500/[0.01] dark:from-indigo-500/[0.02] dark:to-pink-500/[0.02] pointer-events-none" />
       
       <div className="relative p-5">
         {/* Header */}

@@ -106,13 +106,14 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "relative rounded-xl overflow-hidden",
-        "bg-gradient-to-br from-zinc-900/80 via-zinc-900/60 to-zinc-800/40",
-        "border border-white/[0.08]",
+        "bg-card border border-border",
+        "dark:bg-gradient-to-br dark:from-zinc-900/80 dark:via-zinc-900/60 dark:to-zinc-800/40",
+        "dark:border-white/[0.08]",
         "backdrop-blur-xl"
       )}
     >
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.02] via-transparent to-purple-500/[0.02] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.01] via-transparent to-purple-500/[0.01] dark:from-cyan-500/[0.02] dark:to-purple-500/[0.02] pointer-events-none" />
       
       <div className="relative p-3 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
@@ -125,8 +126,8 @@ export default function PerformanceCalendar({ trades, initialBalance }: Props) {
               <CalendarCheck className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-semibold text-white">Performance Calendar</h3>
-              <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">
+              <h3 className="text-sm sm:text-base font-semibold text-foreground">Performance Calendar</h3>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                 {monthlyTrades} trades · <span className={monthlyPnl >= 0 ? "text-emerald-400" : "text-red-400"}>
                   {monthlyPnl >= 0 ? '+' : ''}${monthlyPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
