@@ -52,8 +52,13 @@ export async function POST(request: NextRequest) {
           }
 
           if (user) {
+            const billingPeriod = payload.subscription?.entity?.notes?.billingPeriod || 'monthly';
             const expiry = new Date();
-            expiry.setMonth(expiry.getMonth() + 1);
+            if (billingPeriod === 'yearly') {
+              expiry.setFullYear(expiry.getFullYear() + 1);
+            } else {
+              expiry.setMonth(expiry.getMonth() + 1);
+            }
 
             user.subscription = {
               ...(user.subscription ?? { isSubscribed: false, trialUsed: false }),
@@ -62,10 +67,11 @@ export async function POST(request: NextRequest) {
               subscriptionStatus: 'active',
               subscriptionExpiry: expiry,
               razorpayCustomerId: customerId,
-              trialUsed: true
+              trialUsed: true,
+              billingPeriod: billingPeriod
             };
             await user.save();
-            console.log(`Subscription activated for user: ${user.email}`);
+            console.log(`Subscription activated for user: ${user.email}, billing: ${billingPeriod}`);
           }
         }
         break;
@@ -78,8 +84,13 @@ export async function POST(request: NextRequest) {
           const user = await User.findOne({ "subscription.subscriptionId": subscriptionId });
 
           if (user) {
+            const billingPeriod = user.subscription?.billingPeriod || 'monthly';
             const expiry = new Date();
-            expiry.setMonth(expiry.getMonth() + 1);
+            if (billingPeriod === 'yearly') {
+              expiry.setFullYear(expiry.getFullYear() + 1);
+            } else {
+              expiry.setMonth(expiry.getMonth() + 1);
+            }
 
             if (!user.subscription) {
               user.subscription = { isSubscribed: true, trialUsed: true };
@@ -87,7 +98,7 @@ export async function POST(request: NextRequest) {
             user.subscription.subscriptionExpiry = expiry;
             user.subscription.subscriptionStatus = 'active';
             await user.save();
-            console.log(`Subscription renewed for user: ${user.email}`);
+            console.log(`Subscription renewed for user: ${user.email}, billing: ${billingPeriod}`);
           }
         }
         break;

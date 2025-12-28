@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
 
     if (user.subscription) {
       user.subscription.razorpayCustomerId = subscription.customer_id;
+      user.subscription.billingPeriod = billingPeriod;
     }
     await user.save();
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   Crown, 
@@ -38,6 +38,7 @@ interface SubscriptionStatus {
   trialDaysLeft: number;
   status: 'subscribed' | 'trial' | 'expired' | 'none';
   email?: string;
+  billingPeriod?: 'monthly' | 'yearly';
 }
 
 interface CouponData {
@@ -63,11 +64,18 @@ const features = [
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(true);
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
+  const [isUpgrade, setIsUpgrade] = useState(false);
+  
+  const planParam = searchParams.get('plan');
+  const upgradeParam = searchParams.get('upgrade');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
+    planParam === 'monthly' ? 'monthly' : 'yearly'
+  );
   
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
@@ -113,8 +121,13 @@ export default function CheckoutPage() {
         if (response.ok) {
           const data = await response.json();
           setSubscriptionStatus(data);
+          
           if (data.isSubscribed) {
-            router.push("/dashboard");
+            if (upgradeParam === 'true' && data.billingPeriod !== 'yearly') {
+              setIsUpgrade(true);
+            } else {
+              router.push("/dashboard");
+            }
           }
         }
       } catch (err) {
@@ -125,7 +138,7 @@ export default function CheckoutPage() {
       }
     };
     fetchStatus();
-  }, [router]);
+  }, [router, upgradeParam]);
 
   useEffect(() => {
     if (appliedCoupon) {
@@ -252,7 +265,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (subscriptionStatus?.isSubscribed) {
+  if (subscriptionStatus?.isSubscribed && !isUpgrade) {
     return null;
   }
 

@@ -33,7 +33,8 @@ export async function GET(request: NextRequest) {
       ...status,
       email: user.email,
       subscriptionExpiry: user.subscription?.subscriptionExpiry,
-      trialEndsAt: user.subscription?.trialEndsAt
+      trialEndsAt: user.subscription?.trialEndsAt,
+      billingPeriod: user.subscription?.billingPeriod || 'monthly'
     });
   } catch (error) {
     console.error("Subscription status error:", error);

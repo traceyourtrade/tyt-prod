@@ -45,6 +45,7 @@ export interface IUserSubscription {
   trialEndsAt?: Date;
   trialUsed: boolean;
   razorpayCustomerId?: string;
+  billingPeriod?: 'monthly' | 'yearly';
 }
 
 export interface IUser extends Document {
@@ -204,7 +205,12 @@ const userSchema = new Schema<IUser>({
     subscriptionExpiry: { type: Date },
     trialEndsAt: { type: Date },
     trialUsed: { type: Boolean, default: false },
-    razorpayCustomerId: { type: String }
+    razorpayCustomerId: { type: String },
+    billingPeriod: { 
+      type: String, 
+      enum: ['monthly', 'yearly'],
+      default: 'monthly'
+    }
   }
 });
 
