@@ -236,6 +236,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
 
   const getContractSize = (market: string, symbol: string): number => {
     const upperSymbol = symbol.toUpperCase();
+    const upperMarket = market.toUpperCase();
     
     switch (market) {
       case "FOREX":
@@ -244,16 +245,33 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
         return 1; // Direct units
       case "INDIAN_STOCK":
       case "INDIAN_INDICES":
-        return 1; // Direct units for Indian markets
-      default:
-        // Check for commodities
+      case "STOCK":
+      case "US_STOCK":
+      case "US STOCKS":
+      case "STOCKS":
+        return 1; // Direct units for stocks
+      case "COMMODITIES":
         if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
           return 100; // Gold: 100 oz per lot
         }
         if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
           return 5000; // Silver: 5000 oz per lot
         }
-        return 100000; // Default to Forex
+        return 100; // Default commodity lot size
+      default:
+        // Check if it's a stock-related market type
+        if (upperMarket.includes("STOCK") || upperMarket.includes("EQUIT")) {
+          return 1; // Direct units for any stock market
+        }
+        // Check for commodities by symbol
+        if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
+          return 100; // Gold: 100 oz per lot
+        }
+        if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
+          return 5000; // Silver: 5000 oz per lot
+        }
+        // Default to direct units (1) for unknown markets - safer than assuming Forex
+        return 1;
     }
   };
 
