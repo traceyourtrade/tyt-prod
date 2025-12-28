@@ -596,9 +596,25 @@ export default function FullscreenBacktesting({
     // When on a 1H bar at 14:00, the visible price is 14:59:59 (bar close)
     // To find equivalent position in 15m, we need to find the 14:45 bar
     const sourceIntervalMinutes = intervalToMinutes(sourceInterval);
-    const barEndTime = currentBar 
-      ? currentBar.time + (sourceIntervalMinutes * 60 * 1000) - 1 
-      : sourceTimestamp;
+    
+    // Calculate bar end time - use currentBar if available, otherwise derive from sourceTimestamp
+    // Fallback chain: currentBar.time -> sourceTimestamp -> sessionData.progressPointer -> 0
+    let barEndTime: number;
+    if (currentBar && currentBar.time > 0) {
+      barEndTime = currentBar.time + (sourceIntervalMinutes * 60 * 1000) - 1;
+    } else if (sourceTimestamp > 0) {
+      // No currentBar but we have a timestamp - calculate end time from it
+      barEndTime = sourceTimestamp + (sourceIntervalMinutes * 60 * 1000) - 1;
+    } else if (sessionDataRef.current?.progressPointer) {
+      // Fallback to saved progress pointer
+      const progressTs = new Date(sessionDataRef.current.progressPointer).getTime();
+      barEndTime = progressTs + (sourceIntervalMinutes * 60 * 1000) - 1;
+      console.log('Using progressPointer as fallback:', new Date(progressTs).toISOString());
+    } else {
+      // Neither available - use 0, fetch will anchor at session start
+      barEndTime = 0;
+      console.log('Warning: No valid timestamp for timeframe switch anchor');
+    }
     
     console.log('Bar end time:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
     
@@ -650,14 +666,20 @@ export default function FullscreenBacktesting({
       allBarsRef.current = cachedBars;
       subscribedResolutionRef.current = targetInterval;
       
-      // Check for cached callback
+      // Check for cached callback - if exists, use it; otherwise we'll get one from subscribeBars
+      // when TradingView loads (via setSymbol/setResolution below)
       const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
       if (cachedCallback) {
         onRealtimeCallbackRef.current = cachedCallback;
         callbacksReadyRef.current = true;
       } else {
+        // No cached callback yet - TradingView will call subscribeBars when we call setSymbol below
+        // For now, we can still proceed with the switch since we have data
+        // The subscribeBars handler will set callbacksReadyRef = true when it fires
         onRealtimeCallbackRef.current = null;
-        callbacksReadyRef.current = false;
+        // IMPORTANT: Keep callbacksReadyRef true for fast-path to allow playback to work
+        // The realtime callback is only needed for receiving new bars, not for step/skip
+        callbacksReadyRef.current = true;
       }
       
       // FIND CORRECT BAR in new timeframe using bar end time
@@ -740,7 +762,14 @@ export default function FullscreenBacktesting({
       }
     } else {
       console.log('Using SLOW PATH - will fetch data');
-      // Slow path: update interval and let data fetch effect handle it
+      // Slow path: need to fetch from API
+      // CRITICAL: Set targetTimestampRef so the fetch effect anchors correctly
+      targetTimestampRef.current = barEndTime;
+      replayTimestampRef.current = barEndTime;
+      
+      // Keep pending switch info for the effect to use
+      // (pendingTimeframeSwitchRef was already set above)
+      
       setCurrentInterval(targetInterval);
       if (hideDropdown) setShowTimeframeDropdown(false);
     }
@@ -2456,11 +2485,13 @@ export default function FullscreenBacktesting({
         // TradingView's native timeframe buttons clicked
         // Delegate to unified helper - TradingView already changed the resolution,
         // so we skip the symbol switch (triggerSymbolSwitch: false)
+        // Also skip captureDrawings - TV has already changed resolution by the time this fires,
+        // so capturing now would capture the post-switch state (useless for restoration)
         console.log('==== TV NATIVE TIMEFRAME BUTTON ====');
         processTimeframeSwitch(newInterval, { 
           hideDropdown: false, 
           triggerSymbolSwitch: false, // TradingView already did this
-          captureDrawings: true 
+          captureDrawings: false // Can't capture - resolution already changed
         });
         debouncedSave();
       });
