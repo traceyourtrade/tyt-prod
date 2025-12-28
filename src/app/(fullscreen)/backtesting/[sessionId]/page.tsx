@@ -554,6 +554,198 @@ export default function FullscreenBacktesting({
     return parseInt(interval) || 1;
   }, []);
   
+  // ============================================================================
+  // UNIFIED TIMEFRAME SWITCH HELPER
+  // This single function handles all timeframe switching logic for both:
+  // - handleTimeframeChange (custom dropdown)
+  // - onIntervalChanged (TradingView native buttons)
+  // ============================================================================
+  const processTimeframeSwitch = useCallback((
+    targetInterval: string,
+    options: { 
+      hideDropdown?: boolean; 
+      triggerSymbolSwitch?: boolean;
+      captureDrawings?: boolean;
+    } = {}
+  ) => {
+    const { hideDropdown = false, triggerSymbolSwitch = true, captureDrawings = true } = options;
+    
+    // 1. CAPTURE SOURCE STATE (must be done first, before any mutations)
+    const sourceInterval = currentIntervalRef.current;
+    const sourceTimestamp = replayTimestampRef.current;
+    const currentBar = allBarsRef.current[currentBarIndexRef.current];
+    
+    console.log('==== UNIFIED TIMEFRAME SWITCH ====');
+    console.log('From:', sourceInterval, 'To:', targetInterval);
+    console.log('Source timestamp:', sourceTimestamp, sourceTimestamp > 0 ? new Date(sourceTimestamp).toISOString() : 'N/A');
+    
+    // Skip if same interval
+    if (sourceInterval === targetInterval) {
+      if (hideDropdown) setShowTimeframeDropdown(false);
+      return;
+    }
+    
+    // 2. STOP AUTO-PLAY to prevent timestamp drift during switch
+    if (autoPlayIntervalRef.current) {
+      clearInterval(autoPlayIntervalRef.current);
+      autoPlayIntervalRef.current = null;
+    }
+    setIsPlaying(false);
+    
+    // 3. CALCULATE BAR END TIME for consistent positioning across timeframes
+    // When on a 1H bar at 14:00, the visible price is 14:59:59 (bar close)
+    // To find equivalent position in 15m, we need to find the 14:45 bar
+    const sourceIntervalMinutes = intervalToMinutes(sourceInterval);
+    const barEndTime = currentBar 
+      ? currentBar.time + (sourceIntervalMinutes * 60 * 1000) - 1 
+      : sourceTimestamp;
+    
+    console.log('Bar end time:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
+    
+    // 4. STORE PENDING SWITCH INFO for async callbacks
+    pendingTimeframeSwitchRef.current = { 
+      fromInterval: sourceInterval, 
+      fromTimestamp: currentBar?.time || sourceTimestamp 
+    };
+    
+    // 5. CAPTURE DRAWINGS before resolution change (if requested)
+    if (captureDrawings && tvWidgetRef.current) {
+      try {
+        const chart = tvWidgetRef.current.activeChart();
+        pendingDrawingsRef.current = DrawingManager.captureDrawings(chart);
+        console.log('Captured', pendingDrawingsRef.current.length, 'drawings');
+      } catch (e) {
+        console.warn('Could not capture drawings:', e);
+      }
+    }
+    
+    // 6. CHECK CACHE and determine fast/slow path
+    const cachedBars = barsCacheRef.current[targetInterval];
+    let useFastPath = false;
+    
+    if (cachedBars && cachedBars.length > 0) {
+      const firstBarTime = cachedBars[0].time;
+      const lastBarTime = cachedBars[cachedBars.length - 1].time;
+      
+      // Use fast path if bar end time is within cached range
+      if (barEndTime >= firstBarTime && barEndTime <= lastBarTime + (intervalToMinutes(targetInterval) * 60 * 1000)) {
+        useFastPath = true;
+      } else {
+        console.log('Cache invalid for target position - using slow path');
+        delete barsCacheRef.current[targetInterval];
+        delete loadedRangeRef.current[targetInterval];
+      }
+    }
+    
+    // 7. UPDATE INTERVAL REFS (do this before async operations)
+    currentIntervalRef.current = targetInterval;
+    
+    if (useFastPath && cachedBars) {
+      console.log('Using FAST PATH with', cachedBars.length, 'cached bars');
+      
+      // Set flag to prevent data fetch effect from running
+      isChangingResolutionRef.current = true;
+      
+      // Update refs immediately
+      allBarsRef.current = cachedBars;
+      subscribedResolutionRef.current = targetInterval;
+      
+      // Check for cached callback
+      const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
+      if (cachedCallback) {
+        onRealtimeCallbackRef.current = cachedCallback;
+        callbacksReadyRef.current = true;
+      } else {
+        onRealtimeCallbackRef.current = null;
+        callbacksReadyRef.current = false;
+      }
+      
+      // FIND CORRECT BAR in new timeframe using bar end time
+      const targetIntervalMinutes = intervalToMinutes(targetInterval);
+      let newIndex = Math.min(5, cachedBars.length - 1);
+      
+      for (let i = cachedBars.length - 1; i >= 0; i--) {
+        const barTime = cachedBars[i].time;
+        const barEnd = barTime + (targetIntervalMinutes * 60 * 1000);
+        if (barTime <= barEndTime && barEndTime < barEnd) {
+          newIndex = i;
+          console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
+          break;
+        }
+      }
+      
+      // UPDATE STATE (all at once)
+      setAllBars(cachedBars);
+      setCurrentInterval(targetInterval);
+      if (hideDropdown) setShowTimeframeDropdown(false);
+      
+      // Update bar index with preserved timestamp
+      setCurrentBarIndex(newIndex, cachedBars, { 
+        preserveTimestamp: true,
+        pendingSwitch: { fromInterval: sourceInterval }
+      });
+      
+      // FINALIZE: Update refs to new state
+      if (cachedBars[newIndex]) {
+        replayTimestampRef.current = cachedBars[newIndex].time;
+        console.log('New replay timestamp:', new Date(cachedBars[newIndex].time).toISOString());
+      }
+      replayIntervalRef.current = targetInterval;
+      pendingTimeframeSwitchRef.current = null;
+      
+      // TRIGGER TRADINGVIEW UPDATE if requested
+      if (triggerSymbolSwitch && tvWidgetRef.current) {
+        try {
+          const chart = tvWidgetRef.current.activeChart();
+          const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
+          const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}`;
+          
+          chart.setSymbol(symbolWithSuffix, () => {
+            chart.setResolution(targetInterval, () => {
+              setTimeout(() => {
+                try {
+                  const innerChart = tvWidgetRef.current?.activeChart();
+                  if (innerChart) {
+                    // Restore drawings if lost
+                    if (pendingDrawingsRef.current.length > 0) {
+                      const currentShapes = DrawingManager.getShapeCount(innerChart);
+                      if (currentShapes === 0) {
+                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                      }
+                      pendingDrawingsRef.current = [];
+                    }
+                    
+                    // Center chart on replay position
+                    const replayTs = replayTimestampRef.current;
+                    if (replayTs > 0) {
+                      const resolutionMinutes = intervalToMinutes(targetInterval);
+                      const windowMs = resolutionMinutes * 60 * 1000 * 50;
+                      const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
+                      const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                    }
+                  }
+                } catch (e) {
+                  console.warn('Error in post-switch cleanup:', e);
+                }
+                isChangingResolutionRef.current = false;
+              }, 300);
+            });
+          });
+        } catch (e) {
+          isChangingResolutionRef.current = false;
+        }
+      } else {
+        isChangingResolutionRef.current = false;
+      }
+    } else {
+      console.log('Using SLOW PATH - will fetch data');
+      // Slow path: update interval and let data fetch effect handle it
+      setCurrentInterval(targetInterval);
+      if (hideDropdown) setShowTimeframeDropdown(false);
+    }
+  }, [intervalToMinutes, setCurrentBarIndex]);
+  
   // Calculate how many candles to skip based on skip duration and chart timeframe
   // Uses Math.round to honor the configured duration as closely as possible
   const getCandlesToSkip = useCallback((): number => {
