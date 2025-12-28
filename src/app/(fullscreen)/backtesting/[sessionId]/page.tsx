@@ -601,11 +601,12 @@ export default function FullscreenBacktesting({
     }
     
     // Priority 5: Session start date (last resort)
+    // Add interval to get bar-end time consistent with other branches
     if (sessionDataRef.current?.startDate) {
       const startTs = new Date(sessionDataRef.current.startDate).getTime();
       if (startTs > 0) {
         return {
-          barEndTime: startTs,
+          barEndTime: startTs + (sourceIntervalMinutes * 60 * 1000) - 1,
           source: 'sessionStart'
         };
       }
@@ -649,9 +650,9 @@ export default function FullscreenBacktesting({
     
     console.log('Anchor source:', source, 'barEndTime:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
     
-    // 3. BLOCK SWITCH if no valid anchor exists
-    if (barEndTime <= 0) {
-      console.error('Cannot switch timeframe: no valid anchor available');
+    // 3. BLOCK SWITCH only if no valid anchor exists at all
+    if (barEndTime <= 0 || source === 'none') {
+      console.error('Cannot switch timeframe: no valid anchor available, source:', source);
       // Show notification to user
       if (typeof window !== 'undefined') {
         const toast = document.createElement('div');
@@ -664,6 +665,9 @@ export default function FullscreenBacktesting({
       return;
     }
     
+    // Calculate bar-start timestamp for consistent anchoring
+    const barStartTime = barEndTime - (sourceIntervalMinutes * 60 * 1000) + 1;
+    
     // 4. STOP AUTO-PLAY to prevent timestamp drift during switch
     if (autoPlayIntervalRef.current) {
       clearInterval(autoPlayIntervalRef.current);
@@ -674,10 +678,10 @@ export default function FullscreenBacktesting({
     console.log('Bar end time:', new Date(barEndTime).toISOString());
     
     // 5. STORE PENDING SWITCH INFO for async callbacks
-    const currentBar = allBarsRef.current[currentBarIndexRef.current];
+    // Use the validated barStartTime as the anchor, not stale refs
     pendingTimeframeSwitchRef.current = { 
       fromInterval: sourceInterval, 
-      fromTimestamp: currentBar?.time || replayTimestampRef.current 
+      fromTimestamp: barStartTime
     };
     
     // 5. CAPTURE DRAWINGS before resolution change (if requested)
@@ -819,9 +823,9 @@ export default function FullscreenBacktesting({
     } else {
       console.log('Using SLOW PATH - will fetch data');
       // Slow path: need to fetch from API
-      // CRITICAL: Set targetTimestampRef so the fetch effect anchors correctly
-      targetTimestampRef.current = barEndTime;
-      replayTimestampRef.current = barEndTime;
+      // CRITICAL: Set targetTimestampRef to bar-start for consistent anchoring with fetch logic
+      targetTimestampRef.current = barStartTime;
+      replayTimestampRef.current = barStartTime;
       
       // Keep pending switch info for the effect to use
       // (pendingTimeframeSwitchRef was already set above)
