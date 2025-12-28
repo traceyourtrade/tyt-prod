@@ -2497,6 +2497,41 @@ export default function FullscreenBacktesting({
           
           // Also update replayIntervalRef for consistent state
           replayIntervalRef.current = newInterval;
+          
+          // CRITICAL: Force immediate data processing by using cached bars
+          // TradingView's native buttons don't trigger getBars when data is cached
+          // So we need to manually find the correct bar and update the chart position
+          const cachedBars = barsCacheRef.current[newInterval];
+          if (cachedBars && cachedBars.length > 0) {
+            console.log('Native switch: Using cached bars for', newInterval, 'bar count:', cachedBars.length);
+            const newIntervalMinutes = intervalToMinutes(newInterval);
+            let newIndex = 5;
+            
+            // Find the bar in new timeframe that contains this end time
+            for (let i = cachedBars.length - 1; i >= 0; i--) {
+              const barTime = cachedBars[i].time;
+              const barEnd = barTime + (newIntervalMinutes * 60 * 1000);
+              if (barTime <= barEndTime && barEndTime < barEnd) {
+                newIndex = i;
+                console.log('Native switch: Found bar at index', i, 'time:', new Date(barTime).toISOString());
+                break;
+              }
+            }
+            
+            // Update state with the found bar
+            setAllBars(cachedBars);
+            setCurrentBarIndex(newIndex, cachedBars, { 
+              preserveTimestamp: true,
+              pendingSwitch: { fromInterval: sourceInterval }
+            });
+            
+            // After switch completes, update refs to NEW state for future operations
+            if (cachedBars[newIndex]) {
+              replayTimestampRef.current = cachedBars[newIndex].time;
+            }
+            replayIntervalRef.current = newInterval;
+            pendingTimeframeSwitchRef.current = null;
+          }
         } else if (currentBar) {
           targetTimestampRef.current = currentBar.time;
         }
