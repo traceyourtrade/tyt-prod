@@ -964,6 +964,8 @@ export default function FullscreenBacktesting({
             dataReadyForLayoutRef.current = true;
             console.log('Data ready signal set (from with-data endpoint) - layout can now restore safely');
             
+            // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
+            allBarsRef.current = bars;
             setAllBars(bars);
             
             // Calculate initial bar index
@@ -1245,6 +1247,8 @@ export default function FullscreenBacktesting({
         loadedRangeRef.current[resolution] = { from: fromTs, to: toTs };
         console.log('Cached', bars.length, 'bars for resolution', resolution);
         
+        // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
+        allBarsRef.current = bars;
         // Update React state so playback controls and UI stay in sync
         setAllBars(bars);
         
@@ -1483,6 +1487,8 @@ export default function FullscreenBacktesting({
         } else {
           // Replay timestamp is within range - use cache
           targetTimestampRef.current = null;
+          // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
+          allBarsRef.current = cachedBars;
           setAllBars(cachedBars);
           let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
           
@@ -1536,6 +1542,8 @@ export default function FullscreenBacktesting({
       } else {
         // No replay timestamp - use cache with saved progress or session start
         targetTimestampRef.current = null;
+        // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
+        allBarsRef.current = cachedBars;
         setAllBars(cachedBars);
         let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
         const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
@@ -1637,6 +1645,9 @@ export default function FullscreenBacktesting({
           dataReadyForLayoutRef.current = true;
           console.log('Data ready signal set - layout can now restore safely');
           
+          // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
+          // State update is async, but ref is synchronous
+          allBarsRef.current = bars;
           setAllBars(bars);
           
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
