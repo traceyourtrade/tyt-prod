@@ -651,9 +651,12 @@ export default function FullscreenBacktesting({
       // Find the new bar index based on replay timestamp
       let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
       if (currentReplayTs > 0) {
+        console.log('Timeframe switch: Finding bar for timestamp:', new Date(currentReplayTs).toISOString());
+        console.log('Cached bars range:', new Date(cachedBars[0].time).toISOString(), 'to', new Date(cachedBars[cachedBars.length - 1].time).toISOString());
         for (let i = cachedBars.length - 1; i >= 0; i--) {
           if (cachedBars[i].time <= currentReplayTs) {
             newIndex = i;
+            console.log('Found matching bar at index:', newIndex, 'with time:', new Date(cachedBars[newIndex].time).toISOString(), 'price:', cachedBars[newIndex].close);
             break;
           }
         }
