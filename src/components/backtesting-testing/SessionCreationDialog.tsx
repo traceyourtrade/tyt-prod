@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTestingStore } from '@/store/backtestingStore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faInfoCircle, faChevronDown, faChartLine, faCrown } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faInfoCircle, faChevronDown, faChartLine, faCrown, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 
 interface SessionCreationDialogProps {
@@ -17,12 +17,13 @@ export default function SessionCreationDialog({ isOpen, onClose }: SessionCreati
   const [accountBalance, setAccountBalance] = useState('100000');
   const [assets, setAssets] = useState('');
   const [chartLayout, setChartLayout] = useState('');
-  const [errors, setErrors] = useState<{ name?: string }>({});
-  const router=useRouter()
+  const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
   
-  const { addSession } = useTestingStore();
+  const { addSession, loadUserSessions } = useTestingStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const newErrors: { name?: string } = {};
@@ -35,25 +36,62 @@ export default function SessionCreationDialog({ isOpen, onClose }: SessionCreati
       return;
     }
     
-    const newSession = {
-      id: Date.now(),
-      name: name.trim(),
-      symbol: assets || 'OANDA:XAUUSD',
-      currentBalance: `$${accountBalance}`,
-      startDate: new Date().toLocaleDateString(),
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      daysRemaining: 365,
-      totalPnl: 0,
-      winRate: 0,
-      riskReward: 0,
-      monthGainLoss: 0,
-      weekGainLoss: 0,
-      dailyGainLoss: 0,
-    };
+    setIsSubmitting(true);
+    setErrors({});
     
-    addSession(newSession);
-    onClose();
-    router.push(`/backtesting/${newSession.id}`)
+    try {
+      const selectedSymbol = assets || 'OANDA:XAUUSD';
+      const fromDate = new Date().toISOString().split('T')[0];
+      const toDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const balance = parseFloat(accountBalance.replace(/[^0-9.]/g, '')) || 100000;
+      
+      const response = await fetch('/api/backtest-sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          symbol: selectedSymbol,
+          market: 'FOREX',
+          fromDate,
+          toDate,
+          initialBalance: balance,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create session');
+      }
+      
+      const sessionId = data.data?.sessionId || data.sessionId;
+      
+      const newSession = {
+        id: sessionId,
+        name: name.trim(),
+        symbol: selectedSymbol,
+        currentBalance: `$${balance}`,
+        startDate: new Date().toLocaleDateString(),
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        daysRemaining: 365,
+        totalPnl: 0,
+        winRate: 0,
+        riskReward: 0,
+        monthGainLoss: 0,
+        weekGainLoss: 0,
+        dailyGainLoss: 0,
+      };
+      
+      addSession(newSession);
+      loadUserSessions();
+      onClose();
+      router.push(`/backtesting/${sessionId}`);
+    } catch (error: any) {
+      console.error('Session creation error:', error);
+      setErrors({ general: error.message || 'Failed to create session' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -221,20 +259,37 @@ export default function SessionCreationDialog({ isOpen, onClose }: SessionCreati
             </div>
           </div>
           
+          {errors.general && (
+            <div className="p-3 rounded-xl bg-[var(--loss)]/10 border border-[var(--loss)]/30">
+              <p className="text-[var(--loss)] text-sm flex items-center gap-2">
+                <FontAwesomeIcon icon={faInfoCircle} className="h-4 w-4" />
+                {errors.general}
+              </p>
+            </div>
+          )}
+          
           <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-light)]">
             <button
               type="button"
               onClick={onClose}
               className="btn-secondary px-6 py-2.5"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!name.trim()}
+              className="btn-primary px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={!name.trim() || isSubmitting}
             >
-              Create Session
+              {isSubmitting ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} className="h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Session'
+              )}
             </button>
           </div>
         </form>
