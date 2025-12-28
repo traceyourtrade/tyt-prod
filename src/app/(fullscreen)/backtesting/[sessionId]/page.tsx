@@ -801,10 +801,16 @@ export default function FullscreenBacktesting({
                     const replayTs = replayTimestampRef.current;
                     if (replayTs > 0) {
                       const resolutionMinutes = intervalToMinutes(targetInterval);
-                      const windowMs = resolutionMinutes * 60 * 1000 * 50;
-                      const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
-                      const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+                      // Show ~80 bars: 60 before replay position, 20 after
+                      const barMs = resolutionMinutes * 60 * 1000;
+                      const visibleFrom = (replayTs - barMs * 60) / 1000;
+                      const visibleTo = (replayTs + barMs * 20) / 1000;
                       innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                      
+                      // Reset price scale to auto-fit the visible bars
+                      try {
+                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                      } catch (e) {}
                     }
                   }
                 } catch (e) {
@@ -2579,20 +2585,26 @@ export default function FullscreenBacktesting({
           callbacksReadyRef.current = true;
         }
         
-        // Scroll chart to replay position without reloading data
+        // Scroll chart to replay position and reset price scale
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             const replayTs = replayTimestampRef.current;
             if (innerChart && replayTs > 0) {
               const resolutionMinutes = intervalToMinutes(newInterval);
-              const windowMs = resolutionMinutes * 60 * 1000 * 50;
-              const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
-              const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+              // Show ~80 bars: 60 before replay position, 20 after
+              const barMs = resolutionMinutes * 60 * 1000;
+              const visibleFrom = (replayTs - barMs * 60) / 1000;
+              const visibleTo = (replayTs + barMs * 20) / 1000;
               innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+              
+              // Reset price scale to auto-fit the visible bars
+              try {
+                innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+              } catch (e) {}
             }
           } catch (e) {}
-        }, 200);
+        }, 300);
         
         debouncedSave();
       });
