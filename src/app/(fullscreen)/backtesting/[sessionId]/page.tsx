@@ -1043,9 +1043,10 @@ export default function FullscreenBacktesting({
       // So we need to request a SMALLER window that's biased to include the anchor
       // For intraday: 1 month back, 1 month forward (will definitely include anchor)
       // For daily+: 5 years back, 5 years forward
-      const isIntraday = !['D', 'W', 'M'].includes(resolution);
-      const monthsBack = isIntraday ? 1 : 60;  // 1 month for intraday, 5 years for daily
-      const monthsForward = isIntraday ? 1 : 60;
+      // Note: TradingView sends '1D', '1W', '1M' for daily/weekly/monthly
+      const isDailyOrHigher = ['D', 'W', 'M', '1D', '1W', '1M'].includes(resolution);
+      const monthsBack = isDailyOrHigher ? 60 : 1;  // 5 years for daily+, 1 month for intraday
+      const monthsForward = isDailyOrHigher ? 60 : 1;
       const windowStartDate = subMonths(anchorDate, monthsBack);
       const windowEndDate = addMonths(anchorDate, monthsForward);
       const fromTs = Math.floor(windowStartDate.getTime() / 1000);
