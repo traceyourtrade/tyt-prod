@@ -578,6 +578,10 @@ export default function FullscreenBacktesting({
   };
 
   const handleTimeframeChange = async (tf: string) => {
+    console.log('==== TIMEFRAME SWITCH INITIATED ====');
+    console.log('From:', currentIntervalRef.current, 'To:', tf);
+    console.log('Current replay timestamp:', replayTimestampRef.current, new Date(replayTimestampRef.current).toISOString());
+    
     if (tf === currentIntervalRef.current) {
       setShowTimeframeDropdown(false);
       return;
@@ -717,6 +721,9 @@ export default function FullscreenBacktesting({
       // CRITICAL: After switch completes, update both refs to the NEW state
       // This ensures future switches start from the correct position
       if (cachedBars[newIndex]) {
+        console.log('==== TIMEFRAME SWITCH COMPLETE (fast path) ====');
+        console.log('New bar index:', newIndex, 'Bar time:', new Date(cachedBars[newIndex].time).toISOString());
+        console.log('Bar OHLC:', cachedBars[newIndex].open, cachedBars[newIndex].high, cachedBars[newIndex].low, cachedBars[newIndex].close);
         replayTimestampRef.current = cachedBars[newIndex].time;
       }
       replayIntervalRef.current = tf;
