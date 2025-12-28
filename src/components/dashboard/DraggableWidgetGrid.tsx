@@ -66,7 +66,7 @@ export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) =
       </div>
 
       {showWidgetPicker && isEditMode && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-xl max-w-lg w-full max-h-[80vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="font-semibold">Manage Widgets</h3>

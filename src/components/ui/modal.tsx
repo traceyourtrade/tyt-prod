@@ -50,12 +50,12 @@ export function Modal({ open, onClose, children, className }: ModalProps) {
   return (
     <>
       <div 
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
       <div 
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] bg-card border border-border rounded-xl shadow-lg animate-slide-in-up",
+          "fixed left-[50%] top-[50%] z-[60] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] bg-card border border-border rounded-xl shadow-lg animate-slide-in-up",
           className
         )}
         onClick={(e) => e.stopPropagation()}

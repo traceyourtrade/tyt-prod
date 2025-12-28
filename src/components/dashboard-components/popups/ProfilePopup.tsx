@@ -16,7 +16,7 @@ const ProfilePopup: React.FC<ProfilePopupProps> = ({ deleteImg }) => {
     };
 
     return (
-        <div className={`fixed inset-0 bg-black bg-opacity-40 z-50 flex flex-col items-center justify-center ${showProImg ? "flex" : "hidden"}`}>
+        <div className={`fixed inset-0 bg-black bg-opacity-40 z-[60] flex flex-col items-center justify-center ${showProImg ? "flex" : "hidden"}`}>
             <div className="w-full h-screen flex items-center justify-center relative">
                 <img 
                     src={proImgUrl} 
