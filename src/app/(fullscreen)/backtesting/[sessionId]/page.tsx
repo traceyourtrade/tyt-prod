@@ -1687,14 +1687,13 @@ export default function FullscreenBacktesting({
         onRealtimeCallbackRef.current = onRealtimeCallback;
       },
       unsubscribeBars: (subscriberUID: string) => {
-        // For replay mode, we DON'T clear the callback on unsubscribe
-        // TradingView may only call subscribeBars once, and we need to keep using that callback
-        // The subscriberUID contains the resolution, e.g., "GBPUSD_5" or "GBPUSD_60"
+        // For replay mode, we DON'T clear any callbacks on unsubscribe
+        // We need to keep all callbacks in the map so they can be reused when switching timeframes
         const unsubResolution = subscriberUID?.split('_').pop() || '';
-        console.log('unsubscribeBars called (ignoring for replay):', { subscriberUID, unsubResolution });
+        console.log('unsubscribeBars called (keeping callback for replay):', { subscriberUID, unsubResolution });
         
-        // Remove from callbacks map but DON'T clear the main callback
-        realtimeCallbacksRef.current.delete(unsubResolution);
+        // CRITICAL: Do NOT delete from callbacks map - we need these for timeframe switching
+        // realtimeCallbacksRef.current.delete(unsubResolution); // REMOVED - breaks timeframe switching
         // Keep onRealtimeCallbackRef.current intact for replay
       },
       getMarks: (symbolInfo: any, from: number, to: number, onDataCallback: any) => {
