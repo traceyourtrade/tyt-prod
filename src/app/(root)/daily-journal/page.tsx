@@ -175,10 +175,7 @@ const DailyJournal = () => {
   const [isMobileTradeListOpen, setIsMobileTradeListOpen] = useState(false);
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState(false);
 
-  const [mainTab, setMainTab] = useState<"stats" | "strategy" | "executions" | "attachments">("stats");
-  const [centerTab, setCenterTab] = useState<"chart" | "notes" | "runningPnL">("chart");
-  const [notesTab, setNotesTab] = useState<"trade" | "daily">("trade");
-  const [journalTab, setJournalTab] = useState<"narrative" | "psychology" | "lessons">("narrative");
+  // Removed tab states - now using single scrollable view for center content and right panel
 
   const existingStrategies: string[] = (profileData?.otherData?.strategy || []).filter((s: string) => s && s !== "Select");
 
@@ -684,698 +681,380 @@ const DailyJournal = () => {
 
         {/* Center Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Center Tab Bar */}
-          <div className="flex-shrink-0 px-2 sm:px-6 py-2 sm:py-3 border-b border-white/[0.06] flex items-center justify-between gap-2 bg-gradient-to-b from-card/60 to-transparent backdrop-blur-sm overflow-x-auto scrollbar-hide">
-            <div className="flex items-center gap-0.5 p-0.5 sm:p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
-              {[
-                { key: "chart", label: "Screenshots", icon: ImageIcon },
-                { key: "notes", label: "Notes", icon: MessageSquare },
-                { key: "runningPnL", label: "P&L", icon: BarChart3 },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setCenterTab(tab.key as typeof centerTab)}
-                  className={`relative flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-                    centerTab === tab.key
-                      ? "bg-white/[0.08] text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <tab.icon className={`w-3 h-3 sm:w-4 sm:h-4 ${centerTab === tab.key ? 'text-primary' : ''}`} />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  {centerTab === tab.key && (
-                    <motion.div
-                      layoutId="centerTabIndicator"
-                      className="absolute inset-0 bg-white/[0.08] rounded-lg -z-10"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Center Main Content */}
-          <div className="flex-1 overflow-hidden">
-            {centerTab === "chart" && selectedTrade && (
-              <div className="h-full relative bg-background p-4 sm:p-6 overflow-y-auto">
-                <div className="flex flex-col gap-4 sm:gap-6 max-w-4xl mx-auto">
-                  {/* Before Screenshot */}
-                  <div className="flex flex-col">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        <span className="text-sm font-semibold text-foreground">Before Entry</span>
-                      </div>
-                      {selectedTrade.beforeURL && (
-                        <button
-                          onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
-                          className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] transition-all"
-                        >
-                          <Maximize2 className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group min-h-[200px]">
-                      {selectedTrade.beforeURL ? (
-                        <>
-                          <img
-                            src={selectedTrade.beforeURL}
-                            alt="Before trade screenshot"
-                            className="w-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.01]"
-                            onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                        </>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center py-12 cursor-pointer hover:bg-white/[0.03] transition-colors">
-                          <div className="w-14 h-14 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-3">
-                            <Upload className="w-6 h-6 text-muted-foreground/50" />
-                          </div>
-                          <span className="text-sm font-medium text-muted-foreground mb-1">Upload Before Screenshot</span>
-                          <span className="text-xs text-muted-foreground/60">Click to browse or drag & drop</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(e, "before")}
-                          />
-                        </label>
-                      )}
-                    </div>
+          {/* Hero Summary Bar - Always Visible */}
+          {selectedTrade && metrics && (
+            <div className="flex-shrink-0 px-4 sm:px-6 py-3 border-b border-white/[0.06] bg-gradient-to-r from-card/80 via-card/60 to-card/80 backdrop-blur-xl">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* P&L Hero */}
+                <div className="flex items-center gap-4">
+                  <div className={`px-4 py-2 rounded-xl ${isProfit ? 'bg-profit/10 border border-profit/20' : 'bg-loss/10 border border-loss/20'}`}>
+                    <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider block">Net P&L</span>
+                    <span className={`text-xl font-bold tabular-nums ${isProfit ? 'text-profit' : 'text-loss'}`}>
+                      {isProfit ? '+' : ''}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
+                    </span>
                   </div>
-
-                  {/* After Screenshot */}
-                  <div className="flex flex-col">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${isProfit ? 'bg-profit' : 'bg-loss'}`} />
-                        <span className="text-sm font-semibold text-foreground">After Exit</span>
-                      </div>
-                      {selectedTrade.afterURL && (
-                        <button
-                          onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
-                          className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] transition-all"
-                        >
-                          <Maximize2 className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                      )}
+                  
+                  {/* Quick Stats */}
+                  <div className="hidden sm:flex items-center gap-3">
+                    <div className="text-center px-3">
+                      <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider block">Entry</span>
+                      <span className="text-xs font-semibold text-foreground">{formatTime(selectedTrade.EntryTime || selectedTrade.time)}</span>
                     </div>
-                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group min-h-[200px]">
-                      {selectedTrade.afterURL ? (
-                        <>
-                          <img
-                            src={selectedTrade.afterURL}
-                            alt="After trade screenshot"
-                            className="w-full object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.01]"
-                            onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                        </>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center py-12 cursor-pointer hover:bg-white/[0.03] transition-colors">
-                          <div className="w-14 h-14 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-3">
-                            <Upload className="w-6 h-6 text-muted-foreground/50" />
-                          </div>
-                          <span className="text-sm font-medium text-muted-foreground mb-1">Upload After Screenshot</span>
-                          <span className="text-xs text-muted-foreground/60">Click to browse or drag & drop</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => handleImageUpload(e, "after")}
-                          />
-                        </label>
-                      )}
+                    <div className="w-px h-8 bg-white/[0.06]" />
+                    <div className="text-center px-3">
+                      <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider block">Exit</span>
+                      <span className="text-xs font-semibold text-foreground">{formatTime(selectedTrade.ExitTime)}</span>
+                    </div>
+                    <div className="w-px h-8 bg-white/[0.06]" />
+                    <div className="text-center px-3">
+                      <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider block">Pips</span>
+                      <span className="text-xs font-semibold text-primary">{metrics.pips}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Journaling Tabs Section */}
-                <div className="mt-6 space-y-4">
-                  {/* Tab Headers */}
-                  <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06]">
-                    {[
-                      { key: "narrative", label: "Trade Narrative", icon: FileText },
-                      { key: "psychology", label: "Psychology", icon: Heart },
-                      { key: "lessons", label: "Lessons", icon: Zap },
-                    ].map((tab) => (
+                {/* Quick Rating & Sentiment */}
+                <div className="flex items-center gap-3">
+                  {/* Star Rating */}
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
                       <button
-                        key={tab.key}
-                        onClick={() => setJournalTab(tab.key as typeof journalTab)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                          journalTab === tab.key
-                            ? "bg-white/[0.08] text-foreground border border-white/[0.1]"
-                            : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                        }`}
+                        key={star}
+                        onClick={() => handleRatingChange(star)}
+                        className="transition-all duration-200 hover:scale-110 active:scale-95"
                       >
-                        <tab.icon className={`w-3.5 h-3.5 ${journalTab === tab.key ? 'text-primary' : ''}`} />
-                        <span className="hidden sm:inline">{tab.label}</span>
-                        <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                        <Star
+                          className={`w-4 h-4 transition-colors duration-200 ${
+                            (journalData.tradeRating || 0) >= star
+                              ? "text-amber-400 fill-amber-400"
+                              : "text-white/10 hover:text-white/20"
+                          }`}
+                        />
                       </button>
                     ))}
                   </div>
 
-                  {/* Trade Narrative Tab */}
-                  {journalTab === "narrative" && (
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
-                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
-                          Reason for Entry
-                        </label>
-                        <textarea
-                          value={journalData.reasonForEntry || ""}
-                          onChange={(e) => setJournalData((prev) => ({ ...prev, reasonForEntry: e.target.value }))}
-                          placeholder="What made you take this trade? What signals did you see?"
-                          rows={3}
-                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
-                        />
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
-                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
-                          Setup Validation
-                        </label>
-                        <textarea
-                          value={journalData.setupValidation || ""}
-                          onChange={(e) => setJournalData((prev) => ({ ...prev, setupValidation: e.target.value }))}
-                          placeholder="Did the setup match your playbook? What confirmations were present?"
-                          rows={3}
-                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
-                        />
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
-                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
-                          Exit Rationale
-                        </label>
-                        <textarea
-                          value={journalData.exitRationale || ""}
-                          onChange={(e) => setJournalData((prev) => ({ ...prev, exitRationale: e.target.value }))}
-                          placeholder="Why did you exit? Was it your target, stop loss, or a manual decision?"
-                          rows={3}
-                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Psychology Tab */}
-                  {journalTab === "psychology" && (
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1] transition-colors">
-                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-2">
-                          Emotional State During Trade
-                        </label>
-                        <textarea
-                          value={journalData.emotionalState || ""}
-                          onChange={(e) => setJournalData((prev) => ({ ...prev, emotionalState: e.target.value }))}
-                          placeholder="How were you feeling before, during, and after the trade?"
-                          rows={3}
-                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
-                        />
-                      </div>
-
-                      {/* Quick Sentiment */}
-                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">
-                          Trade Sentiment
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { key: "great", label: "Great", icon: TrendingUp, color: "profit" },
-                            { key: "okay", label: "Okay", icon: Activity, color: "amber-500" },
-                            { key: "poor", label: "Poor", icon: TrendingDown, color: "loss" },
-                          ].map((s) => {
-                            const isSelected = journalData.sentiment === s.key;
-                            return (
-                              <button
-                                key={s.key}
-                                onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
-                                className={`p-3 rounded-xl border transition-all duration-200 ${
-                                  isSelected
-                                    ? s.color === "profit" 
-                                      ? "bg-profit/15 border-profit/40 text-profit shadow-sm"
-                                      : s.color === "loss"
-                                      ? "bg-loss/15 border-loss/40 text-loss shadow-sm"
-                                      : "bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-sm"
-                                    : "bg-white/[0.02] border-white/[0.06] text-muted-foreground/70 hover:bg-white/[0.05] hover:border-white/[0.12]"
-                                }`}
-                              >
-                                <s.icon className={`w-5 h-5 mx-auto mb-1 ${isSelected ? '' : 'opacity-60'}`} />
-                                <span className="text-xs font-medium block">{s.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Quick Tags */}
-                      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                        <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium block mb-3">
-                          Quick Tags
-                        </label>
-                        {journalData.tags && journalData.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-3">
-                            {journalData.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                onClick={() => handleRemoveTag(tag)}
-                                className="px-2.5 py-1 bg-primary/15 text-primary text-xs font-medium rounded-lg cursor-pointer hover:bg-primary/25 transition-colors flex items-center gap-1"
-                              >
-                                {tag}
-                                <X className="w-3 h-3" />
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex flex-wrap gap-1.5">
-                          {commonTags.filter(t => !journalData.tags?.includes(t)).slice(0, 8).map((tag) => (
-                            <button
-                              key={tag}
-                              onClick={() => handleAddTag(tag)}
-                              className="px-2.5 py-1 bg-white/[0.04] hover:bg-white/[0.08] text-muted-foreground hover:text-foreground text-xs font-medium rounded-lg transition-colors border border-white/[0.06]"
-                            >
-                              + {tag}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Lessons Tab */}
-                  {journalTab === "lessons" && (
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-xl bg-loss/5 border border-loss/20 hover:border-loss/30 transition-colors">
-                        <label className="text-[10px] text-loss/80 uppercase tracking-wider font-medium block mb-2">
-                          Mistakes Made
-                        </label>
-                        <textarea
-                          value={journalData.mistakes || ""}
-                          onChange={(e) => setJournalData((prev) => ({ ...prev, mistakes: e.target.value }))}
-                          placeholder="What mistakes did you make? What would you do differently?"
-                          rows={3}
-                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
-                        />
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-profit/5 border border-profit/20 hover:border-profit/30 transition-colors">
-                        <label className="text-[10px] text-profit/80 uppercase tracking-wider font-medium block mb-2">
-                          What Went Well
-                        </label>
-                        <textarea
-                          value={journalData.whatWentWell || ""}
-                          onChange={(e) => setJournalData((prev) => ({ ...prev, whatWentWell: e.target.value }))}
-                          placeholder="What did you do right? What should you repeat?"
-                          rows={3}
-                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
-                        />
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 hover:border-primary/30 transition-colors">
-                        <label className="text-[10px] text-primary/80 uppercase tracking-wider font-medium block mb-2">
-                          Improvements for Next Time
-                        </label>
-                        <textarea
-                          value={journalData.improvements || ""}
-                          onChange={(e) => setJournalData((prev) => ({ ...prev, improvements: e.target.value }))}
-                          placeholder="What will you focus on improving in your next trade?"
-                          rows={3}
-                          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
-                        />
-                      </div>
-                    </div>
-                  )}
+                  {/* Quick Sentiment */}
+                  <div className="flex items-center gap-1 p-1 bg-white/[0.03] rounded-lg border border-white/[0.06]">
+                    {[
+                      { key: "poor", icon: TrendingDown, color: "loss" },
+                      { key: "okay", icon: Activity, color: "amber-500" },
+                      { key: "great", icon: TrendingUp, color: "profit" },
+                    ].map((s) => {
+                      const isSelected = journalData.sentiment === s.key;
+                      return (
+                        <button
+                          key={s.key}
+                          onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
+                          className={`p-1.5 rounded-md transition-all duration-200 ${
+                            isSelected
+                              ? s.color === "profit" 
+                                ? "bg-profit/20 text-profit"
+                                : s.color === "loss"
+                                ? "bg-loss/20 text-loss"
+                                : "bg-amber-500/20 text-amber-500"
+                              : "text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.05]"
+                          }`}
+                          title={s.key.charAt(0).toUpperCase() + s.key.slice(1)}
+                        >
+                          <s.icon className="w-4 h-4" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {centerTab === "notes" && (
-              <div className="h-full overflow-y-auto p-3 sm:p-6">
-                <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
-                  {/* Notes Toggle */}
-                  <div className="flex items-center gap-1 p-1 bg-muted/20 rounded-xl border border-border w-fit">
-                    <button
-                      onClick={() => setNotesTab("trade")}
-                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                        notesTab === "trade" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Trade Note
-                    </button>
-                    <button
-                      onClick={() => setNotesTab("daily")}
-                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                        notesTab === "daily" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Daily Journal
-                    </button>
+          {/* Center Main Content - Single Scrollable View */}
+          <div className="flex-1 overflow-y-auto">
+            {selectedTrade && (
+              <div className="p-4 sm:p-6 space-y-6 max-w-3xl mx-auto">
+                
+                {/* Screenshots Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Trade Screenshots</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Before Screenshot */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        <span className="text-xs font-medium text-muted-foreground">Before Entry</span>
+                        {selectedTrade.beforeURL && (
+                          <button
+                            onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
+                            className="ml-auto p-1 rounded bg-white/[0.05] hover:bg-white/[0.1] transition-all"
+                          >
+                            <Maximize2 className="w-3 h-3 text-muted-foreground" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group aspect-video">
+                        {selectedTrade.beforeURL ? (
+                          <img
+                            src={selectedTrade.beforeURL}
+                            alt="Before trade"
+                            className="w-full h-full object-cover cursor-pointer hover:scale-[1.02] transition-transform"
+                            onClick={() => openLightbox(selectedTrade.beforeURL!, "before")}
+                          />
+                        ) : (
+                          <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-white/[0.03] transition-colors">
+                            <Upload className="w-5 h-5 text-muted-foreground/40 mb-1" />
+                            <span className="text-[10px] text-muted-foreground/60">Upload</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "before")} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* After Screenshot */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${isProfit ? 'bg-profit' : 'bg-loss'}`} />
+                        <span className="text-xs font-medium text-muted-foreground">After Exit</span>
+                        {selectedTrade.afterURL && (
+                          <button
+                            onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
+                            className="ml-auto p-1 rounded bg-white/[0.05] hover:bg-white/[0.1] transition-all"
+                          >
+                            <Maximize2 className="w-3 h-3 text-muted-foreground" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="rounded-lg border border-white/[0.08] bg-white/[0.02] overflow-hidden relative group aspect-video">
+                        {selectedTrade.afterURL ? (
+                          <img
+                            src={selectedTrade.afterURL}
+                            alt="After trade"
+                            className="w-full h-full object-cover cursor-pointer hover:scale-[1.02] transition-transform"
+                            onClick={() => openLightbox(selectedTrade.afterURL!, "after")}
+                          />
+                        ) : (
+                          <label className="flex flex-col items-center justify-center h-full cursor-pointer hover:bg-white/[0.03] transition-colors">
+                            <Upload className="w-5 h-5 text-muted-foreground/40 mb-1" />
+                            <span className="text-[10px] text-muted-foreground/60">Upload</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "after")} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+
+                {/* Trade Narrative Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Trade Narrative</h3>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] focus-within:border-primary/30 transition-colors">
+                      <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium block mb-1.5">
+                        Why did you enter this trade?
+                      </label>
+                      <textarea
+                        value={journalData.reasonForEntry || ""}
+                        onChange={(e) => setJournalData((prev) => ({ ...prev, reasonForEntry: e.target.value }))}
+                        placeholder="Describe the setup, signals, and your reasoning..."
+                        rows={2}
+                        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                      />
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] focus-within:border-primary/30 transition-colors">
+                      <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium block mb-1.5">
+                        How did you manage & exit?
+                      </label>
+                      <textarea
+                        value={journalData.exitRationale || ""}
+                        onChange={(e) => setJournalData((prev) => ({ ...prev, exitRationale: e.target.value }))}
+                        placeholder="Target hit, stopped out, or manual exit? What did you observe?"
+                        rows={2}
+                        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+
+                {/* Lessons & Reflection Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    <h3 className="text-sm font-semibold text-foreground">Lessons & Reflection</h3>
+                  </div>
+                  
+                  <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] focus-within:border-amber-500/30 transition-colors">
+                    <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium block mb-1.5">
+                      What did you learn from this trade?
+                    </label>
+                    <textarea
+                      value={journalData.lessonsLearned || ""}
+                      onChange={(e) => setJournalData((prev) => ({ ...prev, lessonsLearned: e.target.value }))}
+                      placeholder="Key takeaways, mistakes to avoid, patterns to remember..."
+                      rows={2}
+                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                    />
                   </div>
 
-                  {notesTab === "trade" ? (
-                    <div className="space-y-4 sm:space-y-6">
-                      {/* Template Selector - Compact on mobile */}
-                      <div>
-                        <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Template</h3>
-                        {/* Mobile: Grid layout for templates */}
-                        <div className="grid grid-cols-2 gap-2 sm:hidden">
-                          {templates.map((template, idx) => {
-                            const Icon = getTemplateIcon(template.icon);
-                            const colors = getTemplateColor(template.color);
-                            const isSelected = selectedTemplateIdx === idx;
-                            return (
-                              <button
-                                key={idx}
-                                onClick={() => setSelectedTemplateIdx(idx)}
-                                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all border ${
-                                  isSelected
-                                    ? `${colors.bg} ${colors.text} ${colors.border}`
-                                    : "bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border-border"
-                                }`}
-                              >
-                                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                                <span className="truncate">{template.name}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {/* Desktop: Horizontal scroll */}
-                        <div className="hidden sm:flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                          {templates.map((template, idx) => {
-                            const Icon = getTemplateIcon(template.icon);
-                            const colors = getTemplateColor(template.color);
-                            const isSelected = selectedTemplateIdx === idx;
-                            return (
-                              <button
-                                key={idx}
-                                onClick={() => setSelectedTemplateIdx(idx)}
-                                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                                  isSelected
-                                    ? `${colors.bg} ${colors.text} ${colors.border}`
-                                    : "bg-muted/20 text-muted-foreground hover:bg-muted/40 hover:text-foreground border-border"
-                                }`}
-                              >
-                                <Icon className="w-4 h-4" />
-                                {template.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Journal Prompts - Compact on mobile */}
-                      <div className="space-y-3 sm:space-y-4">
-                        {templates[selectedTemplateIdx]?.prompts.map((prompt) => (
-                          <div key={prompt.id} className="space-y-1.5 sm:space-y-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <label className="text-xs sm:text-sm text-foreground font-medium">{prompt.label}</label>
-                              <QuickFillDropdown
-                                promptId={prompt.id}
-                                promptType={prompt.type === "textarea" ? "textarea" : "text"}
-                                currentValue={journalData.prompts?.[prompt.id] || ""}
-                                onSelect={(value) => handlePromptChange(prompt.id, value)}
-                              />
-                            </div>
-                            {prompt.type === "textarea" ? (
-                              <textarea
-                                value={journalData.prompts?.[prompt.id] || ""}
-                                onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                                rows={3}
-                                placeholder={prompt.placeholder}
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/20 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                value={journalData.prompts?.[prompt.id] || ""}
-                                onChange={(e) => handlePromptChange(prompt.id, e.target.value)}
-                                placeholder={prompt.placeholder}
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/20 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-colors"
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Quick Tags - Compact on mobile */}
-                      <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/20 border border-border">
-                        <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Quick Tags</h3>
-                        {journalData.tags && journalData.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                            {journalData.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 bg-primary/10 text-primary rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium border border-primary/20"
-                              >
-                                {tag}
-                                <button onClick={() => handleRemoveTag(tag)} className="hover:text-primary/70">
-                                  <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                          {commonTags.filter(t => !journalData.tags?.includes(t)).map((tag) => (
-                            <button
-                              key={tag}
-                              onClick={() => handleAddTag(tag)}
-                              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-muted/30 hover:bg-muted/50 text-muted-foreground hover:text-foreground rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium transition-all border border-border"
-                            >
-                              + {tag}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 sm:space-y-4">
-                      <div>
-                        <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Daily Journal Entry</h3>
-                        <textarea
-                          value={journalData.dailyNotes || ""}
-                          onChange={(e) => handleDailyNotesChange(e.target.value)}
-                          rows={8}
-                          placeholder="Write about your trading day, market conditions, mindset, and key takeaways..."
-                          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/20 border border-border rounded-lg sm:rounded-xl text-xs sm:text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 resize-none transition-colors"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {centerTab === "runningPnL" && (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-muted/50 to-transparent flex items-center justify-center mb-4 mx-auto border border-border">
-                    <BarChart3 className="w-10 h-10 text-muted-foreground/30" />
+                  <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] focus-within:border-primary/30 transition-colors">
+                    <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium block mb-1.5">
+                      How were you feeling during this trade?
+                    </label>
+                    <textarea
+                      value={journalData.emotionalState || ""}
+                      onChange={(e) => setJournalData((prev) => ({ ...prev, emotionalState: e.target.value }))}
+                      placeholder="Confident, anxious, impulsive, calm..."
+                      rows={2}
+                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                    />
                   </div>
-                  <p className="text-sm text-muted-foreground">Running P&L chart coming soon</p>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+
+                {/* Quick Tags Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-500" />
+                    <h3 className="text-sm font-semibold text-foreground">Quick Tags</h3>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {["A+ Setup", "Followed Rules", "Emotional Entry", "FOMO", "Revenge Trade", "Patience Paid", "Early Exit", "Perfect Execution"].map((tag) => {
+                      const isActive = journalData.tags?.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => {
+                            setJournalData(prev => ({
+                              ...prev,
+                              tags: isActive 
+                                ? (prev.tags || []).filter(t => t !== tag)
+                                : [...(prev.tags || []), tag]
+                            }));
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+                            isActive
+                              ? "bg-primary/20 text-primary border border-primary/30"
+                              : "bg-white/[0.03] text-muted-foreground border border-white/[0.08] hover:bg-white/[0.06] hover:text-foreground"
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Daily Notes Section */}
+                <div className="space-y-3 pb-6">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-blue-500" />
+                    <h3 className="text-sm font-semibold text-foreground">Daily Notes</h3>
+                  </div>
+                  
+                  <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] focus-within:border-blue-500/30 transition-colors">
+                    <textarea
+                      value={journalData.dailyNotes || ""}
+                      onChange={(e) => setJournalData((prev) => ({ ...prev, dailyNotes: e.target.value }))}
+                      placeholder="General notes about your trading day, market conditions, mindset..."
+                      rows={3}
+                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                    />
+                  </div>
                 </div>
               </div>
             )}
+
           </div>
         </div>
 
-        {/* Right Panel - Stats/Strategy/Executions/Attachments */}
+        {/* Right Panel - Unified Stats & Strategy */}
         <motion.div
           initial={false}
-          animate={{ width: isRightPanelCollapsed ? 0 : 300 }}
-          className="hidden lg:block flex-shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-card to-background overflow-hidden"
+          animate={{ width: isRightPanelCollapsed ? 0 : 280 }}
+          className="hidden lg:block flex-shrink-0 border-l border-white/[0.06] bg-gradient-to-b from-card/80 to-background overflow-hidden"
         >
-          <div className="w-[300px] h-full flex flex-col">
-            {/* Right Panel Tabs */}
-            <div className="flex-shrink-0 p-4 border-b border-white/[0.06]">
-              <div className="flex gap-0.5 p-1 bg-white/[0.03] rounded-xl border border-white/[0.08]">
-                {[
-                  { key: "stats", label: "Stats", icon: BarChart2 },
-                  { key: "strategy", label: "Strategy", icon: Target },
-                  { key: "executions", label: "Executions", icon: Activity },
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setMainTab(tab.key as typeof mainTab)}
-                    className={`relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                      mainTab === tab.key
-                        ? "bg-white/[0.08] text-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
-                    }`}
-                  >
-                    <tab.icon className={`w-3.5 h-3.5 ${mainTab === tab.key ? 'text-primary' : ''}`} />
-                    <span className="hidden xl:inline">{tab.label}</span>
-                  </button>
-                ))}
+          <div className="w-[280px] h-full flex flex-col">
+            {/* Right Panel Header */}
+            <div className="flex-shrink-0 px-4 py-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Trade Details</h3>
               </div>
             </div>
 
-            {/* Right Panel Content */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-3">
-              {/* Stats Tab */}
-              {mainTab === "stats" && selectedTrade && metrics && (
+            {/* Right Panel Content - Single Scrollable View */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
+              {selectedTrade && metrics && (
                 <>
-                  {/* Hero P&L Card */}
-                  <div className={`relative p-3.5 rounded-xl border overflow-hidden ${isProfit ? "bg-gradient-to-br from-profit/10 via-profit/5 to-transparent border-profit/25" : "bg-gradient-to-br from-loss/10 via-loss/5 to-transparent border-loss/25"}`}>
-                    <div className={`absolute top-0 left-0 right-0 h-[1px] ${isProfit ? 'bg-gradient-to-r from-transparent via-profit/50 to-transparent' : 'bg-gradient-to-r from-transparent via-loss/50 to-transparent'}`} />
-                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Net P&L</span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className={`text-2xl font-bold tabular-nums tracking-tight ${isProfit ? "text-profit" : "text-loss"}`}>
-                        {isProfit ? "+" : ""}{formatCompactCurrency(selectedTrade.Profit * exchangeRate, currency)}
-                      </span>
+                  {/* Timing */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Entry</span>
+                      <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.EntryTime || selectedTrade.time)}</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Exit</span>
+                      <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.ExitTime)}</p>
                     </div>
                   </div>
 
-                  {/* Timing Section */}
+                  {/* Position & Performance Grid */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Side</span>
+                      <p className={`text-xs font-bold mt-0.5 ${
+                        (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
+                          ? "text-profit" : "text-loss"
+                      }`}>
+                        {selectedTrade.Type || selectedTrade.side || "--"}
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Size</span>
+                      <p className="text-xs font-bold text-foreground mt-0.5">{selectedTrade.quantity || selectedTrade.Size || "--"}</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Pips</span>
+                      <p className="text-xs font-bold text-primary mt-0.5">{metrics.pips}</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">ROI</span>
+                      <p className={`text-xs font-bold mt-0.5 ${metrics.netROI >= 0 ? "text-profit" : "text-loss"}`}>
+                        {metrics.netROI > 0 ? "+" : ""}{isFinite(metrics.netROI) ? metrics.netROI.toFixed(1) : "0"}%
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Costs (Compact) */}
+                  <div className="flex gap-2 text-[10px]">
+                    <span className="text-muted-foreground/50">Fees: <span className="text-foreground">{formatCompactCurrency((selectedTrade.fees || 0) * exchangeRate, currency)}</span></span>
+                    <span className="text-muted-foreground/50">Swap: <span className="text-foreground">{formatCompactCurrency((selectedTrade.swap || 0) * exchangeRate, currency)}</span></span>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-white/[0.06]" />
+
+                  {/* Strategy Section */}
                   <div className="space-y-2">
-                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Timing</span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Entry</span>
-                        <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.EntryTime || selectedTrade.time)}</p>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Exit</span>
-                        <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.ExitTime)}</p>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Target className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider font-medium">Strategy</span>
                     </div>
-                  </div>
-
-                  {/* Position Section */}
-                  <div className="space-y-2">
-                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Position</span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Side</span>
-                        <p className={`text-xs font-bold mt-1 ${
-                          (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
-                            ? "text-profit"
-                            : "text-loss"
-                        }`}>
-                          {selectedTrade.Type || selectedTrade.side || "--"}
-                        </p>
-                      </div>
-                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Quantity</span>
-                        <p className="text-xs font-bold text-foreground mt-1">{selectedTrade.quantity || selectedTrade.Size || "--"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Performance Section */}
-                  <div className="space-y-2">
-                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Performance</span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Pips</span>
-                        <p className="text-xs font-bold text-primary mt-1">{metrics.pips}</p>
-                      </div>
-                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Return/Pip</span>
-                        <p className="text-xs font-bold text-foreground mt-1">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      {[
-                        { label: "Net ROI", value: `${metrics.netROI > 0 ? "+" : ""}${isFinite(metrics.netROI) ? metrics.netROI.toFixed(2) : "0"}%`, color: metrics.netROI >= 0 ? "text-profit" : "text-loss" },
-                        { label: "Gross P&L", value: formatCompactCurrency(metrics.grossPnL * exchangeRate, currency), color: metrics.grossPnL >= 0 ? "text-profit" : "text-loss" },
-                      ].map((item) => (
-                        <div key={item.label} className="flex items-center justify-between py-2 px-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
-                          <span className="text-[10px] text-muted-foreground/70">{item.label}</span>
-                          <span className={`text-xs font-bold tabular-nums ${item.color || "text-foreground"}`}>{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Costs Section */}
-                  <div className="space-y-2">
-                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Costs</span>
-                    <div className="space-y-1">
-                      {[
-                        { label: "Fees", value: formatCompactCurrency((selectedTrade.fees || 0) * exchangeRate, currency) },
-                        { label: "Swap", value: formatCompactCurrency((selectedTrade.swap || 0) * exchangeRate, currency) },
-                      ].map((item) => (
-                        <div key={item.label} className="flex items-center justify-between py-2 px-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
-                          <span className="text-[10px] text-muted-foreground/70">{item.label}</span>
-                          <span className="text-xs font-bold tabular-nums text-foreground">{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Strategy Badge */}
-                  {selectedTrade.strategy && selectedTrade.strategy !== "Select" && (
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20">
-                      <span className="text-[10px] text-primary uppercase tracking-wider font-medium">Strategy</span>
-                      <p className="text-sm font-semibold text-primary mt-1">{selectedTrade.strategy}</p>
-                    </div>
-                  )}
-
-                  {/* Trade Rating */}
-                  <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                    <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider block mb-2">Trade Rating</span>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => handleRatingChange(star)}
-                          className="transition-all duration-200 hover:scale-110 active:scale-95"
-                        >
-                          <Star
-                            className={`w-5 h-5 transition-colors duration-200 ${
-                              (journalData.tradeRating || 0) >= star
-                                ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.4)]"
-                                : "text-white/10 hover:text-white/20"
-                            }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Sentiment */}
-                  <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                    <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider block mb-2">How did this trade feel?</span>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {[
-                        { key: "poor", label: "Poor", icon: TrendingDown, color: "loss" },
-                        { key: "okay", label: "Okay", icon: Activity, color: "amber-500" },
-                        { key: "great", label: "Great", icon: TrendingUp, color: "profit" },
-                      ].map((s) => {
-                        const isSelected = journalData.sentiment === s.key;
-                        return (
-                          <button
-                            key={s.key}
-                            onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
-                            className={`p-2 rounded-lg border transition-all duration-200 ${
-                              isSelected
-                                ? s.color === "profit" 
-                                  ? "bg-profit/15 border-profit/40 text-profit shadow-sm shadow-profit/10"
-                                  : s.color === "loss"
-                                  ? "bg-loss/15 border-loss/40 text-loss shadow-sm shadow-loss/10"
-                                  : "bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-sm shadow-amber-500/10"
-                                : "bg-white/[0.02] border-white/[0.06] text-muted-foreground/70 hover:bg-white/[0.05] hover:border-white/[0.12] hover:text-foreground"
-                            }`}
-                          >
-                            <s.icon className={`w-4 h-4 mx-auto mb-1 ${isSelected ? '' : 'opacity-60'}`} />
-                            <span className="text-[10px] font-semibold">{s.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Strategy Tab */}
-              {mainTab === "strategy" && selectedTrade && (
-                <>
-                  {/* Strategy Selector */}
-                  <div className="space-y-2">
-                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Assign Strategy</span>
                     <select
                       value={selectedTrade.strategy || ""}
                       onChange={(e) => {
@@ -1393,140 +1072,52 @@ const DailyJournal = () => {
                           setRulesCompliance({});
                         }
                       }}
-                      className="w-full px-3 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-sm text-foreground focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all duration-200 cursor-pointer"
+                      className="w-full px-2.5 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-xs text-foreground focus:outline-none focus:border-primary/40 transition-all cursor-pointer"
                     >
-                      <option value="" className="bg-card text-muted-foreground">Select a strategy...</option>
+                      <option value="" className="bg-card text-muted-foreground">Select strategy...</option>
                       {existingStrategies.map((strategy) => (
                         <option key={strategy} value={strategy} className="bg-card text-foreground">
                           {strategy}
                         </option>
                       ))}
                     </select>
-                    {existingStrategies.length === 0 && (
-                      <p className="text-[10px] text-muted-foreground/60 px-1">
-                        No strategies found. Create strategies in Settings first.
-                      </p>
-                    )}
                   </div>
 
-                  {selectedTrade.strategy && selectedTrade.strategy !== "Select" && selectedTrade.strategy !== "" ? (
-                    <>
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Target className="w-4 h-4 text-primary" />
-                          <span className="text-xs text-primary uppercase tracking-wider font-medium">Active Strategy</span>
-                        </div>
-                        <p className="text-lg font-semibold text-foreground">{selectedTrade.strategy}</p>
+                  {/* Strategy Rules Compliance - Show only if strategy selected */}
+                  {strategyRules.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider px-0.5">Rules Compliance</span>
+                      <div className="space-y-1">
+                        {strategyRules.slice(0, 4).map((rule, idx) => (
+                          <div 
+                            key={idx} 
+                            className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors cursor-pointer"
+                            onClick={() => {
+                              setRulesCompliance(prev => ({
+                                ...prev,
+                                [rule]: prev[rule] === true ? false : prev[rule] === false ? undefined : true
+                              }));
+                            }}
+                          >
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
+                              rulesCompliance[rule] === true 
+                                ? "bg-profit/20 text-profit border border-profit/30"
+                                : rulesCompliance[rule] === false 
+                                ? "bg-loss/20 text-loss border border-loss/30"
+                                : "bg-white/[0.05] border border-white/[0.1]"
+                            }`}>
+                              {rulesCompliance[rule] === true && <Check className="w-3 h-3" />}
+                              {rulesCompliance[rule] === false && <X className="w-3 h-3" />}
+                            </div>
+                            <span className="text-[10px] text-foreground truncate">{rule}</span>
+                          </div>
+                        ))}
+                        {strategyRules.length > 4 && (
+                          <p className="text-[9px] text-muted-foreground/50 px-1">+{strategyRules.length - 4} more rules</p>
+                        )}
                       </div>
-
-                      {loadingRules ? (
-                        <div className="p-8 text-center">
-                          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                          <span className="text-sm text-muted-foreground">Loading rules...</span>
-                        </div>
-                      ) : strategyRules.length > 0 ? (
-                        <div className="space-y-2">
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider px-1">Rules Compliance</span>
-                          {strategyRules.map((rule) => (
-                            <button
-                              key={rule.id}
-                              onClick={() => toggleRuleCompliance(rule.id)}
-                              className={`w-full flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left ${
-                                rulesCompliance[rule.id]
-                                  ? "bg-profit/10 border-profit/20"
-                                  : "bg-muted/20 border-border hover:border-primary/30"
-                              }`}
-                            >
-                              <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                                rulesCompliance[rule.id] ? "bg-profit" : "bg-white/10"
-                              }`}>
-                                {rulesCompliance[rule.id] && <Check className="w-3 h-3 text-white" />}
-                              </div>
-                              <span className={`text-sm ${rulesCompliance[rule.id] ? "text-foreground" : "text-muted-foreground"}`}>
-                                {rule.text}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="p-6 text-center rounded-xl bg-muted/20 border border-border">
-                          <ListChecks className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">No rules defined for this strategy</p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="p-6 text-center rounded-xl bg-muted/20 border border-border">
-                      <Target className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground/70">Select a strategy above to track rule compliance</p>
                     </div>
                   )}
-                </>
-              )}
-
-              {/* Executions Tab */}
-              {mainTab === "executions" && selectedTrade && (
-                <>
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-muted/30 to-transparent border border-border">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Execution Summary</span>
-                    <p className="text-xl font-semibold text-foreground mt-2">
-                      {selectedTrade.quantity || 1} {(selectedTrade.quantity || 1) === 1 ? "Unit" : "Units"}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-xl bg-profit/5 border border-profit/10">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-2.5 h-2.5 rounded-full bg-profit" />
-                        <span className="text-sm font-medium text-profit">Entry</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Time</span>
-                          <span className="text-foreground font-medium">{formatTime(selectedTrade.EntryTime)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Price</span>
-                          <span className="text-foreground font-medium">{selectedTrade.entryPrice || "--"}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-loss/5 border border-loss/10">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-2.5 h-2.5 rounded-full bg-loss" />
-                        <span className="text-sm font-medium text-loss">Exit</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Time</span>
-                          <span className="text-foreground font-medium">{formatTime(selectedTrade.ExitTime)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Price</span>
-                          <span className="text-foreground font-medium">{selectedTrade.exitPrice || "--"}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-xl bg-muted/20 border border-border">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Duration</span>
-                        <span className="text-foreground font-medium">
-                          {selectedTrade.EntryTime && selectedTrade.ExitTime
-                            ? (() => {
-                                const [eh, em] = selectedTrade.EntryTime.split(":").map(Number);
-                                const [xh, xm] = selectedTrade.ExitTime.split(":").map(Number);
-                                const mins = (xh * 60 + xm) - (eh * 60 + em);
-                                const hours = Math.floor(mins / 60);
-                                const remaining = mins % 60;
-                                return hours > 0 ? `${hours}h ${remaining}m` : `${mins}m`;
-                              })()
-                            : "--"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
                 </>
               )}
 
@@ -1537,7 +1128,7 @@ const DailyJournal = () => {
         {/* Toggle Right Panel - Desktop Only */}
         <motion.button
           initial={false}
-          animate={{ right: isRightPanelCollapsed ? 0 : 340 }}
+          animate={{ right: isRightPanelCollapsed ? 0 : 280 }}
           onClick={() => setIsRightPanelCollapsed(!isRightPanelCollapsed)}
           className="hidden lg:flex absolute top-1/2 -translate-y-1/2 z-10 p-1.5 bg-card border border-border rounded-l-lg hover:bg-muted/50 transition-colors items-center justify-center"
         >
