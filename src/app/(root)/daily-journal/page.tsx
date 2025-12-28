@@ -621,10 +621,11 @@ const DailyJournal = () => {
             </div>
 
             {/* Trade List */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1">
+            <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1.5">
               {filteredTrades.map((trade, idx) => {
                 const isSelected = (trade.id || trade._id) === (selectedTrade?.id || selectedTrade?._id);
                 const tradeProfit = trade.Profit >= 0;
+                const hasJournalData = trade.jrData?.widw || trade.jrData?.tradeRating;
                 return (
                   <motion.button
                     key={trade.id || trade._id || idx}
@@ -632,35 +633,48 @@ const DailyJournal = () => {
                       setSelectedTrade(trade);
                       setSelectedTradeIndex(idx);
                     }}
-                    className={`w-full p-3 text-left rounded-xl transition-all duration-200 ${
+                    className={`w-full p-2.5 text-left rounded-xl transition-all duration-200 group ${
                       isSelected 
                         ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border border-primary/30 shadow-lg shadow-primary/5" 
-                        : "hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06]"
+                        : "hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08]"
                     }`}
-                    whileHover={{ scale: isSelected ? 1 : 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={{ scale: isSelected ? 1 : 1.005 }}
+                    whileTap={{ scale: 0.995 }}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`relative ${isSelected ? 'ring-2 ring-primary/30 ring-offset-1 ring-offset-background rounded-lg' : ''}`}>
-                          <SymbolLogo symbol={trade.Item || trade.symbol || ""} size="sm" />
+                    <div className="flex items-center gap-2.5">
+                      {/* Symbol Logo */}
+                      <SymbolLogo 
+                        symbol={trade.Item || trade.symbol || ""} 
+                        size="sm" 
+                        isProfit={tradeProfit}
+                        isSelected={isSelected}
+                      />
+                      
+                      {/* Trade Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`font-semibold text-sm truncate ${isSelected ? 'text-foreground' : 'text-foreground/90'}`}>
+                            {trade.Item || trade.symbol}
+                          </span>
+                          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ${tradeProfit ? "text-profit" : "text-loss"}`}>
+                            {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit * exchangeRate, currency)}
+                          </span>
                         </div>
-                        <div>
-                          <span className={`font-semibold text-sm ${isSelected ? 'text-foreground' : 'text-foreground/90'}`}>{trade.Item || trade.symbol}</span>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[10px] text-muted-foreground/70">{formatDate(trade.date)}</span>
-                            {trade.strategy && (
-                              <>
-                                <span className="text-muted-foreground/30">·</span>
-                                <span className="text-[10px] text-primary/70">{trade.strategy}</span>
-                              </>
-                            )}
-                          </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-muted-foreground/60">{formatDate(trade.date)}</span>
+                          {trade.strategy && trade.strategy !== "Select" && (
+                            <>
+                              <span className="text-muted-foreground/30">·</span>
+                              <span className="text-[10px] text-primary/60 truncate max-w-[80px]">{trade.strategy}</span>
+                            </>
+                          )}
+                          {hasJournalData && (
+                            <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium">
+                              Journaled
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <span className={`text-sm font-bold tabular-nums ${tradeProfit ? "text-profit" : "text-loss"}`}>
-                        {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit * exchangeRate, currency)}
-                      </span>
                     </div>
                   </motion.button>
                 );
