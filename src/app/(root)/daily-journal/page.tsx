@@ -52,6 +52,7 @@ import {
   PanelRightClose,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
+import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import { formatCompactNumber } from "@/utils/formatNumber";
 import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
 import { SymbolLogo } from "@/components/ui/SymbolLogo";
@@ -144,7 +145,8 @@ const getTemplateColor = (color: string) => {
 };
 
 const DailyJournal = () => {
-  const { selectedAccounts, setAccounts, profileData } = useAccountDetails();
+  const { setAccounts, profileData } = useAccountDetails();
+  const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
   const tokenn = Cookies.get("ProJournX") || "";
 
