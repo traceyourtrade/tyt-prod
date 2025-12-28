@@ -327,6 +327,8 @@ export default function FullscreenBacktesting({
   const hasLoadedLayoutRef = useRef(false);
   const hasScrolledToStartRef = useRef(false);
   const replayTimestampRef = useRef<number>(0); // Tracks replay position as timestamp for consistent drawing anchors
+  const replayIntervalRef = useRef<string>(initialInterval); // Tracks which interval the replayTimestamp was recorded from
+  const pendingTimeframeSwitchRef = useRef<{ fromInterval: string; fromTimestamp: number } | null>(null); // Captures source interval at switch initiation
   const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
   const favoriteDrawingToolsRef = useRef<string[]>([]); // Stores favorite drawing tools
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
@@ -346,19 +348,38 @@ export default function FullscreenBacktesting({
   const tradeLinesRef = useRef<Record<string, { entry: any; tp: any; sl: any }>>({});
   const openTradesRef = useRef<any[]>([]);
   
-  const setCurrentBarIndex = (newIndex: number, bars?: any[], preserveTimestamp: boolean = false) => {
+  // Options for setCurrentBarIndex
+  type SetBarIndexOptions = {
+    preserveTimestamp?: boolean;
+    // During a timeframe switch, pass the source interval to keep replayIntervalRef stable
+    // until the switch is finalized by the caller
+    pendingSwitch?: { fromInterval: string };
+  };
+  
+  const setCurrentBarIndex = (newIndex: number, bars?: any[], options: SetBarIndexOptions | boolean = false) => {
+    // Handle legacy boolean signature for backward compatibility
+    const opts: SetBarIndexOptions = typeof options === 'boolean' 
+      ? { preserveTimestamp: options }
+      : options;
+    const { preserveTimestamp = false, pendingSwitch } = opts;
+    
     currentBarIndexRef.current = newIndex;
     setCurrentBarIndexState(newIndex);
     
     // During timeframe switches, preserve the exact replay timestamp to prevent drift
-    // Only update timestamp during normal playback/seek operations
     if (!preserveTimestamp) {
+      // Normal playback/seek: update both timestamp and interval
       const barsToUse = bars || barsCacheRef.current[currentIntervalRef.current] || allBars;
       if (barsToUse && barsToUse[newIndex]) {
         replayTimestampRef.current = barsToUse[newIndex].time;
+        replayIntervalRef.current = currentIntervalRef.current;
       }
+    } else if (pendingSwitch) {
+      // Timeframe switch in progress: keep replayIntervalRef on the SOURCE interval
+      // This ensures async callbacks don't corrupt the interval before switch completes
+      replayIntervalRef.current = pendingSwitch.fromInterval;
     }
-    // When preserveTimestamp is true, keep the existing replayTimestampRef value
+    // When preserveTimestamp is true with no pendingSwitch, keep existing refs unchanged
   };
   
   const [isLoading, setIsLoading] = useState(true);
@@ -571,9 +592,14 @@ export default function FullscreenBacktesting({
     }
     setIsPlaying(false);
     
+    // CRITICAL: Capture source interval and timestamp at switch initiation
+    // This ensures stable values throughout the switch process, even if async callbacks fire
+    const sourceInterval = currentIntervalRef.current;
+    const sourceTimestamp = replayTimestampRef.current;
+    pendingTimeframeSwitchRef.current = { fromInterval: sourceInterval, fromTimestamp: sourceTimestamp };
+    
     // Use replayTimestamp for consistent drawing anchors across resolutions
-    // This is already set whenever currentBarIndex changes
-    const currentReplayTs = replayTimestampRef.current;
+    const currentReplayTs = sourceTimestamp;
     
     // Update interval ref immediately for cleanup guards
     currentIntervalRef.current = tf;
@@ -649,20 +675,52 @@ export default function FullscreenBacktesting({
       setShowTimeframeDropdown(false);
       
       // Find the new bar index based on replay timestamp
+      // CRITICAL: The replay timestamp is the bar's OPEN time, but we're viewing its CLOSE price.
+      // When switching to a smaller timeframe, we need to find the bar whose CLOSE represents
+      // the same moment in time (end of the original bar's period).
+      // Example: 1H bar at 14:00 shows close at 14:59:59 -> find 15min bar at 14:45 (closes at 15:00)
       let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
-      if (currentReplayTs > 0) {
-        console.log('Timeframe switch: Finding bar for timestamp:', new Date(currentReplayTs).toISOString());
+      if (currentReplayTs > 0 && pendingTimeframeSwitchRef.current) {
+        // Use the stable source interval captured at switch initiation
+        const { fromInterval } = pendingTimeframeSwitchRef.current;
+        const oldIntervalMinutes = intervalToMinutes(fromInterval);
+        const newIntervalMinutes = intervalToMinutes(tf);
+        
+        // Calculate the effective end time of the current bar (open + interval duration)
+        // Subtract 1ms to stay within the bar's period
+        const barEndTime = currentReplayTs + (oldIntervalMinutes * 60 * 1000) - 1;
+        
+        console.log('Timeframe switch (fast path): Finding bar for effective end time:', new Date(barEndTime).toISOString());
+        console.log('Old interval:', fromInterval, '(', oldIntervalMinutes, 'min) -> New interval:', tf, '(', newIntervalMinutes, 'min)');
+        console.log('Bar open:', new Date(currentReplayTs).toISOString(), '-> Bar effective end:', new Date(barEndTime).toISOString());
         console.log('Cached bars range:', new Date(cachedBars[0].time).toISOString(), 'to', new Date(cachedBars[cachedBars.length - 1].time).toISOString());
+        
+        // Find the bar in new timeframe that contains this end time
         for (let i = cachedBars.length - 1; i >= 0; i--) {
-          if (cachedBars[i].time <= currentReplayTs) {
+          const barTime = cachedBars[i].time;
+          const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
+          // The bar contains barEndTime if barTime <= barEndTime < barEndMs
+          if (barTime <= barEndTime && barEndTime < barEndMs) {
             newIndex = i;
             console.log('Found matching bar at index:', newIndex, 'with time:', new Date(cachedBars[newIndex].time).toISOString(), 'price:', cachedBars[newIndex].close);
             break;
           }
         }
       }
-      // Preserve timestamp during timeframe switch to prevent drift
-      setCurrentBarIndex(newIndex, cachedBars, true);
+      // Preserve timestamp during timeframe switch, passing pending switch info
+      // to keep replayIntervalRef stable until we finalize
+      const pendingSwitch = pendingTimeframeSwitchRef.current;
+      setCurrentBarIndex(newIndex, cachedBars, { 
+        preserveTimestamp: true, 
+        pendingSwitch: pendingSwitch ? { fromInterval: pendingSwitch.fromInterval } : undefined 
+      });
+      // CRITICAL: After switch completes, update both refs to the NEW state
+      // This ensures future switches start from the correct position
+      if (cachedBars[newIndex]) {
+        replayTimestampRef.current = cachedBars[newIndex].time;
+      }
+      replayIntervalRef.current = tf;
+      pendingTimeframeSwitchRef.current = null;
       
       // Use setSymbol + setResolution to force fresh subscription
       // setSymbol with suffix ensures TradingView triggers subscribeBars for new resolution
@@ -1345,15 +1403,52 @@ export default function FullscreenBacktesting({
           targetTimestampRef.current = null;
           setAllBars(cachedBars);
           let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
-          // Find the last bar whose time <= target timestamp
-          for (let i = cachedBars.length - 1; i >= 0; i--) {
-            if (cachedBars[i].time <= replayTs) {
-              newIndex = i;
-              break;
+          
+          // Check if this is a timeframe switch (pending switch ref is set)
+          const pendingSwitch = pendingTimeframeSwitchRef.current;
+          if (pendingSwitch) {
+            // CRITICAL: Use bar end time logic for correct position finding across timeframes
+            // Use the stable source interval captured at switch initiation
+            const { fromInterval, fromTimestamp } = pendingSwitch;
+            const oldIntervalMinutes = intervalToMinutes(fromInterval);
+            const newIntervalMinutes = intervalToMinutes(currentInterval);
+            const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
+            
+            console.log('Cached path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
+            console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
+            
+            // Find the bar in new timeframe that contains this end time
+            for (let i = cachedBars.length - 1; i >= 0; i--) {
+              const barTime = cachedBars[i].time;
+              const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
+              if (barTime <= barEndTime && barEndTime < barEndMs) {
+                newIndex = i;
+                break;
+              }
+            }
+          } else {
+            // Non-switch path: simple bar time matching
+            for (let i = cachedBars.length - 1; i >= 0; i--) {
+              if (cachedBars[i].time <= replayTs) {
+                newIndex = i;
+                break;
+              }
             }
           }
-          const shouldPreserveTimestamp = Object.keys(barsCacheRef.current).length > 0;
-          setCurrentBarIndex(newIndex, cachedBars, shouldPreserveTimestamp);
+          // Use options object to pass pending switch info for stable replayIntervalRef
+          setCurrentBarIndex(newIndex, cachedBars, { 
+            preserveTimestamp: Object.keys(barsCacheRef.current).length > 0,
+            pendingSwitch: pendingSwitch ? { fromInterval: pendingSwitch.fromInterval } : undefined
+          });
+          // CRITICAL: After switch completes, update both refs to the NEW state
+          // This ensures future switches start from the correct position
+          if (pendingSwitch) {
+            if (cachedBars[newIndex]) {
+              replayTimestampRef.current = cachedBars[newIndex].time;
+            }
+            replayIntervalRef.current = currentInterval;
+            pendingTimeframeSwitchRef.current = null;
+          }
           return;
         }
       } else {
@@ -1463,23 +1558,45 @@ export default function FullscreenBacktesting({
           setAllBars(bars);
           
           let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
-          // Use replayTimestamp if available (timeframe switch), otherwise use saved session pointer
-          // Only use progressPointer if session has actual trades (user made progress worth resuming)
+          // Check if this is a timeframe switch (pending switch ref is set)
+          const pendingSwitch = pendingTimeframeSwitchRef.current;
           const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
-          const targetTs = replayTimestampRef.current > 0 
-            ? replayTimestampRef.current 
-            : (savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null));
+          const targetTs = pendingSwitch?.fromTimestamp || 
+            (savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null));
+          
           if (targetTs) {
-            // Find the last bar whose time <= target timestamp for consistent positioning
-            let foundIndex = -1;
-            for (let i = bars.length - 1; i >= 0; i--) {
-              if (bars[i].time <= targetTs) {
-                foundIndex = i;
-                break;
+            if (pendingSwitch) {
+              // CRITICAL: Use bar end time logic for correct position finding across timeframes
+              // Use the stable source interval captured at switch initiation
+              const { fromInterval, fromTimestamp } = pendingSwitch;
+              const oldIntervalMinutes = intervalToMinutes(fromInterval);
+              const newIntervalMinutes = intervalToMinutes(currentInterval);
+              const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
+              
+              console.log('Slow path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
+              console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
+              
+              // Find the bar in new timeframe that contains this end time
+              for (let i = bars.length - 1; i >= 0; i--) {
+                const barTime = bars[i].time;
+                const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
+                if (barTime <= barEndTime && barEndTime < barEndMs) {
+                  newIndex = i;
+                  break;
+                }
               }
-            }
-            if (foundIndex >= 0) {
-              newIndex = foundIndex;
+            } else {
+              // Non-timeframe switch: use simple bar open time matching
+              let foundIndex = -1;
+              for (let i = bars.length - 1; i >= 0; i--) {
+                if (bars[i].time <= targetTs) {
+                  foundIndex = i;
+                  break;
+                }
+              }
+              if (foundIndex >= 0) {
+                newIndex = foundIndex;
+              }
             }
           } else {
             // For fresh sessions with no saved progress, start at the 'from' date
@@ -1493,9 +1610,21 @@ export default function FullscreenBacktesting({
             }
           }
           // Preserve timestamp during resolution changes (not first load)
-          // Only preserve if we already have bars cached (not first load) and have a valid timestamp
+          // Use options object to pass pending switch info for stable replayIntervalRef
           const shouldPreserveTimestamp = replayTimestampRef.current > 0 && Object.keys(barsCacheRef.current).length > 1;
-          setCurrentBarIndex(newIndex, bars, shouldPreserveTimestamp);
+          setCurrentBarIndex(newIndex, bars, { 
+            preserveTimestamp: shouldPreserveTimestamp,
+            pendingSwitch: pendingSwitch ? { fromInterval: pendingSwitch.fromInterval } : undefined
+          });
+          // CRITICAL: After switch completes, update both refs to the NEW state
+          // This ensures future switches start from the correct position
+          if (pendingSwitch) {
+            if (bars[newIndex]) {
+              replayTimestampRef.current = bars[newIndex].time;
+            }
+            replayIntervalRef.current = currentInterval;
+            pendingTimeframeSwitchRef.current = null;
+          }
           setIsPlaying(false);
           
           // Trigger any pending getBars callbacks for this resolution
