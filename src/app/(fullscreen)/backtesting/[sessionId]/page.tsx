@@ -661,13 +661,12 @@ export default function FullscreenBacktesting({
       // Preserve timestamp during timeframe switch to prevent drift
       setCurrentBarIndex(newIndex, cachedBars, true);
       
-      // Use TradingView's setSymbol + setResolution to force fresh subscription
-      // This ensures we get a new onRealtimeCallback for the new resolution
+      // Use setSymbol + setResolution to force fresh subscription
+      // setSymbol with suffix ensures TradingView triggers subscribeBars for new resolution
+      // Note: This causes a brief visual reload of the widget, but is necessary for callbacks
       try {
         const chart = tvWidgetRef.current.activeChart();
         const baseSymbol = sessionData?.symbol || 'EUR/USD';
-        // Append resolution suffix to force TradingView to treat this as a new symbol
-        // This triggers a fresh subscription cycle (resolveSymbol -> getBars -> subscribeBars)
         const symbolWithSuffix = `${baseSymbol}#tf_${tf}`;
         console.log('Switching to symbol with resolution suffix:', symbolWithSuffix);
         
@@ -706,7 +705,7 @@ export default function FullscreenBacktesting({
                 console.warn('Error restoring drawings or setting visible range:', e);
               }
               isChangingResolutionRef.current = false;
-            }, 500); // Small delay to ensure chart has finished loading
+            }, 300);
           });
         });
       } catch (e) {
@@ -1523,6 +1522,7 @@ export default function FullscreenBacktesting({
           }
           
           // If widget exists and this isn't the first load, update the resolution
+          // Use setSymbol + setResolution to force fresh subscription
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
             try {
               const chart = tvWidgetRef.current.activeChart();
@@ -1532,26 +1532,41 @@ export default function FullscreenBacktesting({
               
               // Add small delay to ensure cache is fully synchronized before TradingView queries
               await new Promise(resolve => setTimeout(resolve, 50));
-              // Force fresh subscription by changing symbol
+              
               chart.setSymbol(symbolWithSuffix, () => {
                 chart.setResolution(currentInterval, () => {
-                  // Restore drawings if they were lost during resolution change
+                  // Restore drawings and set visible range after resolution change
                   setTimeout(() => {
                     try {
-                      const chart = tvWidgetRef.current?.activeChart();
-                      if (chart && pendingDrawingsRef.current.length > 0) {
-                        const currentShapes = DrawingManager.getShapeCount(chart);
-                        if (currentShapes === 0) {
-                          console.log('Drawings lost during resolution change (slow path), restoring', pendingDrawingsRef.current.length, 'drawings');
-                          DrawingManager.restoreDrawings(chart, pendingDrawingsRef.current);
+                      const innerChart = tvWidgetRef.current?.activeChart();
+                      if (innerChart) {
+                        // Restore drawings if they were lost
+                        if (pendingDrawingsRef.current.length > 0) {
+                          const currentShapes = DrawingManager.getShapeCount(innerChart);
+                          if (currentShapes === 0) {
+                            console.log('Drawings lost during resolution change (slow path), restoring', pendingDrawingsRef.current.length, 'drawings');
+                            DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                          }
+                          pendingDrawingsRef.current = [];
                         }
-                        pendingDrawingsRef.current = [];
+                        
+                        // Set visible range centered on replay timestamp
+                        const replayTs = replayTimestampRef.current;
+                        if (replayTs > 0) {
+                          const resolutionMinutes = intervalToMinutes(currentInterval);
+                          const barsToShow = 50;
+                          const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
+                          const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
+                          const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+                          console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
+                          innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        }
                       }
                     } catch (e) {
-                      console.warn('Error checking/restoring drawings:', e);
+                      console.warn('Error restoring drawings or setting visible range:', e);
                     }
                     isChangingResolutionRef.current = false;
-                  }, 500);
+                  }, 300);
                 });
               });
             } catch (e) {
