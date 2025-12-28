@@ -48,5 +48,19 @@ const affiliateSchema = new Schema<IAffiliate>({
 
 export const getAffiliateModel = async (): Promise<Model<IAffiliate>> => {
   const conn = await connectMainDB();
-  return conn.models.Affiliate || conn.model<IAffiliate>('Affiliate', affiliateSchema);
+  const model = conn.models.Affiliate || conn.model<IAffiliate>('Affiliate', affiliateSchema);
+  
+  // Drop stale promoCode index if it exists (from older schema version)
+  try {
+    const indexes = await model.collection.indexes();
+    const hasPromoCodeIndex = indexes.some((idx: any) => idx.name === 'promoCode_1');
+    if (hasPromoCodeIndex) {
+      console.log('Dropping stale promoCode index from affiliates collection');
+      await model.collection.dropIndex('promoCode_1');
+    }
+  } catch (e) {
+    // Index may not exist, ignore error
+  }
+  
+  return model;
 };
