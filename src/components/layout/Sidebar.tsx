@@ -478,19 +478,45 @@ export function Sidebar({
               {subscriptionStatus?.isSubscribed ? (
                 <motion.div 
                   className={cn(
-                    "relative rounded-xl overflow-hidden",
+                    "relative rounded-xl overflow-hidden group cursor-default",
                     collapsed && "p-1"
                   )}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/20 via-[#4EBF94]/5 to-transparent" />
-                  <div className="absolute inset-0 border border-[#4EBF94]/20 rounded-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-600/20" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 via-transparent to-yellow-500/10" />
+                  <div className="absolute inset-0 border border-amber-400/30 rounded-xl" />
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-300/20 to-transparent"
+                    animate={{ 
+                      x: ["-100%", "100%"],
+                    }}
+                    transition={{ 
+                      duration: 3,
+                      repeat: Infinity,
+                      repeatDelay: 2,
+                      ease: "easeInOut"
+                    }}
+                  />
                   <div className={cn(
-                    "relative flex items-center gap-2 p-2.5",
-                    collapsed && "justify-center"
+                    "relative flex items-center gap-2.5 p-3",
+                    collapsed && "justify-center p-2"
                   )}>
-                    <Crown className="h-4 w-4 text-[#4EBF94] flex-shrink-0" />
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-amber-400/30 rounded-lg blur-md" />
+                      <div className="relative w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                        <Crown className="h-4 w-4 text-amber-950" />
+                      </div>
+                    </div>
                     {!collapsed && (
-                      <span className="text-[11px] font-medium text-[#4EBF94]">Pro Member</span>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent">
+                          PRO MEMBER
+                        </span>
+                        <span className="text-[9px] text-amber-400/60 font-medium">Premium Access</span>
+                      </div>
                     )}
                   </div>
                 </motion.div>
