@@ -562,6 +562,15 @@ export default function FullscreenBacktesting({
       return;
     }
     
+    // CRITICAL: Stop auto-play immediately to prevent timestamp drift during switch
+    // At high speeds (10x), the interval fires ~80ms apart and can advance the replay
+    // timestamp significantly while waiting for new resolution data to load
+    if (autoPlayIntervalRef.current) {
+      clearInterval(autoPlayIntervalRef.current);
+      autoPlayIntervalRef.current = null;
+    }
+    setIsPlaying(false);
+    
     // Use replayTimestamp for consistent drawing anchors across resolutions
     // This is already set whenever currentBarIndex changes
     const currentReplayTs = replayTimestampRef.current;
