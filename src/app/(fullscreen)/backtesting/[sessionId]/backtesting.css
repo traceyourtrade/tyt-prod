@@ -2741,6 +2741,13 @@
 
 .bt-bottom-drawer.collapsed {
   transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
 }
 
 .bt-bottom-drawer.collapsed .bt-drawer-content {
