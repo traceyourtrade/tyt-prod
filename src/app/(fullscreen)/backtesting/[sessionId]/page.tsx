@@ -625,11 +625,14 @@ export default function FullscreenBacktesting({
       if (cachedCallback) {
         console.log('Found cached callback for resolution:', tf);
         onRealtimeCallbackRef.current = cachedCallback;
+        // Callback exists, handleNext can proceed
+        callbacksReadyRef.current = true;
       } else {
-        // CRITICAL: Clear the old callback to prevent using stale callback for wrong resolution
+        // CRITICAL: Clear the old callback AND block handleNext until subscribeBars fires
         // TradingView will call subscribeBars when the new symbol/resolution loads
-        console.log('No cached callback for resolution:', tf, '- clearing old callback, will wait for subscribeBars');
+        console.log('No cached callback for resolution:', tf, '- blocking handleNext until subscribeBars');
         onRealtimeCallbackRef.current = null;
+        callbacksReadyRef.current = false; // CRITICAL: Block handleNext until new callback arrives
       }
       
       setAllBars(cachedBars);
