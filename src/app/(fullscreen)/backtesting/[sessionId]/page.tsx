@@ -726,20 +726,18 @@ export default function FullscreenBacktesting({
       allBarsRef.current = cachedBars;
       subscribedResolutionRef.current = targetInterval;
       
-      // Check for cached callback - if exists, use it; otherwise we'll get one from subscribeBars
-      // when TradingView loads (via setSymbol/setResolution below)
+      // Check for cached callback - if exists, use it; otherwise wait for TradingView to resubscribe
       const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
       if (cachedCallback) {
         onRealtimeCallbackRef.current = cachedCallback;
         callbacksReadyRef.current = true;
       } else {
-        // No cached callback yet - TradingView will call subscribeBars when we call setSymbol below
-        // For now, we can still proceed with the switch since we have data
-        // The subscribeBars handler will set callbacksReadyRef = true when it fires
+        // No cached callback yet - TradingView will call subscribeBars when setSymbol/setResolution completes
+        // CRITICAL: Set callbacksReadyRef to FALSE to block handleNext until TradingView has resubscribed
+        // This prevents the "chart doesn't update but internal state advances" bug
         onRealtimeCallbackRef.current = null;
-        // IMPORTANT: Keep callbacksReadyRef true for fast-path to allow playback to work
-        // The realtime callback is only needed for receiving new bars, not for step/skip
-        callbacksReadyRef.current = true;
+        callbacksReadyRef.current = false;
+        console.log('Fast-path: No cached callback for', targetInterval, '- waiting for TradingView to resubscribe');
       }
       
       // FIND CORRECT BAR in new timeframe using bar end time
