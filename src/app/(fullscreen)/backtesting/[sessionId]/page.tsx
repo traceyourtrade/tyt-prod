@@ -2453,78 +2453,15 @@ export default function FullscreenBacktesting({
       }
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
-        // CRITICAL: This fires when TradingView's native timeframe buttons are clicked
-        // We need to apply the same bar end time logic as handleTimeframeChange
-        const sourceInterval = currentIntervalRef.current;
-        const sourceTimestamp = replayTimestampRef.current;
-        const currentBar = allBarsRef.current[currentBarIndexRef.current];
-        
-        console.log('==== TV NATIVE TIMEFRAME CHANGE ====');
-        console.log('From:', sourceInterval, 'To:', newInterval);
-        console.log('Source timestamp:', sourceTimestamp, new Date(sourceTimestamp).toISOString());
-        
-        if (currentBar && sourceInterval && sourceInterval !== newInterval) {
-          // Calculate bar end time for proper position finding in new timeframe
-          const oldIntervalMinutes = intervalToMinutes(sourceInterval);
-          const barEndTime = currentBar.time + (oldIntervalMinutes * 60 * 1000) - 1;
-          
-          console.log('Bar open:', new Date(currentBar.time).toISOString(), '-> Bar end:', new Date(barEndTime).toISOString());
-          
-          // Store the pending switch info so getBars can use it
-          pendingTimeframeSwitchRef.current = { 
-            fromInterval: sourceInterval, 
-            fromTimestamp: currentBar.time 
-          };
-          
-          // CRITICAL: Update replayTimestampRef to bar END time so getBars filters correctly
-          // This makes the 15m chart show all bars up to 18:45 when coming from 1H 18:00 bar
-          replayTimestampRef.current = barEndTime;
-          targetTimestampRef.current = barEndTime;
-          
-          // Also update replayIntervalRef for consistent state
-          replayIntervalRef.current = newInterval;
-          
-          // CRITICAL: Force immediate data processing by using cached bars
-          // TradingView's native buttons don't trigger getBars when data is cached
-          // So we need to manually find the correct bar and update the chart position
-          const cachedBars = barsCacheRef.current[newInterval];
-          if (cachedBars && cachedBars.length > 0) {
-            console.log('Native switch: Using cached bars for', newInterval, 'bar count:', cachedBars.length);
-            const newIntervalMinutes = intervalToMinutes(newInterval);
-            let newIndex = 5;
-            
-            // Find the bar in new timeframe that contains this end time
-            for (let i = cachedBars.length - 1; i >= 0; i--) {
-              const barTime = cachedBars[i].time;
-              const barEnd = barTime + (newIntervalMinutes * 60 * 1000);
-              if (barTime <= barEndTime && barEndTime < barEnd) {
-                newIndex = i;
-                console.log('Native switch: Found bar at index', i, 'time:', new Date(barTime).toISOString());
-                break;
-              }
-            }
-            
-            // Update state with the found bar
-            setAllBars(cachedBars);
-            setCurrentBarIndex(newIndex, cachedBars, { 
-              preserveTimestamp: true,
-              pendingSwitch: { fromInterval: sourceInterval }
-            });
-            
-            // After switch completes, update refs to NEW state for future operations
-            if (cachedBars[newIndex]) {
-              replayTimestampRef.current = cachedBars[newIndex].time;
-            }
-            replayIntervalRef.current = newInterval;
-            pendingTimeframeSwitchRef.current = null;
-          }
-        } else if (currentBar) {
-          targetTimestampRef.current = currentBar.time;
-        }
-        
-        // Update refs
-        currentIntervalRef.current = newInterval;
-        setCurrentInterval(newInterval);
+        // TradingView's native timeframe buttons clicked
+        // Delegate to unified helper - TradingView already changed the resolution,
+        // so we skip the symbol switch (triggerSymbolSwitch: false)
+        console.log('==== TV NATIVE TIMEFRAME BUTTON ====');
+        processTimeframeSwitch(newInterval, { 
+          hideDropdown: false, 
+          triggerSymbolSwitch: false, // TradingView already did this
+          captureDrawings: true 
+        });
         debouncedSave();
       });
 
