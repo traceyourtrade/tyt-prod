@@ -203,53 +203,57 @@ export default function PropFirmHeroCard({
         </div>
 
         {/* Main Content - Horizontal Layout */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-stretch gap-3">
           {/* Stats Row */}
-          <div className="flex-1 flex items-center gap-2">
-            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
-              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+          <div className="flex-1 grid grid-cols-4 gap-2">
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2.5 border border-white/[0.06] flex flex-col justify-between">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider mb-1">
                 <Shield className="w-2.5 h-2.5 flex-shrink-0" />
                 <span>Starting</span>
               </div>
-              <p className="text-sm font-bold text-white tabular-nums truncate">
+              <p className="text-sm font-bold text-white tabular-nums">
                 {formatCurrency(startingBalance)}
               </p>
             </div>
             
-            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
-              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2.5 border border-white/[0.06] flex flex-col justify-between">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider mb-1">
                 <TrendingUp className="w-2.5 h-2.5 flex-shrink-0" />
                 <span>Current</span>
               </div>
-              <p className="text-sm font-bold text-white tabular-nums truncate">
-                {formatCurrency(currentEquity)}
-              </p>
-              <p className={cn(
-                "text-[9px] font-semibold",
-                currentProfit >= 0 ? "text-emerald-400" : "text-red-400"
-              )}>
-                {currentProfit >= 0 ? "+" : ""}{((currentProfit / startingBalance) * 100).toFixed(2)}%
-              </p>
+              <div>
+                <p className="text-sm font-bold text-white tabular-nums">
+                  {formatCurrency(currentEquity)}
+                </p>
+                <p className={cn(
+                  "text-[9px] font-semibold",
+                  currentProfit >= 0 ? "text-emerald-400" : "text-red-400"
+                )}>
+                  {currentProfit >= 0 ? "+" : ""}{((currentProfit / startingBalance) * 100).toFixed(2)}%
+                </p>
+              </div>
             </div>
             
-            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
-              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2.5 border border-white/[0.06] flex flex-col justify-between">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider mb-1">
                 <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
                 <span>Days</span>
               </div>
-              <p className="text-sm font-bold text-white tabular-nums">
-                {daysActive}
-              </p>
-              <p className="text-[9px] text-white/40">active</p>
+              <div>
+                <p className="text-sm font-bold text-white tabular-nums">
+                  {daysActive}
+                </p>
+                <p className="text-[9px] text-white/40">active</p>
+              </div>
             </div>
             
-            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
-              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2.5 border border-white/[0.06] flex flex-col justify-between">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider mb-1">
                 <Activity className="w-2.5 h-2.5 flex-shrink-0" />
                 <span>P&L</span>
               </div>
               <p className={cn(
-                "text-sm font-bold tabular-nums truncate",
+                "text-sm font-bold tabular-nums",
                 currentProfit >= 0 ? "text-emerald-400" : "text-red-400"
               )}>
                 {currentProfit >= 0 ? "+" : ""}{formatCurrency(Math.abs(currentProfit))}
@@ -258,20 +262,20 @@ export default function PropFirmHeroCard({
           </div>
 
           {/* Progress Circles - Compact */}
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0 pl-2 border-l border-white/[0.06]">
             <div className="text-center">
-              <CircularProgress progress={profitProgress} type="profit" size={70} strokeWidth={6} />
+              <CircularProgress progress={profitProgress} type="profit" size={64} strokeWidth={5} />
               <div className="mt-1">
                 <p className="text-[8px] text-white/40 uppercase tracking-wider">Target</p>
-                <p className="text-xs font-bold text-white">{formatCurrency(profitTargetValue)}</p>
+                <p className="text-[11px] font-bold text-white">{formatCurrency(profitTargetValue)}</p>
               </div>
             </div>
             
             <div className="text-center">
-              <CircularProgress progress={drawdownProgress} type="drawdown" size={70} strokeWidth={6} />
+              <CircularProgress progress={drawdownProgress} type="drawdown" size={64} strokeWidth={5} />
               <div className="mt-1">
                 <p className="text-[8px] text-white/40 uppercase tracking-wider">Max DD</p>
-                <p className="text-xs font-bold text-white">{formatCurrency(maxDrawdownValue)}</p>
+                <p className="text-[11px] font-bold text-white">{formatCurrency(maxDrawdownValue)}</p>
               </div>
             </div>
           </div>
