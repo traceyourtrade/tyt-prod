@@ -29,12 +29,15 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Reports & Strategies:** Redesigned pages with theme-aware charts for analytics.
 - **Playbook:** AI-powered (rule-based) pattern detection for identifying winning trade setups.
 - **Prop Firm Mode:** Comprehensive prop firm challenge tracking system with amber/gold accents:
+  - **Multi-Challenge Support:** Track up to 4 simultaneous prop firm challenges with per-challenge isolation of settings, metrics, violations, and phase progression. Uses `challenges: Record<string, PropChallenge>` with `activeChallengeIds` array and `viewingChallengeId` for selection. Persist migration (version 2) handles legacy single-challenge data conversion.
+  - **Portfolio Overview:** Aggregate stats view showing total capital, total P&L, active count, and at-risk challenges count with individual challenge cards.
   - **Presets Library:** 9+ major prop firm presets (FTMO, The Funded Trader, The5ers, MyForexFunds, E8 Funding, Funded Next, Alpha Capital, True Forex Funds, Custom) with accurate rules, phases, and scaling plans.
   - **Multi-Phase Tracking:** Visual phase roadmap showing progression through evaluation phases to funded status.
   - **Challenge History:** Complete history of all challenge attempts with pass/fail status and statistics.
-  - **Smart Alerts:** Automatic violation logging at 70% (warning) and 85% (critical) of drawdown limits with deduplication.
+  - **Smart Alerts:** Automatic violation logging at 70% (warning) and 85% (critical) of drawdown limits with deduplication, now per-challenge.
   - **Scale-Up Calculator:** Projects capital growth based on prop firm scaling plans and monthly returns.
-  - **Violations Timeline:** Tracks drawdown warnings, breaches, and other rule violations with journal notes.
+  - **Violations Timeline:** Tracks drawdown warnings, breaches, and other rule violations with journal notes per challenge.
+  - **Future Enhancement:** Account-to-challenge linking via `linkedAccountIds` for filtering trades per challenge (not yet implemented).
 - **Lot Size Calculator:** Tool for forex position sizing.
 - **Resource Center:** Educational hub with articles, psychology tips, and customizable trading routines.
 - **Account Type System:** `isPropFirm` field for filtering accounts.
