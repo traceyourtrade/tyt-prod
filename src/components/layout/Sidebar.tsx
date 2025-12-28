@@ -93,6 +93,22 @@ export function Sidebar({
   const [backtestingOpen, setBacktestingOpen] = React.useState(false)
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<SubscriptionStatus | null>(null)
   const [isLoadingSubscription, setIsLoadingSubscription] = React.useState(true)
+  const sidebarRef = React.useRef<HTMLElement>(null)
+
+  React.useEffect(() => {
+    const sidebar = sidebarRef.current
+    if (!sidebar) return
+
+    const handleWheel = (e: WheelEvent) => {
+      e.stopPropagation()
+    }
+
+    sidebar.addEventListener('wheel', handleWheel, { passive: true })
+    
+    return () => {
+      sidebar.removeEventListener('wheel', handleWheel)
+    }
+  }, [])
 
   React.useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -210,6 +226,7 @@ export function Sidebar({
 
   return (
     <aside 
+      ref={sidebarRef}
       className={cn(
         "fixed left-0 top-0 z-40 flex h-screen flex-col transition-all duration-300 ease-out overscroll-contain",
         collapsed ? "w-[72px]" : "w-[260px]"

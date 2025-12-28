@@ -675,7 +675,7 @@ export default function RootLayout({
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background overflow-hidden flex flex-col">
       {/* Page Loading Indicator */}
       <Suspense fallback={null}>
         <PageLoading />
@@ -818,7 +818,7 @@ export default function RootLayout({
       {/* Main Content Area */}
       <div
         className={cn(
-          "min-h-screen transition-all duration-300",
+          "flex-1 overflow-y-auto overscroll-contain transition-all duration-300",
           "lg:ml-[64px]",
           !collapsed && "lg:ml-[232px]",
         )}
