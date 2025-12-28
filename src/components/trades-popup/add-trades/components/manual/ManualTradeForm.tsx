@@ -238,6 +238,15 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     const upperSymbol = symbol.toUpperCase();
     const upperMarket = market.toUpperCase();
     
+    // PRIORITY: Check for commodities by symbol FIRST
+    // Gold/Silver may be listed under FOREX but need commodity contract sizes
+    if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
+      return 100; // Gold: 100 oz per lot
+    }
+    if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
+      return 5000; // Silver: 5000 oz per lot
+    }
+    
     switch (market) {
       case "FOREX":
         return 100000; // 1 lot = 100,000 units
