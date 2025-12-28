@@ -555,6 +555,67 @@ export default function FullscreenBacktesting({
   }, []);
   
   // ============================================================================
+  // GET VALID ANCHOR - finds the most reliable timestamp for timeframe switching
+  // Scans through multiple sources to find a valid anchor point
+  // ============================================================================
+  const getValidAnchor = useCallback((sourceIntervalMinutes: number): { barEndTime: number; source: string } => {
+    // Priority 1: Current bar at replay index
+    const currentBar = allBarsRef.current[currentBarIndexRef.current];
+    if (currentBar && currentBar.time > 0) {
+      return {
+        barEndTime: currentBar.time + (sourceIntervalMinutes * 60 * 1000) - 1,
+        source: 'currentBar'
+      };
+    }
+    
+    // Priority 2: replayTimestampRef (last known position)
+    const replayTs = replayTimestampRef.current;
+    if (replayTs > 0) {
+      return {
+        barEndTime: replayTs + (sourceIntervalMinutes * 60 * 1000) - 1,
+        source: 'replayTimestamp'
+      };
+    }
+    
+    // Priority 3: Scan backward through loaded bars to find any valid bar
+    const bars = allBarsRef.current;
+    const startIdx = Math.min(currentBarIndexRef.current, bars.length - 1);
+    for (let i = startIdx; i >= 0; i--) {
+      if (bars[i] && bars[i].time > 0) {
+        return {
+          barEndTime: bars[i].time + (sourceIntervalMinutes * 60 * 1000) - 1,
+          source: `loadedBar[${i}]`
+        };
+      }
+    }
+    
+    // Priority 4: Session progressPointer (saved position)
+    if (sessionDataRef.current?.progressPointer) {
+      const progressTs = new Date(sessionDataRef.current.progressPointer).getTime();
+      if (progressTs > 0) {
+        return {
+          barEndTime: progressTs + (sourceIntervalMinutes * 60 * 1000) - 1,
+          source: 'progressPointer'
+        };
+      }
+    }
+    
+    // Priority 5: Session start date (last resort)
+    if (sessionDataRef.current?.startDate) {
+      const startTs = new Date(sessionDataRef.current.startDate).getTime();
+      if (startTs > 0) {
+        return {
+          barEndTime: startTs,
+          source: 'sessionStart'
+        };
+      }
+    }
+    
+    // No valid anchor found
+    return { barEndTime: 0, source: 'none' };
+  }, []);
+  
+  // ============================================================================
   // UNIFIED TIMEFRAME SWITCH HELPER
   // This single function handles all timeframe switching logic for both:
   // - handleTimeframeChange (custom dropdown)
@@ -572,12 +633,9 @@ export default function FullscreenBacktesting({
     
     // 1. CAPTURE SOURCE STATE (must be done first, before any mutations)
     const sourceInterval = currentIntervalRef.current;
-    const sourceTimestamp = replayTimestampRef.current;
-    const currentBar = allBarsRef.current[currentBarIndexRef.current];
     
     console.log('==== UNIFIED TIMEFRAME SWITCH ====');
     console.log('From:', sourceInterval, 'To:', targetInterval);
-    console.log('Source timestamp:', sourceTimestamp, sourceTimestamp > 0 ? new Date(sourceTimestamp).toISOString() : 'N/A');
     
     // Skip if same interval
     if (sourceInterval === targetInterval) {
@@ -585,43 +643,41 @@ export default function FullscreenBacktesting({
       return;
     }
     
-    // 2. STOP AUTO-PLAY to prevent timestamp drift during switch
+    // 2. GET VALID ANCHOR - this is critical for correct positioning
+    const sourceIntervalMinutes = intervalToMinutes(sourceInterval);
+    const { barEndTime, source } = getValidAnchor(sourceIntervalMinutes);
+    
+    console.log('Anchor source:', source, 'barEndTime:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
+    
+    // 3. BLOCK SWITCH if no valid anchor exists
+    if (barEndTime <= 0) {
+      console.error('Cannot switch timeframe: no valid anchor available');
+      // Show notification to user
+      if (typeof window !== 'undefined') {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-amber-500 text-black px-4 py-2 rounded-lg shadow-lg z-50';
+        toast.textContent = 'Please wait for data to load before switching timeframes';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+      }
+      if (hideDropdown) setShowTimeframeDropdown(false);
+      return;
+    }
+    
+    // 4. STOP AUTO-PLAY to prevent timestamp drift during switch
     if (autoPlayIntervalRef.current) {
       clearInterval(autoPlayIntervalRef.current);
       autoPlayIntervalRef.current = null;
     }
     setIsPlaying(false);
     
-    // 3. CALCULATE BAR END TIME for consistent positioning across timeframes
-    // When on a 1H bar at 14:00, the visible price is 14:59:59 (bar close)
-    // To find equivalent position in 15m, we need to find the 14:45 bar
-    const sourceIntervalMinutes = intervalToMinutes(sourceInterval);
+    console.log('Bar end time:', new Date(barEndTime).toISOString());
     
-    // Calculate bar end time - use currentBar if available, otherwise derive from sourceTimestamp
-    // Fallback chain: currentBar.time -> sourceTimestamp -> sessionData.progressPointer -> 0
-    let barEndTime: number;
-    if (currentBar && currentBar.time > 0) {
-      barEndTime = currentBar.time + (sourceIntervalMinutes * 60 * 1000) - 1;
-    } else if (sourceTimestamp > 0) {
-      // No currentBar but we have a timestamp - calculate end time from it
-      barEndTime = sourceTimestamp + (sourceIntervalMinutes * 60 * 1000) - 1;
-    } else if (sessionDataRef.current?.progressPointer) {
-      // Fallback to saved progress pointer
-      const progressTs = new Date(sessionDataRef.current.progressPointer).getTime();
-      barEndTime = progressTs + (sourceIntervalMinutes * 60 * 1000) - 1;
-      console.log('Using progressPointer as fallback:', new Date(progressTs).toISOString());
-    } else {
-      // Neither available - use 0, fetch will anchor at session start
-      barEndTime = 0;
-      console.log('Warning: No valid timestamp for timeframe switch anchor');
-    }
-    
-    console.log('Bar end time:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
-    
-    // 4. STORE PENDING SWITCH INFO for async callbacks
+    // 5. STORE PENDING SWITCH INFO for async callbacks
+    const currentBar = allBarsRef.current[currentBarIndexRef.current];
     pendingTimeframeSwitchRef.current = { 
       fromInterval: sourceInterval, 
-      fromTimestamp: currentBar?.time || sourceTimestamp 
+      fromTimestamp: currentBar?.time || replayTimestampRef.current 
     };
     
     // 5. CAPTURE DRAWINGS before resolution change (if requested)
@@ -773,7 +829,7 @@ export default function FullscreenBacktesting({
       setCurrentInterval(targetInterval);
       if (hideDropdown) setShowTimeframeDropdown(false);
     }
-  }, [intervalToMinutes, setCurrentBarIndex]);
+  }, [intervalToMinutes, setCurrentBarIndex, getValidAnchor]);
   
   // Calculate how many candles to skip based on skip duration and chart timeframe
   // Uses Math.round to honor the configured duration as closely as possible
