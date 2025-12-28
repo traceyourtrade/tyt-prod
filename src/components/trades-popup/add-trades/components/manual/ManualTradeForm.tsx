@@ -300,13 +300,41 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     
     let pnl = priceDiff * size * contractSize;
     
-    // For JPY pairs (XXXJPY), P&L is in JPY - convert to USD
-    // JPY pairs have the quote currency as JPY, so we divide by approximate USD/JPY rate
+    // For non-USD quote currencies, convert P&L to USD
+    // The quote currency (last 3 chars) determines what currency P&L is calculated in
     const upperSymbol = trade.symbol.toUpperCase();
-    if (upperSymbol.endsWith("JPY") && trade.market === "FOREX") {
-      // Use approximate USD/JPY rate of 150 for conversion
-      // This gives a reasonable USD estimate without needing live rates
-      pnl = pnl / 150;
+    if (trade.market === "FOREX" && upperSymbol.length >= 6) {
+      const quoteCurrency = upperSymbol.slice(-3);
+      
+      // Approximate conversion rates to USD (as of late 2024)
+      // These are rough estimates - actual rates vary
+      switch (quoteCurrency) {
+        case "JPY":
+          pnl = pnl / 150; // USD/JPY ~150
+          break;
+        case "CHF":
+          pnl = pnl * 1.13; // USD/CHF ~0.88, so multiply by 1/0.88
+          break;
+        case "CAD":
+          pnl = pnl * 0.71; // USD/CAD ~1.40, so multiply by 1/1.40
+          break;
+        case "GBP":
+          pnl = pnl * 1.27; // GBP/USD ~1.27
+          break;
+        case "AUD":
+          pnl = pnl * 0.62; // AUD/USD ~0.62
+          break;
+        case "NZD":
+          pnl = pnl * 0.57; // NZD/USD ~0.57
+          break;
+        case "EUR":
+          pnl = pnl * 1.04; // EUR/USD ~1.04
+          break;
+        // USD quote currency - no conversion needed
+        case "USD":
+        default:
+          break;
+      }
     }
     
     return pnl - commission - otherCharges;
