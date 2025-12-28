@@ -2569,40 +2569,53 @@ export default function FullscreenBacktesting({
         
         // CRITICAL: Force TradingView to reload data with the CORRECT replay position
         // Without this, the chart shows bars filtered to the old position
+        // We use a short delay to let processTimeframeSwitch complete first
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
               console.log('Forcing chart reload after native button click');
               
-              // Use setSymbol with resolution suffix to force a complete reload cycle
-              // This is more reliable than just resetData()
-              const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}`;
-              
-              innerChart.resetData();
-              innerChart.setSymbol(symbolWithSuffix, () => {
-                innerChart.setResolution(newInterval, () => {
-                  // Scroll to replay position after reload
+              // Capture current visible range BEFORE reload to preserve zoom
+              let savedVisibleRange: { from: number; to: number } | null = null;
+              try {
+                const currentRange = innerChart.getVisibleRange();
+                if (currentRange && currentRange.from && currentRange.to) {
+                  // Calculate relative offset from replay position
                   const replayTs = replayTimestampRef.current;
                   if (replayTs > 0) {
+                    const rangeMidpoint = (currentRange.from + currentRange.to) / 2;
+                    const rangeWidth = currentRange.to - currentRange.from;
+                    // For new timeframe, keep similar time window
+                    savedVisibleRange = {
+                      from: (replayTs / 1000) - (rangeWidth * 0.3),
+                      to: (replayTs / 1000) + (rangeWidth * 0.1)
+                    };
+                  }
+                }
+              } catch (e) {}
+              
+              // Just reset data - TradingView will call getBars again with correct position
+              innerChart.resetData();
+              
+              // Restore visible range centered on replay position after reset completes
+              setTimeout(() => {
+                try {
+                  const replayTs = replayTimestampRef.current;
+                  if (replayTs > 0 && innerChart) {
                     const resolutionMinutes = intervalToMinutes(newInterval);
                     const windowMs = resolutionMinutes * 60 * 1000 * 50;
                     const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
                     const visibleTo = (replayTs + windowMs * 0.1) / 1000;
-                    setTimeout(() => {
-                      try {
-                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                      } catch (e) {}
-                    }, 200);
+                    innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
                   }
-                });
-              });
+                } catch (e) {}
+              }, 500);
             }
           } catch (e) {
             console.warn('Error forcing reload after native button:', e);
           }
-        }, 100);
+        }, 50);
         
         debouncedSave();
       });
