@@ -3035,11 +3035,29 @@ export default function FullscreenBacktesting({
 
   // Handle forward with skip duration - skips multiple candles based on time
   const handleSkipForward = useCallback(async () => {
+    // CRITICAL: Block if widget callbacks aren't ready yet (e.g., during HMR/widget recreation)
+    if (!callbacksReadyRef.current) {
+      console.warn('handleSkipForward: callbacks not ready (widget recreating?) - pausing playback');
+      setIsPlaying(false);
+      return;
+    }
+    
     const bars = allBarsRef.current;
     const idx = currentBarIndexRef.current;
     const resolution = currentIntervalRef.current;
+    const subscribedRes = subscribedResolutionRef.current;
+    
+    console.log('handleSkipForward called:', {
+      idx,
+      barsLength: bars?.length,
+      resolution,
+      subscribedRes,
+      hasCallback: !!onRealtimeCallbackRef.current,
+      callbacksReady: callbacksReadyRef.current,
+    });
     
     if (!bars || bars.length === 0) {
+      console.log('handleSkipForward: no bars, stopping playback');
       setIsPlaying(false);
       return;
     }
@@ -3120,11 +3138,22 @@ export default function FullscreenBacktesting({
             const candlesToSkip = getCandlesToSkip();
             const newIndex = Math.min(idx + candlesToSkip, mergedBars.length - 1);
             
-            if (onRealtimeCallbackRef.current) {
+            // Get the correct callback for the current resolution
+            let cb = onRealtimeCallbackRef.current;
+            if (!cb || subscribedRes !== resolution) {
+              const correctCb = realtimeCallbacksRef.current.get(resolution);
+              if (correctCb) {
+                cb = correctCb;
+                onRealtimeCallbackRef.current = correctCb;
+                subscribedResolutionRef.current = resolution;
+              }
+            }
+            
+            if (cb) {
               for (let i = idx + 1; i <= newIndex; i++) {
                 const bar = mergedBars[i];
                 if (bar) {
-                  onRealtimeCallbackRef.current({ ...bar, time: bar.time });
+                  cb({ ...bar, time: bar.time });
                 }
               }
             }
@@ -3145,20 +3174,34 @@ export default function FullscreenBacktesting({
     const candlesToSkip = getCandlesToSkip();
     const newIndex = Math.min(idx + candlesToSkip, bars.length - 1);
     
+    // Get the correct callback for the current resolution (same logic as handleNext)
+    let callback = onRealtimeCallbackRef.current;
+    if (!callback || subscribedRes !== resolution) {
+      const correctCallback = realtimeCallbacksRef.current.get(resolution);
+      if (correctCallback) {
+        console.log('handleSkipForward: Using callback from map for resolution:', resolution);
+        callback = correctCallback;
+        onRealtimeCallbackRef.current = correctCallback;
+        subscribedResolutionRef.current = resolution;
+      }
+    }
+    
     // Push all bars in between to TradingView to update the chart
-    if (onRealtimeCallbackRef.current) {
+    if (callback) {
       for (let i = idx + 1; i <= newIndex; i++) {
         const bar = bars[i];
         if (bar) {
-          onRealtimeCallbackRef.current({
+          callback({
             ...bar,
             time: bar.time,
           });
         }
       }
+      setCurrentBarIndex(newIndex, bars);
+    } else {
+      console.warn('handleSkipForward: no callback available for resolution:', resolution, '- pausing');
+      setIsPlaying(false);
     }
-    
-    setCurrentBarIndex(newIndex, bars);
   }, [getCandlesToSkip, sessionData]);
   
   // Handle backward with skip duration
