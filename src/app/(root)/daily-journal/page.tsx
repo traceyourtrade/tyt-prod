@@ -875,23 +875,38 @@ const DailyJournal = () => {
 
                 {/* Quick Rating & Sentiment */}
                 <div className="flex items-center gap-3">
-                  {/* Star Rating */}
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => handleRatingChange(star)}
-                        className="transition-all duration-200 hover:scale-110 active:scale-95"
-                      >
-                        <Star
-                          className={`w-4 h-4 transition-colors duration-200 ${
-                            (journalData.tradeRating || 0) >= star
-                              ? "text-amber-400 fill-amber-400"
-                              : "text-white/10 hover:text-white/20"
-                          }`}
-                        />
-                      </button>
-                    ))}
+                  {/* Star Rating - supports half stars */}
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const rating = journalData.tradeRating || 0;
+                      const isFullStar = rating >= star;
+                      const isHalfStar = rating >= star - 0.5 && rating < star;
+                      return (
+                        <button
+                          key={star}
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const clickX = e.clientX - rect.left;
+                            const isLeftHalf = clickX < rect.width / 2;
+                            handleRatingChange(isLeftHalf ? star - 0.5 : star);
+                          }}
+                          className="relative transition-all duration-200 hover:scale-110 active:scale-95"
+                        >
+                          <Star className="w-4 h-4 text-white/10" />
+                          {isFullStar && (
+                            <Star className="w-4 h-4 text-amber-400 fill-amber-400 absolute inset-0" />
+                          )}
+                          {isHalfStar && (
+                            <div className="absolute inset-0 overflow-hidden w-1/2">
+                              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {journalData.tradeRating ? (
+                      <span className="text-xs text-amber-400 ml-1">{journalData.tradeRating}</span>
+                    ) : null}
                   </div>
 
                   {/* Quick Sentiment */}
@@ -1495,12 +1510,37 @@ const DailyJournal = () => {
                     </div>
                     <div className="p-3 rounded-xl bg-muted/20 border border-border">
                       <span className="text-xs text-muted-foreground block mb-2">Trade Rating</span>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button key={star} onClick={() => handleRatingChange(star)}>
-                            <Star className={`w-5 h-5 ${(journalData.tradeRating || 0) >= star ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"}`} />
-                          </button>
-                        ))}
+                      <div className="flex gap-1 items-center">
+                        {[1, 2, 3, 4, 5].map((star) => {
+                          const rating = journalData.tradeRating || 0;
+                          const isFullStar = rating >= star;
+                          const isHalfStar = rating >= star - 0.5 && rating < star;
+                          return (
+                            <button
+                              key={star}
+                              onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const clickX = e.clientX - rect.left;
+                                const isLeftHalf = clickX < rect.width / 2;
+                                handleRatingChange(isLeftHalf ? star - 0.5 : star);
+                              }}
+                              className="relative"
+                            >
+                              <Star className="w-5 h-5 text-muted-foreground/30" />
+                              {isFullStar && (
+                                <Star className="w-5 h-5 text-amber-400 fill-amber-400 absolute inset-0" />
+                              )}
+                              {isHalfStar && (
+                                <div className="absolute inset-0 overflow-hidden w-1/2">
+                                  <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                        {journalData.tradeRating ? (
+                          <span className="text-xs text-amber-400 ml-1">{journalData.tradeRating}</span>
+                        ) : null}
                       </div>
                     </div>
                   </>
