@@ -615,12 +615,20 @@ export default function FullscreenBacktesting({
       allBarsRef.current = cachedBars;
       currentIntervalRef.current = tf;
       
+      // CRITICAL: Always update subscribedResolutionRef to match new timeframe
+      // This ensures handleNext knows which resolution we're targeting
+      subscribedResolutionRef.current = tf;
+      
       // Try to get callback for new resolution from our map
       const cachedCallback = realtimeCallbacksRef.current.get(tf);
       if (cachedCallback) {
         console.log('Found cached callback for resolution:', tf);
         onRealtimeCallbackRef.current = cachedCallback;
-        subscribedResolutionRef.current = tf;
+      } else {
+        // CRITICAL: Clear the old callback to prevent using stale callback for wrong resolution
+        // TradingView will call subscribeBars when the new symbol/resolution loads
+        console.log('No cached callback for resolution:', tf, '- clearing old callback, will wait for subscribeBars');
+        onRealtimeCallbackRef.current = null;
       }
       
       setAllBars(cachedBars);
@@ -2927,18 +2935,35 @@ export default function FullscreenBacktesting({
     
     const nextBar = bars[idx + 1];
     
+    // Get the correct callback for the current resolution
+    // This handles cases where timeframe was switched and callback wasn't updated
+    let callback = onRealtimeCallbackRef.current;
+    if (!callback || subscribedRes !== resolution) {
+      // Try to get the correct callback from the map
+      const correctCallback = realtimeCallbacksRef.current.get(resolution);
+      if (correctCallback) {
+        console.log('handleNext: Using callback from map for resolution:', resolution);
+        callback = correctCallback;
+        onRealtimeCallbackRef.current = correctCallback;
+        subscribedResolutionRef.current = resolution;
+      }
+    }
+    
     // Push bar to TradingView if subscribed
-    if (nextBar && onRealtimeCallbackRef.current) {
-      onRealtimeCallbackRef.current({
+    if (nextBar && callback) {
+      callback({
         ...nextBar,
         time: nextBar.time,
       });
-    } else if (nextBar && !onRealtimeCallbackRef.current) {
-      console.warn('handleNext: onRealtimeCallbackRef is null, cannot push bar to chart. subscribedResolution:', subscribedResolutionRef.current, 'currentInterval:', currentIntervalRef.current);
+      // Only advance bar index if we successfully pushed to chart
+      setCurrentBarIndex(idx + 1, bars);
+    } else if (nextBar && !callback) {
+      // CRITICAL: Don't advance bar index without a valid callback
+      // This prevents UI from getting out of sync with chart
+      console.warn('handleNext: no callback available for resolution:', resolution, '- pausing until chart subscribes');
+      setIsPlaying(false);
+      return;
     }
-    
-    // Pass bars to update replayTimestamp correctly during playback
-    setCurrentBarIndex(idx + 1, bars);
   }, [sessionData]);
 
   // Handle forward with skip duration - skips multiple candles based on time
