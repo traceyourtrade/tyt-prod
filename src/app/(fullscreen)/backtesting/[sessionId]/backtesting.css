@@ -66,6 +66,103 @@
 }
 
 /* =====================================================
+   LIGHT THEME OVERRIDES
+   ===================================================== */
+.bt-light {
+  --bt-bg-deep: #f8f9fa;
+  --bt-bg-base: #ffffff;
+  --bt-bg-elevated: #f1f3f5;
+  --bt-bg-surface: #e9ecef;
+  --bt-bg-hover: #dee2e6;
+  
+  --bt-border-subtle: rgba(0, 0, 0, 0.04);
+  --bt-border-default: rgba(0, 0, 0, 0.08);
+  --bt-border-strong: rgba(0, 0, 0, 0.12);
+  
+  --bt-text-primary: #1a1a1a;
+  --bt-text-secondary: #4a4a4a;
+  --bt-text-muted: #6b6b6b;
+  --bt-text-disabled: #9a9a9a;
+  
+  --bt-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --bt-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --bt-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.bt-light .bt-floating-bar {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.bt-light .bt-bottom-drawer {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.bt-light .bt-float-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #4a4a4a;
+}
+
+.bt-light .bt-float-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1a1a1a;
+}
+
+.bt-light .bt-drawer-tabs {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.bt-light .bt-drawer-tab {
+  color: #6b6b6b;
+}
+
+.bt-light .bt-drawer-tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #4a4a4a;
+}
+
+.bt-light .bt-drawer-tab.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+}
+
+.bt-light .bt-drawer-stat {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.bt-light .bt-float-group.speed-group {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.bt-light .bt-float-tf-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #1a1a1a;
+}
+
+.bt-light .bt-float-range {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.15));
+}
+
+.bt-light .bt-float-divider {
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+}
+
+.bt-light .bt-header {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.bt-light .bt-page {
+  background: #f1f3f5;
+}
+
+/* =====================================================
    ANIMATIONS
    ===================================================== */
 @keyframes bt-pulse {
@@ -606,6 +703,37 @@
 }
 
 /* Analytics Button */
+/* Theme Toggle Button */
+.bt-theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--bt-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bt-theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--bt-text-primary);
+}
+
+.bt-light .bt-theme-toggle-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #4a4a4a;
+}
+
+.bt-light .bt-theme-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1a1a1a;
+}
+
 .bt-analytics-btn {
   display: flex;
   align-items: center;
