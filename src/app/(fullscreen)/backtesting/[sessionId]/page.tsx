@@ -448,10 +448,20 @@ export default function FullscreenBacktesting({
     if (!isDragging) return;
     
     const handleMouseMove = (e: MouseEvent) => {
-      setBarPosition({
-        x: e.clientX - dragOffsetRef.current.x,
-        y: e.clientY - dragOffsetRef.current.y,
-      });
+      const bar = document.querySelector('.bt-floating-bar') as HTMLElement;
+      const barWidth = bar?.offsetWidth || 600;
+      const barHeight = bar?.offsetHeight || 50;
+      
+      // Calculate new position
+      let newX = e.clientX - dragOffsetRef.current.x;
+      let newY = e.clientY - dragOffsetRef.current.y;
+      
+      // Constrain within viewport bounds with 10px padding
+      const padding = 10;
+      newX = Math.max(padding, Math.min(newX, window.innerWidth - barWidth - padding));
+      newY = Math.max(padding, Math.min(newY, window.innerHeight - barHeight - padding));
+      
+      setBarPosition({ x: newX, y: newY });
     };
     
     const handleMouseUp = () => {
