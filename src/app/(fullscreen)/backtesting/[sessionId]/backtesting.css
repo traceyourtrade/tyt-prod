@@ -291,6 +291,178 @@
   color: #1a1a1a;
 }
 
+/* Light mode - Balance toggle (segmented control) */
+.bt-light .bt-order-balance-toggle-inner {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.bt-light .bt-radio-option {
+  color: #64748b;
+}
+
+.bt-light .bt-radio-option:hover:not(.active) {
+  color: #475569;
+}
+
+.bt-light .bt-radio-option.active {
+  color: #1e293b;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode - Estimate boxes (loss/profit) */
+.bt-light .bt-estimate {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.bt-light .bt-estimate:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.bt-light .bt-estimate.loss {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.bt-light .bt-estimate.profit {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.bt-light .bt-estimate-label {
+  color: #64748b;
+}
+
+.bt-light .bt-estimate.loss .bt-estimate-value {
+  color: #dc2626;
+}
+
+.bt-light .bt-estimate.profit .bt-estimate-value {
+  color: #16a34a;
+}
+
+/* Light mode - Section labels */
+.bt-light .bt-order-section-label {
+  color: #64748b;
+}
+
+/* Light mode - Risk preset buttons */
+.bt-light .bt-risk-btn {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.bt-light .bt-risk-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.bt-light .bt-risk-btn.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Light mode - Order field inputs and selects */
+.bt-light .bt-order-field input,
+.bt-light .bt-order-field select {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #1e293b;
+}
+
+.bt-light .bt-order-field input:focus,
+.bt-light .bt-order-field select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: #ffffff;
+}
+
+.bt-light .bt-order-field input.bt-readonly,
+.bt-light .bt-order-field input:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+.bt-light .bt-order-field label {
+  color: #64748b;
+}
+
+.bt-light .bt-order-field input::placeholder {
+  color: #9ca3af;
+}
+
+/* Light mode - Select arrow */
+.bt-light .bt-select-arrow {
+  color: #64748b;
+}
+
+/* Light mode - Input icons */
+.bt-light .bt-input-icon {
+  color: #64748b;
+}
+
+/* Light mode - Toggle switches */
+.bt-light .bt-toggle-slider {
+  background: #cbd5e1;
+  border-color: #94a3b8;
+}
+
+.bt-light .bt-toggle-slider::before {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.bt-light .bt-toggle input:checked + .bt-toggle-slider {
+  background: #3b82f6;
+  border-color: #2563eb;
+}
+
+/* Light mode - Toggle labels */
+.bt-light .bt-toggle-row {
+  border-color: #e2e8f0;
+}
+
+.bt-light .bt-toggle-row span {
+  color: #374151;
+}
+
+/* Light mode - Order header accent dot */
+.bt-light .bt-order-modal-header h3::before {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
+/* Light mode - Scrollbar in modal */
+.bt-light .bt-order-modal::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.bt-light .bt-order-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Light mode - Text suffix in inputs (like "ticks") */
+.bt-light .bt-input-suffix {
+  color: #94a3b8;
+}
+
+/* Light mode - Checkbox styling */
+.bt-light .bt-checkbox-row {
+  color: #374151;
+}
+
+/* Light mode - Chart area background */
+.bt-light .bt-chart-area {
+  background: #f8fafc;
+}
+
 /* =====================================================
    ANIMATIONS
    ===================================================== */
