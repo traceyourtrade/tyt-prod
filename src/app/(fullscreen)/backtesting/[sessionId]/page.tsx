@@ -673,20 +673,37 @@ export default function FullscreenBacktesting({
         
         chart.setSymbol(symbolWithSuffix, () => {
           chart.setResolution(tf, () => {
-            // Restore drawings if they were lost during resolution change
+            // Restore drawings and set visible range after resolution change
             setTimeout(() => {
               try {
                 const innerChart = tvWidgetRef.current?.activeChart();
-                if (innerChart && pendingDrawingsRef.current.length > 0) {
-                  const currentShapes = DrawingManager.getShapeCount(innerChart);
-                  if (currentShapes === 0) {
-                    console.log('Drawings lost during resolution change, restoring', pendingDrawingsRef.current.length, 'drawings');
-                    DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                if (innerChart) {
+                  // Restore drawings if they were lost during resolution change
+                  if (pendingDrawingsRef.current.length > 0) {
+                    const currentShapes = DrawingManager.getShapeCount(innerChart);
+                    if (currentShapes === 0) {
+                      console.log('Drawings lost during resolution change, restoring', pendingDrawingsRef.current.length, 'drawings');
+                      DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                    }
+                    pendingDrawingsRef.current = [];
                   }
-                  pendingDrawingsRef.current = [];
+                  
+                  // CRITICAL: Set visible range centered on replay timestamp
+                  // This ensures the chart shows the same time position after switching timeframes
+                  const replayTs = replayTimestampRef.current;
+                  if (replayTs > 0) {
+                    // Calculate window width based on resolution (show ~50 bars worth of data)
+                    const resolutionMinutes = intervalToMinutes(tf);
+                    const barsToShow = 50;
+                    const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
+                    const visibleFrom = (replayTs - windowMs * 0.3) / 1000; // 30% history
+                    const visibleTo = (replayTs + windowMs * 0.1) / 1000; // 10% future (for margin)
+                    console.log('Setting visible range around replay timestamp:', new Date(replayTs).toISOString());
+                    innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                  }
                 }
               } catch (e) {
-                console.warn('Error checking/restoring drawings:', e);
+                console.warn('Error restoring drawings or setting visible range:', e);
               }
               isChangingResolutionRef.current = false;
             }, 500); // Small delay to ensure chart has finished loading
