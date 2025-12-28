@@ -515,6 +515,38 @@ export default function FullscreenBacktesting({
     };
   }, [isDrawerResizing]);
 
+  // Update TradingView chart theme when theme changes
+  useEffect(() => {
+    if (!tvWidgetRef.current) return;
+    
+    const applyTheme = () => {
+      try {
+        const newTheme = isDarkTheme ? 'dark' : 'light';
+        const result = tvWidgetRef.current?.changeTheme(newTheme);
+        // changeTheme returns a promise
+        if (result && typeof result.then === 'function') {
+          result.then(() => {
+            console.log('Chart theme changed to:', newTheme);
+          }).catch((e: any) => {
+            console.log('Theme change failed:', e);
+          });
+        }
+      } catch (e) {
+        console.log('Could not change chart theme:', e);
+      }
+    };
+    
+    // Use onChartReady to ensure widget is ready
+    try {
+      tvWidgetRef.current.onChartReady(() => {
+        applyTheme();
+      });
+    } catch (e) {
+      // If onChartReady fails (widget already ready), try direct call
+      applyTheme();
+    }
+  }, [isDarkTheme]);
+
   const handleDrawerResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
