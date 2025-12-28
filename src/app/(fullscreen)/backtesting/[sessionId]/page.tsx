@@ -329,6 +329,7 @@ export default function FullscreenBacktesting({
   const replayTimestampRef = useRef<number>(0); // Tracks replay position as timestamp for consistent drawing anchors
   const replayIntervalRef = useRef<string>(initialInterval); // Tracks which interval the replayTimestamp was recorded from
   const pendingTimeframeSwitchRef = useRef<{ fromInterval: string; fromTimestamp: number } | null>(null); // Captures source interval at switch initiation
+  const pendingAnchorTimestampRef = useRef<number | null>(null); // Set BEFORE resolution change so getBars can use correct anchor even when called early
   const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
   const favoriteDrawingToolsRef = useRef<string[]>([]); // Stores favorite drawing tools
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
@@ -667,6 +668,11 @@ export default function FullscreenBacktesting({
     
     // Calculate bar-start timestamp for consistent anchoring
     const barStartTime = barEndTime - (sourceIntervalMinutes * 60 * 1000) + 1;
+    
+    // CRITICAL: Set pending anchor IMMEDIATELY - getBars may be called before onIntervalChanged
+    // This ensures getBars uses the correct timestamp even when called early by TradingView
+    pendingAnchorTimestampRef.current = barStartTime;
+    console.log('Set pendingAnchorTimestampRef:', new Date(barStartTime).toISOString());
     
     // 4. STOP AUTO-PLAY to prevent timestamp drift during switch
     if (autoPlayIntervalRef.current) {
@@ -1872,7 +1878,17 @@ export default function FullscreenBacktesting({
       },
       getBars: (symbolInfo: any, resolution: string, periodParams: any, onHistoryCallback: any) => {
         const { firstDataRequest } = periodParams;
-        const replayTs = replayTimestampRef.current;
+        
+        // CRITICAL: Use pending anchor if set (during timeframe switch)
+        // This handles the race condition where TradingView calls getBars BEFORE our onIntervalChanged
+        const anchorTs = pendingAnchorTimestampRef.current || replayTimestampRef.current;
+        const usingPendingAnchor = !!pendingAnchorTimestampRef.current;
+        
+        // Clear the pending anchor after use - it's only for the first getBars call after a switch
+        if (pendingAnchorTimestampRef.current) {
+          console.log('getBars: Using pending anchor:', new Date(anchorTs).toISOString());
+          pendingAnchorTimestampRef.current = null;
+        }
         
         // ONLY use cached bars for the exact requested resolution - no fallback
         // This prevents mixing data between resolutions
@@ -1886,15 +1902,15 @@ export default function FullscreenBacktesting({
           barCount: barsForResolution?.length || 0
         });
         
-        // CRITICAL: Validate cached bars contain the replay timestamp
-        // If replay timestamp is outside cached range, we need fresh data
+        // CRITICAL: Validate cached bars contain the anchor timestamp
+        // If anchor timestamp is outside cached range, we need fresh data
         let validCache = barsForResolution && barsForResolution.length > 0;
-        if (validCache && replayTs > 0) {
+        if (validCache && anchorTs > 0) {
           const firstBarTime = barsForResolution[0].time;
           const lastBarTime = barsForResolution[barsForResolution.length - 1].time;
-          if (replayTs < firstBarTime || replayTs > lastBarTime) {
-            console.log('getBars: Replay timestamp outside cached range, invalidating for', resolution);
-            console.log('Replay:', new Date(replayTs).toISOString(), 
+          if (anchorTs < firstBarTime || anchorTs > lastBarTime) {
+            console.log('getBars: Anchor timestamp outside cached range, invalidating for', resolution);
+            console.log('Anchor:', new Date(anchorTs).toISOString(), 
               'Cache:', new Date(firstBarTime).toISOString(), '-', new Date(lastBarTime).toISOString());
             // Invalidate this cache - it's stale for the current replay position
             delete barsCacheRef.current[resolution];
@@ -1918,10 +1934,14 @@ export default function FullscreenBacktesting({
         
         if (firstDataRequest) {
           // Use timestamp-based filtering to ensure consistent drawing anchors across resolutions
-          // Filter to bars whose time <= replay timestamp (hides future bars)
-          const barsToShow = replayTs > 0 
-            ? barsForResolution.filter((bar: any) => bar.time <= replayTs)
+          // Filter to bars whose time <= anchor timestamp (hides future bars)
+          const barsToShow = anchorTs > 0 
+            ? barsForResolution.filter((bar: any) => bar.time <= anchorTs)
             : barsForResolution.slice(0, currentBarIndexRef.current + 1);
+          
+          console.log('getBars firstDataRequest: anchor=', anchorTs > 0 ? new Date(anchorTs).toISOString() : 'N/A', 
+            'returning', barsToShow.length, 'bars');
+          
           onHistoryCallback(barsToShow, { noData: barsToShow.length === 0 });
           return;
         }
