@@ -337,6 +337,7 @@ export default function FullscreenBacktesting({
   const fetchingResolutionsRef = useRef<Set<string>>(new Set()); // Track in-flight resolution fetches
   const dataReadyForLayoutRef = useRef<boolean>(false); // Signal when bars are loaded and ready for layout restoration
   const isUnmountingRef = useRef<boolean>(false); // Track if component is unmounting to prevent empty saves
+  const callbacksReadyRef = useRef<boolean>(false); // Gate handleNext until subscribeBars fires on current widget
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -1685,6 +1686,9 @@ export default function FullscreenBacktesting({
         // and we need to use that callback for our replay system
         subscribedResolutionRef.current = resolution;
         onRealtimeCallbackRef.current = onRealtimeCallback;
+        
+        // Mark callbacks as ready - handleNext can now proceed
+        callbacksReadyRef.current = true;
       },
       unsubscribeBars: (subscriberUID: string) => {
         // For replay mode, we DON'T clear any callbacks on unsubscribe
@@ -1792,6 +1796,14 @@ export default function FullscreenBacktesting({
       },
     };
 
+    // CRITICAL: Clear all callback refs before creating new widget
+    // This ensures we don't push bars to a stale/dead chart instance (e.g., after HMR)
+    realtimeCallbacksRef.current.clear();
+    onRealtimeCallbackRef.current = null;
+    subscribedResolutionRef.current = null;
+    callbacksReadyRef.current = false; // Block handleNext until subscribeBars fires
+    console.log('Creating new TradingView widget - cleared all callback refs, waiting for subscribeBars');
+    
     const tvWidget = new TradingViewWidget(widgetOptions);
     tvWidgetRef.current = tvWidget;
 
@@ -2826,6 +2838,13 @@ export default function FullscreenBacktesting({
   }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId, contractSize, sessionData?.symbol]);
 
   const handleNext = useCallback(async () => {
+    // CRITICAL: Block if widget callbacks aren't ready yet (e.g., during HMR/widget recreation)
+    if (!callbacksReadyRef.current) {
+      console.warn('handleNext: callbacks not ready (widget recreating?) - pausing playback');
+      setIsPlaying(false);
+      return;
+    }
+    
     // Use ref for latest bars to avoid stale closure issues
     const bars = allBarsRef.current;
     const idx = currentBarIndexRef.current;
@@ -2839,6 +2858,7 @@ export default function FullscreenBacktesting({
       resolution, 
       hasCallback,
       subscribedRes,
+      callbacksReady: callbacksReadyRef.current,
       isAtEnd: idx >= (bars?.length || 0) - 1
     });
     
