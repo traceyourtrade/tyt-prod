@@ -2556,16 +2556,54 @@ export default function FullscreenBacktesting({
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
         // TradingView's native timeframe buttons clicked
-        // Delegate to unified helper - TradingView already changed the resolution,
-        // so we skip the symbol switch (triggerSymbolSwitch: false)
-        // Also skip captureDrawings - TV has already changed resolution by the time this fires,
-        // so capturing now would capture the post-switch state (useless for restoration)
+        // CRITICAL: TradingView called getBars BEFORE this callback fires, so the chart
+        // is displaying bars filtered to the OLD replay position. We need to:
+        // 1. Update our refs via processTimeframeSwitch
+        // 2. Force TradingView to reload with the CORRECT position
         console.log('==== TV NATIVE TIMEFRAME BUTTON ====');
         processTimeframeSwitch(newInterval, { 
           hideDropdown: false, 
-          triggerSymbolSwitch: false, // TradingView already did this
+          triggerSymbolSwitch: false, // We'll handle the reload ourselves
           captureDrawings: false // Can't capture - resolution already changed
         });
+        
+        // CRITICAL: Force TradingView to reload data with the CORRECT replay position
+        // Without this, the chart shows bars filtered to the old position
+        setTimeout(() => {
+          try {
+            const innerChart = tvWidgetRef.current?.activeChart();
+            if (innerChart) {
+              console.log('Forcing chart reload after native button click');
+              
+              // Use setSymbol with resolution suffix to force a complete reload cycle
+              // This is more reliable than just resetData()
+              const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
+              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}`;
+              
+              innerChart.resetData();
+              innerChart.setSymbol(symbolWithSuffix, () => {
+                innerChart.setResolution(newInterval, () => {
+                  // Scroll to replay position after reload
+                  const replayTs = replayTimestampRef.current;
+                  if (replayTs > 0) {
+                    const resolutionMinutes = intervalToMinutes(newInterval);
+                    const windowMs = resolutionMinutes * 60 * 1000 * 50;
+                    const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
+                    const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+                    setTimeout(() => {
+                      try {
+                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                      } catch (e) {}
+                    }, 200);
+                  }
+                });
+              });
+            }
+          } catch (e) {
+            console.warn('Error forcing reload after native button:', e);
+          }
+        }, 100);
+        
         debouncedSave();
       });
 
