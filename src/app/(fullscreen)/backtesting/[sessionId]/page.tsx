@@ -2497,24 +2497,6 @@ export default function FullscreenBacktesting({
           
           // Also update replayIntervalRef for consistent state
           replayIntervalRef.current = newInterval;
-          
-          // Schedule chart scroll to current position after TradingView updates
-          setTimeout(() => {
-            try {
-              const innerChart = tvWidgetRef.current?.activeChart();
-              if (innerChart) {
-                const newIntervalMinutes = intervalToMinutes(newInterval);
-                const barsToShow = 50;
-                const windowMs = newIntervalMinutes * 60 * 1000 * barsToShow;
-                const visibleFrom = (barEndTime - windowMs * 0.7) / 1000;
-                const visibleTo = (barEndTime + windowMs * 0.3) / 1000;
-                console.log('Scrolling chart to bar end time:', new Date(barEndTime).toISOString());
-                innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-              }
-            } catch (e) {
-              console.warn('Could not scroll chart after timeframe change:', e);
-            }
-          }, 300);
         } else if (currentBar) {
           targetTimestampRef.current = currentBar.time;
         }
