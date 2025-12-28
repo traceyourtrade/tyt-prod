@@ -211,7 +211,7 @@ export function Sidebar({
   return (
     <aside 
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col transition-all duration-300 ease-out",
+        "fixed left-0 top-0 z-40 flex h-screen flex-col transition-all duration-300 ease-out overscroll-contain",
         collapsed ? "w-[72px]" : "w-[260px]"
       )}
     >
@@ -368,7 +368,7 @@ export function Sidebar({
         )}
 
         {/* Main Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-hide">
+        <nav className="flex-1 overflow-y-auto py-4 px-2 scrollbar-hide overscroll-contain">
           {/* Scroll fade top */}
           <div className="sticky top-0 left-0 right-0 h-4 bg-gradient-to-b from-[#0a0e14]/90 to-transparent pointer-events-none -mb-4 z-10" />
           
