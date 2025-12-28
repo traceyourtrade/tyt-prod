@@ -773,8 +773,13 @@ export default function FullscreenBacktesting({
       
       // FINALIZE: Update refs to new state
       if (cachedBars[newIndex]) {
-        replayTimestampRef.current = cachedBars[newIndex].time;
-        console.log('New replay timestamp:', new Date(cachedBars[newIndex].time).toISOString());
+        const newBarTime = cachedBars[newIndex].time;
+        replayTimestampRef.current = newBarTime;
+        // CRITICAL: Update the pending anchor to match the ACTUAL new bar position
+        // This ensures getBars filters to the correct timestamp even if it runs after this point
+        pendingAnchorTimestampRef.current = newBarTime;
+        console.log('New replay timestamp:', new Date(newBarTime).toISOString());
+        console.log('Updated pendingAnchorTimestampRef to match:', new Date(newBarTime).toISOString());
       }
       replayIntervalRef.current = targetInterval;
       pendingTimeframeSwitchRef.current = null;
