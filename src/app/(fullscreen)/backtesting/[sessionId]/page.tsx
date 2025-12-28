@@ -780,6 +780,10 @@ export default function FullscreenBacktesting({
           const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
           const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}`;
           
+          // CRITICAL: Reset data to force TradingView to call getBars fresh
+          // Without this, TradingView uses cached bars and chart doesn't update
+          chart.resetData();
+          
           chart.setSymbol(symbolWithSuffix, () => {
             chart.setResolution(targetInterval, () => {
               setTimeout(() => {
