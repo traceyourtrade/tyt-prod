@@ -1228,57 +1228,82 @@ const DailyJournal = () => {
                     </div>
                   </div>
 
-                  {/* Entry/Exit Times */}
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Entry</span>
-                      <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.EntryTime || selectedTrade.time)}</p>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Exit</span>
-                      <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.ExitTime)}</p>
-                    </div>
-                  </div>
-
-                  {/* Trade Info Grid */}
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Side</span>
-                      <p className={`text-xs font-bold mt-1 ${
-                        (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
-                          ? "text-profit"
-                          : "text-loss"
-                      }`}>
-                        {selectedTrade.Type || selectedTrade.side || "--"}
-                      </p>
-                    </div>
-                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Quantity</span>
-                      <p className="text-xs font-bold text-foreground mt-1">{selectedTrade.quantity || selectedTrade.Size || "--"}</p>
-                    </div>
-                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Pips</span>
-                      <p className="text-xs font-bold text-primary mt-1">{metrics.pips}</p>
-                    </div>
-                    <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
-                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Return/Pip</span>
-                      <p className="text-xs font-bold text-foreground mt-1">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
-                    </div>
-                  </div>
-
-                  {/* Additional Stats */}
-                  <div className="space-y-1">
-                    {[
-                      { label: "Fees", value: formatCompactCurrency((selectedTrade.fees || 0) * exchangeRate, currency) },
-                      { label: "Swap", value: formatCompactCurrency((selectedTrade.swap || 0) * exchangeRate, currency) },
-                      { label: "Net ROI", value: `${metrics.netROI > 0 ? "+" : ""}${isFinite(metrics.netROI) ? metrics.netROI.toFixed(2) : "0"}%`, color: metrics.netROI >= 0 ? "text-profit" : "text-loss" },
-                      { label: "Gross P&L", value: formatCompactCurrency(metrics.grossPnL * exchangeRate, currency), color: metrics.grossPnL >= 0 ? "text-profit" : "text-loss" },
-                    ].map((item) => (
-                      <div key={item.label} className="flex items-center justify-between py-2 px-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
-                        <span className="text-[10px] text-muted-foreground/70">{item.label}</span>
-                        <span className={`text-xs font-bold tabular-nums ${item.color || "text-foreground"}`}>{item.value}</span>
+                  {/* Timing Section */}
+                  <div className="space-y-2">
+                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Timing</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Entry</span>
+                        <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.EntryTime || selectedTrade.time)}</p>
                       </div>
-                    ))}
+                      <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Exit</span>
+                        <p className="text-[11px] font-semibold text-foreground mt-0.5">{formatTime(selectedTrade.ExitTime)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Position Section */}
+                  <div className="space-y-2">
+                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Position</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Side</span>
+                        <p className={`text-xs font-bold mt-1 ${
+                          (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
+                            ? "text-profit"
+                            : "text-loss"
+                        }`}>
+                          {selectedTrade.Type || selectedTrade.side || "--"}
+                        </p>
+                      </div>
+                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Quantity</span>
+                        <p className="text-xs font-bold text-foreground mt-1">{selectedTrade.quantity || selectedTrade.Size || "--"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance Section */}
+                  <div className="space-y-2">
+                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Performance</span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Pips</span>
+                        <p className="text-xs font-bold text-primary mt-1">{metrics.pips}</p>
+                      </div>
+                      <div className="group p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.05] transition-all duration-200">
+                        <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Return/Pip</span>
+                        <p className="text-xs font-bold text-foreground mt-1">{formatCompactCurrency(metrics.returnPerPip * exchangeRate, currency)}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      {[
+                        { label: "Net ROI", value: `${metrics.netROI > 0 ? "+" : ""}${isFinite(metrics.netROI) ? metrics.netROI.toFixed(2) : "0"}%`, color: metrics.netROI >= 0 ? "text-profit" : "text-loss" },
+                        { label: "Gross P&L", value: formatCompactCurrency(metrics.grossPnL * exchangeRate, currency), color: metrics.grossPnL >= 0 ? "text-profit" : "text-loss" },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center justify-between py-2 px-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
+                          <span className="text-[10px] text-muted-foreground/70">{item.label}</span>
+                          <span className={`text-xs font-bold tabular-nums ${item.color || "text-foreground"}`}>{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Costs Section */}
+                  <div className="space-y-2">
+                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Costs</span>
+                    <div className="space-y-1">
+                      {[
+                        { label: "Fees", value: formatCompactCurrency((selectedTrade.fees || 0) * exchangeRate, currency) },
+                        { label: "Swap", value: formatCompactCurrency((selectedTrade.swap || 0) * exchangeRate, currency) },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center justify-between py-2 px-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-200">
+                          <span className="text-[10px] text-muted-foreground/70">{item.label}</span>
+                          <span className="text-xs font-bold tabular-nums text-foreground">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Strategy Badge */}
