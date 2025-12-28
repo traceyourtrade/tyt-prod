@@ -1373,7 +1373,43 @@ const DailyJournal = () => {
               {/* Strategy Tab */}
               {mainTab === "strategy" && selectedTrade && (
                 <>
-                  {selectedTrade.strategy && selectedTrade.strategy !== "Select" ? (
+                  {/* Strategy Selector */}
+                  <div className="space-y-2">
+                    <span className="text-[9px] text-muted-foreground/50 uppercase tracking-widest font-medium px-1">Assign Strategy</span>
+                    <select
+                      value={selectedTrade.strategy || ""}
+                      onChange={(e) => {
+                        const newStrategy = e.target.value;
+                        setSelectedTrade(prev => prev ? { ...prev, strategy: newStrategy } : null);
+                        setTrades(prev => prev.map(t => 
+                          (t.id || t._id) === (selectedTrade.id || selectedTrade._id) 
+                            ? { ...t, strategy: newStrategy } 
+                            : t
+                        ));
+                        if (newStrategy && newStrategy !== "Select") {
+                          fetchStrategyRules(newStrategy);
+                        } else {
+                          setStrategyRules([]);
+                          setRulesCompliance({});
+                        }
+                      }}
+                      className="w-full px-3 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-sm text-foreground focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all duration-200 cursor-pointer"
+                    >
+                      <option value="" className="bg-card text-muted-foreground">Select a strategy...</option>
+                      {existingStrategies.map((strategy) => (
+                        <option key={strategy} value={strategy} className="bg-card text-foreground">
+                          {strategy}
+                        </option>
+                      ))}
+                    </select>
+                    {existingStrategies.length === 0 && (
+                      <p className="text-[10px] text-muted-foreground/60 px-1">
+                        No strategies found. Create strategies in Settings first.
+                      </p>
+                    )}
+                  </div>
+
+                  {selectedTrade.strategy && selectedTrade.strategy !== "Select" && selectedTrade.strategy !== "" ? (
                     <>
                       <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20">
                         <div className="flex items-center gap-2 mb-2">
@@ -1420,10 +1456,9 @@ const DailyJournal = () => {
                       )}
                     </>
                   ) : (
-                    <div className="p-8 text-center rounded-xl bg-muted/20 border border-border">
-                      <Target className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                      <p className="text-sm text-muted-foreground mb-1">No strategy assigned</p>
-                      <p className="text-xs text-muted-foreground/70">Assign a strategy to track rule compliance</p>
+                    <div className="p-6 text-center rounded-xl bg-muted/20 border border-border">
+                      <Target className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground/70">Select a strategy above to track rule compliance</p>
                     </div>
                   )}
                 </>
