@@ -2467,10 +2467,42 @@ export default function FullscreenBacktesting({
       }
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
-        const currentBar = allBars[currentBarIndexRef.current];
-        if (currentBar) {
+        // CRITICAL: This fires when TradingView's native timeframe buttons are clicked
+        // We need to apply the same bar end time logic as handleTimeframeChange
+        const sourceInterval = currentIntervalRef.current;
+        const sourceTimestamp = replayTimestampRef.current;
+        const currentBar = allBarsRef.current[currentBarIndexRef.current];
+        
+        console.log('==== TV NATIVE TIMEFRAME CHANGE ====');
+        console.log('From:', sourceInterval, 'To:', newInterval);
+        console.log('Source timestamp:', sourceTimestamp, new Date(sourceTimestamp).toISOString());
+        
+        if (currentBar && sourceInterval && sourceInterval !== newInterval) {
+          // Calculate bar end time for proper position finding in new timeframe
+          const oldIntervalMinutes = intervalToMinutes(sourceInterval);
+          const barEndTime = currentBar.time + (oldIntervalMinutes * 60 * 1000) - 1;
+          
+          console.log('Bar open:', new Date(currentBar.time).toISOString(), '-> Bar end:', new Date(barEndTime).toISOString());
+          
+          // Store the pending switch info so getBars can use it
+          pendingTimeframeSwitchRef.current = { 
+            fromInterval: sourceInterval, 
+            fromTimestamp: currentBar.time 
+          };
+          
+          // CRITICAL: Update replayTimestampRef to bar END time so getBars filters correctly
+          // This makes the 15m chart show all bars up to 18:45 when coming from 1H 18:00 bar
+          replayTimestampRef.current = barEndTime;
+          targetTimestampRef.current = barEndTime;
+          
+          // Also update replayIntervalRef for consistent state
+          replayIntervalRef.current = newInterval;
+        } else if (currentBar) {
           targetTimestampRef.current = currentBar.time;
         }
+        
+        // Update refs
+        currentIntervalRef.current = newInterval;
         setCurrentInterval(newInterval);
         debouncedSave();
       });
