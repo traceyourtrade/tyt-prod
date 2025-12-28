@@ -298,7 +298,18 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       ? exitPrice - entryPrice 
       : entryPrice - exitPrice;
     
-    return priceDiff * size * contractSize - commission - otherCharges;
+    let pnl = priceDiff * size * contractSize;
+    
+    // For JPY pairs (XXXJPY), P&L is in JPY - convert to USD
+    // JPY pairs have the quote currency as JPY, so we divide by approximate USD/JPY rate
+    const upperSymbol = trade.symbol.toUpperCase();
+    if (upperSymbol.endsWith("JPY") && trade.market === "FOREX") {
+      // Use approximate USD/JPY rate of 150 for conversion
+      // This gives a reasonable USD estimate without needing live rates
+      pnl = pnl / 150;
+    }
+    
+    return pnl - commission - otherCharges;
   };
 
   const handleSubmit = async () => {
