@@ -174,6 +174,8 @@ const DailyJournal = () => {
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const [isMobileTradeListOpen, setIsMobileTradeListOpen] = useState(false);
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState(false);
+  const [tradeFilter, setTradeFilter] = useState<"all" | "winners" | "losers">("all");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Removed tab states - now using single scrollable view for center content and right panel
 
@@ -285,6 +287,52 @@ const DailyJournal = () => {
     return data;
   }, [trades, searchQuery]);
 
+  // Keyboard navigation for trades
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if focused on an input or textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.contentEditable === "true") return;
+      
+      const finalFilteredTrades = filteredTrades.filter(t => {
+        if (tradeFilter === "winners") return t.Profit >= 0;
+        if (tradeFilter === "losers") return t.Profit < 0;
+        return true;
+      });
+      
+      if (finalFilteredTrades.length === 0) return;
+      
+      const currentIdx = finalFilteredTrades.findIndex(t => (t.id || t._id) === (selectedTrade?.id || selectedTrade?._id));
+      
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        const newIdx = currentIdx <= 0 ? finalFilteredTrades.length - 1 : currentIdx - 1;
+        setSelectedTrade(finalFilteredTrades[newIdx]);
+        setSelectedTradeIndex(newIdx);
+      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        const newIdx = currentIdx >= finalFilteredTrades.length - 1 ? 0 : currentIdx + 1;
+        setSelectedTrade(finalFilteredTrades[newIdx]);
+        setSelectedTradeIndex(newIdx);
+      } else if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (!isDemo && !isSaving) handleSave();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [filteredTrades, tradeFilter, selectedTrade, isDemo, isSaving]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    if (selectedTrade) {
+      const originalData = selectedTrade.jrData || {};
+      const hasChanges = JSON.stringify(journalData) !== JSON.stringify(originalData);
+      setHasUnsavedChanges(hasChanges);
+    }
+  }, [journalData, selectedTrade]);
+
   const navigateTrade = (direction: "prev" | "next") => {
     const currentIdx = filteredTrades.findIndex(t => (t.id || t._id) === (selectedTrade?.id || selectedTrade?._id));
     let newIdx = direction === "prev" ? currentIdx - 1 : currentIdx + 1;
@@ -384,6 +432,16 @@ const DailyJournal = () => {
           jrData: jrDataWithRules,
         }),
       });
+      
+      // Update selectedTrade with the saved jrData to sync state
+      setSelectedTrade(prev => prev ? { ...prev, jrData: jrDataWithRules } : null);
+      setTrades(prev => prev.map(t => 
+        (t.id || t._id) === tradeId ? { ...t, jrData: jrDataWithRules } : t
+      ));
+      
+      // Reset unsaved changes indicator
+      setHasUnsavedChanges(false);
+      
       setAccounts();
     } catch (error) {
       console.error("Error saving journal:", error);
@@ -588,10 +646,17 @@ const DailyJournal = () => {
             <button
               onClick={handleSave}
               disabled={isDemo || isSaving}
-              className="group flex items-center gap-1 sm:gap-2 px-2 sm:px-5 py-1.5 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-semibold text-[10px] sm:text-sm transition-all duration-300 disabled:opacity-50 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+              className={`group relative flex items-center gap-1 sm:gap-2 px-2 sm:px-5 py-1.5 sm:py-2.5 rounded-xl text-white font-semibold text-[10px] sm:text-sm transition-all duration-300 disabled:opacity-50 shadow-lg ${
+                hasUnsavedChanges 
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 shadow-amber-500/20 hover:shadow-amber-500/30" 
+                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-emerald-500/20 hover:shadow-emerald-500/30"
+              }`}
             >
+              {hasUnsavedChanges && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+              )}
               <Save className="w-3 h-3 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
-              <span className="hidden xs:inline sm:inline">{isSaving ? "..." : "Save"}</span>
+              <span className="hidden xs:inline sm:inline">{isSaving ? "..." : hasUnsavedChanges ? "Save" : "Saved"}</span>
             </button>
           </div>
         </div>
@@ -606,8 +671,8 @@ const DailyJournal = () => {
           className="hidden md:block flex-shrink-0 border-r border-white/[0.06] bg-gradient-to-b from-card to-background overflow-hidden"
         >
           <div className="w-[280px] h-full flex flex-col">
-            {/* Search */}
-            <div className="p-4 border-b border-white/[0.06]">
+            {/* Search & Filters */}
+            <div className="p-3 border-b border-white/[0.06] space-y-2">
               <div className="relative group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary/70 transition-colors" />
                 <input
@@ -615,70 +680,151 @@ const DailyJournal = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search trades..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-xl text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/40 focus:bg-white/[0.05] transition-all duration-200"
                 />
+              </div>
+              {/* Filter Buttons */}
+              <div className="flex gap-1">
+                {[
+                  { key: "all", label: "All" },
+                  { key: "winners", label: "Winners", color: "profit" },
+                  { key: "losers", label: "Losers", color: "loss" },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setTradeFilter(f.key as "all" | "winners" | "losers")}
+                    className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+                      tradeFilter === f.key
+                        ? f.color === "profit"
+                          ? "bg-profit/15 text-profit border border-profit/30"
+                          : f.color === "loss"
+                          ? "bg-loss/15 text-loss border border-loss/30"
+                          : "bg-primary/15 text-primary border border-primary/30"
+                        : "bg-white/[0.03] text-muted-foreground hover:bg-white/[0.06] border border-transparent"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Trade List */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin p-2 space-y-1.5">
-              {filteredTrades.map((trade, idx) => {
-                const isSelected = (trade.id || trade._id) === (selectedTrade?.id || selectedTrade?._id);
-                const tradeProfit = trade.Profit >= 0;
-                const hasJournalData = trade.jrData?.widw || trade.jrData?.tradeRating;
-                return (
-                  <motion.button
-                    key={trade.id || trade._id || idx}
-                    onClick={() => {
-                      setSelectedTrade(trade);
-                      setSelectedTradeIndex(idx);
-                    }}
-                    className={`w-full p-2.5 text-left rounded-xl transition-all duration-200 group ${
-                      isSelected 
-                        ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border border-primary/30 shadow-lg shadow-primary/5" 
-                        : "hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08]"
-                    }`}
-                    whileHover={{ scale: isSelected ? 1 : 1.005 }}
-                    whileTap={{ scale: 0.995 }}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {/* Symbol Logo */}
-                      <SymbolLogo 
-                        symbol={trade.Item || trade.symbol || ""} 
-                        size="sm" 
-                        isProfit={tradeProfit}
-                        isSelected={isSelected}
-                      />
-                      
-                      {/* Trade Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`font-semibold text-sm truncate ${isSelected ? 'text-foreground' : 'text-foreground/90'}`}>
-                            {trade.Item || trade.symbol}
-                          </span>
-                          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ${tradeProfit ? "text-profit" : "text-loss"}`}>
-                            {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit * exchangeRate, currency)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] text-muted-foreground/60">{formatDate(trade.date)}</span>
-                          {trade.strategy && trade.strategy !== "Select" && (
-                            <>
-                              <span className="text-muted-foreground/30">·</span>
-                              <span className="text-[10px] text-primary/60 truncate max-w-[80px]">{trade.strategy}</span>
-                            </>
-                          )}
-                          {hasJournalData && (
-                            <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium">
-                              Journaled
-                            </span>
-                          )}
-                        </div>
+            {/* Trade List with Day Grouping */}
+            <div className="flex-1 overflow-y-auto scrollbar-thin p-2">
+              {(() => {
+                // Group trades by date
+                const groupedTrades: { [key: string]: typeof filteredTrades } = {};
+                const finalFilteredTrades = filteredTrades.filter(t => {
+                  if (tradeFilter === "winners") return t.Profit >= 0;
+                  if (tradeFilter === "losers") return t.Profit < 0;
+                  return true;
+                });
+                
+                finalFilteredTrades.forEach(trade => {
+                  const dateKey = trade.date || "Unknown";
+                  if (!groupedTrades[dateKey]) groupedTrades[dateKey] = [];
+                  groupedTrades[dateKey].push(trade);
+                });
+
+                const getDateLabel = (dateStr: string) => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                  if (dateStr === today) return "Today";
+                  if (dateStr === yesterday) return "Yesterday";
+                  return formatDate(dateStr);
+                };
+
+                const sortedDates = Object.keys(groupedTrades).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+                if (sortedDates.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-full py-12 text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
+                        <FileText className="w-8 h-8 text-muted-foreground/30" />
+                      </div>
+                      <p className="text-sm text-muted-foreground/70 mb-1">No trades found</p>
+                      <p className="text-xs text-muted-foreground/50">
+                        {tradeFilter !== "all" ? "Try changing the filter" : "Add trades to get started"}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return sortedDates.map(dateKey => (
+                  <div key={dateKey} className="mb-3">
+                    {/* Date Header */}
+                    <div className="sticky top-0 z-10 px-2 py-1.5 mb-1 bg-background/95 backdrop-blur-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                          {getDateLabel(dateKey)}
+                        </span>
+                        <div className="flex-1 h-px bg-white/[0.06]" />
+                        <span className="text-[9px] text-muted-foreground/50">
+                          {groupedTrades[dateKey].length} trade{groupedTrades[dateKey].length !== 1 ? 's' : ''}
+                        </span>
                       </div>
                     </div>
-                  </motion.button>
-                );
-              })}
+                    {/* Trades for this date */}
+                    <div className="space-y-1">
+                      {groupedTrades[dateKey].map((trade, idx) => {
+                        const globalIdx = finalFilteredTrades.indexOf(trade);
+                        const isSelected = (trade.id || trade._id) === (selectedTrade?.id || selectedTrade?._id);
+                        const tradeProfit = trade.Profit >= 0;
+                        const hasJournalData = trade.jrData?.widw || trade.jrData?.tradeRating;
+                        return (
+                          <motion.button
+                            key={trade.id || trade._id || idx}
+                            onClick={() => {
+                              setSelectedTrade(trade);
+                              setSelectedTradeIndex(globalIdx);
+                            }}
+                            className={`w-full p-2.5 text-left rounded-xl transition-all duration-200 group ${
+                              isSelected 
+                                ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border border-primary/30 shadow-lg shadow-primary/5" 
+                                : "hover:bg-white/[0.04] border border-transparent hover:border-white/[0.08]"
+                            }`}
+                            whileHover={{ scale: isSelected ? 1 : 1.005 }}
+                            whileTap={{ scale: 0.995 }}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <SymbolLogo 
+                                symbol={trade.Item || trade.symbol || ""} 
+                                size="sm" 
+                                isProfit={tradeProfit}
+                                isSelected={isSelected}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`font-semibold text-sm truncate ${isSelected ? 'text-foreground' : 'text-foreground/90'}`}>
+                                    {trade.Item || trade.symbol}
+                                  </span>
+                                  <span className={`text-sm font-bold tabular-nums flex-shrink-0 ${tradeProfit ? "text-profit" : "text-loss"}`}>
+                                    {tradeProfit ? "+" : ""}{formatCompactCurrency(trade.Profit * exchangeRate, currency)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="text-[10px] text-muted-foreground/60">{formatTime(trade.EntryTime || trade.time)}</span>
+                                  {trade.strategy && trade.strategy !== "Select" && (
+                                    <>
+                                      <span className="text-muted-foreground/30">·</span>
+                                      <span className="text-[10px] text-primary/60 truncate max-w-[70px]">{trade.strategy}</span>
+                                    </>
+                                  )}
+                                  {hasJournalData && (
+                                    <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-medium">
+                                      Journaled
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </motion.div>
