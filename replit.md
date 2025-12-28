@@ -28,7 +28,13 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Notebook:** Premium three-column layout with a comprehensive template system for various trading analyses and notes.
 - **Reports & Strategies:** Redesigned pages with theme-aware charts for analytics.
 - **Playbook:** AI-powered (rule-based) pattern detection for identifying winning trade setups.
-- **Prop Firm Mode:** Dedicated mode with amber/gold accents for tracking prop firm challenge progress, including profit targets and drawdown limits.
+- **Prop Firm Mode:** Comprehensive prop firm challenge tracking system with amber/gold accents:
+  - **Presets Library:** 9+ major prop firm presets (FTMO, The Funded Trader, The5ers, MyForexFunds, E8 Funding, Funded Next, Alpha Capital, True Forex Funds, Custom) with accurate rules, phases, and scaling plans.
+  - **Multi-Phase Tracking:** Visual phase roadmap showing progression through evaluation phases to funded status.
+  - **Challenge History:** Complete history of all challenge attempts with pass/fail status and statistics.
+  - **Smart Alerts:** Automatic violation logging at 70% (warning) and 85% (critical) of drawdown limits with deduplication.
+  - **Scale-Up Calculator:** Projects capital growth based on prop firm scaling plans and monthly returns.
+  - **Violations Timeline:** Tracks drawdown warnings, breaches, and other rule violations with journal notes.
 - **Lot Size Calculator:** Tool for forex position sizing.
 - **Resource Center:** Educational hub with articles, psychology tips, and customizable trading routines.
 - **Account Type System:** `isPropFirm` field for filtering accounts.
