@@ -525,41 +525,22 @@ export default function RootLayout({
         <div className={cn("px-2 pb-2", !isExpanded && "px-1")}>
           {subscriptionStatus?.isSubscribed ? (
             <div className={cn(
-              "relative rounded-lg overflow-hidden",
-              isExpanded && "rounded-xl"
+              "relative rounded-xl overflow-hidden",
+              isExpanded ? "px-3 py-2.5" : "p-2"
             )}>
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-600/20" />
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-400/10 via-transparent to-yellow-500/10" />
-              <div className="absolute inset-0 border border-amber-400/30 rounded-lg" />
-              <div 
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-300/20 to-transparent animate-shimmer"
-                style={{
-                  animation: 'shimmer 3s ease-in-out infinite',
-                }}
-              />
-              <style jsx>{`
-                @keyframes shimmer {
-                  0%, 100% { transform: translateX(-100%); }
-                  50% { transform: translateX(100%); }
-                }
-              `}</style>
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-900/30 via-amber-800/20 to-amber-900/30 rounded-xl" />
+              <div className="absolute inset-0 border border-amber-500/20 rounded-xl" />
               <div className={cn(
-                "relative flex items-center gap-2.5 p-2.5",
-                !isExpanded && "justify-center p-2"
+                "relative flex items-center gap-2.5",
+                !isExpanded && "justify-center"
               )}>
-                <div className="relative">
-                  <div className="absolute inset-0 bg-amber-400/30 rounded-md blur-sm" />
-                  <div className="relative w-6 h-6 rounded-md bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                    <Crown className="h-3.5 w-3.5 text-amber-950" />
-                  </div>
+                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
+                  <Crown className="h-3 w-3 text-amber-950" />
                 </div>
                 {isExpanded && (
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-bold bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent">
-                      PRO MEMBER
-                    </span>
-                    <span className="text-[8px] text-amber-400/60 font-medium">Premium Access</span>
-                  </div>
+                  <span className="text-[11px] font-semibold text-amber-400">
+                    Pro Member
+                  </span>
                 )}
               </div>
             </div>
