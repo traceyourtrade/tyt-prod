@@ -773,17 +773,15 @@ export default function FullscreenBacktesting({
       replayIntervalRef.current = targetInterval;
       pendingTimeframeSwitchRef.current = null;
       
-      // TRIGGER TRADINGVIEW UPDATE if requested
+      // TRIGGER TRADINGVIEW UPDATE if requested (for custom dropdown changes)
       if (triggerSymbolSwitch && tvWidgetRef.current) {
         try {
           const chart = tvWidgetRef.current.activeChart();
           const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
           const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}`;
           
-          // CRITICAL: Reset data to force TradingView to call getBars fresh
-          // Without this, TradingView uses cached bars and chart doesn't update
-          chart.resetData();
-          
+          // Use setSymbol + setResolution to trigger TradingView to call getBars
+          // Note: Do NOT call resetData() here - it causes infinite loops
           chart.setSymbol(symbolWithSuffix, () => {
             chart.setResolution(targetInterval, () => {
               setTimeout(() => {
@@ -2555,58 +2553,46 @@ export default function FullscreenBacktesting({
       }
       
       chart.onIntervalChanged().subscribe(null, (newInterval: string) => {
+        // Guard against re-entry when we trigger resolution changes ourselves
+        if (isChangingResolutionRef.current) {
+          console.log('onIntervalChanged: Ignoring (our own change)');
+          return;
+        }
+        
         // TradingView's native timeframe buttons clicked
-        // CRITICAL: TradingView called getBars BEFORE this callback fires, so the chart
-        // is displaying bars filtered to the OLD replay position. We need to:
-        // 1. Update our refs via processTimeframeSwitch
-        // 2. Force TradingView to reload with the CORRECT position
+        // IMPORTANT: Do NOT call resetData() or setSymbol/setResolution here - that would
+        // trigger another onIntervalChanged event creating an infinite loop!
         console.log('==== TV NATIVE TIMEFRAME BUTTON ====');
+        
+        // Update refs and state via the unified helper
         processTimeframeSwitch(newInterval, { 
           hideDropdown: false, 
-          triggerSymbolSwitch: false, // We'll handle the reload ourselves
-          captureDrawings: false // Can't capture - resolution already changed
+          triggerSymbolSwitch: false,
+          captureDrawings: false
         });
         
-        // CRITICAL: Force TradingView to reload data with the CORRECT replay position
-        // Without this, the chart shows bars filtered to the old position
-        // We use a short delay to let processTimeframeSwitch complete first
+        // Ensure the correct callback is set for playback to work
+        const cachedCallback = realtimeCallbacksRef.current.get(newInterval);
+        if (cachedCallback) {
+          onRealtimeCallbackRef.current = cachedCallback;
+          subscribedResolutionRef.current = newInterval;
+          callbacksReadyRef.current = true;
+        }
+        
+        // Scroll chart to replay position without reloading data
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
-            if (innerChart) {
-              console.log('Forcing chart reload after native button click');
-              
-              // IMPORTANT: Ensure the correct callback is set for the new resolution
-              // This is needed because resetData may not trigger subscribeBars again
-              const cachedCallback = realtimeCallbacksRef.current.get(newInterval);
-              if (cachedCallback) {
-                onRealtimeCallbackRef.current = cachedCallback;
-                subscribedResolutionRef.current = newInterval;
-                callbacksReadyRef.current = true;
-                console.log('Restored callback for resolution:', newInterval);
-              }
-              
-              // Just reset data - TradingView will call getBars again with correct position
-              innerChart.resetData();
-              
-              // Restore visible range centered on replay position after reset completes
-              setTimeout(() => {
-                try {
-                  const replayTs = replayTimestampRef.current;
-                  if (replayTs > 0 && innerChart) {
-                    const resolutionMinutes = intervalToMinutes(newInterval);
-                    const windowMs = resolutionMinutes * 60 * 1000 * 50;
-                    const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
-                    const visibleTo = (replayTs + windowMs * 0.1) / 1000;
-                    innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                  }
-                } catch (e) {}
-              }, 500);
+            const replayTs = replayTimestampRef.current;
+            if (innerChart && replayTs > 0) {
+              const resolutionMinutes = intervalToMinutes(newInterval);
+              const windowMs = resolutionMinutes * 60 * 1000 * 50;
+              const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
+              const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+              innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
             }
-          } catch (e) {
-            console.warn('Error forcing reload after native button:', e);
-          }
-        }, 50);
+          } catch (e) {}
+        }, 200);
         
         debouncedSave();
       });
