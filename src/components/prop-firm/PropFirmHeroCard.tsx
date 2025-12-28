@@ -199,56 +199,56 @@ export default function PropFirmHeroCard({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <Shield className="w-3.5 h-3.5" />
-                  Starting Balance
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 md:p-4 border border-gray-200 dark:border-white/5 min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500 dark:text-white/40 mb-1.5 md:mb-2">
+                  <Shield className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+                  <span>Balance</span>
                 </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+                <p className="text-base md:text-xl font-bold text-gray-900 dark:text-white tabular-nums">
                   ${startingBalance.toLocaleString()}
                 </p>
               </div>
               
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5 overflow-hidden">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">Current Equity</span>
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 md:p-4 border border-gray-200 dark:border-white/5 min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500 dark:text-white/40 mb-1.5 md:mb-2">
+                  <TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+                  <span>Equity</span>
                 </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums truncate">
-                  ${currentEquity.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                <p className="text-base md:text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+                  ${currentEquity.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
                 <p className={cn(
-                  "text-xs font-medium mt-1",
+                  "text-[10px] md:text-xs font-medium mt-0.5 md:mt-1",
                   currentProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                 )}>
                   {currentProfit >= 0 ? "+" : ""}{((currentProfit / startingBalance) * 100).toFixed(2)}%
                 </p>
               </div>
               
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Days Active
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 md:p-4 border border-gray-200 dark:border-white/5 min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500 dark:text-white/40 mb-1.5 md:mb-2">
+                  <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+                  <span>Days</span>
                 </div>
-                <p className="text-xl font-bold text-gray-900 dark:text-white tabular-nums">
+                <p className="text-base md:text-xl font-bold text-gray-900 dark:text-white tabular-nums">
                   {daysActive}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-white/40 mt-1">
+                <p className="text-[10px] md:text-xs text-gray-500 dark:text-white/40 mt-0.5 md:mt-1">
                   days
                 </p>
               </div>
               
-              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 border border-gray-200 dark:border-white/5 overflow-hidden">
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-white/40 mb-2">
-                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">Profit/Loss</span>
+              <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 md:p-4 border border-gray-200 dark:border-white/5 min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500 dark:text-white/40 mb-1.5 md:mb-2">
+                  <Clock className="w-3 h-3 md:w-3.5 md:h-3.5 flex-shrink-0" />
+                  <span>P&L</span>
                 </div>
                 <p className={cn(
-                  "text-xl font-bold tabular-nums truncate",
+                  "text-base md:text-xl font-bold tabular-nums",
                   currentProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                 )}>
-                  {currentProfit >= 0 ? "+" : ""}${Math.abs(currentProfit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                  {currentProfit >= 0 ? "+" : ""}${Math.abs(currentProfit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
               </div>
             </div>
