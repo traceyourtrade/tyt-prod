@@ -397,7 +397,7 @@ export default function FullscreenBacktesting({
   const [activeDrawerTab, setActiveDrawerTab] = useState<'open' | 'pending' | 'closed'>('open');
   const drawerMinHeight = 150;
   const drawerMaxHeight = 500;
-  const drawerCollapsedHeight = 48;
+  const drawerCollapsedHeight = 56;
 
   const symbol = sessionData ? symbolToChartFormat(sessionData.symbol, sessionData.market) : '';
   const fromDate = sessionData?.fromDate || '';
