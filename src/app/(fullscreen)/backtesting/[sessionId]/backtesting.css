@@ -2681,32 +2681,21 @@
   bottom: 8px;
   left: 8px;
   right: 8px;
-  background: linear-gradient(180deg, rgba(16, 18, 24, 0.98) 0%, rgba(8, 10, 14, 0.99) 100%);
+  background: rgba(16, 18, 24, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   z-index: 150;
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   transition: height 0.05s ease-out;
+  overflow: hidden;
 }
 
 .bt-bottom-drawer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(59, 130, 246, 0.5) 20%, 
-    rgba(20, 184, 166, 0.5) 50%, 
-    rgba(139, 92, 246, 0.5) 80%, 
-    transparent 100%
-  );
+  display: none;
 }
 
 .bt-drawer-resize-handle {
