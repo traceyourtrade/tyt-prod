@@ -14,8 +14,12 @@ import PropFirmPhaseRoadmap from "./PropFirmPhaseRoadmap"
 import PropFirmPresetSelector from "./PropFirmPresetSelector"
 import PropFirmChallengeHistory from "./PropFirmChallengeHistory"
 import PropFirmScaleUpCalculator from "./PropFirmScaleUpCalculator"
+import PropFirmChallengeOverview from "./PropFirmChallengeOverview"
 import Calendar from "@/components/dashboard-components/Calendar"
-import { AlertTriangle, Clock, Building2, X, History, Calculator, ChevronRight } from "lucide-react"
+import { 
+  AlertTriangle, Clock, Building2, X, History, Calculator, 
+  ChevronRight, LayoutGrid, Eye, ChevronDown
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Trade {
@@ -24,24 +28,37 @@ interface Trade {
   [key: string]: unknown
 }
 
-type TabType = "overview" | "history" | "calculator"
+type TabType = "portfolio" | "details" | "history" | "calculator"
 
 export default function PropFirmDashboard() {
   const { 
-    settings, 
-    peakEquity, 
+    settings: globalSettings, 
+    peakEquity: globalPeakEquity, 
     challengeStatus, 
     updatePeakEquity, 
     setChallengeStatus,
-    selectedPresetId,
     alertThresholds,
-    checkAndLogViolation
+    checkAndLogViolation,
+    getAllActiveChallenges,
+    getActiveChallenge,
+    setViewingChallenge,
+    viewingChallengeId,
+    updateChallengeMetrics,
+    setChallengeStatusById,
+    checkAndLogChallengeViolation,
   } = usePropFirmStore()
   const { selectedAccounts } = useModeFilteredAccounts()
   const [dailyBreached, setDailyBreached] = useState(false)
   const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false)
   const [showPresetModal, setShowPresetModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabType>("overview")
+  const [activeTab, setActiveTab] = useState<TabType>("portfolio")
+
+  const activeChallenges = getAllActiveChallenges()
+  const viewingChallenge = getActiveChallenge()
+
+  // Use viewing challenge's settings if available, otherwise fall back to global
+  const settings = viewingChallenge?.settings || globalSettings
+  const peakEquity = viewingChallenge?.peakEquity || globalPeakEquity
 
   const calculations = useMemo(() => {
     let totalPnL = 0
@@ -129,38 +146,59 @@ export default function PropFirmDashboard() {
     }
   }, [selectedAccounts, settings, peakEquity])
 
+  // Update peak equity and challenge metrics
   useEffect(() => {
     if (calculations.currentEquity > peakEquity) {
       updatePeakEquity(calculations.currentEquity)
     }
-  }, [calculations.currentEquity, peakEquity, updatePeakEquity])
+    
+    // Update per-challenge metrics if viewing a challenge
+    if (viewingChallengeId) {
+      updateChallengeMetrics(viewingChallengeId, {
+        totalPnL: calculations.totalPnL,
+        currentEquity: calculations.currentEquity,
+      })
+    }
+  }, [calculations.currentEquity, calculations.totalPnL, peakEquity, updatePeakEquity, viewingChallengeId, updateChallengeMetrics])
 
+  // Update challenge status based on calculations
   useEffect(() => {
     const { drawdownUsedPercent, profitProgress, dailyDrawdownBreached } = calculations
     
+    let newStatus: "breached" | "completed" | "at_risk" | "active" = "active"
+    
     if (drawdownUsedPercent >= 100) {
-      setChallengeStatus("breached")
+      newStatus = "breached"
       setDailyBreached(false)
     } else if (dailyDrawdownBreached) {
-      setChallengeStatus("breached")
+      newStatus = "breached"
       setDailyBreached(true)
     } else if (profitProgress >= 100) {
-      setChallengeStatus("completed")
+      newStatus = "completed"
       setDailyBreached(false)
     } else if (drawdownUsedPercent >= alertThresholds.warning) {
-      setChallengeStatus("at_risk")
+      newStatus = "at_risk"
       setDailyBreached(false)
     } else {
-      setChallengeStatus("active")
       setDailyBreached(false)
     }
-  }, [calculations, setChallengeStatus, alertThresholds])
+    
+    // Update per-challenge status if viewing a challenge
+    if (viewingChallengeId) {
+      setChallengeStatusById(viewingChallengeId, newStatus)
+    }
+    setChallengeStatus(newStatus)
+  }, [calculations, setChallengeStatus, alertThresholds, viewingChallengeId, setChallengeStatusById])
 
+  // Log violations for the viewing challenge
   useEffect(() => {
     const { drawdownUsedPercent, dailyDrawdownUsedPercent, maxDrawdownValue, dailyDrawdownValue } = calculations
     
+    if (!viewingChallengeId) return
+    
     if (drawdownUsedPercent >= alertThresholds.critical) {
-      checkAndLogViolation(
+      checkAndLogChallengeViolation(
+        viewingChallengeId,
         "max_drawdown",
         "critical",
         `Max drawdown at ${drawdownUsedPercent.toFixed(1)}% - CRITICAL LEVEL`,
@@ -168,7 +206,8 @@ export default function PropFirmDashboard() {
         maxDrawdownValue
       )
     } else if (drawdownUsedPercent >= alertThresholds.warning) {
-      checkAndLogViolation(
+      checkAndLogChallengeViolation(
+        viewingChallengeId,
         "max_drawdown",
         "warning",
         `Max drawdown at ${drawdownUsedPercent.toFixed(1)}% - approaching limit`,
@@ -178,7 +217,8 @@ export default function PropFirmDashboard() {
     }
 
     if (dailyDrawdownValue && dailyDrawdownUsedPercent >= alertThresholds.critical) {
-      checkAndLogViolation(
+      checkAndLogChallengeViolation(
+        viewingChallengeId,
         "daily_drawdown",
         "critical",
         `Daily drawdown at ${dailyDrawdownUsedPercent.toFixed(1)}% - CRITICAL LEVEL`,
@@ -186,38 +226,54 @@ export default function PropFirmDashboard() {
         dailyDrawdownValue
       )
     }
-  }, [calculations, alertThresholds, checkAndLogViolation])
+  }, [calculations, alertThresholds, viewingChallengeId, checkAndLogChallengeViolation])
+
+  const handleAddChallenge = () => {
+    setShowPresetModal(true)
+  }
+
+  const handleSelectChallenge = (challengeId: string) => {
+    setViewingChallenge(challengeId)
+    setActiveTab("details")
+  }
 
   const tabs = [
-    { id: "overview" as const, label: "Overview", icon: Building2 },
+    { id: "portfolio" as const, label: "Portfolio", icon: LayoutGrid },
+    { id: "details" as const, label: "Details", icon: Eye, disabled: activeChallenges.length === 0 },
     { id: "history" as const, label: "History", icon: History },
     { id: "calculator" as const, label: "Calculator", icon: Calculator },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Preset Selector Button */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => setShowPresetModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:bg-amber-500/20 transition-all text-sm font-medium"
-        >
-          <Building2 className="w-4 h-4" />
-          {selectedPresetId ? "Change Prop Firm" : "Select Prop Firm"}
-          <ChevronRight className="w-4 h-4" />
-        </button>
+      {/* Header with Tab Navigation */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        {/* Challenge Selector (when viewing details) */}
+        {activeTab === "details" && activeChallenges.length > 1 && viewingChallenge && (
+          <div className="relative">
+            <button
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border/50 text-foreground hover:border-border transition-all text-sm font-medium"
+            >
+              <Building2 className="w-4 h-4 text-amber-500" />
+              {viewingChallenge.name}
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+        )}
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border/50">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/50 border border-border/50 ml-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => !tab.disabled && setActiveTab(tab.id)}
+              disabled={tab.disabled}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
                 activeTab === tab.id
                   ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+                tab.disabled && "opacity-50 cursor-not-allowed"
               )}
             >
               <tab.icon className="w-3.5 h-3.5" />
@@ -229,13 +285,21 @@ export default function PropFirmDashboard() {
 
       <div className="flex gap-6">
         <div className="flex-1 space-y-6 min-w-0">
-          {challengeStatus === "breached" && (
-            <PropFirmBreachBanner type={dailyBreached ? "daily_drawdown" : "drawdown"} />
+          {/* Portfolio Tab - Multi-Challenge Overview */}
+          {activeTab === "portfolio" && (
+            <PropFirmChallengeOverview
+              onAddChallenge={handleAddChallenge}
+              onSelectChallenge={handleSelectChallenge}
+            />
           )}
 
-          {activeTab === "overview" && (
+          {/* Details Tab - Single Challenge View */}
+          {activeTab === "details" && viewingChallenge && (
             <>
-              {/* Phase Roadmap - New Component */}
+              {challengeStatus === "breached" && (
+                <PropFirmBreachBanner type={dailyBreached ? "daily_drawdown" : "drawdown"} />
+              )}
+
               <PropFirmPhaseRoadmap />
 
               <PropFirmHeroCard
@@ -354,6 +418,26 @@ export default function PropFirmDashboard() {
             </>
           )}
 
+          {/* Details Tab - No Challenge Selected */}
+          {activeTab === "details" && !viewingChallenge && activeChallenges.length > 0 && (
+            <div className="bg-card border border-border/50 rounded-xl p-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center mx-auto mb-4">
+                <Eye className="w-8 h-8 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Select a Challenge</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Choose a challenge from the Portfolio tab to view its details.
+              </p>
+              <button
+                onClick={() => setActiveTab("portfolio")}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-colors"
+              >
+                <LayoutGrid className="w-5 h-5" />
+                View Portfolio
+              </button>
+            </div>
+          )}
+
           {activeTab === "history" && (
             <PropFirmChallengeHistory />
           )}
@@ -363,17 +447,19 @@ export default function PropFirmDashboard() {
           )}
         </div>
 
-        <div className={cn(
-          "hidden xl:block flex-shrink-0 transition-all duration-300 overflow-hidden",
-          suggestionsCollapsed ? "w-14" : "w-80"
-        )}>
-          <div className="sticky top-6">
-            <PropFirmSuggestions 
-              isCollapsed={suggestionsCollapsed}
-              onToggleCollapse={() => setSuggestionsCollapsed(!suggestionsCollapsed)}
-            />
+        {(activeTab === "details" || activeTab === "portfolio") && (
+          <div className={cn(
+            "hidden xl:block flex-shrink-0 transition-all duration-300 overflow-hidden",
+            suggestionsCollapsed ? "w-14" : "w-80"
+          )}>
+            <div className="sticky top-6">
+              <PropFirmSuggestions 
+                isCollapsed={suggestionsCollapsed}
+                onToggleCollapse={() => setSuggestionsCollapsed(!suggestionsCollapsed)}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Preset Selection Modal */}
@@ -400,8 +486,10 @@ export default function PropFirmDashboard() {
                     <Building2 className="w-5 h-5 text-amber-500" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-foreground">Select Prop Firm</h2>
-                    <p className="text-xs text-muted-foreground">Choose a prop firm preset to start tracking your challenge</p>
+                    <h2 className="text-lg font-semibold text-foreground">Add Challenge</h2>
+                    <p className="text-xs text-muted-foreground">
+                      {activeChallenges.length}/4 challenges active
+                    </p>
                   </div>
                 </div>
                 <button
@@ -414,7 +502,10 @@ export default function PropFirmDashboard() {
 
               {/* Modal Body */}
               <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
-                <PropFirmPresetSelector onSelect={() => setShowPresetModal(false)} />
+                <PropFirmPresetSelector onSelect={() => {
+                  setShowPresetModal(false)
+                  setActiveTab("details")
+                }} />
               </div>
             </motion.div>
           </motion.div>
