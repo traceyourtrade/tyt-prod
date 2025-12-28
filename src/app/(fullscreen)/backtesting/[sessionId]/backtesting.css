@@ -463,6 +463,56 @@
   background: #f8fafc;
 }
 
+/* Light mode - SL/TP sections */
+.bt-light .bt-order-sl-tp-section {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.bt-light .bt-sl-tp-header {
+  background: #f1f5f9;
+  color: #374151;
+  border-bottom-color: #e2e8f0;
+}
+
+/* Light mode - Order footer actions */
+.bt-light .bt-order-actions {
+  background: #f8fafc;
+  border-top-color: #e2e8f0;
+}
+
+.bt-light .bt-order-action-btn.discard {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.bt-light .bt-order-action-btn.discard:hover {
+  background: #f9fafb;
+  color: #374151;
+  border-color: #9ca3af;
+}
+
+.bt-light .bt-order-action-btn.save {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.bt-light .bt-order-action-btn.save:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Light mode - Checkbox toggle row */
+.bt-light .bt-checkbox-toggle {
+  border-color: #e2e8f0;
+}
+
+.bt-light .bt-checkbox-label {
+  color: #374151;
+}
+
 /* =====================================================
    ANIMATIONS
    ===================================================== */
