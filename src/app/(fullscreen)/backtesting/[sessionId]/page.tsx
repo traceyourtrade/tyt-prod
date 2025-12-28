@@ -2591,9 +2591,10 @@ export default function FullscreenBacktesting({
         }
         
         // TradingView's native timeframe buttons clicked
-        // IMPORTANT: Do NOT call resetData() or setSymbol/setResolution here - that would
-        // trigger another onIntervalChanged event creating an infinite loop!
         console.log('==== TV NATIVE TIMEFRAME BUTTON ====');
+        
+        // Set guard BEFORE any work to prevent resetData from re-triggering this callback
+        isChangingResolutionRef.current = true;
         
         // Update refs and state via the unified helper
         processTimeframeSwitch(newInterval, { 
@@ -2610,26 +2611,41 @@ export default function FullscreenBacktesting({
           callbacksReadyRef.current = true;
         }
         
-        // Scroll chart to replay position and reset price scale
+        // CRITICAL: Force TradingView to reload data with correct filtering
+        // TradingView caches data internally and won't call getBars when switching back
+        // to a resolution it already had. resetData() forces a fresh getBars call.
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
-            const replayTs = replayTimestampRef.current;
-            if (innerChart && replayTs > 0) {
-              const resolutionMinutes = intervalToMinutes(newInterval);
-              // Show ~80 bars: 60 before replay position, 20 after
-              const barMs = resolutionMinutes * 60 * 1000;
-              const visibleFrom = (replayTs - barMs * 60) / 1000;
-              const visibleTo = (replayTs + barMs * 20) / 1000;
-              innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+            if (innerChart) {
+              console.log('Forcing chart reload after native button click');
+              innerChart.resetData();
               
-              // Reset price scale to auto-fit the visible bars
-              try {
-                innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-              } catch (e) {}
+              // After reset, scroll to replay position and reset price scale
+              setTimeout(() => {
+                try {
+                  const replayTs = replayTimestampRef.current;
+                  if (innerChart && replayTs > 0) {
+                    const resolutionMinutes = intervalToMinutes(newInterval);
+                    const barMs = resolutionMinutes * 60 * 1000;
+                    const visibleFrom = (replayTs - barMs * 60) / 1000;
+                    const visibleTo = (replayTs + barMs * 20) / 1000;
+                    innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                    
+                    try {
+                      innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                    } catch (e) {}
+                  }
+                } catch (e) {}
+                isChangingResolutionRef.current = false;
+              }, 300);
+            } else {
+              isChangingResolutionRef.current = false;
             }
-          } catch (e) {}
-        }, 300);
+          } catch (e) {
+            isChangingResolutionRef.current = false;
+          }
+        }, 50);
         
         debouncedSave();
       });
