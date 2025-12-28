@@ -18,8 +18,8 @@ interface PropFirmHeroCardProps {
 
 function CircularProgress({ 
   progress, 
-  size = 100, 
-  strokeWidth = 8, 
+  size = 70, 
+  strokeWidth = 6, 
   type = "profit" 
 }: { 
   progress: number
@@ -82,10 +82,10 @@ function CircularProgress({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-white tabular-nums">
+        <span className="text-lg font-bold text-white tabular-nums">
           {cappedProgress.toFixed(0)}%
         </span>
-        <span className="text-[10px] text-white/50 uppercase tracking-wider font-medium">
+        <span className="text-[8px] text-white/50 uppercase tracking-wider font-medium">
           {type === "profit" ? "Target" : "DD Used"}
         </span>
       </div>
@@ -176,9 +176,9 @@ export default function PropFirmHeroCard({
       {/* Subtle grid pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] opacity-50" />
       
-      <div className="relative p-5">
+      <div className="relative p-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center">
               <Target className="w-5 h-5 text-amber-400" />
@@ -202,54 +202,54 @@ export default function PropFirmHeroCard({
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="flex flex-col lg:flex-row gap-5">
-          {/* Stats Grid */}
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
-                <Shield className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">Starting</span>
+        {/* Main Content - Horizontal Layout */}
+        <div className="flex items-center gap-4">
+          {/* Stats Row */}
+          <div className="flex-1 flex items-center gap-2">
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+                <Shield className="w-2.5 h-2.5 flex-shrink-0" />
+                <span>Starting</span>
               </div>
-              <p className="text-lg font-bold text-white tabular-nums truncate">
+              <p className="text-sm font-bold text-white tabular-nums truncate">
                 {formatCurrency(startingBalance)}
               </p>
             </div>
             
-            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
-                <TrendingUp className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">Current</span>
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+                <TrendingUp className="w-2.5 h-2.5 flex-shrink-0" />
+                <span>Current</span>
               </div>
-              <p className="text-lg font-bold text-white tabular-nums truncate">
+              <p className="text-sm font-bold text-white tabular-nums truncate">
                 {formatCurrency(currentEquity)}
               </p>
               <p className={cn(
-                "text-[10px] font-semibold mt-0.5",
+                "text-[9px] font-semibold",
                 currentProfit >= 0 ? "text-emerald-400" : "text-red-400"
               )}>
                 {currentProfit >= 0 ? "+" : ""}{((currentProfit / startingBalance) * 100).toFixed(2)}%
               </p>
             </div>
             
-            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
-                <Calendar className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">Days</span>
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+                <Calendar className="w-2.5 h-2.5 flex-shrink-0" />
+                <span>Days</span>
               </div>
-              <p className="text-lg font-bold text-white tabular-nums">
+              <p className="text-sm font-bold text-white tabular-nums">
                 {daysActive}
               </p>
-              <p className="text-[10px] text-white/40 mt-0.5">active</p>
+              <p className="text-[9px] text-white/40">active</p>
             </div>
             
-            <div className="bg-white/[0.03] rounded-xl p-3.5 border border-white/[0.06]">
-              <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-1.5 uppercase tracking-wider">
-                <Activity className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">P&L</span>
+            <div className="bg-white/[0.03] rounded-lg px-3 py-2 border border-white/[0.06] min-w-0">
+              <div className="flex items-center gap-1 text-[9px] text-white/40 uppercase tracking-wider">
+                <Activity className="w-2.5 h-2.5 flex-shrink-0" />
+                <span>P&L</span>
               </div>
               <p className={cn(
-                "text-lg font-bold tabular-nums truncate",
+                "text-sm font-bold tabular-nums truncate",
                 currentProfit >= 0 ? "text-emerald-400" : "text-red-400"
               )}>
                 {currentProfit >= 0 ? "+" : ""}{formatCurrency(Math.abs(currentProfit))}
@@ -257,21 +257,21 @@ export default function PropFirmHeroCard({
             </div>
           </div>
 
-          {/* Progress Circles */}
-          <div className="flex items-center justify-center gap-6 lg:gap-8 py-2">
+          {/* Progress Circles - Compact */}
+          <div className="flex items-center gap-4 flex-shrink-0">
             <div className="text-center">
-              <CircularProgress progress={profitProgress} type="profit" size={100} />
-              <div className="mt-2">
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">Profit Target</p>
-                <p className="text-sm font-bold text-white">{formatCurrency(profitTargetValue)}</p>
+              <CircularProgress progress={profitProgress} type="profit" size={70} strokeWidth={6} />
+              <div className="mt-1">
+                <p className="text-[8px] text-white/40 uppercase tracking-wider">Target</p>
+                <p className="text-xs font-bold text-white">{formatCurrency(profitTargetValue)}</p>
               </div>
             </div>
             
             <div className="text-center">
-              <CircularProgress progress={drawdownProgress} type="drawdown" size={100} />
-              <div className="mt-2">
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">Max DD</p>
-                <p className="text-sm font-bold text-white">{formatCurrency(maxDrawdownValue)}</p>
+              <CircularProgress progress={drawdownProgress} type="drawdown" size={70} strokeWidth={6} />
+              <div className="mt-1">
+                <p className="text-[8px] text-white/40 uppercase tracking-wider">Max DD</p>
+                <p className="text-xs font-bold text-white">{formatCurrency(maxDrawdownValue)}</p>
               </div>
             </div>
           </div>
