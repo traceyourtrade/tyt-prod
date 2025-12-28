@@ -23,7 +23,8 @@ import {
   ArrowDownRight,
   CheckSquare,
   Square,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 
 interface Trade {
@@ -146,6 +147,7 @@ export default function BacktestingDashboard() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [selectedSessions, setSelectedSessions] = useState<Set<number>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -252,6 +254,8 @@ export default function BacktestingDashboard() {
   const createSession = async () => {
     if (!formData.name.trim() || !formData.fromDate || !formData.toDate) return;
     
+    setIsCreating(true);
+    
     try {
       const res = await fetch("/api/backtest-sessions", {
         method: "POST",
@@ -268,6 +272,18 @@ export default function BacktestingDashboard() {
       });
 
       if (res.ok) {
+        let sessionId = null;
+        
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const data = await res.json();
+            sessionId = data.data?.sessionId;
+          } catch (e) {
+            console.log("No JSON body in response");
+          }
+        }
+        
         setShowCreateModal(false);
         setFormData({
           name: "",
@@ -279,10 +295,16 @@ export default function BacktestingDashboard() {
           description: ""
         });
         setSymbolSearch("");
-        fetchSessions();
+        await fetchSessions();
+        
+        if (sessionId) {
+          router.push(`/backtesting/${sessionId}`);
+        }
       }
     } catch (error) {
       console.error("Failed to create session:", error);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -1169,16 +1191,23 @@ export default function BacktestingDashboard() {
                   </button>
                   <motion.button
                     onClick={createSession}
-                    disabled={!formData.name || !formData.fromDate || !formData.toDate}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    disabled={!formData.name || !formData.fromDate || !formData.toDate || isCreating}
+                    whileHover={{ scale: isCreating ? 1 : 1.01 }}
+                    whileTap={{ scale: isCreating ? 1 : 0.99 }}
                     className={cn(
-                      "flex-1 px-4 py-3 rounded-xl font-semibold transition-all",
+                      "flex-1 px-4 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2",
                       "bg-primary text-primary-foreground hover:bg-primary/90",
                       "disabled:opacity-50 disabled:cursor-not-allowed"
                     )}
                   >
-                    Create Session
+                    {isCreating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Creating Session...
+                      </>
+                    ) : (
+                      "Create Session"
+                    )}
                   </motion.button>
                 </div>
               </div>
