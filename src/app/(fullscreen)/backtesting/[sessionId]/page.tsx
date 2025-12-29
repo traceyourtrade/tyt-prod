@@ -2639,11 +2639,26 @@ export default function FullscreenBacktesting({
         // Set guard BEFORE any work to prevent resetData from re-triggering this callback
         isChangingResolutionRef.current = true;
         
+        // CRITICAL: Capture drawings BEFORE any chart operations
+        // This ensures user drawings are preserved across timeframe switches
+        const chart = tvWidgetRef.current?.activeChart();
+        if (chart) {
+          try {
+            const drawings = DrawingManager.captureDrawings(chart);
+            if (drawings.length > 0) {
+              console.log('Captured', drawings.length, 'drawings before timeframe switch');
+              pendingDrawingsRef.current = drawings;
+            }
+          } catch (e) {
+            console.warn('Failed to capture drawings:', e);
+          }
+        }
+        
         // Update refs and state via the unified helper
         processTimeframeSwitch(newInterval, { 
           hideDropdown: false, 
           triggerSymbolSwitch: false,
-          captureDrawings: false
+          captureDrawings: false  // Already captured above
         });
         
         // Ensure the correct callback is set for playback to work
@@ -2654,18 +2669,19 @@ export default function FullscreenBacktesting({
           callbacksReadyRef.current = true;
         }
         
-        // CRITICAL: Force TradingView to reload data with correct filtering
-        // TradingView caches data internally and won't call getBars when switching back
-        // to a resolution it already had. We use setSymbol with a unique suffix to force
-        // TradingView to treat this as a new symbol and call getBars fresh.
+        // Force TradingView to reload data with correct filtering
+        // We use setSymbol with stable suffix (no Date.now) to preserve chart identity
+        // This allows drawings to persist across timeframe switches
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
               const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}_${Date.now()}`;
+              // IMPORTANT: Use stable symbol key (no Date.now()) to preserve drawings
+              // The session ID ensures uniqueness while maintaining chart identity
+              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}`;
               
-              console.log('Forcing complete chart reload with symbol:', symbolWithSuffix);
+              console.log('Switching timeframe with stable symbol:', symbolWithSuffix);
               
               // Set the anchor AGAIN right before triggering getBars
               // This ensures it's available when TradingView calls getBars
