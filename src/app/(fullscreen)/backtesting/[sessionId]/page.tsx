@@ -2655,7 +2655,8 @@ export default function FullscreenBacktesting({
         isChangingResolutionRef.current = true;
         
         // CRITICAL: Capture drawings BEFORE any chart operations
-        // This ensures user drawings are preserved across timeframe switches
+        // With stable symbol suffix (no Date.now()), bar indices remain consistent
+        // so drawings should restore to correct positions
         const chart = tvWidgetRef.current?.activeChart();
         if (chart) {
           try {
@@ -2684,20 +2685,22 @@ export default function FullscreenBacktesting({
           callbacksReadyRef.current = true;
         }
         
+        // CRITICAL: Clear bars cache for new resolution to force fresh data fetch
+        // This is safer than using Date.now() in symbol (which breaks drawing coordinates)
+        delete barsCacheRef.current[newInterval];
+        console.log('Cleared bars cache for resolution:', newInterval);
+        
         // CRITICAL: Force TradingView to reload data with correct filtering
-        // TradingView caches data internally and won't call getBars when switching back
-        // to a resolution it already had. We use setSymbol with a unique suffix to force
-        // TradingView to treat this as a new symbol and call getBars fresh.
-        // We use Date.now() to force chart reload BUT we use chart.save()/load() to preserve drawings.
+        // Use stable symbol suffix (no Date.now()) to preserve drawing bar-index mappings
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
               const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              // Use Date.now() to ensure TradingView treats this as new symbol and calls getBars
-              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}_${Date.now()}`;
+              // Use STABLE symbol suffix - no Date.now() to preserve drawing positions
+              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}`;
               
-              console.log('Switching timeframe with symbol:', symbolWithSuffix);
+              console.log('Switching timeframe with stable symbol:', symbolWithSuffix);
               
               // Set the anchor AGAIN right before triggering getBars
               // This ensures it's available when TradingView calls getBars
