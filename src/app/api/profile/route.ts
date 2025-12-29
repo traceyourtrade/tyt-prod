@@ -139,14 +139,22 @@ export async function PUT(req: NextRequest) {
         };
 
         if (profilePicture) {
+            console.log("Profile picture received, type:", profilePicture.startsWith('data:') ? 'base64' : 'url');
             if (profilePicture.startsWith('data:')) {
                 const oldPictureUrl = rootUser.profilePicture;
                 
-                const newPictureUrl = await uploadProfilePicture(profilePicture, userId);
-                updateData.profilePicture = newPictureUrl;
-                
-                if (oldPictureUrl && (oldPictureUrl.includes('s3.amazonaws.com') || oldPictureUrl.includes('.s3.'))) {
-                    await deleteOldProfilePicture(oldPictureUrl);
+                try {
+                    console.log("Uploading profile picture to S3...");
+                    const newPictureUrl = await uploadProfilePicture(profilePicture, userId);
+                    console.log("Profile picture uploaded successfully:", newPictureUrl);
+                    updateData.profilePicture = newPictureUrl;
+                    
+                    if (oldPictureUrl && (oldPictureUrl.includes('s3.amazonaws.com') || oldPictureUrl.includes('.s3.'))) {
+                        await deleteOldProfilePicture(oldPictureUrl);
+                    }
+                } catch (uploadError) {
+                    console.error("S3 upload error:", uploadError);
+                    throw uploadError;
                 }
             } else if (profilePicture.startsWith('http')) {
                 updateData.profilePicture = profilePicture;
