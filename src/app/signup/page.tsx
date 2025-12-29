@@ -117,6 +117,32 @@ const SignUp: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConPassword, setShowConPassword] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref');
+      const coupon = urlParams.get('coupon');
+      
+      if (ref) {
+        setReferralCode(ref);
+        localStorage.setItem('affiliate_ref', ref);
+      } else {
+        const storedRef = localStorage.getItem('affiliate_ref');
+        if (storedRef) setReferralCode(storedRef);
+      }
+      
+      if (coupon) {
+        setCouponCode(coupon);
+        localStorage.setItem('affiliate_coupon', coupon);
+      } else {
+        const storedCoupon = localStorage.getItem('affiliate_coupon');
+        if (storedCoupon) setCouponCode(storedCoupon);
+      }
+    }
+  }, []);
 
   const setLoginVal = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -150,6 +176,8 @@ const SignUp: React.FC = () => {
           cpassword,
           countryCode: selectedCode.code,
           country: selectedCode.country,
+          referralCode: referralCode || undefined,
+          couponCode: couponCode || undefined,
         }),
       });
 

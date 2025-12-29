@@ -4,10 +4,18 @@ import bcrypt from "bcryptjs";
 import { getUserModel } from "@/models/main/user.model";
 import { getNoteModel } from "@/models/main/notes.model";
 import { activateTrial } from "@/lib/subscription";
+import { getAffiliateModel } from "@/models/main/affiliate.model";
+import { getReferralModel } from "@/models/main/referral.model";
 import nodemailer from "nodemailer"
+
+const generateReferralUniqueId = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+};
+
 export async function POST(req: Request) {
   try {
-    const { email, fullName, phone, password, cpassword, countryCode, country } = await req.json();
+    const { email, fullName, phone, password, cpassword, countryCode, country, referralCode, couponCode } = await req.json();
 
     // ✅ Validate input
     if (!email || !fullName || !phone || !password || !cpassword || !countryCode || !country) {
@@ -78,6 +86,51 @@ export async function POST(req: Request) {
 
     await user.save();
     await notes.save();
+
+    // ✅ Track affiliate referral if referral code or coupon code is provided
+    if (referralCode || couponCode) {
+      try {
+        const Affiliate = await getAffiliateModel();
+        const Referral = await getReferralModel();
+        
+        let affiliate = null;
+        
+        if (referralCode) {
+          affiliate = await Affiliate.findOne({ referralCode, status: 'approved' });
+        }
+        
+        if (!affiliate && couponCode) {
+          const { getAffiliateCouponModel } = await import("@/models/main/affiliateCoupon.model");
+          const AffiliateCoupon = await getAffiliateCouponModel();
+          const coupon = await AffiliateCoupon.findOne({ code: couponCode.toUpperCase(), status: 'active' });
+          if (coupon) {
+            affiliate = await Affiliate.findOne({ uniqueId: coupon.affiliateId, status: 'approved' });
+          }
+        }
+        
+        if (affiliate) {
+          const referral = new Referral({
+            uniqueId: generateReferralUniqueId(),
+            affiliateId: affiliate.uniqueId,
+            referredUserId: uniqueId,
+            referralCode: referralCode || '',
+            couponCode: couponCode || '',
+            status: 'signed_up',
+            source: 'registration',
+          });
+          await referral.save();
+          
+          await Affiliate.updateOne(
+            { uniqueId: affiliate.uniqueId },
+            { $inc: { totalReferrals: 1 }, $set: { updatedAt: new Date() } }
+          );
+          
+          console.log(`Affiliate referral tracked: ${affiliate.referralCode} -> ${uniqueId}`);
+        }
+      } catch (affiliateError) {
+        console.error("Affiliate tracking error (non-blocking):", affiliateError);
+      }
+    }
 
     // ✅ Send verification email
     const transporter = nodemailer.createTransport({

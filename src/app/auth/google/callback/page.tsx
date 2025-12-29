@@ -118,6 +118,17 @@ const GoogleSignUp = () => {
   const [email, setEmail] = useState("Email");
   const [fName, setFname] = useState("");
   const [error, setError] = useState("");
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedRef = localStorage.getItem('affiliate_ref');
+      const storedCoupon = localStorage.getItem('affiliate_coupon');
+      if (storedRef) setReferralCode(storedRef);
+      if (storedCoupon) setCouponCode(storedCoupon);
+    }
+  }, []);
 
   const setLoginVal = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -135,7 +146,8 @@ const GoogleSignUp = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email, fullName: fName, phone, password, cpassword, countryCode: selectedCode.code, country: selectedCode.country
+          email, fullName: fName, phone, password, cpassword, countryCode: selectedCode.code, country: selectedCode.country,
+          referralCode: referralCode || undefined, couponCode: couponCode || undefined
         })
       });
 

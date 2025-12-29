@@ -3,14 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getUserModel } from "@/models/main/user.model";
 import { getNoteModel } from "@/models/main/notes.model";
+import { getAffiliateModel } from "@/models/main/affiliate.model";
+import { getReferralModel } from "@/models/main/referral.model";
 import { GoogleAuthRequest, UserData, NotesData } from "@/types/auth";
 import { activateTrial } from "@/lib/subscription";
+
+const generateReferralUniqueId = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+};
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const User = await getUserModel();
     const Notes = await getNoteModel();
-    const body: GoogleAuthRequest = await request.json();
+    const body: GoogleAuthRequest & { referralCode?: string; couponCode?: string } = await request.json();
     const {
       email,
       fullName,
@@ -19,6 +26,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       cpassword,
       countryCode,
       country,
+      referralCode,
+      couponCode,
     } = body;
 
     console.log("Registration data:", {
@@ -111,6 +120,51 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       await user.save();
       await notes.save();
+
+      // ✅ Track affiliate referral if referral code or coupon code is provided
+      if (referralCode || couponCode) {
+        try {
+          const Affiliate = await getAffiliateModel();
+          const Referral = await getReferralModel();
+          
+          let affiliate = null;
+          
+          if (referralCode) {
+            affiliate = await Affiliate.findOne({ referralCode, status: 'approved' });
+          }
+          
+          if (!affiliate && couponCode) {
+            const { getAffiliateCouponModel } = await import("@/models/main/affiliateCoupon.model");
+            const AffiliateCoupon = await getAffiliateCouponModel();
+            const coupon = await AffiliateCoupon.findOne({ code: couponCode.toUpperCase(), status: 'active' });
+            if (coupon) {
+              affiliate = await Affiliate.findOne({ uniqueId: coupon.affiliateId, status: 'approved' });
+            }
+          }
+          
+          if (affiliate) {
+            const referralEntry = new Referral({
+              uniqueId: generateReferralUniqueId(),
+              affiliateId: affiliate.uniqueId,
+              referredUserId: uniqueId,
+              referralCode: referralCode || '',
+              couponCode: couponCode || '',
+              status: 'signed_up',
+              source: 'google_registration',
+            });
+            await referralEntry.save();
+            
+            await Affiliate.updateOne(
+              { uniqueId: affiliate.uniqueId },
+              { $inc: { totalReferrals: 1 }, $set: { updatedAt: new Date() } }
+            );
+            
+            console.log(`Affiliate referral tracked (Google): ${affiliate.referralCode} -> ${uniqueId}`);
+          }
+        } catch (affiliateError) {
+          console.error("Affiliate tracking error (non-blocking):", affiliateError);
+        }
+      }
 
       const isRegistered = await User.findOne({ email });
 
