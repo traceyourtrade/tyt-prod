@@ -17,6 +17,7 @@ export interface DrawingPoint {
 export interface SavedDrawing {
   id?: string;
   name: string;
+  toolname?: string;  // Internal tool identifier (e.g., "trend_line")
   points: DrawingPoint[];
   overrides: Record<string, any>;
   lock: boolean;
@@ -33,6 +34,190 @@ export interface DrawingPayload {
 }
 
 const CURRENT_SCHEMA_VERSION = 2;
+
+/**
+ * Maps TradingView display names to internal tool identifiers
+ * Display names are localized and vary, internal names are consistent
+ */
+const SHAPE_NAME_TO_TOOL: Record<string, string> = {
+  // Lines
+  "Trend Line": "trend_line",
+  "trend_line": "trend_line",
+  "Horizontal Line": "horizontal_line",
+  "horizontal_line": "horizontal_line",
+  "Vertical Line": "vertical_line",
+  "vertical_line": "vertical_line",
+  "Ray": "ray",
+  "ray": "ray",
+  "Arrow": "arrow",
+  "arrow": "arrow",
+  "Extended Line": "extended",
+  "extended": "extended",
+  "Info Line": "info_line",
+  "info_line": "info_line",
+  "Trend Angle": "trend_angle",
+  "trend_angle": "trend_angle",
+  "Horizontal Ray": "horizontal_ray",
+  "horizontal_ray": "horizontal_ray",
+  "Cross Line": "cross_line",
+  "cross_line": "cross_line",
+  
+  // Channels
+  "Parallel Channel": "parallel_channel",
+  "parallel_channel": "parallel_channel",
+  "Disjoint Angle": "disjoint_angle",
+  "disjoint_angle": "disjoint_angle",
+  "Flat Bottom": "flat_bottom",
+  "flat_bottom": "flat_bottom",
+  
+  // Fibonacci
+  "Fib Retracement": "fib_retracement",
+  "fib_retracement": "fib_retracement",
+  "Fib Extension": "fib_trend_ext",
+  "fib_trend_ext": "fib_trend_ext",
+  "Fib Channel": "fib_channel",
+  "fib_channel": "fib_channel",
+  "Fib Circles": "fib_circles",
+  "fib_circles": "fib_circles",
+  "Fib Speed/Resistance Fan": "fib_speed_resist_fan",
+  "fib_speed_resist_fan": "fib_speed_resist_fan",
+  "Fib Timezone": "fib_timezone",
+  "fib_timezone": "fib_timezone",
+  "Fib Trend Time": "fib_trend_time",
+  "fib_trend_time": "fib_trend_time",
+  "Fib Spiral": "fib_spiral",
+  "fib_spiral": "fib_spiral",
+  "Fib Speed Resistance Arcs": "fib_speed_resist_arcs",
+  "fib_speed_resist_arcs": "fib_speed_resist_arcs",
+  
+  // Patterns
+  "XABCD Pattern": "xabcd_pattern",
+  "xabcd_pattern": "xabcd_pattern",
+  "Cypher Pattern": "cypher_pattern",
+  "cypher_pattern": "cypher_pattern",
+  "ABCD Pattern": "abcd_pattern",
+  "abcd_pattern": "abcd_pattern",
+  
+  // Pitchfork
+  "Pitchfork": "pitchfork",
+  "pitchfork": "pitchfork",
+  "Schiff Pitchfork": "schiff_pitchfork",
+  "schiff_pitchfork": "schiff_pitchfork",
+  "Modified Schiff Pitchfork": "schiff_pitchfork_modified",
+  "schiff_pitchfork_modified": "schiff_pitchfork_modified",
+  "Inside Pitchfork": "inside_pitchfork",
+  "inside_pitchfork": "inside_pitchfork",
+  "Pitchfan": "pitchfan",
+  "pitchfan": "pitchfan",
+  
+  // Gann
+  "Gann Box": "gannbox",
+  "gannbox": "gannbox",
+  "Gann Square": "gannbox_square",
+  "gannbox_square": "gannbox_square",
+  "Gann Fixed": "gannbox_fixed",
+  "gannbox_fixed": "gannbox_fixed",
+  "Gann Fan": "gannbox_fan",
+  "gannbox_fan": "gannbox_fan",
+  
+  // Shapes
+  "Rectangle": "rectangle",
+  "rectangle": "rectangle",
+  "Circle": "circle",
+  "circle": "circle",
+  "Ellipse": "ellipse",
+  "ellipse": "ellipse",
+  "Triangle": "triangle",
+  "triangle": "triangle",
+  "Polyline": "polyline",
+  "polyline": "polyline",
+  "Curve": "curve",
+  "curve": "curve",
+  "Double Curve": "double_curve",
+  "double_curve": "double_curve",
+  "Arc": "arc",
+  "arc": "arc",
+  "Path": "path",
+  "path": "path",
+  
+  // Text and Notes
+  "Text": "text",
+  "text": "text",
+  "Anchored Text": "anchored_text",
+  "anchored_text": "anchored_text",
+  "Note": "note",
+  "note": "note",
+  "Anchored Note": "anchored_note",
+  "anchored_note": "anchored_note",
+  "Callout": "callout",
+  "callout": "callout",
+  "Balloon": "balloon",
+  "balloon": "balloon",
+  "Comment": "comment",
+  "comment": "comment",
+  "Price Label": "price_label",
+  "price_label": "price_label",
+  "Price Note": "price_note",
+  "price_note": "price_note",
+  "Signpost": "signpost",
+  "signpost": "signpost",
+  "Flag": "flag",
+  "flag": "flag",
+  "Text Note": "text_note",
+  "text_note": "text_note",
+  
+  // Arrows and Markers
+  "Arrow Up": "arrow_up",
+  "arrow_up": "arrow_up",
+  "Arrow Down": "arrow_down",
+  "arrow_down": "arrow_down",
+  "Arrow Left": "arrow_left",
+  "arrow_left": "arrow_left",
+  "Arrow Right": "arrow_right",
+  "arrow_right": "arrow_right",
+  "Arrow Marker": "arrow_marker",
+  "arrow_marker": "arrow_marker",
+  
+  // Icons
+  "Icon": "icon",
+  "icon": "icon",
+  "Emoji": "emoji",
+  "emoji": "emoji",
+  "Sticker": "sticker",
+  "sticker": "sticker",
+  
+  // Other
+  "Anchored VWAP": "anchored_vwap",
+  "anchored_vwap": "anchored_vwap",
+  "Table": "table",
+  "table": "table",
+};
+
+/**
+ * Converts a display name to internal tool identifier
+ */
+function getToolIdentifier(displayName: string): string | null {
+  // Check direct mapping
+  if (SHAPE_NAME_TO_TOOL[displayName]) {
+    return SHAPE_NAME_TO_TOOL[displayName];
+  }
+  
+  // Try lowercase version
+  const lowerName = displayName.toLowerCase().replace(/\s+/g, '_');
+  if (SHAPE_NAME_TO_TOOL[lowerName]) {
+    return SHAPE_NAME_TO_TOOL[lowerName];
+  }
+  
+  // Try converting display name format to snake_case
+  const snakeCase = displayName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  if (SHAPE_NAME_TO_TOOL[snakeCase]) {
+    return SHAPE_NAME_TO_TOOL[snakeCase];
+  }
+  
+  // Last resort: return the snake_case version and hope TradingView accepts it
+  console.warn('[DrawingManager] Unknown shape name, using snake_case:', displayName, '->', snakeCase);
+  return snakeCase;
+}
 
 /**
  * Validates that a timestamp is in seconds (not milliseconds)
@@ -132,9 +317,26 @@ export function captureDrawings(chart: any): SavedDrawing[] {
             'valid:', validPoints.length, 'total:', points.length);
         }
         
+        // Try to get the internal tool name from the shape source
+        // This is more reliable than display names which may be localized
+        let toolname: string | undefined;
+        try {
+          const source = (shapeObj as any)._source || (shapeObj as any).source;
+          toolname = source?.toolname || source?.name;
+          if (!toolname) {
+            // Fallback: try to get from properties
+            toolname = properties?.tool || properties?.shape;
+          }
+        } catch (e) {
+          // Ignore - will use display name mapping as fallback
+        }
+        
+        console.log('[DrawingManager] Captured shape:', shape.name, 'toolname:', toolname);
+        
         const drawing: SavedDrawing = {
           id: shape.id,
           name: shape.name,
+          toolname: toolname,
           points: validPoints,
           overrides: properties || {},
           lock: false
@@ -172,10 +374,20 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
         continue;
       }
       
+      // Use captured toolname first, then fall back to display name mapping
+      let toolName: string | null | undefined = drawing.toolname;
+      if (!toolName) {
+        toolName = getToolIdentifier(drawing.name);
+      }
+      if (!toolName) {
+        console.warn('[DrawingManager] Could not determine tool name for:', drawing.name);
+        continue;
+      }
+      
       // TradingView's createMultipointShape expects timestamps in SECONDS
       // Same format as getPoints() returns - no conversion needed
       const shapeOptions = {
-        shape: drawing.name,
+        shape: toolName,
         overrides: drawing.overrides || {},
         lock: drawing.lock || false,
         disableSelection: false,
@@ -183,7 +395,7 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
         disableUndo: false,
       };
       
-      console.log('[DrawingManager] Restoring:', drawing.name, 
+      console.log('[DrawingManager] Restoring:', drawing.name, '-> tool:', toolName,
         'points (seconds):', drawing.points.map(p => ({ time: p.time, price: typeof p.price === 'number' ? p.price.toFixed(5) : p.price }))
       );
       
