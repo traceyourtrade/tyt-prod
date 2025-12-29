@@ -194,6 +194,127 @@ const SHAPE_NAME_TO_TOOL: Record<string, string> = {
 };
 
 /**
+ * Maps TradingView internal class names (e.g., LineToolTrendLine) to short tool names (e.g., trend_line)
+ * These are the names returned by shape._source.toolname
+ */
+const INTERNAL_CLASS_TO_TOOL: Record<string, string> = {
+  // Lines
+  "LineToolTrendLine": "trend_line",
+  "LineToolHorzLine": "horizontal_line",
+  "LineToolVertLine": "vertical_line",
+  "LineToolRay": "ray",
+  "LineToolArrow": "arrow",
+  "LineToolExtended": "extended",
+  "LineToolInfoLine": "info_line",
+  "LineToolTrendAngle": "trend_angle",
+  "LineToolHorzRay": "horizontal_ray",
+  "LineToolCrossLine": "cross_line",
+  
+  // Channels
+  "LineToolParallelChannel": "parallel_channel",
+  "LineToolDisjointAngle": "disjoint_angle",
+  "LineToolFlatBottom": "flat_bottom",
+  
+  // Fibonacci
+  "LineToolFibRetracement": "fib_retracement",
+  "LineToolFibTrendExt": "fib_trend_ext",
+  "LineToolFibChannel": "fib_channel",
+  "LineToolFibCircles": "fib_circles",
+  "LineToolFibSpeedResistFan": "fib_speed_resist_fan",
+  "LineToolFibTimezone": "fib_timezone",
+  "LineToolFibTrendTime": "fib_trend_time",
+  "LineToolFibSpiral": "fib_spiral",
+  "LineToolFibSpeedResistArcs": "fib_speed_resist_arcs",
+  
+  // Patterns
+  "LineToolXABCDPattern": "xabcd_pattern",
+  "LineToolCypherPattern": "cypher_pattern",
+  "LineToolABCDPattern": "abcd_pattern",
+  
+  // Pitchfork
+  "LineToolPitchfork": "pitchfork",
+  "LineToolSchiffPitchfork": "schiff_pitchfork",
+  "LineToolSchiffPitchforkModified": "schiff_pitchfork_modified",
+  "LineToolInsidePitchfork": "inside_pitchfork",
+  "LineToolPitchfan": "pitchfan",
+  
+  // Gann
+  "LineToolGannBox": "gannbox",
+  "LineToolGannSquare": "gannbox_square",
+  "LineToolGannFixed": "gannbox_fixed",
+  "LineToolGannFan": "gannbox_fan",
+  
+  // Shapes
+  "LineToolRectangle": "rectangle",
+  "LineToolCircle": "circle",
+  "LineToolEllipse": "ellipse",
+  "LineToolTriangle": "triangle",
+  "LineToolPolyline": "polyline",
+  "LineToolCurve": "curve",
+  "LineToolDoubleCurve": "double_curve",
+  "LineToolArc": "arc",
+  "LineToolPath": "path",
+  "LineToolBrush": "brush",
+  "LineToolHighlighter": "highlighter",
+  
+  // Text and Notes
+  "LineToolText": "text",
+  "LineToolAnchoredText": "anchored_text",
+  "LineToolNote": "note",
+  "LineToolAnchoredNote": "anchored_note",
+  "LineToolCallout": "callout",
+  "LineToolBalloon": "balloon",
+  "LineToolComment": "comment",
+  "LineToolPriceLabel": "price_label",
+  "LineToolPriceNote": "price_note",
+  "LineToolSignpost": "signpost",
+  "LineToolFlagMark": "flag",
+  "LineToolTextNote": "text_note",
+  
+  // Arrows and Markers
+  "LineToolArrowUp": "arrow_up",
+  "LineToolArrowDown": "arrow_down",
+  "LineToolArrowLeft": "arrow_left",
+  "LineToolArrowRight": "arrow_right",
+  "LineToolArrowMarker": "arrow_marker",
+  
+  // Icons
+  "LineToolIcon": "icon",
+  "LineToolEmoji": "emoji",
+  "LineToolSticker": "sticker",
+  
+  // Other
+  "LineToolAnchoredVWAP": "anchored_vwap",
+  "LineToolTable": "table",
+  "LineToolRiskRewardLong": "long_position",
+  "LineToolRiskRewardShort": "short_position",
+};
+
+/**
+ * Converts an internal class name (e.g., LineToolTrendLine) to short tool name (e.g., trend_line)
+ */
+function convertInternalClassToTool(internalName: string): string | null {
+  // Direct mapping
+  if (INTERNAL_CLASS_TO_TOOL[internalName]) {
+    return INTERNAL_CLASS_TO_TOOL[internalName];
+  }
+  
+  // Try to convert programmatically: remove "LineTool" prefix and convert to snake_case
+  if (internalName.startsWith('LineTool')) {
+    const withoutPrefix = internalName.slice(8); // Remove "LineTool"
+    // Convert CamelCase to snake_case
+    const snakeCase = withoutPrefix
+      .replace(/([A-Z])/g, '_$1')
+      .toLowerCase()
+      .replace(/^_/, ''); // Remove leading underscore
+    console.log('[DrawingManager] Converted internal class to tool:', internalName, '->', snakeCase);
+    return snakeCase;
+  }
+  
+  return null;
+}
+
+/**
  * Converts a display name to internal tool identifier
  */
 function getToolIdentifier(displayName: string): string | null {
@@ -374,13 +495,27 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
         continue;
       }
       
-      // Use captured toolname first, then fall back to display name mapping
-      let toolName: string | null | undefined = drawing.toolname;
+      // Determine the short tool name for createMultipointShape
+      let toolName: string | null | undefined = null;
+      
+      // If we have a captured internal class name (e.g., LineToolTrendLine), convert it
+      if (drawing.toolname) {
+        // Check if it's already a short name (doesn't start with LineTool)
+        if (!drawing.toolname.startsWith('LineTool')) {
+          toolName = drawing.toolname;
+        } else {
+          // Convert internal class name to short tool name
+          toolName = convertInternalClassToTool(drawing.toolname);
+        }
+      }
+      
+      // Fall back to display name mapping
       if (!toolName) {
         toolName = getToolIdentifier(drawing.name);
       }
+      
       if (!toolName) {
-        console.warn('[DrawingManager] Could not determine tool name for:', drawing.name);
+        console.warn('[DrawingManager] Could not determine tool name for:', drawing.name, 'toolname:', drawing.toolname);
         continue;
       }
       
