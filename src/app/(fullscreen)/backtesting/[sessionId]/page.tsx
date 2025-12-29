@@ -3070,10 +3070,18 @@ export default function FullscreenBacktesting({
         return;
       }
       
-      const entryShape = chart.getShapeById(entryLineId);
+      let entryShape;
+      try {
+        entryShape = chart.getShapeById(entryLineId);
+      } catch (e) {
+        // Shape was removed (TradingView throws "There is no such shape")
+        // This is expected after timeframe switch - silently clear reference
+        if (tradeLines) tradeLines.entry = null;
+        return;
+      }
+      
       if (!entryShape) {
         // Shape was removed, clear the reference
-        console.log("Entry shape not found, clearing reference for trade:", tradeLineId);
         if (tradeLines) tradeLines.entry = null;
         return;
       }
