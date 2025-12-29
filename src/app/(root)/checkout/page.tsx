@@ -36,7 +36,7 @@ interface SubscriptionStatus {
   isSubscribed: boolean;
   isOnTrial: boolean;
   trialDaysLeft: number;
-  status: 'subscribed' | 'trial' | 'expired' | 'none';
+  status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive';
   email?: string;
   billingPeriod?: 'monthly' | 'yearly';
 }
@@ -278,19 +278,36 @@ export default function CheckoutPage() {
 
       <div className="relative z-10 px-4 py-4">
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
-          >
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+          {/* Only show back button if user has access (not for first-time users) */}
+          {subscriptionStatus?.hasAccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Back</span>
-            </Link>
-          </motion.div>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back</span>
+              </Link>
+            </motion.div>
+          )}
+          
+          {/* Welcome message for first-time users */}
+          {subscriptionStatus?.status === 'inactive' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-emerald-500/10 border border-white/10"
+            >
+              <h2 className="text-lg font-semibold text-foreground mb-1">Welcome to ProJournX!</h2>
+              <p className="text-sm text-muted-foreground">
+                Choose a plan below to start your trading journal journey.
+              </p>
+            </motion.div>
+          )}
 
           <div className="grid lg:grid-cols-5 gap-6 items-start">
             <div className="lg:col-span-3 space-y-5">
@@ -304,7 +321,11 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground">
-                    Upgrade to <span className="text-emerald-400">Pro</span>
+                    {subscriptionStatus?.status === 'inactive' ? (
+                      <>Get <span className="text-emerald-400">Pro</span> Access</>
+                    ) : (
+                      <>Upgrade to <span className="text-emerald-400">Pro</span></>
+                    )}
                   </h1>
                   <p className="text-sm text-muted-foreground">
                     Unlock your full trading potential

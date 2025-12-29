@@ -26,7 +26,7 @@ export interface AuthResponse {
 export interface UserSubscriptionData {
   isSubscribed: boolean;
   subscriptionId?: string;
-  subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired';
+  subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired' | 'inactive';
   subscriptionExpiry?: Date;
   trialEndsAt?: Date;
   trialUsed: boolean;

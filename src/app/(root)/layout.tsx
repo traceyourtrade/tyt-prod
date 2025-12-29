@@ -4,7 +4,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
 import "../globals.css";
 import PageLoading from "@/components/ui/page-loading";
@@ -53,7 +53,7 @@ interface SubscriptionStatus {
   isSubscribed: boolean;
   isOnTrial: boolean;
   trialDaysLeft: number;
-  status: 'subscribed' | 'trial' | 'expired' | 'none';
+  status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive';
 }
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -137,6 +137,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState<boolean>(true);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
@@ -144,10 +145,14 @@ export default function RootLayout({
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState<boolean>(true);
 
   const { profileData, setAccounts } = useAccountDetails();
   const checkoutUrl = "/checkout";
   const { setAddTrades, setAddAcc } = calendarPopUp();
+  
+  // Pages that don't require subscription (checkout, settings, support)
+  const publicPages = ['/checkout', '/settings', '/support'];
 
   useEffect(() => {
     setAccounts();
@@ -163,10 +168,25 @@ export default function RootLayout({
         }
       } catch (error) {
         console.error('Failed to fetch subscription status:', error);
+      } finally {
+        setSubscriptionLoading(false);
       }
     };
     fetchSubscriptionStatus();
   }, []);
+
+  // Redirect unpaid users to checkout (blocking access)
+  useEffect(() => {
+    if (subscriptionLoading) return;
+    
+    const isPublicPage = publicPages.some(page => pathname.startsWith(page));
+    if (isPublicPage) return;
+    
+    // If user doesn't have access and is not on a public page, redirect to checkout
+    if (subscriptionStatus && !subscriptionStatus.hasAccess) {
+      router.push('/checkout');
+    }
+  }, [subscriptionStatus, subscriptionLoading, pathname, router]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -544,30 +564,6 @@ export default function RootLayout({
                 )}
               </div>
             </div>
-          ) : subscriptionStatus?.isOnTrial ? (
-            <Link
-              href={checkoutUrl}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "relative block rounded-lg overflow-hidden cursor-pointer group",
-                isExpanded && "rounded-xl"
-              )}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent group-hover:from-amber-500/30 group-hover:via-orange-500/20 transition-all duration-200" />
-              <div className="absolute inset-0 border border-amber-500/30 rounded-lg" />
-              <div className={cn(
-                "relative flex items-center gap-2 p-2",
-                !isExpanded && "justify-center p-1.5"
-              )}>
-                <Clock className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                {isExpanded && (
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-amber-400">Trial: {subscriptionStatus.trialDaysLeft} days left</p>
-                    <p className="text-[9px] text-muted-foreground">Upgrade to Pro</p>
-                  </div>
-                )}
-              </div>
-            </Link>
           ) : (
             <Link
               href={checkoutUrl}
@@ -677,6 +673,19 @@ export default function RootLayout({
       </div>
     </div>
   );
+
+  // Show loading while checking subscription (only for protected pages)
+  const isPublicPage = publicPages.some(page => pathname.startsWith(page));
+  if (subscriptionLoading && !isPublicPage) {
+    return (
+      <div className="h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-muted-foreground text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-background overflow-hidden flex flex-col">

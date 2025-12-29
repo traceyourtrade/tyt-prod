@@ -40,7 +40,7 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (res.status === 200) {
-        router.push(`/welcome/${data.name}`);
+        router.push(`/dashboard`);
       } else {
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck your Email & Password");

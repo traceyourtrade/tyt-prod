@@ -58,10 +58,7 @@ export async function POST(req: Request) {
       { expiresIn: "15m" }
     );
 
-    // ✅ Create user and notes documents
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 5);
-
+    // ✅ Create user and notes documents (no trial - must subscribe to use)
     const user = new User({
       uniqueId,
       email,
@@ -73,9 +70,8 @@ export async function POST(req: Request) {
       country,
       subscription: {
         isSubscribed: false,
-        trialEndsAt,
-        trialUsed: true,
-        subscriptionStatus: 'pending'
+        trialUsed: false,
+        subscriptionStatus: 'inactive'
       }
     });
 

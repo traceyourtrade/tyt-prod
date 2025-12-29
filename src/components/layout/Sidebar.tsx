@@ -36,7 +36,7 @@ interface SubscriptionStatus {
   isSubscribed: boolean
   isOnTrial: boolean
   trialDaysLeft: number
-  status: 'subscribed' | 'trial' | 'expired' | 'none'
+  status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive'
 }
 
 interface SidebarProps {
@@ -503,33 +503,6 @@ export function Sidebar({
                     )}
                   </div>
                 </motion.div>
-              ) : subscriptionStatus?.isOnTrial ? (
-                <motion.a
-                  href={paymentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "relative block rounded-xl overflow-hidden cursor-pointer group",
-                    collapsed && "p-1"
-                  )}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent group-hover:from-amber-500/30 group-hover:via-orange-500/20 transition-all duration-200" />
-                  <div className="absolute inset-0 border border-amber-500/30 rounded-xl" />
-                  <div className={cn(
-                    "relative flex items-center gap-2 p-2.5",
-                    collapsed && "justify-center"
-                  )}>
-                    <Clock className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                    {!collapsed && (
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-medium text-amber-400">Trial: {subscriptionStatus.trialDaysLeft} days left</p>
-                        <p className="text-[9px] text-white/40">Upgrade to Pro</p>
-                      </div>
-                    )}
-                  </div>
-                </motion.a>
               ) : (
                 <motion.a
                   href={paymentUrl}

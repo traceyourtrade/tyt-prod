@@ -190,7 +190,7 @@ const SignUp: React.FC = () => {
           path: "/",
         });
 
-        router.push(`/verificationmail`);
+        router.push(`/checkout`);
       } else {
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck the Email & Password");

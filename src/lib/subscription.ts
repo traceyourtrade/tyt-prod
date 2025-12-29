@@ -9,7 +9,7 @@ export interface SubscriptionStatus {
   isSubscribed: boolean;
   isOnTrial: boolean;
   trialDaysLeft: number;
-  status: 'subscribed' | 'trial' | 'expired' | 'none';
+  status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive';
 }
 
 export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
@@ -59,6 +59,17 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
       isOnTrial: false,
       trialDaysLeft: 0,
       status: 'expired'
+    };
+  }
+  
+  // Check if subscription status is 'inactive' (new user who hasn't subscribed yet)
+  if (user.subscription?.subscriptionStatus === 'inactive') {
+    return {
+      hasAccess: false,
+      isSubscribed: false,
+      isOnTrial: false,
+      trialDaysLeft: 0,
+      status: 'inactive'
     };
   }
   

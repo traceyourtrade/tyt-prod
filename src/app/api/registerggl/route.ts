@@ -89,9 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const uniqueId = await generateUniqueCode();
 
-      const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + 5);
-
+      // No trial - users must subscribe to use the app
       const userData: UserData = {
         isEmailVerified: true,
         uniqueId,
@@ -104,9 +102,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         country,
         subscription: {
           isSubscribed: false,
-          trialEndsAt,
-          trialUsed: true,
-          subscriptionStatus: 'pending'
+          trialUsed: false,
+          subscriptionStatus: 'inactive'
         }
       };
 

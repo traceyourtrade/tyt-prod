@@ -10,7 +10,7 @@ interface SubscriptionStatus {
   isSubscribed: boolean;
   isOnTrial: boolean;
   trialDaysLeft: number;
-  status: 'subscribed' | 'trial' | 'expired' | 'none';
+  status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive';
 }
 
 interface SubscriptionGateProps {

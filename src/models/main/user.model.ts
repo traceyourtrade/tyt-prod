@@ -40,7 +40,7 @@ export interface IUserNotification {
 export interface IUserSubscription {
   isSubscribed: boolean;
   subscriptionId?: string;
-  subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired';
+  subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired' | 'inactive';
   subscriptionExpiry?: Date;
   trialEndsAt?: Date;
   trialUsed: boolean;
@@ -199,8 +199,8 @@ const userSchema = new Schema<IUser>({
     subscriptionId: { type: String },
     subscriptionStatus: { 
       type: String, 
-      enum: ['active', 'cancelled', 'halted', 'pending', 'expired'],
-      default: 'pending'
+      enum: ['active', 'cancelled', 'halted', 'pending', 'expired', 'inactive'],
+      default: 'inactive'
     },
     subscriptionExpiry: { type: Date },
     trialEndsAt: { type: Date },

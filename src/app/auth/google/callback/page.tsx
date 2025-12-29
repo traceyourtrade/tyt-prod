@@ -154,7 +154,7 @@ const GoogleSignUp = () => {
       const data = await res.json();
 
       if (res.status === 200) {
-        router.push(`/welcome/${data.name}`);
+        router.push(`/checkout`);
       } else {
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck");
@@ -193,7 +193,7 @@ const GoogleSignUp = () => {
           setShow(true);
           Cookies.set('google_token', response.data.access_token, { secure: true, sameSite: 'strict' });
         } else if (response.data.msg === "registered user") {
-          router.push(`/welcome/${response.data.name}`);
+          router.push(`/dashboard`);
         }
       })
       .catch(err => {
