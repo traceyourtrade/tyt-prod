@@ -141,21 +141,37 @@ export const useTestingStore = create<TestingState>((set, get) => ({
       const response = await res.json();
 
       if (response.success && response.data) {
-        const sessions = response.data.map((dbSession: any) => ({
-          id: dbSession.sessionId,
-          name: dbSession.sessionInfo?.name || 'Unnamed',
-          symbol: dbSession.sessionInfo?.symbol || 'N/A',
-          currentBalance: dbSession.sessionInfo?.currentBalance || '$0',
-          startDate: dbSession.sessionInfo?.startDate || '',
-          endDate: dbSession.sessionInfo?.endDate || '',
-          daysRemaining: dbSession.sessionInfo?.daysRemaining || 0,
-          totalPnl: dbSession.sessionInfo?.totalPnl || 0,
-          winRate: dbSession.sessionInfo?.winRate || 0,
-          riskReward: dbSession.sessionInfo?.riskReward || 0,
-          monthGainLoss: dbSession.sessionInfo?.monthGainLoss || 0,
-          weekGainLoss: dbSession.sessionInfo?.weekGainLoss || 0,
-          dailyGainLoss: dbSession.sessionInfo?.dailyGainLoss || 0
-        }));
+        const sessions = response.data.map((dbSession: any) => {
+          const trades = dbSession.trades || [];
+          const closedTrades = trades.filter((t: any) => t.status === 'closed');
+          const winningTrades = closedTrades.filter((t: any) => (t.pnl || 0) > 0);
+          const totalPnl = closedTrades.reduce((sum: number, t: any) => sum + (t.pnl || 0), 0);
+          const winRate = closedTrades.length > 0 ? (winningTrades.length / closedTrades.length) * 100 : 0;
+          const avgRR = closedTrades.length > 0 
+            ? closedTrades.reduce((sum: number, t: any) => sum + (t.rr || 0), 0) / closedTrades.length 
+            : 0;
+          
+          const fromDate = new Date(dbSession.fromDate);
+          const toDate = new Date(dbSession.toDate);
+          const today = new Date();
+          const daysRemaining = Math.max(0, Math.ceil((toDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+          
+          return {
+            id: dbSession.sessionId,
+            name: dbSession.name || 'Unnamed',
+            symbol: dbSession.symbol || 'N/A',
+            currentBalance: `$${(dbSession.currentBalance || dbSession.initialBalance || 0).toLocaleString()}`,
+            startDate: fromDate.toLocaleDateString(),
+            endDate: toDate.toLocaleDateString(),
+            daysRemaining: daysRemaining,
+            totalPnl: totalPnl,
+            winRate: Math.round(winRate),
+            riskReward: avgRR,
+            monthGainLoss: 0,
+            weekGainLoss: 0,
+            dailyGainLoss: 0
+          };
+        });
 
         set({ 
           sessions,
