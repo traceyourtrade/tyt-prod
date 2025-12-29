@@ -1,6 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getUserModel } from '@/models/main/user.model';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from 'uuid';
+
+const s3Client = new S3Client({
+    region: process.env.PHOTO_BUCKET_REGION!,
+    credentials: {
+        accessKeyId: process.env.PHOTO_ACCESS_KEY!,
+        secretAccessKey: process.env.PHOTO_SECRET_ACCESS_KEY!,
+    },
+});
+
+async function uploadProfilePicture(base64Data: string, userId: string): Promise<string> {
+    const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+        throw new Error("Invalid base64 image format");
+    }
+
+    const mimeType = matches[1];
+    const buffer = Buffer.from(matches[2], 'base64');
+    
+    const extension = mimeType.split('/')[1] || 'png';
+    const fileName = `profile-pictures/${userId}-${uuidv4()}.${extension}`;
+
+    const params = {
+        Bucket: process.env.PHOTO_BUCKET_NAME!,
+        Key: fileName,
+        Body: buffer,
+        ContentType: mimeType,
+    };
+
+    await s3Client.send(new PutObjectCommand(params));
+    return `https://${process.env.PHOTO_BUCKET_NAME}.s3.amazonaws.com/${fileName}`;
+}
+
+async function deleteOldProfilePicture(url: string): Promise<void> {
+    try {
+        const bucketName = process.env.PHOTO_BUCKET_NAME!;
+        const urlPrefix = `https://${bucketName}.s3.amazonaws.com/`;
+        if (url.startsWith(urlPrefix)) {
+            const key = url.replace(urlPrefix, '');
+            await s3Client.send(new DeleteObjectCommand({
+                Bucket: bucketName,
+                Key: key,
+            }));
+        }
+    } catch (error) {
+        console.warn("Failed to delete old profile picture:", error);
+    }
+}
 
 async function getUserFromToken(token: string) {
     const User = await getUserModel();
@@ -62,7 +111,7 @@ export async function PUT(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { firstName, lastName, country, phone, bio } = body;
+        const { firstName, lastName, country, phone, bio, profilePicture } = body;
 
         const rootUser = await getUserFromToken(token);
         if (!rootUser) {
@@ -71,22 +120,40 @@ export async function PUT(req: NextRequest) {
 
         const fullName = `${firstName || ""} ${lastName || ""}`.trim();
 
+        const updateData: Record<string, unknown> = {
+            fullName, 
+            firstName: firstName || "",
+            lastName: lastName || "",
+            country, 
+            phone, 
+            bio 
+        };
+
+        if (profilePicture) {
+            if (profilePicture.startsWith('data:')) {
+                const oldPictureUrl = rootUser.profilePicture;
+                
+                const newPictureUrl = await uploadProfilePicture(profilePicture, userId);
+                updateData.profilePicture = newPictureUrl;
+                
+                if (oldPictureUrl && oldPictureUrl.includes('s3.amazonaws.com')) {
+                    await deleteOldProfilePicture(oldPictureUrl);
+                }
+            } else if (profilePicture.startsWith('http')) {
+                updateData.profilePicture = profilePicture;
+            }
+        }
+
         const User = await getUserModel();
         await User.updateOne(
             { email: rootUser.email }, 
-            { 
-                $set: { 
-                    fullName, 
-                    firstName: firstName || "",
-                    lastName: lastName || "",
-                    country, 
-                    phone, 
-                    bio 
-                } 
-            }
+            { $set: updateData }
         );
 
-        return NextResponse.json({ message: "Profile updated successfully" });
+        return NextResponse.json({ 
+            message: "Profile updated successfully",
+            profilePicture: updateData.profilePicture || rootUser.profilePicture
+        });
 
     } catch (error) {
         console.error("PUT profile error:", error);

@@ -8,6 +8,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [originalPicture, setOriginalPicture] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,6 +32,7 @@ const Profile = () => {
           setPhone(data.phone || "");
           setBio(data.bio || "");
           setProfilePicture(data.profilePicture || null);
+          setOriginalPicture(data.profilePicture || null);
         }
       } catch (e) {
         setFirstName("Demo");
@@ -46,20 +48,31 @@ const Profile = () => {
     setSaveMessage(null);
     
     try {
+      const payload: Record<string, string | undefined> = {
+        firstName,
+        lastName,
+        country,
+        phone,
+        bio,
+      };
+
+      if (profilePicture !== originalPicture) {
+        payload.profilePicture = profilePicture || undefined;
+      }
+
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          country,
-          phone,
-          bio,
-        }),
+        body: JSON.stringify(payload),
       });
       
       if (res.ok) {
+        const data = await res.json();
+        if (data.profilePicture) {
+          setProfilePicture(data.profilePicture);
+          setOriginalPicture(data.profilePicture);
+        }
         setSaveMessage({ type: 'success', text: 'Profile saved successfully!' });
         setIsEditing(false);
         setTimeout(() => setSaveMessage(null), 3000);
