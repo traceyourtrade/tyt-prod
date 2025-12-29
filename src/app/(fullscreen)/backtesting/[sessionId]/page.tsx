@@ -2781,6 +2781,24 @@ export default function FullscreenBacktesting({
                           }
                         }
                       }
+                      
+                      // CRITICAL: Restore user drawings after chart reload
+                      // Drawings were captured before the timeframe switch in processTimeframeSwitch
+                      if (pendingDrawingsRef.current && pendingDrawingsRef.current.length > 0) {
+                        setTimeout(() => {
+                          try {
+                            const currentChart = tvWidgetRef.current?.activeChart();
+                            if (currentChart) {
+                              console.log('Restoring drawings after timeframe switch:', pendingDrawingsRef.current.length, 'drawings');
+                              const restoredCount = DrawingManager.restoreDrawings(currentChart, pendingDrawingsRef.current);
+                              console.log('Drawings restored:', restoredCount);
+                              pendingDrawingsRef.current = [];
+                            }
+                          } catch (e) {
+                            console.error('Error restoring drawings:', e);
+                          }
+                        }, 200);
+                      }
                     }
                   } catch (e) {}
                   isChangingResolutionRef.current = false;
