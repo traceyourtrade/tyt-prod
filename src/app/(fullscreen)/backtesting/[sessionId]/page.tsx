@@ -2709,6 +2709,16 @@ export default function FullscreenBacktesting({
                 pendingAnchorTimestampRef.current = currentAnchor;
               }
               
+              // CRITICAL: Call resetData to force TradingView to refetch bars
+              // This is necessary because TradingView caches series data internally
+              // and won't call getBars for a symbol it already loaded
+              try {
+                innerChart.resetData();
+                console.log('Called resetData to force TradingView data refetch');
+              } catch (e) {
+                console.log('resetData not available, continuing with setSymbol');
+              }
+              
               innerChart.setSymbol(symbolWithSuffix, () => {
                 // After symbol change, scroll to replay position and reset price scale
                 setTimeout(() => {
