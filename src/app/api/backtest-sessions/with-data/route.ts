@@ -2,12 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getUserModel } from '@/models/main/user.model';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
-import { getCachedBarsModel } from '@/models/backtest/cachedBars.model';
 
 const POLYGON_API_URL = 'https://api.polygon.io/v2/aggs/ticker';
+const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
 
-// Anomaly detection: Filter out bars with impossible price spreads
-// Returns filtered bars and list of anomalies for UI notification
+interface CacheEntry {
+  data: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[] };
+  timestamp: number;
+}
+
+const barsCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 4 * 60 * 60 * 1000;
+const MAX_CACHE_SIZE = 50;
+
+function getCachedBars(key: string): CacheEntry['data'] | null {
+  const entry = barsCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    barsCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedBars(key: string, data: CacheEntry['data']): void {
+  if (barsCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = barsCache.keys().next().value;
+    if (oldestKey) barsCache.delete(oldestKey);
+  }
+  barsCache.set(key, { data, timestamp: Date.now() });
+}
+
 interface AnomalyInfo {
   timestamp: number;
   reason: string;
@@ -28,11 +53,10 @@ function detectAndFilterAnomalies(
   const anomalies: AnomalyInfo[] = [];
   const validIndices: number[] = [];
   
-  // Symbol-specific thresholds (absolute max spread in one bar)
   const maxSpreadThresholds: Record<string, number> = {
-    'XAUUSD': 300,  // Gold: $300 max spread per bar
-    'XAGUSD': 5,    // Silver: $5 max spread
-    'DEFAULT': 0.10 // Default: 10% of price
+    'XAUUSD': 300,
+    'XAGUSD': 5,
+    'DEFAULT': 0.10
   };
   
   const threshold = maxSpreadThresholds[symbol] || maxSpreadThresholds['DEFAULT'];
@@ -43,7 +67,6 @@ function detectAndFilterAnomalies(
     const priceLevel = (h[i] + l[i]) / 2;
     const spreadPercent = (spread / priceLevel) * 100;
     
-    // Check for anomaly: absolute threshold for known symbols, or >10% spread for others
     const isAnomaly = usePercentage 
       ? spreadPercent > 10 
       : spread > threshold;
@@ -57,13 +80,6 @@ function detectAndFilterAnomalies(
         high: h[i],
         low: l[i],
         close: c[i]
-      });
-      console.log('Filtered anomalous bar:', {
-        time: new Date(t[i] * 1000).toISOString(),
-        symbol,
-        spread: spread.toFixed(2),
-        spreadPercent: spreadPercent.toFixed(1) + '%',
-        o: o[i], h: h[i], l: l[i], c: c[i]
       });
     } else {
       validIndices.push(i);
@@ -82,9 +98,7 @@ function detectAndFilterAnomalies(
     anomalies
   };
 }
-const POLYGON_API_KEY = process.env.POLYGON_API_KEY;
 
-// Map TradingView resolution to Polygon timespan format
 function getPolygonTimespan(resolution: string): { multiplier: number; timespan: string } | null {
   const resolutionMap: Record<string, { multiplier: number; timespan: string }> = {
     '1': { multiplier: 1, timespan: 'minute' },
@@ -104,7 +118,6 @@ function getPolygonTimespan(resolution: string): { multiplier: number; timespan:
   return resolutionMap[resolution] || null;
 }
 
-// Convert symbol to Polygon forex ticker format (C:EURUSD)
 function toPolygonTicker(symbol: string, market: string): string | null {
   if (market !== 'FOREX') return null;
   const clean = symbol.replace(/^(C:|FX:)/, '').replace(/[^A-Z]/gi, '').toUpperCase();
@@ -114,7 +127,6 @@ function toPolygonTicker(symbol: string, market: string): string | null {
   return null;
 }
 
-// Fetch data from Polygon API with pagination for large date ranges
 async function fetchFromPolygon(
   symbol: string,
   market: string,
@@ -151,32 +163,30 @@ async function fetchFromPolygon(
     let nextUrl: string | null = initialUrl;
     let pageCount = 0;
     
-    // Fetch all available pages until no more data
     while (nextUrl) {
       pageCount++;
-      const response = await fetch(nextUrl, {
+      const fetchResponse = await fetch(nextUrl, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         cache: 'no-store'
       });
 
-      if (!response.ok) {
-        console.error('Polygon API error:', response.status, response.statusText);
+      if (!fetchResponse.ok) {
+        console.error('Polygon API error:', fetchResponse.status, fetchResponse.statusText);
         break;
       }
 
-      const data = await response.json();
+      const jsonData: { status: string; results?: Array<{ t: number; o: number; h: number; l: number; c: number; v?: number }>; resultsCount?: number; next_url?: string } = await fetchResponse.json();
 
-      if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+      if (jsonData.status !== 'OK' || !jsonData.results || jsonData.results.length === 0) {
         if (allBars.length === 0) {
-          console.log('No data from Polygon:', { status: data.status, resultsCount: data.resultsCount, ticker, fromDate, toDate });
+          console.log('No data from Polygon:', { status: jsonData.status, resultsCount: jsonData.resultsCount, ticker, fromDate, toDate });
           return null;
         }
         break;
       }
 
-      // Add bars from this page
-      for (const b of data.results) {
+      for (const b of jsonData.results) {
         allBars.push({
           t: Math.floor(b.t / 1000),
           o: b.o,
@@ -187,11 +197,10 @@ async function fetchFromPolygon(
         });
       }
       
-      console.log(`with-data: Polygon page ${pageCount}: got ${data.results.length} bars, total: ${allBars.length}`);
+      console.log(`with-data: Polygon page ${pageCount}: got ${jsonData.results.length} bars, total: ${allBars.length}`);
 
-      // Check for next page
-      if (data.next_url) {
-        nextUrl = `${data.next_url}&apiKey=${POLYGON_API_KEY}`;
+      if (jsonData.next_url) {
+        nextUrl = `${jsonData.next_url}&apiKey=${POLYGON_API_KEY}`;
       } else {
         nextUrl = null;
       }
@@ -241,7 +250,6 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const sessionId = searchParams.get('sessionId');
     const resolution = searchParams.get('resolution') || '60';
-    const forceRefresh = searchParams.get('forceRefresh') === 'true';
 
     if (!sessionId) {
       return NextResponse.json({ success: false, error: "Missing sessionId" }, { status: 400 });
@@ -249,7 +257,7 @@ export async function GET(req: NextRequest) {
 
     const BacktestSession = await getBacktestSessionsModel();
 
-    const session = await BacktestSession.findOne({
+    const session = await (BacktestSession as any).findOne({
       sessionId: parseInt(sessionId),
       uniqueId: userId
     }).lean();
@@ -282,20 +290,14 @@ export async function GET(req: NextRequest) {
     const market = sessionData.market;
     const symbol = sessionData.symbol;
     
-    // Load ALL historical data from market start (10 years) up to session's toDate
-    // This gives users full historical context for technical analysis
-    // Replay will start from session.fromDate and play through session.toDate
     const sessionFromDate = new Date(sessionData.fromDate);
     const sessionToDate = new Date(sessionData.toDate);
     
-    // Data range: 10 years ago to session's end date
     const tenYearsAgo = new Date();
     tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
     
     const fromTs = Math.floor(tenYearsAgo.getTime() / 1000);
     const toTs = Math.floor(sessionToDate.getTime() / 1000);
-    
-    // The replay start point (where user starts playing from)
     const replayStartTs = Math.floor(sessionFromDate.getTime() / 1000);
     
     console.log('with-data: Loading historical data range:', {
@@ -309,178 +311,31 @@ export async function GET(req: NextRequest) {
 
     let barsData: { s: string; t: number[]; o: number[]; h: number[]; l: number[]; c: number[]; v: number[]; errmsg?: string } = { s: 'no_data', t: [], o: [], h: [], l: [], c: [], v: [] };
     
-    // If forceRefresh, delete existing cache for this symbol/resolution first
-    if (forceRefresh) {
-      try {
-        const CachedBars = await getCachedBarsModel();
-        await CachedBars.deleteMany({ market, symbol, resolution });
-        console.log('Force refresh: Cleared cache for', { market, symbol, resolution });
-      } catch (err) {
-        console.error('Error clearing cache:', err);
-      }
-    }
+    const cacheKey = `${market}:${symbol}:${resolution}:${fromTs}:${toTs}`;
+    const cachedData = getCachedBars(cacheKey);
     
-    // Check MongoDB cache first for instant response - find ANY overlapping cached data
-    try {
-      const CachedBars = await getCachedBarsModel();
+    if (cachedData) {
+      console.log('with-data: Cache HIT for', { market, symbol, resolution });
+      const { filtered: cleanedData, anomalies } = detectAndFilterAnomalies(
+        cachedData.t, cachedData.o, cachedData.h, cachedData.l, cachedData.c, cachedData.v, symbol
+      );
+      barsData = { s: 'ok', ...cleanedData };
       
-      // Find all cached documents that might have overlapping data
-      const cachedDocs = await CachedBars.find({
-        market,
-        symbol,
-        resolution,
-        // At least some overlap: cached range overlaps with requested range
-        $or: [
-          { fromTs: { $lte: toTs }, toTs: { $gte: fromTs } },
-        ]
-      }).lean();
-
-      if (cachedDocs && cachedDocs.length > 0) {
-        // Merge all cached bars that fall within requested range
-        const allBarsMap = new Map<number, { t: number; o: number; h: number; l: number; c: number; v: number }>();
-        
-        for (const cached of cachedDocs) {
-          if (!cached.t || cached.t.length === 0) continue;
-          const hasValidVolume = cached.v && cached.v.length === cached.t.length;
-          
-          for (let i = 0; i < cached.t.length; i++) {
-            const timestamp = cached.t[i];
-            if (timestamp >= fromTs && timestamp <= toTs && !allBarsMap.has(timestamp)) {
-              allBarsMap.set(timestamp, {
-                t: timestamp,
-                o: cached.o[i],
-                h: cached.h[i],
-                l: cached.l[i],
-                c: cached.c[i],
-                v: hasValidVolume ? cached.v[i] : 0
-              });
-            }
-          }
-        }
-        
-        if (allBarsMap.size > 0) {
-          // Sort by timestamp
-          const mergedBars = Array.from(allBarsMap.values()).sort((a, b) => a.t - b.t);
-          const earliestCachedTs = mergedBars[0]?.t || 0;
-          const latestCachedTs = mergedBars[mergedBars.length - 1]?.t || 0;
-          
-          // Check if cached data covers enough history (at least 5 years back from replay start)
-          // AND has enough bars to be meaningful (not sparse/gappy coverage)
-          const fiveYearsBeforeReplay = replayStartTs - (5 * 365 * 24 * 60 * 60);
-          const hasEarlyEnoughData = earliestCachedTs <= fiveYearsBeforeReplay;
-          
-          // Minimum bar counts expected for different resolutions (accounting for forex weekends)
-          const minBarsForResolution: Record<string, number> = {
-            '1': 100000,    // 1min: ~2 years minimum
-            '5': 20000,     // 5min: ~2 years minimum  
-            '15': 10000,    // 15min: ~3 years minimum
-            '30': 5000,     // 30min: ~3 years minimum
-            '60': 10000,    // 1H: ~5 years minimum (120 bars/week * 52 weeks * 5 years = ~31,000)
-            '120': 5000,    // 2H: ~5 years minimum
-            '240': 2500,    // 4H: ~5 years minimum
-            'D': 1000,      // Daily: ~4 years minimum
-            '1D': 1000,
-            'W': 200,       // Weekly: ~4 years minimum
-            '1W': 200,
-          };
-          const minBars = minBarsForResolution[resolution] || 5000;
-          const hasEnoughBars = mergedBars.length >= minBars;
-          
-          // Check for large gaps in data (more than 7 days = 604800 seconds)
-          // This catches cases where we have early and late data but missing months in between
-          let hasLargeGaps = false;
-          let largestGapDays = 0;
-          const maxGapAllowed = 7 * 24 * 60 * 60; // 7 days in seconds (forex closes on weekends)
-          // Scan entire dataset for gaps - sample every 10th bar for efficiency
-          for (let i = 1; i < mergedBars.length; i += 10) {
-            const gap = mergedBars[i].t - mergedBars[Math.max(0, i-10)].t;
-            const gapDays = gap / 86400;
-            if (gapDays > largestGapDays) largestGapDays = gapDays;
-            if (gap > maxGapAllowed * 10) { // 70 days gap when sampling every 10th bar
-              hasLargeGaps = true;
-              console.log('Detected large gap in cached data:', {
-                fromDate: new Date(mergedBars[Math.max(0, i-10)].t * 1000).toISOString(),
-                toDate: new Date(mergedBars[i].t * 1000).toISOString(),
-                gapDays: Math.round(gapDays)
-              });
-              break;
-            }
-          }
-          console.log('Gap check result:', { hasLargeGaps, largestGapDays: Math.round(largestGapDays) });
-          
-          const cacheCoversEnoughHistory = hasEarlyEnoughData && hasEnoughBars && !hasLargeGaps;
-          
-          console.log('Cache HIT for with-data (merged):', { 
-            market, symbol, resolution, 
-            barCount: mergedBars.length,
-            minBars,
-            hasEnoughBars,
-            fromDocs: cachedDocs.length,
-            earliestCachedDate: new Date(earliestCachedTs * 1000).toISOString(),
-            latestCachedDate: new Date(latestCachedTs * 1000).toISOString(),
-            fiveYearsBeforeReplay: new Date(fiveYearsBeforeReplay * 1000).toISOString(),
-            hasEarlyEnoughData,
-            cacheCoversEnoughHistory
-          });
-          
-          // If cache doesn't have enough historical data, don't use it - fetch fresh
-          if (cacheCoversEnoughHistory) {
-            // Apply anomaly detection to filter corrupted bars
-            const rawBars = {
-              t: mergedBars.map(b => b.t),
-              o: mergedBars.map(b => b.o),
-              h: mergedBars.map(b => b.h),
-              l: mergedBars.map(b => b.l),
-              c: mergedBars.map(b => b.c),
-              v: mergedBars.map(b => b.v)
-            };
-            
-            const { filtered, anomalies } = detectAndFilterAnomalies(
-              rawBars.t, rawBars.o, rawBars.h, rawBars.l, rawBars.c, rawBars.v, symbol
-            );
-            
-            if (anomalies.length > 0) {
-              console.log('Filtered anomalies from cached data:', {
-                symbol,
-                anomalyCount: anomalies.length,
-                originalBars: rawBars.t.length,
-                filteredBars: filtered.t.length
-              });
-            }
-            
-            barsData = {
-              s: 'ok',
-              ...filtered
-            };
-
-            return NextResponse.json({
-              success: true,
-              session: sessionData,
-              bars: barsData,
-              resolution: resolution,
-              replayStartTs: replayStartTs,
-              cached: true,
-              anomaliesFiltered: anomalies.length
-            }, {
-              headers: {
-                'Cache-Control': 'private, max-age=30'
-              }
-            });
-          } else {
-            console.log('Cache does not cover enough history - fetching from Polygon');
-          }
-        }
-      }
-    } catch (cacheError) {
-      console.warn('Cache lookup failed:', cacheError);
+      return NextResponse.json({
+        success: true,
+        session: sessionData,
+        bars: barsData,
+        resolution: resolution,
+        replayStartTs: replayStartTs,
+        cached: true
+      }, {
+        headers: { 'Cache-Control': 'private, max-age=30' }
+      });
     }
-    
-    console.log('Cache MISS for with-data - fetching data:', { market, symbol, resolution, fromTs, toTs });
     
     try {
       let data: { s: string; t?: number[]; o?: number[]; h?: number[]; l?: number[]; c?: number[]; v?: number[] } | null = null;
       
-      // Fetch from Polygon API (FOREX only)
       if (market === 'FOREX') {
         data = await fetchFromPolygon(symbol, market, resolution, fromTs, toTs);
         
@@ -493,7 +348,6 @@ export async function GET(req: NextRequest) {
           };
         }
       } else {
-        // Non-FOREX markets not supported
         console.log('Non-FOREX market not supported:', { market, symbol });
         barsData = { 
           s: 'error', 
@@ -510,7 +364,6 @@ export async function GET(req: NextRequest) {
           }
         }
         
-        // Capture arrays for safe access
         const tArr = data.t;
         const oArr = data.o;
         const hArr = data.h;
@@ -529,7 +382,6 @@ export async function GET(req: NextRequest) {
           }
         }
         
-        // Apply anomaly detection to filter corrupted bars from fresh data
         const { filtered: cleanedData, anomalies } = detectAndFilterAnomalies(
           data.t, data.o, data.h, data.l, data.c, data.v || [], symbol
         );
@@ -548,46 +400,16 @@ export async function GET(req: NextRequest) {
           ...cleanedData
         };
         
-        // Cache the response for future use (store raw data, filter on read)
-        const MAX_CACHED_BARS = 100000;
-        try {
-          const barsToCache = data.t.length > MAX_CACHED_BARS ? MAX_CACHED_BARS : data.t.length;
-          
-          let safeVolume: number[] = [];
-          if (data.v && Array.isArray(data.v)) {
-            safeVolume = data.v
-              .slice(0, barsToCache)
-              .map((v: unknown) => typeof v === 'number' ? v : parseFloat(String(v)))
-              .filter((v: number) => !isNaN(v) && isFinite(v));
-            if (safeVolume.length !== barsToCache) {
-              safeVolume = [];
-            }
-          }
-          
-          const CachedBars = await getCachedBarsModel();
-          await CachedBars.findOneAndUpdate(
-            { market, symbol, resolution, fromTs, toTs },
-            {
-              market,
-              symbol,
-              resolution,
-              fromTs,
-              toTs,
-              t: data.t.slice(0, barsToCache),
-              o: data.o.slice(0, barsToCache),
-              h: data.h.slice(0, barsToCache),
-              l: data.l.slice(0, barsToCache),
-              c: data.c.slice(0, barsToCache),
-              v: safeVolume,
-              cachedAt: new Date(),
-              expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            },
-            { upsert: true }
-          );
-          console.log('Cached bars for future use:', { market, symbol, resolution, barCount: barsToCache });
-        } catch (cacheError) {
-          console.warn('Failed to cache bars:', cacheError);
-        }
+        setCachedBars(cacheKey, {
+          s: 'ok',
+          t: data.t,
+          o: data.o,
+          h: data.h,
+          l: data.l,
+          c: data.c,
+          v: data.v || []
+        });
+        console.log('with-data: Cached bars for', { market, symbol, resolution, barCount: data.t.length });
       }
     } catch (fetchError) {
       console.error('Data fetch error:', fetchError);

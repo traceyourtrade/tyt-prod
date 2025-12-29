@@ -1,7 +1,5 @@
 import { Bar, BarRequest, BarResponse, barsToTradingView, TradingViewBars } from '@/lib/backtesting/types';
-import { getFromCache, mergeBarsToCache } from './cacheStore';
-import { fetchFromPolygon, isPolygonSupported } from './polygonAdapter';
-import { fetchFromVps, isVpsSupported } from './vpsAdapter';
+import { fetchFromPolygon } from './polygonAdapter';
 
 export interface FetchOptions {
   userId?: string;
@@ -11,68 +9,16 @@ export interface FetchOptions {
 
 export async function fetchBars(request: BarRequest, options: FetchOptions = {}): Promise<BarResponse> {
   const { market, symbol, resolution, from, to } = request;
-  const { userId = '', authToken, skipCache = false } = options;
 
   console.log('[BarFetcher] Request:', { market, symbol, resolution, from, to });
 
-  if (!skipCache) {
-    const cacheResult = await getFromCache({ market, symbol, resolution, from, to });
-
-    if (cacheResult.coverage.complete) {
-      console.log('[BarFetcher] Cache hit - complete coverage');
-      return {
-        bars: cacheResult.bars,
-        coverage: {
-          from: cacheResult.coverage.from,
-          to: cacheResult.coverage.to,
-          barCount: cacheResult.bars.length
-        },
-        source: 'cache'
-      };
-    }
-
-    console.log('[BarFetcher] Cache incomplete, fetching from source');
-  }
-
   let bars: Bar[] = [];
-  let source: 'polygon' | 'vps' | 'mixed' = 'polygon';
 
-  if (isPolygonSupported(market)) {
-    const polygonResult = await fetchFromPolygon(symbol, market, resolution, from, to);
-    if (polygonResult.success && polygonResult.bars.length > 0) {
-      bars = polygonResult.bars;
-      source = 'polygon';
-    } else {
-      console.log('[BarFetcher] Polygon failed/empty, falling back to VPS');
-      const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId, authToken);
-      if (vpsResult.success && vpsResult.bars.length > 0) {
-        bars = vpsResult.bars;
-        source = 'vps';
-      }
-    }
-  } else if (isVpsSupported(market)) {
-    const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId, authToken);
-    if (vpsResult.success) {
-      bars = vpsResult.bars;
-      source = 'vps';
-    }
+  const polygonResult = await fetchFromPolygon(symbol, market, resolution, from, to);
+  if (polygonResult.success && polygonResult.bars.length > 0) {
+    bars = polygonResult.bars;
   } else {
-    const polygonResult = await fetchFromPolygon(symbol, market, resolution, from, to);
-    if (polygonResult.success && polygonResult.bars.length > 0) {
-      bars = polygonResult.bars;
-      source = 'polygon';
-    } else {
-      console.log('[BarFetcher] Polygon failed/empty, falling back to VPS');
-      const vpsResult = await fetchFromVps(symbol, market, resolution, from, to, userId, authToken);
-      if (vpsResult.success && vpsResult.bars.length > 0) {
-        bars = vpsResult.bars;
-        source = 'vps';
-      }
-    }
-  }
-
-  if (bars.length > 0) {
-    await mergeBarsToCache({ market, symbol, resolution, from, to }, bars);
+    console.log('[BarFetcher] Polygon returned no data:', polygonResult.error || 'empty result');
   }
 
   const coverage = {
@@ -81,9 +27,9 @@ export async function fetchBars(request: BarRequest, options: FetchOptions = {})
     barCount: bars.length
   };
 
-  console.log('[BarFetcher] Response:', { source, barCount: bars.length, coverage });
+  console.log('[BarFetcher] Response:', { source: 'polygon', barCount: bars.length, coverage });
 
-  return { bars, coverage, source };
+  return { bars, coverage, source: 'polygon' };
 }
 
 export async function fetchBarsAsTradingView(request: BarRequest, options: FetchOptions = {}): Promise<TradingViewBars> {

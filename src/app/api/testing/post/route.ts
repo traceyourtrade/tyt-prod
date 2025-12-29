@@ -10,11 +10,11 @@ import { createBacktestSession ,
   updateTrade,
   deleteTrade,
   updateUISettings} from '@/lib/api-handlers/testingHandler';
-import { connectBacktestDB } from '@/lib/db/connect';
+import { connectMainDB } from '@/lib/db/connect';
 
 export async function POST(req: NextRequest) {
   try {
-    await connectBacktestDB()
+    await connectMainDB()
     const cookieStore = await cookies();
     const token = cookieStore.get('authToken')?.value|| 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OTFkZDZjYmFlMDg1YjcwOGY1MjRjZDYiLCJpYXQiOjE3NjUwMTA0NzUsImV4cCI6MTc2NTQ0MjQ3NX0.cWWBJ4OKEEZ7xU6KlrfcJnZHHFNq3ObPQ5NFu2Ap_a4';
     const userId = cookieStore.get('userId')?.value || 'eY3RUQXztcrf';

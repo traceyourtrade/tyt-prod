@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getUserModel } from '@/models/main/user.model';
-
-const VPS_API_URL = 'http://72.61.242.6:5001';
+import { fetchFromPolygon } from '@/lib/api-handlers/backtesting/polygonAdapter';
 
 interface CacheEntry {
   data: any;
@@ -10,7 +9,7 @@ interface CacheEntry {
 }
 
 const chartCache = new Map<string, CacheEntry>();
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours for historical data
+const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 function getFromCache(key: string): any | null {
   const entry = chartCache.get(key);
@@ -35,45 +34,6 @@ async function getUserFromToken(token: string) {
   return await User.findOne({ "tokens.token": token });
 }
 
-function detectMarketType(symbol: string): string {
-  const upperSymbol = symbol.toUpperCase();
-  
-  // Crypto pairs
-  if (upperSymbol.includes('BTC') || upperSymbol.includes('ETH') || 
-      upperSymbol.includes('USDT') || upperSymbol.includes('BNB') ||
-      upperSymbol.includes('XRP') || upperSymbol.includes('SOL') ||
-      upperSymbol.includes('ADA') || upperSymbol.includes('DOGE')) {
-    return 'CRYPTO';
-  }
-  
-  // Indian indices
-  if (upperSymbol.includes('NIFTY') || upperSymbol.includes('BANKNIFTY') ||
-      upperSymbol.includes('SENSEX') || upperSymbol.includes('FINNIFTY')) {
-    return 'INDIAN_INDICES';
-  }
-  
-  // Indian stocks (common suffixes)
-  if (upperSymbol.endsWith('.NS') || upperSymbol.endsWith('.BO') ||
-      upperSymbol.includes('RELIANCE') || upperSymbol.includes('TCS') ||
-      upperSymbol.includes('INFY') || upperSymbol.includes('HDFC')) {
-    return 'INDIAN_STOCK';
-  }
-  
-  // Forex pairs (6 characters, all letters, common pairs)
-  const forexPairs = [
-    'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD',
-    'EURGBP', 'EURJPY', 'GBPJPY', 'AUDJPY', 'EURAUD', 'EURCHF', 'AUDNZD',
-    'XAUUSD', 'XAGUSD', 'GOLD', 'SILVER'
-  ];
-  if (forexPairs.includes(upperSymbol) || 
-      (upperSymbol.length === 6 && /^[A-Z]+$/.test(upperSymbol))) {
-    return 'FOREX';
-  }
-  
-  // Default to FOREX for unknown
-  return 'FOREX';
-}
-
 function mapIntervalToResolution(interval: string): string {
   const intervalMap: Record<string, string> = {
     '1min': '1',
@@ -95,7 +55,6 @@ export async function GET(request: Request) {
   const symbol = searchParams.get('symbol') || '';
   const date = searchParams.get('date');
   const interval = searchParams.get('interval') || '5min';
-  const market = searchParams.get('market');
   
   if (!symbol) {
     return NextResponse.json({ 
@@ -131,7 +90,6 @@ export async function GET(request: Request) {
       }, { status: 401 });
     }
 
-    // Cache key includes userId to scope data per user
     const cacheKey = `${userId}:${symbol}:${date}:${interval}`;
     const cachedData = getFromCache(cacheKey);
     
@@ -140,10 +98,8 @@ export async function GET(request: Request) {
       return NextResponse.json(cachedData);
     }
 
-    const detectedMarket = market || detectMarketType(symbol);
     const resolution = mapIntervalToResolution(interval);
     
-    // Calculate time range for the trade date
     const tradeDate = new Date(date);
     const startOfDay = new Date(tradeDate);
     startOfDay.setHours(0, 0, 0, 0);
@@ -152,79 +108,48 @@ export async function GET(request: Request) {
     
     const fromTs = Math.floor(startOfDay.getTime() / 1000);
     const toTs = Math.floor(endOfDay.getTime() / 1000);
-    
-    const apiUrl = new URL(`${VPS_API_URL}/api/bars`);
-    apiUrl.searchParams.set('market', detectedMarket);
-    apiUrl.searchParams.set('symbol', symbol);
-    apiUrl.searchParams.set('resolution', resolution);
-    apiUrl.searchParams.set('from', fromTs.toString());
-    apiUrl.searchParams.set('to', toTs.toString());
-    apiUrl.searchParams.set('userId', userId);
 
-    console.log('[TradeChart] Fetching from VPS:', {
+    console.log('[TradeChart] Fetching from Polygon:', {
       symbol,
-      market: detectedMarket,
       resolution,
       date,
-      url: apiUrl.toString()
+      from: fromTs,
+      to: toTs
     });
 
-    const response = await fetch(apiUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      cache: 'no-store'
-    });
+    const polygonResult = await fetchFromPolygon(symbol, 'FOREX', resolution, fromTs, toTs);
 
-    if (!response.ok) {
-      console.error('[TradeChart] VPS API error:', response.status, response.statusText);
-      return NextResponse.json({ 
-        error: 'Failed to fetch chart data',
-        candles: [] 
-      }, { status: response.status });
-    }
-
-    const data = await response.json();
-    
-    if (data.s !== 'ok' || !data.t || !Array.isArray(data.t) || data.t.length === 0) {
-      console.log('[TradeChart] No data from VPS:', data);
+    if (!polygonResult.success || polygonResult.bars.length === 0) {
+      console.log('[TradeChart] No data from Polygon:', polygonResult.error || 'empty result');
       return NextResponse.json({ 
         error: 'No data available for this symbol/date',
         candles: [],
         interval 
       });
     }
+
+    const filteredBars = polygonResult.bars.filter(bar => {
+      const barTime = Math.floor(bar.time / 1000);
+      return barTime >= fromTs && barTime <= toTs;
+    });
+
+    console.log(`[TradeChart] Filtered ${polygonResult.bars.length} bars to ${filteredBars.length} for date ${date}`);
     
-    // Filter candles to only include the requested date range
-    // VPS API ignores 'from' parameter and returns all data since 2023
-    const filteredIndices: number[] = [];
-    for (let i = 0; i < data.t.length; i++) {
-      const barTime = data.t[i];
-      if (barTime >= fromTs && barTime <= toTs) {
-        filteredIndices.push(i);
-      }
-    }
-    
-    console.log(`[TradeChart] Filtered ${data.t.length} bars to ${filteredIndices.length} for date ${date}`);
-    
-    if (filteredIndices.length === 0) {
+    if (filteredBars.length === 0) {
       return NextResponse.json({ 
         error: 'No data available for this specific date',
         candles: [],
         interval 
       });
     }
-    
-    // Convert VPS array format to candles object format (only filtered data)
-    const candles = filteredIndices.map((i) => ({
-      time: new Date(data.t[i] * 1000).toISOString(),
-      open: data.o[i],
-      high: data.h[i],
-      low: data.l[i],
-      close: data.c[i],
-      volume: data.v ? data.v[i] : 0,
+
+    const candles = filteredBars.map((bar) => ({
+      time: new Date(bar.time).toISOString(),
+      open: bar.open,
+      high: bar.high,
+      low: bar.low,
+      close: bar.close,
+      volume: bar.volume || 0,
     }));
     
     console.log(`[TradeChart] Returning ${candles.length} candles for ${symbol}`);

@@ -58,9 +58,9 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Development & Deployment:** Configured for Replit, running on port 5000, with autoscale deployment.
 
 ## External Dependencies
-- **Database:** MongoDB (main and accounts data, and backtesting data using `DATABASE3` secret).
+- **Database:** MongoDB (main database for user data, accounts database for trading accounts). Backtest session data is now stored in the main database.
 - **Authentication:** Google OAuth, JWT-based sessions.
 - **Storage:** AWS S3 for image uploads.
 - **Email:** Nodemailer with Gmail.
 - **UI Libraries:** Material-UI, Framer Motion, Chart.js, Recharts.
-- **Market Data:** Polygon.io/Massive.com API (primary for FOREX backtesting - fast), VPS fallback (for other markets), Twelve Data API (legacy).
+- **Market Data:** Polygon.io API (exclusive source for FOREX chart data). No VPS or caching layer - all chart data fetched directly from Polygon.
