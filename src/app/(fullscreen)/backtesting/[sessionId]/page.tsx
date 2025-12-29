@@ -2689,6 +2689,98 @@ export default function FullscreenBacktesting({
                       try {
                         innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
                       } catch (e) {}
+                      
+                      // CRITICAL: Redraw trade lines after chart reload
+                      // The old shape IDs are invalid after setSymbol, so clear and redraw
+                      const openTrades = openTradesRef.current || [];
+                      if (openTrades.length > 0) {
+                        console.log('Redrawing trade lines after timeframe switch:', openTrades.length, 'trades');
+                        // Clear stale shape references
+                        tradeLinesRef.current = {};
+                        // Redraw each trade's lines
+                        for (const trade of openTrades) {
+                          try {
+                            const tradeForDraw = {
+                              id: trade.id,
+                              type: trade.type,
+                              entry: trade.entry,
+                              target: trade.target,
+                              stopLoss: trade.stopLoss,
+                              lotSize: trade.lotSize
+                            };
+                            // Use setTimeout to ensure chart is fully ready
+                            setTimeout(() => {
+                              if (tvWidgetRef.current) {
+                                const chart = tvWidgetRef.current.activeChart();
+                                if (!chart) return;
+                                
+                                // Draw entry line
+                                const entryId = chart.createShape(
+                                  { price: trade.entry },
+                                  {
+                                    shape: "horizontal_line",
+                                    lock: true,
+                                    disableSelection: true,
+                                    overrides: {
+                                      linecolor: "rgba(245, 158, 11, 0.9)",
+                                      linestyle: 2,
+                                      linewidth: 1,
+                                    }
+                                  }
+                                );
+                                
+                                let tpId = null;
+                                let slId = null;
+                                
+                                // Draw TP line if exists
+                                if (trade.target !== undefined) {
+                                  tpId = chart.createShape(
+                                    { price: trade.target },
+                                    {
+                                      shape: "horizontal_line",
+                                      lock: false,
+                                      disableSelection: false,
+                                      overrides: {
+                                        linecolor: "rgba(34, 197, 94, 0.9)",
+                                        linestyle: 0,
+                                        linewidth: 2,
+                                      }
+                                    }
+                                  );
+                                }
+                                
+                                // Draw SL line if exists
+                                if (trade.stopLoss !== undefined) {
+                                  slId = chart.createShape(
+                                    { price: trade.stopLoss },
+                                    {
+                                      shape: "horizontal_line",
+                                      lock: false,
+                                      disableSelection: false,
+                                      overrides: {
+                                        linecolor: "rgba(239, 68, 68, 0.9)",
+                                        linestyle: 0,
+                                        linewidth: 2,
+                                      }
+                                    }
+                                  );
+                                }
+                                
+                                // Store new shape IDs
+                                tradeLinesRef.current[trade.id] = {
+                                  entry: entryId,
+                                  tp: tpId,
+                                  sl: slId
+                                };
+                                
+                                console.log('Trade lines redrawn for trade:', trade.id);
+                              }
+                            }, 100);
+                          } catch (e) {
+                            console.error('Error redrawing trade lines:', e);
+                          }
+                        }
+                      }
                     }
                   } catch (e) {}
                   isChangingResolutionRef.current = false;
