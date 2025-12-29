@@ -32,15 +32,24 @@ async function uploadProfilePicture(base64Data: string, userId: string): Promise
     };
 
     await s3Client.send(new PutObjectCommand(params));
-    return `https://${process.env.PHOTO_BUCKET_NAME}.s3.amazonaws.com/${fileName}`;
+    return `https://${process.env.PHOTO_BUCKET_NAME}.s3.${process.env.PHOTO_BUCKET_REGION}.amazonaws.com/${fileName}`;
 }
 
 async function deleteOldProfilePicture(url: string): Promise<void> {
     try {
         const bucketName = process.env.PHOTO_BUCKET_NAME!;
-        const urlPrefix = `https://${bucketName}.s3.amazonaws.com/`;
+        const region = process.env.PHOTO_BUCKET_REGION!;
+        const urlPrefix = `https://${bucketName}.s3.${region}.amazonaws.com/`;
+        const urlPrefixAlt = `https://${bucketName}.s3.amazonaws.com/`;
+        
+        let key = '';
         if (url.startsWith(urlPrefix)) {
-            const key = url.replace(urlPrefix, '');
+            key = url.replace(urlPrefix, '');
+        } else if (url.startsWith(urlPrefixAlt)) {
+            key = url.replace(urlPrefixAlt, '');
+        }
+        
+        if (key) {
             await s3Client.send(new DeleteObjectCommand({
                 Bucket: bucketName,
                 Key: key,
@@ -136,7 +145,7 @@ export async function PUT(req: NextRequest) {
                 const newPictureUrl = await uploadProfilePicture(profilePicture, userId);
                 updateData.profilePicture = newPictureUrl;
                 
-                if (oldPictureUrl && oldPictureUrl.includes('s3.amazonaws.com')) {
+                if (oldPictureUrl && (oldPictureUrl.includes('s3.amazonaws.com') || oldPictureUrl.includes('.s3.'))) {
                     await deleteOldProfilePicture(oldPictureUrl);
                 }
             } else if (profilePicture.startsWith('http')) {

@@ -87,7 +87,7 @@ export async function uploadImageHandler(formData, userId: string, token: string
             return NextResponse.json({ error: "Failed to store image." }, { status: 500 });
         }
 
-        const imageUrl = `https://${process.env.PHOTO_BUCKET_NAME}.s3.amazonaws.com/${fileName}`;
+        const imageUrl = `https://${process.env.PHOTO_BUCKET_NAME}.s3.${process.env.PHOTO_BUCKET_REGION}.amazonaws.com/${fileName}`;
 
         // Find the trade in the specified collection
         const tradeDoc = await TradeModel.findOne({
