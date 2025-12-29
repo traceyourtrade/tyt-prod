@@ -526,8 +526,20 @@ const DailyJournal = () => {
         formData.append("accountType", selectedTrade.accountType || "");
         formData.append("apiName", "uploadImage");
 
-        await fetch("/api/daily-journal/post", { method: "POST", body: formData });
-        setAccounts();
+        try {
+          const response = await fetch("/api/daily-journal/post", { method: "POST", body: formData });
+          if (response.ok) {
+            const result = await response.json();
+            if (result.imageUrl) {
+              const imgKey = type === "before" ? "beforeURL" : "afterURL";
+              setSelectedTrade(prev => prev ? { ...prev, [imgKey]: result.imageUrl } : null);
+            }
+          }
+        } catch (err) {
+          console.error("Image upload error:", err);
+        } finally {
+          setAccounts();
+        }
       };
       img.src = event.target?.result as string;
     };
