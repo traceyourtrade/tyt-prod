@@ -137,6 +137,8 @@ export function Sidebar({
   React.useEffect(() => {
     if (pathname.startsWith('/backtesting')) {
       setBacktestingOpen(true)
+    } else {
+      setBacktestingOpen(false)
     }
   }, [pathname])
 
