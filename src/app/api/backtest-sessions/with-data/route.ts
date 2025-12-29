@@ -293,15 +293,15 @@ export async function GET(req: NextRequest) {
     const sessionFromDate = new Date(sessionData.fromDate);
     const sessionToDate = new Date(sessionData.toDate);
     
-    const tenYearsAgo = new Date();
-    tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+    const twoYearsAgo = new Date(sessionFromDate);
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
     
-    const fromTs = Math.floor(tenYearsAgo.getTime() / 1000);
+    const fromTs = Math.floor(twoYearsAgo.getTime() / 1000);
     const toTs = Math.floor(sessionToDate.getTime() / 1000);
     const replayStartTs = Math.floor(sessionFromDate.getTime() / 1000);
     
     console.log('with-data: Loading historical data range:', {
-      dataFrom: tenYearsAgo.toISOString(),
+      dataFrom: twoYearsAgo.toISOString(),
       dataTo: sessionData.toDate,
       replayStartFrom: sessionData.fromDate,
       fromTs,
