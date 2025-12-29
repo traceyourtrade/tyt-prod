@@ -335,6 +335,7 @@ export default function FullscreenBacktesting({
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
   const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
   const initialRestoreCompleteRef = useRef<boolean>(false); // Tracks if initial chart restore is complete
+  const isRestoringDrawingsRef = useRef<boolean>(false); // Guards capture/save during drawing restoration
   const allBarsRef = useRef<any[]>([]); // Ref for bars data to avoid widget recreation on data changes
   const widgetInitializedRef = useRef<boolean>(false); // Track if widget has been created
   const fetchingResolutionsRef = useRef<Set<string>>(new Set()); // Track in-flight resolution fetches
@@ -2453,6 +2454,12 @@ export default function FullscreenBacktesting({
           return;
         }
         
+        // Block auto-saves during drawing restoration - prevents duplicates
+        if (isRestoringDrawingsRef.current) {
+          console.log('Skipping auto-save: drawing restoration in progress');
+          return;
+        }
+        
         // Block auto-saves during unmount - chart is being destroyed and will return 0 drawings
         if (isUnmountingRef.current) {
           console.log('Skipping auto-save: component unmounting');
@@ -2491,6 +2498,14 @@ export default function FullscreenBacktesting({
             } catch (e) {
               // Skip studies that can't be serialized
             }
+          }
+          
+          // CORRUPTION PROTECTION: Never save more than 100 drawings
+          // If we have more, it indicates duplication bugs
+          const MAX_DRAWINGS = 100;
+          if (drawings.length > MAX_DRAWINGS) {
+            console.error('Skipping auto-save: too many drawings (' + drawings.length + '), indicates corruption');
+            return;
           }
           
           // Prevent overwriting saved drawings with empty state
@@ -2669,19 +2684,20 @@ export default function FullscreenBacktesting({
           callbacksReadyRef.current = true;
         }
         
-        // Force TradingView to reload data with correct filtering
-        // We use setSymbol with stable suffix (no Date.now) to preserve chart identity
-        // This allows drawings to persist across timeframe switches
+        // CRITICAL: Force TradingView to reload data with correct filtering
+        // TradingView caches data internally and won't call getBars when switching back
+        // to a resolution it already had. We use setSymbol with a unique suffix to force
+        // TradingView to treat this as a new symbol and call getBars fresh.
+        // We use Date.now() to force chart reload BUT we use chart.save()/load() to preserve drawings.
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
               const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              // IMPORTANT: Use stable symbol key (no Date.now()) to preserve drawings
-              // The session ID ensures uniqueness while maintaining chart identity
-              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}`;
+              // Use Date.now() to ensure TradingView treats this as new symbol and calls getBars
+              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}_${Date.now()}`;
               
-              console.log('Switching timeframe with stable symbol:', symbolWithSuffix);
+              console.log('Switching timeframe with symbol:', symbolWithSuffix);
               
               // Set the anchor AGAIN right before triggering getBars
               // This ensures it's available when TradingView calls getBars
@@ -2799,19 +2815,31 @@ export default function FullscreenBacktesting({
                       }
                       
                       // CRITICAL: Restore user drawings after chart reload
-                      // Drawings were captured before the timeframe switch in processTimeframeSwitch
+                      // Drawings were captured before the timeframe switch
                       if (pendingDrawingsRef.current && pendingDrawingsRef.current.length > 0) {
                         setTimeout(() => {
                           try {
                             const currentChart = tvWidgetRef.current?.activeChart();
                             if (currentChart) {
+                              // Set guard to prevent auto-save from capturing just-restored drawings
+                              isRestoringDrawingsRef.current = true;
+                              
+                              // Clear any existing drawings to prevent duplicates
+                              DrawingManager.clearAllDrawings(currentChart);
+                              
                               console.log('Restoring drawings after timeframe switch:', pendingDrawingsRef.current.length, 'drawings');
                               const restoredCount = DrawingManager.restoreDrawings(currentChart, pendingDrawingsRef.current);
                               console.log('Drawings restored:', restoredCount);
+                              
+                              // Clear pending and release guard after a delay to let auto-save settle
                               pendingDrawingsRef.current = [];
+                              setTimeout(() => {
+                                isRestoringDrawingsRef.current = false;
+                              }, 500);
                             }
                           } catch (e) {
                             console.error('Error restoring drawings:', e);
+                            isRestoringDrawingsRef.current = false;
                           }
                         }, 200);
                       }
