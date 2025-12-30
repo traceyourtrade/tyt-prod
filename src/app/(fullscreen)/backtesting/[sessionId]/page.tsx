@@ -1685,6 +1685,14 @@ export default function FullscreenBacktesting({
           }
           delete pendingCallbacksRef.current[resolution];
         }
+        
+        // CRITICAL: Finalize the TF controller if this resolution matches the switch target
+        // This ensures Daily and other slow-path TF switches complete properly
+        if (tfController.getIsSwitching() && tfController.currentTarget === resolution) {
+          console.log('Slow-path fetch: Finalizing TF controller for', resolution);
+          callbacksReadyRef.current = true; // Enable replay controls
+          tfController.finalize(resolution);
+        }
       } else {
         console.log('No data returned for resolution', resolution);
         // Still need to fulfill pending callbacks with no data
@@ -1694,6 +1702,12 @@ export default function FullscreenBacktesting({
             callback([], { noData: true });
           }
           delete pendingCallbacksRef.current[resolution];
+        }
+        
+        // Also finalize controller on no-data to prevent permanent blocking
+        if (tfController.getIsSwitching() && tfController.currentTarget === resolution) {
+          console.log('Slow-path fetch (no data): Finalizing TF controller for', resolution);
+          tfController.finalize(resolution);
         }
       }
     } catch (error) {
@@ -1705,6 +1719,12 @@ export default function FullscreenBacktesting({
           callback([], { noData: true });
         }
         delete pendingCallbacksRef.current[resolution];
+      }
+      
+      // Also finalize controller on error to prevent permanent blocking
+      if (tfController.getIsSwitching() && tfController.currentTarget === resolution) {
+        console.log('Slow-path fetch (error): Finalizing TF controller for', resolution);
+        tfController.finalize(resolution);
       }
     } finally {
       fetchingResolutionsRef.current.delete(resolution);
