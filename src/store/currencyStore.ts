@@ -58,16 +58,26 @@ export const formatCurrencyValue = (
   const absValue = Math.abs(displayValue);
   
   let formatted: string;
-  if (absValue >= 10000000) {
-    formatted = `${(absValue / 10000000).toFixed(2)}Cr`;
-  } else if (absValue >= 100000 && currency === "INR") {
-    formatted = `${(absValue / 100000).toFixed(2)}L`;
-  } else if (absValue >= 1000000) {
-    formatted = `${(absValue / 1000000).toFixed(1)}M`;
-  } else if (absValue >= 1000) {
-    formatted = `${(absValue / 1000).toFixed(1)}K`;
+  if (currency === "INR") {
+    if (absValue >= 10000000) {
+      formatted = `${(absValue / 10000000).toFixed(2)}Cr`;
+    } else if (absValue >= 100000) {
+      formatted = `${(absValue / 100000).toFixed(2)}L`;
+    } else if (absValue >= 1000) {
+      formatted = `${(absValue / 1000).toFixed(1)}K`;
+    } else {
+      formatted = absValue.toFixed(2);
+    }
   } else {
-    formatted = absValue.toFixed(2);
+    if (absValue >= 1000000000) {
+      formatted = `${(absValue / 1000000000).toFixed(2)}B`;
+    } else if (absValue >= 1000000) {
+      formatted = `${(absValue / 1000000).toFixed(2)}M`;
+    } else if (absValue >= 1000) {
+      formatted = `${(absValue / 1000).toFixed(1)}K`;
+    } else {
+      formatted = absValue.toFixed(2);
+    }
   }
   
   return displayValue < 0 ? `-${symbol}${formatted}` : `${symbol}${formatted}`;
