@@ -1,0 +1,154 @@
+You are implementing a professional Bar Replay (candle-by-candle replay) system
+similar to FX Replay / TradingView Bar Replay.
+
+This is NOT a chart player.
+This is a time-controlled market simulation engine.
+
+––––––––––––––––––––––
+1) WHAT IS BAR REPLAY?
+––––––––––––––––––––––
+Bar Replay simulates the market exactly as it unfolded in real time.
+
+• Candles are revealed one-by-one
+• No future data is visible
+• Every action happens on a single simulated timeline
+• User experiences the market "as if live"
+
+––––––––––––––––––––––
+2) CORE CONCEPT (MOST IMPORTANT)
+––––––––––––––––––––––
+Bar Replay is driven by ONE variable:
+
+replayIndex (or replayTime)
+
+This variable represents:
+"Which candle is currently live"
+
+All systems MUST react to this value.
+
+––––––––––––––––––––––
+3) BAR REPLAY FLOW (STEP BY STEP)
+––––––––––––––––––––––
+
+Step 1: Load full historical candle data
+• Data is loaded ONCE
+• Stored in memory
+• No refetch during replay
+
+Step 2: User selects replay start point
+• Date + time
+• System finds the matching candle
+• Sets replayIndex to that candle
+
+Step 3: Enter Replay Mode
+• Only candles ≤ replayIndex are visible
+• Future candles are hidden
+• Replay state is locked
+
+Step 4: Play / Pause / Step
+• Play → replayIndex increases by 1 per tick
+• Pause → replayIndex stops changing
+• Next → replayIndex += 1
+• Previous → replayIndex -= 1 (optional)
+
+Step 5: Chart reacts
+• Chart redraws when replayIndex changes
+• No chart logic controls replay
+
+––––––––––––––––––––––
+4) SINGLE TIMELINE RULE
+––––––––––––––––––––––
+Everything must use the SAME simulated time:
+
+• Chart
+• Indicators
+• Trades
+• Metrics
+
+No independent clocks.
+No async drift.
+
+––––––––––––––––––––––
+5) INDICATORS IN BAR REPLAY
+––––––––––––––––––––––
+• Indicators update candle-by-candle
+• Only past candles are used
+• No future data allowed
+• Incremental updates preferred for performance
+
+––––––––––––––––––––––
+6) TRADING (PAPER MODE)
+––––––––––––––––––––––
+User can place simulated trades during replay.
+
+Trade rules:
+• Orders execute only on current candle
+• SL / TP checked on each new candle
+• PnL updates in real time
+• No future price access
+
+––––––––––––––––––––––
+7) TIMEFRAME SWITCHING
+––––––––––––––––––––––
+Timeframe switch is a CHANGE OF VIEW, not time.
+
+Rules:
+• Simulated time must NOT change
+• Replay continues from same market moment
+• replayIndex must be recalculated for new timeframe
+• No reset, no jump, no pause
+
+––––––––––––––––––––––
+8) SCROLLING BEHAVIOR
+––––––––––––––––––––––
+Scrolling the chart is VISUAL ONLY.
+
+Rules:
+• Scrolling does NOT change replayIndex
+• Scrolling does NOT change replayTime
+• No future candles appear
+• Replay resumes from current candle
+
+––––––––––––––––––––––
+9) SESSION MANAGEMENT
+––––––––––––––––––––––
+Bar Replay supports save & resume.
+
+On exit:
+• Save replayTime
+• Save trades & metrics
+
+On resume:
+• Restore replayTime
+• Recalculate replayIndex
+• Continue replay seamlessly
+
+––––––––––––––––––––––
+10) FEATURES REQUIRED
+––––––––––––––––––––––
+✔ Candle-by-candle playback
+✔ Play / Pause / Step controls
+✔ Speed control
+✔ Timeframe switching
+✔ Indicator support
+✔ Paper trading (orders, SL, TP)
+✔ Session save & resume
+✔ No future data leakage
+✔ High performance
+
+––––––––––––––––––––––
+11) WHAT BAR REPLAY IS NOT
+––––––––––––––––––––––
+❌ Not video playback
+❌ Not index-based chart scrolling
+❌ Not reloading candles every tick
+❌ Not UI-driven logic
+
+––––––––––––––––––––––
+12) FINAL MENTAL MODEL
+––––––––––––––––––––––
+Bar Replay = 
+"Reveal one candle at a time and let the system react."
+
+If replayIndex does not change,
+nothing in the system should change.
