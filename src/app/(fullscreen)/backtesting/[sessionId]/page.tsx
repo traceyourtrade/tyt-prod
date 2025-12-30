@@ -830,6 +830,16 @@ export default function FullscreenBacktesting({
         }
       }
       
+      // CRITICAL: Update anchor BEFORE any state changes or TradingView triggers
+      // This ensures any getBars call during React re-render uses the correct timestamp
+      if (cachedBars[newIndex]) {
+        const newBarTime = cachedBars[newIndex].time;
+        replayTimestampRef.current = newBarTime;
+        pendingAnchorTimestampRef.current = newBarTime;
+        console.log('Fast-path: Set anchor BEFORE state update:', new Date(newBarTime).toISOString());
+      }
+      replayIntervalRef.current = targetInterval;
+      
       // UPDATE STATE (all at once)
       setAllBars(cachedBars);
       setCurrentInterval(targetInterval);
@@ -840,18 +850,6 @@ export default function FullscreenBacktesting({
         preserveTimestamp: true,
         pendingSwitch: { fromInterval: sourceInterval }
       });
-      
-      // FINALIZE: Update refs to new state
-      if (cachedBars[newIndex]) {
-        const newBarTime = cachedBars[newIndex].time;
-        replayTimestampRef.current = newBarTime;
-        // CRITICAL: Update the pending anchor to match the ACTUAL new bar position
-        // This ensures getBars filters to the correct timestamp even if it runs after this point
-        pendingAnchorTimestampRef.current = newBarTime;
-        console.log('New replay timestamp:', new Date(newBarTime).toISOString());
-        console.log('Updated pendingAnchorTimestampRef to match:', new Date(newBarTime).toISOString());
-      }
-      replayIntervalRef.current = targetInterval;
       pendingTimeframeSwitchRef.current = null;
       
       // TRIGGER TRADINGVIEW UPDATE if requested (for custom dropdown changes)
@@ -898,6 +896,8 @@ export default function FullscreenBacktesting({
                   console.warn('Error in post-switch cleanup:', e);
                 }
                 isChangingResolutionRef.current = false;
+                // Clear the pending anchor now that switch is complete
+                pendingAnchorTimestampRef.current = null;
                 
                 // Resume playback if it was active before the switch
                 if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
@@ -910,10 +910,13 @@ export default function FullscreenBacktesting({
           });
         } catch (e) {
           isChangingResolutionRef.current = false;
-          wasPlayingBeforeSwitchRef.current = false; // Reset on error
+          wasPlayingBeforeSwitchRef.current = false;
+          pendingAnchorTimestampRef.current = null;
         }
       } else {
         isChangingResolutionRef.current = false;
+        // Clear pending anchor for non-TV-switch path
+        pendingAnchorTimestampRef.current = null;
         // Resume playback if it was active (no TradingView switch needed, callback already ready)
         if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
           console.log('Resuming playback after fast-path (no TV switch)');
@@ -1903,6 +1906,7 @@ export default function FullscreenBacktesting({
                       console.warn('Error restoring drawings or setting visible range:', e);
                     }
                     isChangingResolutionRef.current = false;
+                    pendingAnchorTimestampRef.current = null;
                     
                     // Resume playback if it was active before the switch
                     if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
@@ -1916,10 +1920,12 @@ export default function FullscreenBacktesting({
             } catch (e) {
               console.log('setSymbol/setResolution error:', e);
               isChangingResolutionRef.current = false;
-              wasPlayingBeforeSwitchRef.current = false; // Reset on error
+              wasPlayingBeforeSwitchRef.current = false;
+              pendingAnchorTimestampRef.current = null;
             }
           } else {
             isChangingResolutionRef.current = false;
+            pendingAnchorTimestampRef.current = null;
             // Resume playback if it was active (no widget switch needed)
             if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
               console.log('Resuming playback after slow-path (no widget update)');
@@ -1931,11 +1937,13 @@ export default function FullscreenBacktesting({
           console.log('No data from VPS API:', data);
           // Don't clear bars on failure - keep existing data
           isChangingResolutionRef.current = false;
+          pendingAnchorTimestampRef.current = null;
         }
       } catch (error) {
         console.error("Error fetching history from VPS:", error);
         // Don't clear bars on error - keep existing data and allow retry
         isChangingResolutionRef.current = false;
+        pendingAnchorTimestampRef.current = null;
         // Set error state if this is the first load (no bars cached yet)
         if (Object.keys(barsCacheRef.current).length === 0) {
           setLoadError('Connection failed. The market data server may be temporarily unavailable.');
@@ -1998,10 +2006,10 @@ export default function FullscreenBacktesting({
         const anchorTs = pendingAnchorTimestampRef.current || replayTimestampRef.current;
         const usingPendingAnchor = !!pendingAnchorTimestampRef.current;
         
-        // Clear the pending anchor after use - it's only for the first getBars call after a switch
-        if (pendingAnchorTimestampRef.current) {
+        // DON'T clear pendingAnchorTimestampRef here - TradingView may call getBars multiple times
+        // during a single timeframe switch. We'll clear it after the switch is fully complete.
+        if (usingPendingAnchor) {
           console.log('getBars: Using pending anchor:', new Date(anchorTs).toISOString());
-          pendingAnchorTimestampRef.current = null;
         }
         
         // ONLY use cached bars for the exact requested resolution - no fallback
