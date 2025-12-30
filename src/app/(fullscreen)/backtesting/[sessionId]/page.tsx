@@ -816,21 +816,40 @@ export default function FullscreenBacktesting({
       // FIND CORRECT BAR in new timeframe using replayTimestampRef (the SINGLE source of truth)
       // Per FX Replay spec: replayIndex = candle where candle.openTime <= replayTime < candle.closeTime
       const targetIntervalMinutes = intervalToMinutes(targetInterval);
-      let newIndex = Math.min(5, cachedBars.length - 1);
+      let newIndex = -1;
       
       // CRITICAL: Use replayTimestampRef.current, NOT barEndTime from source timeframe
       const replayTs = replayTimestampRef.current;
-      console.log('Finding bar in new TF using replayTime:', new Date(replayTs).toISOString());
+      console.log('Fast-path: Finding bar in new TF using replayTime:', new Date(replayTs).toISOString());
       
+      // First try: Find bar where replayTs is strictly inside [barTime, barEnd)
       for (let i = cachedBars.length - 1; i >= 0; i--) {
         const barTime = cachedBars[i].time;
         const barEnd = barTime + (targetIntervalMinutes * 60 * 1000);
-        // Spec: candle.openTime <= replayTime < candle.closeTime
         if (barTime <= replayTs && replayTs < barEnd) {
           newIndex = i;
-          console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
+          console.log('Fast-path: Found bar at index:', i, 'time:', new Date(barTime).toISOString());
           break;
         }
+      }
+      
+      // Fallback: If replayTs lands exactly on a candle boundary (e.g., after forwarding N candles),
+      // find the last bar where barTime <= replayTs (this is the bar that just closed)
+      if (newIndex === -1) {
+        console.log('Fast-path: No exact match, finding last bar with time <= replayTs');
+        for (let i = cachedBars.length - 1; i >= 0; i--) {
+          if (cachedBars[i].time <= replayTs) {
+            newIndex = i;
+            console.log('Fast-path: Fallback found bar at index:', i, 'time:', new Date(cachedBars[i].time).toISOString());
+            break;
+          }
+        }
+      }
+      
+      // Final fallback: Use first few bars if still no match
+      if (newIndex === -1) {
+        newIndex = Math.min(5, cachedBars.length - 1);
+        console.log('Fast-path: Using default index:', newIndex);
       }
       
       // Clamp index within bounds
@@ -1096,17 +1115,36 @@ export default function FullscreenBacktesting({
             
             // STEP 2: Derive replayIndex from replayTime
             // Per spec: replayIndex = candle where candle.openTime <= replayTime < candle.closeTime
-            let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+            let newIndex = -1;
             
+            // First try: Find bar where replayTime is strictly inside [barTime, barEnd)
             for (let i = bars.length - 1; i >= 0; i--) {
               const barTime = bars[i].time;
               const barEnd = barTime + intervalMs;
-              // Spec: candle.openTime <= replayTime < candle.closeTime
               if (barTime <= targetReplayTime && targetReplayTime < barEnd) {
                 newIndex = i;
-                console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
+                console.log('Session resume: Found bar at index:', i, 'time:', new Date(barTime).toISOString());
                 break;
               }
+            }
+            
+            // Fallback: If replayTime lands exactly on a candle boundary,
+            // find the last bar where barTime <= replayTime
+            if (newIndex === -1) {
+              console.log('Session resume: No exact match, finding last bar with time <= replayTime');
+              for (let i = bars.length - 1; i >= 0; i--) {
+                if (bars[i].time <= targetReplayTime) {
+                  newIndex = i;
+                  console.log('Session resume: Fallback found bar at index:', i, 'time:', new Date(bars[i].time).toISOString());
+                  break;
+                }
+              }
+            }
+            
+            // Final fallback: Use first few bars if still no match
+            if (newIndex === -1) {
+              newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+              console.log('Session resume: Using default index:', newIndex);
             }
             
             // Clamp index within bounds
@@ -1389,15 +1427,34 @@ export default function FullscreenBacktesting({
         if (replayTs > 0) {
           // Use replay timestamp for timeframe switches - find bar containing replayTs
           console.log('Slow-path: Finding bar using replayTime:', new Date(replayTs).toISOString());
+          let foundIndex = -1;
+          
+          // First try: Find bar where replayTs is strictly inside [barTime, barEnd)
           for (let i = bars.length - 1; i >= 0; i--) {
             const barTime = bars[i].time;
             const barEnd = barTime + intervalMs;
-            // Spec: candle.openTime <= replayTime < candle.closeTime
             if (barTime <= replayTs && replayTs < barEnd) {
-              newIndex = i;
-              console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
+              foundIndex = i;
+              console.log('Slow-path: Found bar at index:', i, 'time:', new Date(barTime).toISOString());
               break;
             }
+          }
+          
+          // Fallback: If replayTs lands exactly on a candle boundary (e.g., after forwarding N candles),
+          // find the last bar where barTime <= replayTs (this is the bar that just closed)
+          if (foundIndex === -1) {
+            console.log('Slow-path: No exact match, finding last bar with time <= replayTs');
+            for (let i = bars.length - 1; i >= 0; i--) {
+              if (bars[i].time <= replayTs) {
+                foundIndex = i;
+                console.log('Slow-path: Fallback found bar at index:', i, 'time:', new Date(bars[i].time).toISOString());
+                break;
+              }
+            }
+          }
+          
+          if (foundIndex >= 0) {
+            newIndex = foundIndex;
           }
         } else if (fromDate) {
           // For fresh sessions, start at the 'from' date so user can replay forward
