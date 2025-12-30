@@ -723,20 +723,20 @@ export default function FullscreenBacktesting({
       }
     }
     
-    // Priority 3: Session start date + one candle (last resort for fresh sessions)
-    if (sessionDataRef.current?.startDate) {
-      const startTs = new Date(sessionDataRef.current.startDate).getTime();
+    // Priority 3: fromDate prop (session start date) + one candle (last resort for fresh sessions)
+    if (fromDate) {
+      const startTs = new Date(fromDate).getTime();
       if (startTs > 0) {
         return {
           barEndTime: startTs + (sourceIntervalMinutes * 60 * 1000),
-          source: 'sessionStart'
+          source: 'fromDate'
         };
       }
     }
     
     // No valid anchor found - caller should block the operation
     return { barEndTime: 0, source: 'none' };
-  }, []);
+  }, [fromDate]);
   
   // ============================================================================
   // UNIFIED TIMEFRAME SWITCH HELPER
@@ -873,59 +873,44 @@ export default function FullscreenBacktesting({
       allBarsRef.current = cachedBars;
       subscribedResolutionRef.current = targetInterval;
       
-      // Check for cached callback - if exists, use it; otherwise wait for TradingView to resubscribe
+      // Check for cached callback - if exists, store it; otherwise clear it
+      // CRITICAL: Do NOT set callbacksReadyRef true until AFTER setReplayTimeAndDeriveIndex
       const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
       if (cachedCallback) {
         onRealtimeCallbackRef.current = cachedCallback;
-        callbacksReadyRef.current = true;
       } else {
-        // No cached callback yet - TradingView will call subscribeBars when setSymbol/setResolution completes
-        // CRITICAL: Set callbacksReadyRef to FALSE to block handleNext until TradingView has resubscribed
-        // This prevents the "chart doesn't update but internal state advances" bug
         onRealtimeCallbackRef.current = null;
-        callbacksReadyRef.current = false;
         console.log('Fast-path: No cached callback for', targetInterval, '- waiting for TradingView to resubscribe');
       }
       
+      // CRITICAL: Block handleNext during the switch to prevent stale state access
+      callbacksReadyRef.current = false;
+      
       // ═══════════════════════════════════════════════════════════════════════════
-      // TIME-DRIVEN APPROACH: Derive new index from unchanged replayTime
-      // Per FX Replay spec: Timeframe is ONLY a VIEW. Never reset replay.
+      // TIME-DRIVEN APPROACH: replayTime is absolute, timeframe is just a view
+      // Per FX Replay spec: Never reset replay on TF switch
       // ═══════════════════════════════════════════════════════════════════════════
       const replayTs = replayTimestampRef.current;
-      console.log('Fast-path: Deriving index from replayTime:', new Date(replayTs).toISOString());
+      console.log('Fast-path: Using replayTime:', new Date(replayTs).toISOString());
       
-      // Derive index using strict inequality (bar.time < replayTime)
-      // This ensures we show only COMPLETED candles in the new timeframe
-      let newIndex = deriveBarIndexFromTime(cachedBars, replayTs, targetInterval);
+      // CRITICAL: Clear pending switch BEFORE calling setReplayTimeAndDeriveIndex
+      // This ensures no downstream effects read stale pendingAnchorTimestampRef
+      pendingTimeframeSwitchRef.current = null;
+      pendingAnchorTimestampRef.current = null;
       
-      // Clamp index within bounds
-      newIndex = Math.max(0, Math.min(newIndex, cachedBars.length - 1));
-      
-      console.log('Fast-path: Derived index:', newIndex, 'bar time:', new Date(cachedBars[newIndex]?.time).toISOString());
-      
-      // UPDATE STATE (all at once)
+      // UPDATE STATE
       setAllBars(cachedBars);
       setCurrentInterval(targetInterval);
       if (hideDropdown) setShowTimeframeDropdown(false);
       
-      // Update bar index with preserved timestamp
-      setCurrentBarIndex(newIndex, cachedBars, { 
-        preserveTimestamp: true,
-        pendingSwitch: { fromInterval: sourceInterval }
-      });
+      // TIME-DRIVEN: Use canonical setter to derive index from existing replayTime
+      // Note: allBarsRef was already set to cachedBars at line 873
+      const derivedIndex = setReplayTimeAndDeriveIndex(replayTs, targetInterval);
+      console.log('Fast-path TF switch: replayTime=', new Date(replayTs).toISOString(), 'derived index=', derivedIndex);
       
-      // FINALIZE: Update refs to new state
-      // NOTE per FX Replay spec: replayTime is ABSOLUTE and NEVER changes on timeframe switch.
-      // Keep pendingAnchorTimestampRef as replayTimestampRef (elapsed time) for consistent filtering.
-      // replayTimestampRef stays unchanged - timeframe is just a lens, time is absolute.
-      if (cachedBars[newIndex]) {
-        // Keep anchor as elapsed time (replayTimestampRef) for consistent bar filtering
-        // DO NOT update pendingAnchorTimestampRef to bar start - that breaks elapsed time tracking
-        console.log('Timeframe switch complete - replayTime:', new Date(replayTimestampRef.current).toISOString());
-        console.log('Target bar at index:', newIndex, 'time:', new Date(cachedBars[newIndex].time).toISOString());
-      }
-      replayIntervalRef.current = targetInterval;
-      pendingTimeframeSwitchRef.current = null;
+      // NOW flip callbacksReadyRef AFTER setReplayTimeAndDeriveIndex has settled
+      // If we have cached callback, enable immediately. Otherwise subscribeBars will enable it.
+      callbacksReadyRef.current = !!cachedCallback;
       
       // TRIGGER TRADINGVIEW UPDATE if requested (for custom dropdown changes)
       if (triggerSymbolSwitch && tvWidgetRef.current) {
@@ -1168,74 +1153,40 @@ export default function FullscreenBacktesting({
             setAllBars(bars);
             
             // ═══════════════════════════════════════════════════════════════════
-            // FX REPLAY SPEC: Session Resume
-            // 1) Restore replayTime FIRST (from progressPointer or fromDate)
-            // 2) Recalculate replayIndex from replayTime
-            // 3) replayIndex is ALWAYS derived from replayTime, never the reverse
+            // TIME-DRIVEN: Session Resume
+            // Use setReplayTimeAndDeriveIndex as the canonical setter
             // ═══════════════════════════════════════════════════════════════════
             
-            // Get resolution interval in ms for checking candle boundaries
+            // Get resolution interval in ms
             const resolutionMinutes = intervalToMinutes(result.resolution);
             const intervalMs = resolutionMinutes * 60 * 1000;
             
-            // STEP 1: Restore replayTime FIRST (use progressPointer if exists, otherwise fromDate)
+            // Determine replayTime (from progressPointer or fromDate)
             let targetReplayTime: number;
             if (sessionResult.progressPointer && sessionResult.progressPointer > 0) {
               // Resume from saved progress position
               targetReplayTime = typeof sessionResult.progressPointer === 'number' 
                 ? sessionResult.progressPointer 
                 : new Date(sessionResult.progressPointer).getTime();
-              console.log('Session resume: Restoring replayTime from progressPointer:', new Date(targetReplayTime).toISOString());
+              console.log('Session resume: Using progressPointer:', new Date(targetReplayTime).toISOString());
             } else {
-              // Fresh session - start at fromDate
-              targetReplayTime = result.replayStartTs ? result.replayStartTs * 1000 : new Date(sessionResult.fromDate).getTime();
-              console.log('Session resume: Using fromDate as replayTime:', new Date(targetReplayTime).toISOString());
-            }
-            
-            // CRITICAL: Set replayTimestampRef FIRST - this is the single source of truth
-            replayTimestampRef.current = targetReplayTime;
-            replayIntervalRef.current = result.resolution;
-            console.log('Set replayTimestampRef:', new Date(targetReplayTime).toISOString());
-            
-            // STEP 2: Derive replayIndex from replayTime
-            // Per spec: replayIndex = candle where candle.openTime <= replayTime < candle.closeTime
-            let newIndex = -1;
-            
-            // First try: Find bar where replayTime is strictly inside [barTime, barEnd)
-            for (let i = bars.length - 1; i >= 0; i--) {
-              const barTime = bars[i].time;
-              const barEnd = barTime + intervalMs;
-              if (barTime <= targetReplayTime && targetReplayTime < barEnd) {
-                newIndex = i;
-                console.log('Session resume: Found bar at index:', i, 'time:', new Date(barTime).toISOString());
-                break;
+              // Fresh session - start at fromDate + one candle duration (so first candle is "completed")
+              // TIME-DRIVEN: Use fromDate directly, not a bar index, to stay within session window
+              const startTs = result.replayStartTs ? result.replayStartTs * 1000 : new Date(sessionResult.fromDate).getTime();
+              targetReplayTime = startTs + intervalMs;
+              
+              // CLAMP: If data starts after fromDate, use first bar's close time to stay in data window
+              if (bars.length > 0 && targetReplayTime < bars[0].time + intervalMs) {
+                targetReplayTime = bars[0].time + intervalMs;
+                console.log('Session resume: Clamped to first bar close:', new Date(targetReplayTime).toISOString());
+              } else {
+                console.log('Session resume: Using fromDate + interval:', new Date(targetReplayTime).toISOString());
               }
             }
             
-            // Fallback: If replayTime lands exactly on a candle boundary,
-            // find the last bar where barTime <= replayTime
-            if (newIndex === -1) {
-              console.log('Session resume: No exact match, finding last bar with time <= replayTime');
-              for (let i = bars.length - 1; i >= 0; i--) {
-                if (bars[i].time <= targetReplayTime) {
-                  newIndex = i;
-                  console.log('Session resume: Fallback found bar at index:', i, 'time:', new Date(bars[i].time).toISOString());
-                  break;
-                }
-              }
-            }
-            
-            // Final fallback: Use first few bars if still no match
-            if (newIndex === -1) {
-              newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
-              console.log('Session resume: Using default index:', newIndex);
-            }
-            
-            // Clamp index within bounds
-            newIndex = Math.max(0, Math.min(newIndex, bars.length - 1));
-            
-            // STEP 3: Set the bar index (preserveTimestamp=true since we already set replayTimestampRef)
-            setCurrentBarIndex(newIndex, bars, true);
+            // TIME-DRIVEN: Use canonical setter to set replayTime and derive index
+            const derivedIndex = setReplayTimeAndDeriveIndex(targetReplayTime, result.resolution);
+            console.log('Session resume: Derived index:', derivedIndex);
           }
           
           // Load existing trades from session
@@ -1500,37 +1451,38 @@ export default function FullscreenBacktesting({
         setAllBars(bars);
         
         // ═══════════════════════════════════════════════════════════════════════════
-        // TIME-DRIVEN APPROACH: Derive index from replayTime (the ONLY source of truth)
-        // Per FX Replay spec: Timeframe is ONLY a VIEW. Index is always derived.
+        // TIME-DRIVEN APPROACH: Always set replayTime first, then derive index
+        // Per FX Replay spec: replayTime is the SINGLE SOURCE OF TRUTH
         // ═══════════════════════════════════════════════════════════════════════════
-        const replayTs = replayTimestampRef.current;
-        let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+        const intervalMs = intervalToMs(resolution);
+        let newReplayTime = replayTimestampRef.current;
         
-        if (replayTs > 0) {
-          // Derive index from replayTime using strict inequality
-          console.log('Slow-path: Deriving index from replayTime:', new Date(replayTs).toISOString());
-          newIndex = deriveBarIndexFromTime(bars, replayTs, resolution);
-          console.log('Slow-path: Derived index:', newIndex, 'bar time:', new Date(bars[newIndex]?.time).toISOString());
+        if (newReplayTime > 0) {
+          // Use existing replayTime - just derive the index for the new bars
+          console.log('Slow-path: Using existing replayTime:', new Date(newReplayTime).toISOString());
         } else if (fromDate) {
-          // For fresh sessions, start at the 'from' date so user can replay forward
+          // Fresh session: start at the first bar >= fromDate
           const fromTs = new Date(fromDate).getTime();
-          const intervalMs = intervalToMs(resolution);
           for (let i = 0; i < bars.length; i++) {
             if (bars[i].time >= fromTs) {
-              newIndex = i;
-              // Initialize replayTime to the candle CLOSE time (open + interval)
-              // Per FX Replay spec: replayTime represents when the candle completed
-              replayTimestampRef.current = bars[i].time + intervalMs;
+              // Set replayTime to the candle CLOSE time (open + interval)
+              newReplayTime = bars[i].time + intervalMs;
+              console.log('Slow-path: Fresh session, setting replayTime from fromDate:', new Date(newReplayTime).toISOString());
               break;
             }
           }
         }
         
-        // Clamp index and update state
-        newIndex = Math.max(0, Math.min(newIndex, bars.length - 1));
-        currentBarIndexRef.current = newIndex;
-        setCurrentBarIndexState(newIndex);
-        replayIntervalRef.current = resolution;
+        // Fallback for fresh sessions with no matching bar
+        if (newReplayTime <= 0 && bars.length > 0) {
+          const startIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+          newReplayTime = bars[startIndex].time + intervalMs;
+          console.log('Slow-path: Fallback, setting replayTime from bar', startIndex);
+        }
+        
+        // TIME-DRIVEN: Always use setReplayTimeAndDeriveIndex - never mutate index directly
+        const newIndex = setReplayTimeAndDeriveIndex(newReplayTime, resolution);
+        console.log('Slow-path: Derived index:', newIndex, 'bar time:', bars[newIndex] ? new Date(bars[newIndex].time).toISOString() : 'N/A');
         
         // Trigger any pending getBars callbacks for this resolution
         const pendingCallbacks = pendingCallbacksRef.current[resolution];
@@ -1541,16 +1493,11 @@ export default function FullscreenBacktesting({
             const { firstDataRequest } = periodParams;
             
             if (firstDataRequest) {
-              // When switching timeframes, include bars up to the visible range's end (if captured)
-              // This ensures the new timeframe shows the same market period as the source
-              const visibleRangeEnd = pendingVisibleRangeRef.current?.to 
-                ? pendingVisibleRangeRef.current.to * 1000  // Convert from seconds to ms
-                : replayTs;
-              const filterEnd = Math.max(replayTs, visibleRangeEnd);
-              
-              const barsToShow = filterEnd > 0 
-                ? bars.filter((bar: any) => bar.time <= filterEnd)
-                : bars.slice(0, newIndex + 1);
+              // TIME-DRIVEN: Filter bars STRICTLY by close time <= replayTime
+              // Do NOT extend past replayTime for visible range - that would leak future candles
+              // Visible range restoration should be handled by TradingView's setVisibleRange, not by widening bar payload
+              const barsToShow = bars.filter((bar: any) => (bar.time + intervalMs) <= newReplayTime);
+              console.log('Slow-path pending callback: replayTime=', new Date(newReplayTime).toISOString(), 'bars=', barsToShow.length);
               callback(barsToShow, { noData: barsToShow.length === 0 });
             } else {
               const filteredBars = bars.filter(
@@ -1756,52 +1703,33 @@ export default function FullscreenBacktesting({
           // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
           allBarsRef.current = cachedBars;
           setAllBars(cachedBars);
-          let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
           
           // Check if this is a timeframe switch (pending switch ref is set)
           const pendingSwitch = pendingTimeframeSwitchRef.current;
+          
+          // ═══════════════════════════════════════════════════════════════════════════
+          // TIME-DRIVEN: Use setReplayTimeAndDeriveIndex as canonical setter
+          // Per FX Replay spec: replayTime is absolute, never changes during TF switch
+          // ═══════════════════════════════════════════════════════════════════════════
+          
+          // Clear pending switch BEFORE calling canonical setter
           if (pendingSwitch) {
-            // CRITICAL: Use bar end time logic for correct position finding across timeframes
-            // Use the stable source interval captured at switch initiation
-            const { fromInterval, fromTimestamp } = pendingSwitch;
-            const oldIntervalMinutes = intervalToMinutes(fromInterval);
-            const newIntervalMinutes = intervalToMinutes(currentInterval);
-            const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
-            
-            console.log('Cached path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
-            console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
-            
-            // Find the bar in new timeframe that contains this end time
-            for (let i = cachedBars.length - 1; i >= 0; i--) {
-              const barTime = cachedBars[i].time;
-              const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
-              if (barTime <= barEndTime && barEndTime < barEndMs) {
-                newIndex = i;
-                break;
-              }
-            }
-          } else {
-            // Non-switch path: simple bar time matching
-            for (let i = cachedBars.length - 1; i >= 0; i--) {
-              if (cachedBars[i].time <= replayTs) {
-                newIndex = i;
-                break;
-              }
-            }
+            pendingTimeframeSwitchRef.current = null;
+            pendingAnchorTimestampRef.current = null;
           }
-          // Use options object to pass pending switch info for stable replayIntervalRef
-          setCurrentBarIndex(newIndex, cachedBars, { 
-            preserveTimestamp: Object.keys(barsCacheRef.current).length > 0,
-            pendingSwitch: pendingSwitch ? { fromInterval: pendingSwitch.fromInterval } : undefined
-          });
-          // CRITICAL: After switch completes, update interval ref to the NEW state
-          // Per FX Replay spec: "Simulated time must NOT change" during timeframe switch
-          // So we do NOT update replayTimestampRef - only replayIntervalRef
+          
+          // Use existing replayTime - timeframe switch preserves it
+          const derivedIndex = setReplayTimeAndDeriveIndex(replayTs, currentInterval);
+          console.log('Slow-path cached: replayTime preserved at:', new Date(replayTs).toISOString(), 'derived index:', derivedIndex);
+          
+          // Update interval ref to NEW state after switch completes
           if (pendingSwitch) {
             replayIntervalRef.current = currentInterval;
-            pendingTimeframeSwitchRef.current = null;
-            console.log('Timeframe switch complete - replayTime preserved at:', new Date(replayTimestampRef.current).toISOString());
           }
+          
+          // Re-enable playback after canonical setter
+          const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
+          callbacksReadyRef.current = !!cachedCallback;
           return;
         }
       } else {
@@ -1810,26 +1738,34 @@ export default function FullscreenBacktesting({
         // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
         allBarsRef.current = cachedBars;
         setAllBars(cachedBars);
-        let newIndex = cachedBars.length >= 6 ? 5 : Math.max(0, cachedBars.length - 1);
+        
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TIME-DRIVEN: Compute targetReplayTime and use canonical setter
+        // ═══════════════════════════════════════════════════════════════════════════
+        const intervalMs = intervalToMinutes(currentInterval) * 60 * 1000;
         const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
-        const targetTs = savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null);
-        if (targetTs) {
-          for (let i = cachedBars.length - 1; i >= 0; i--) {
-            if (cachedBars[i].time <= targetTs) {
-              newIndex = i;
-              break;
-            }
-          }
+        let targetReplayTime: number;
+        
+        const savedTs = savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null);
+        if (savedTs) {
+          targetReplayTime = typeof savedTs === 'number' ? savedTs : new Date(savedTs).getTime();
         } else {
+          // Fresh start - use fromDate + interval
           const fromTimestamp = new Date(fromDate).getTime();
-          for (let i = 0; i < cachedBars.length; i++) {
-            if (cachedBars[i].time >= fromTimestamp) {
-              newIndex = i;
-              break;
-            }
+          targetReplayTime = fromTimestamp + intervalMs;
+          
+          // Clamp to first bar's close if data starts later
+          if (cachedBars.length > 0 && targetReplayTime < cachedBars[0].time + intervalMs) {
+            targetReplayTime = cachedBars[0].time + intervalMs;
           }
         }
-        setCurrentBarIndex(newIndex, cachedBars, false);
+        
+        const derivedIndex = setReplayTimeAndDeriveIndex(targetReplayTime, currentInterval);
+        console.log('Slow-path no-replay: replayTime set to:', new Date(targetReplayTime).toISOString(), 'derived index:', derivedIndex);
+        
+        // Re-enable playback after canonical setter
+        const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
+        callbacksReadyRef.current = !!cachedCallback;
         return;
       }
     }
@@ -1915,77 +1851,60 @@ export default function FullscreenBacktesting({
           allBarsRef.current = bars;
           setAllBars(bars);
           
-          let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
-          // Check if this is a timeframe switch (pending switch ref is set)
+          // ═══════════════════════════════════════════════════════════════════════════
+          // TIME-DRIVEN: Compute targetReplayTime and use canonical setter
+          // Per FX Replay spec: replayTime is absolute, index is always derived
+          // ═══════════════════════════════════════════════════════════════════════════
           const pendingSwitch = pendingTimeframeSwitchRef.current;
           const sessionHasTrades = sessionData?.trades && sessionData.trades.length > 0;
-          const targetTs = pendingSwitch?.fromTimestamp || 
-            (savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null));
+          const intervalMs = intervalToMinutes(currentInterval) * 60 * 1000;
+          let targetReplayTime: number;
           
-          if (targetTs) {
-            if (pendingSwitch) {
-              // CRITICAL: Use bar end time logic for correct position finding across timeframes
-              // Use the stable source interval captured at switch initiation
-              const { fromInterval, fromTimestamp } = pendingSwitch;
-              const oldIntervalMinutes = intervalToMinutes(fromInterval);
-              const newIntervalMinutes = intervalToMinutes(currentInterval);
-              const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
-              
-              console.log('Slow path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
-              console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
-              
-              // Find the bar in new timeframe that contains this end time
-              for (let i = bars.length - 1; i >= 0; i--) {
-                const barTime = bars[i].time;
-                const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
-                if (barTime <= barEndTime && barEndTime < barEndMs) {
-                  newIndex = i;
-                  break;
-                }
-              }
-            } else {
-              // Non-timeframe switch: use simple bar open time matching
-              let foundIndex = -1;
-              for (let i = bars.length - 1; i >= 0; i--) {
-                if (bars[i].time <= targetTs) {
-                  foundIndex = i;
-                  break;
-                }
-              }
-              if (foundIndex >= 0) {
-                newIndex = foundIndex;
-              }
-            }
+          // Priority: existing replayTime (TF switch) > saved progress > session start
+          const existingReplayTs = replayTimestampRef.current;
+          if (existingReplayTs > 0) {
+            // Timeframe switch or resume - preserve existing replayTime
+            targetReplayTime = existingReplayTs;
+            console.log('Slow-path fetch: Preserving existing replayTime:', new Date(targetReplayTime).toISOString());
           } else {
-            // For fresh sessions with no saved progress, start at the 'from' date
-            // This allows user to see historical data and replay forward from their chosen start date
-            const fromTimestamp = fromTs * 1000; // Convert to milliseconds
-            for (let i = 0; i < bars.length; i++) {
-              if (bars[i].time >= fromTimestamp) {
-                newIndex = i;
-                break;
+            // Fresh load - compute from saved progress or session start
+            const savedTs = savedTimestamp || (sessionHasTrades ? sessionData?.progressPointer : null);
+            if (savedTs) {
+              targetReplayTime = typeof savedTs === 'number' ? savedTs : new Date(savedTs).getTime();
+            } else {
+              // Fresh session - use fromDate + interval
+              const fromTimestamp = fromTs * 1000; // Convert to milliseconds
+              targetReplayTime = fromTimestamp + intervalMs;
+              
+              // Clamp to first bar's close if data starts later
+              if (bars.length > 0 && targetReplayTime < bars[0].time + intervalMs) {
+                targetReplayTime = bars[0].time + intervalMs;
               }
             }
           }
-          // Preserve timestamp during resolution changes (not first load)
-          // Use options object to pass pending switch info for stable replayIntervalRef
-          const shouldPreserveTimestamp = replayTimestampRef.current > 0 && Object.keys(barsCacheRef.current).length > 1;
-          setCurrentBarIndex(newIndex, bars, { 
-            preserveTimestamp: shouldPreserveTimestamp,
-            pendingSwitch: pendingSwitch ? { fromInterval: pendingSwitch.fromInterval } : undefined
-          });
-          // CRITICAL: After switch completes, update interval ref to the NEW state
-          // Per FX Replay spec: "Simulated time must NOT change" during timeframe switch
-          // So we do NOT update replayTimestampRef - only replayIntervalRef
+          
+          // Clear pending switch BEFORE calling canonical setter
+          if (pendingSwitch) {
+            pendingTimeframeSwitchRef.current = null;
+            pendingAnchorTimestampRef.current = null;
+          }
+          
+          // Use canonical setter to set replayTime and derive index
+          const derivedIndex = setReplayTimeAndDeriveIndex(targetReplayTime, currentInterval);
+          console.log('Slow-path fetch: replayTime=', new Date(targetReplayTime).toISOString(), 'derived index:', derivedIndex);
+          
+          // Update interval ref to NEW state after switch completes
           if (pendingSwitch) {
             replayIntervalRef.current = currentInterval;
-            pendingTimeframeSwitchRef.current = null;
-            console.log('Slow-path: Timeframe switch complete - replayTime preserved at:', new Date(replayTimestampRef.current).toISOString());
           }
+          
+          // Re-enable playback after canonical setter (subscribeBars will set to true if no cached callback)
+          const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
+          callbacksReadyRef.current = !!cachedCallback;
           setIsPlaying(false);
           
           // Trigger any pending getBars callbacks for this resolution
-          // This must happen AFTER computing newIndex so callbacks receive correct bar count
+          // TIME-DRIVEN: Filter by replayTime (not index)
           const pendingCallbacks = pendingCallbacksRef.current[currentInterval];
           if (pendingCallbacks && pendingCallbacks.length > 0) {
             console.log('Triggering', pendingCallbacks.length, 'pending callbacks for resolution', currentInterval);
@@ -1995,10 +1914,8 @@ export default function FullscreenBacktesting({
               const { firstDataRequest } = periodParams;
               
               if (firstDataRequest) {
-                // Use same logic as live getBars path: timestamp-based filtering
-                const barsToShow = replayTs > 0 
-                  ? bars.filter((bar: any) => bar.time <= replayTs)
-                  : bars.slice(0, newIndex + 1);
+                // TIME-DRIVEN: Filter by replayTime (candles with closeTime <= replayTime)
+                const barsToShow = bars.filter((bar: any) => (bar.time + intervalMs) <= replayTs);
                 callback(barsToShow, { noData: barsToShow.length === 0 });
               } else {
                 const filteredBars = bars.filter(
@@ -2200,14 +2117,19 @@ export default function FullscreenBacktesting({
           // TIME-DRIVEN FILTERING: Show only completed candles
           // A candle is completed when its closeTime <= replayTime
           // closeTime = bar.time + interval
+          // CRITICAL: Always use replayTimestampRef as the filter - never fall back to index
           // ═══════════════════════════════════════════════════════════════════════════
           const intervalMs = intervalToMs(resolution);
-          const barsToShow = anchorTs > 0 
-            ? barsForResolution.filter((bar: any) => (bar.time + intervalMs) <= anchorTs)
-            : barsForResolution.slice(0, currentBarIndexRef.current + 1);
           
-          console.log('getBars firstDataRequest: anchor=', anchorTs > 0 ? new Date(anchorTs).toISOString() : 'N/A', 
-            'returning', barsToShow.length, 'bars (closeTime <= replayTime)');
+          // Use anchorTs if available, otherwise fall back to replayTimestampRef (the SINGLE source of truth)
+          const filterTime = anchorTs > 0 ? anchorTs : replayTimestampRef.current;
+          
+          const barsToShow = filterTime > 0 
+            ? barsForResolution.filter((bar: any) => (bar.time + intervalMs) <= filterTime)
+            : barsForResolution.slice(0, 6); // Absolute fallback: show first 6 bars for fresh sessions
+          
+          console.log('getBars firstDataRequest: filterTime=', filterTime > 0 ? new Date(filterTime).toISOString() : 'N/A', 
+            'returning', barsToShow.length, 'bars (closeTime <= filterTime)');
           
           onHistoryCallback(barsToShow, { noData: barsToShow.length === 0 });
           return;
