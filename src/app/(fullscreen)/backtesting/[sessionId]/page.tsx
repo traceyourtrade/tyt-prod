@@ -387,13 +387,27 @@ export default function FullscreenBacktesting({
         // Per FX Replay spec: replayTime = time after the current candle has closed
         // Formula: bar.time + interval - 1ms = the last moment of this candle
         const currentIntervalMs = intervalToMs(currentIntervalRef.current);
-        replayTimestampRef.current = barsToUse[newIndex].time + currentIntervalMs - 1;
+        const newReplayTime = barsToUse[newIndex].time + currentIntervalMs - 1;
+        replayTimestampRef.current = newReplayTime;
         replayIntervalRef.current = currentIntervalRef.current;
+        
+        // DEBUG: Log elapsed time after each advance
+        console.log('setCurrentBarIndex advance:', {
+          index: newIndex,
+          interval: currentIntervalRef.current,
+          barTime: new Date(barsToUse[newIndex].time).toISOString(),
+          newReplayTime: new Date(newReplayTime).toISOString(),
+        });
       }
     } else if (pendingSwitch) {
       // Timeframe switch in progress: keep replayIntervalRef on the SOURCE interval
       // This ensures async callbacks don't corrupt the interval before switch completes
       replayIntervalRef.current = pendingSwitch.fromInterval;
+      console.log('setCurrentBarIndex TF switch:', {
+        index: newIndex,
+        preservedReplayTime: new Date(replayTimestampRef.current).toISOString(),
+        fromInterval: pendingSwitch.fromInterval,
+      });
     }
     // When preserveTimestamp is true with no pendingSwitch, keep existing refs unchanged
   };
