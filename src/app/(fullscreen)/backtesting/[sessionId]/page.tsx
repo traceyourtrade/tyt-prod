@@ -1485,6 +1485,24 @@ export default function FullscreenBacktesting({
         
         console.log(`Merged bars: ${existingBars.length} + ${newBars.length} = ${mergedBars.length}`);
         
+        // CRITICAL: Sync to allBarsRef if this is the current resolution so handleNext sees new bars
+        if (resolution === currentIntervalRef.current) {
+          console.log('fetchMoreBars: Syncing merged bars to allBarsRef for resolution:', resolution);
+          allBarsRef.current = mergedBars;
+          setAllBars(mergedBars);
+          
+          // Recalculate current bar index if we prepended bars (direction === 'back')
+          if (direction === 'back' && pendingAnchorTimestampRef.current) {
+            const anchorTs = new Date(pendingAnchorTimestampRef.current).getTime();
+            const newIndex = mergedBars.findIndex((b: any) => b.time >= anchorTs);
+            if (newIndex >= 0 && newIndex !== currentBarIndexRef.current) {
+              console.log('fetchMoreBars: Recalculated index from anchor:', newIndex);
+              currentBarIndexRef.current = newIndex;
+              setCurrentBarIndex(newIndex, mergedBars);
+            }
+          }
+        }
+        
         // Filter for requested period
         const filteredBars = newBars.filter(
           (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
