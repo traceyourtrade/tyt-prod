@@ -1,0 +1,190 @@
+Perfect questions — this is exactly where most replay systems break.
+Below is the expected / correct FX Replay–style behavior, explained from start → edge cases, so Replit has zero ambiguity.
+
+🔁 FX Replay – Expected Behavior (Authoritative Spec)
+
+This is behavioral truth, not preference.
+
+🟢 REPLAY START (BASELINE BEHAVIOR)
+
+When replay starts:
+
+User selects:
+
+Symbol
+
+Timeframe (ex: 5m)
+
+Start Date & Time (ex: 10:35)
+
+System:
+
+Finds the first candle whose open time ≥ selected time
+
+Sets:
+
+replayIndex = that candle index
+replayTime  = candle.time
+
+
+Chart:
+
+Renders candles only up to replayIndex
+
+Future candles are hidden
+
+Replay mode is now locked
+
+📌 Replay is now running on a single timeline clock.
+
+🔄 TIMEFRAME SWITCH DURING REPLAY (MOST IMPORTANT)
+Example:
+
+Replay running on 5m, user switches to 15m
+
+✅ EXPECTED BEHAVIOR (FX Replay–Correct)
+1️⃣ Replay time MUST stay the same
+
+Replay is time-based, not index-based.
+
+replayTime = 2024-08-01 10:35
+
+
+This value never changes when timeframe changes.
+
+2️⃣ Recalculate replayIndex for new timeframe
+
+After timeframe switch:
+
+Load candles for new TF (15m)
+
+Find candle where:
+
+candle.openTime <= replayTime < candle.closeTime
+
+
+Set:
+
+replayIndex = matching 15m candle index
+
+
+📌 You are mapping time → index, not index → index.
+
+3️⃣ Chart updates, replay state continues
+
+Chart re-renders with 15m candles
+
+Only candles before replayIndex are visible
+
+Replay continues from same market moment
+
+❌ WRONG BEHAVIORS (DO NOT DO THIS)
+
+❌ Reset replay to beginning
+
+❌ Jump to nearest index number
+
+❌ Pause replay automatically
+
+❌ Move replay forward/backward in time
+
+🔑 ONE-LINE RULE
+
+“Time is absolute. Timeframe is just a lens.”
+
+⏪ SCROLLING BACK DURING REPLAY
+
+This is a VIEW ACTION, not a TIME ACTION.
+
+✅ EXPECTED BEHAVIOR
+1️⃣ Scrolling left DOES NOT change replayTime
+
+replayIndex remains unchanged
+
+replayTime remains unchanged
+
+Trades & indicators stay frozen at replayTime
+
+User is only looking at past candles.
+
+2️⃣ No future candles EVER appear
+
+Even while scrolling:
+
+Candles after replayIndex are still hidden
+
+No leakage of future data
+
+3️⃣ Returning to live replay
+
+When user presses:
+
+▶ Play
+
+⏭ Next Candle
+
+Chart snaps back to:
+
+last visible candle = replayIndex
+
+❌ WRONG BEHAVIORS
+
+❌ Moving replayTime when scrolling
+
+❌ Allowing trade placement in scrolled-past time
+
+❌ Showing candles beyond replayIndex
+
+🔐 HARD RULE
+
+“Scrolling is visual. Replay is temporal.”
+
+🧠 TRADE PLACEMENT DURING SCROLL
+
+If user scrolls back and clicks Buy/Sell:
+
+✅ Correct:
+
+Trade is executed at current replayTime price
+
+NOT at scrolled candle price
+
+OR
+
+Alternative (Allowed but explicit):
+
+Disable trading while chart is scrolled away from replayIndex
+
+Show message:
+
+“Return to live replay to place trades”
+
+FX Replay usually follows this.
+
+📊 INDICATORS DURING TIMEFRAME SWITCH
+
+Indicators must:
+
+Recalculate once on TF switch
+
+Only using candles ≤ replayTime
+
+No future data used
+
+After switch → continue incremental updates
+
+🧱 STATE VARIABLES (MANDATORY)
+replayTime        // absolute timestamp (truth)
+replayIndex       // derived from timeframe
+timeframe
+isReplayActive
+
+
+🚨 replayTime is NEVER derived from replayIndex
+✅ replayIndex is ALWAYS derived from replayTime
+
+🧩 FINAL MENTAL MODEL (GIVE HIM THIS)
+
+Replay is a timeline simulation.
+Timeframes are different resolutions of the same clock.
+Scrolling is just camera movement, not time travel.
