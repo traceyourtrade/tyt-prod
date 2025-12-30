@@ -785,7 +785,7 @@ export default function FullscreenBacktesting({
     }
     
     // CONTROLLER GATE: If already switching, queue this request and return
-    if (tfController.isSwitching) {
+    if (tfController.getIsSwitching()) {
       console.log('[TF Controller] Already switching, queueing:', targetInterval);
       tfController.requestSwitch(targetInterval);
       if (hideDropdown) setShowTimeframeDropdown(false);
@@ -3712,7 +3712,8 @@ export default function FullscreenBacktesting({
 
   const handleNext = useCallback(async () => {
     // TRANSACTIONAL GATE: Block ALL replay advancement during TF switches
-    if (tfController.isSwitching) {
+    // Use getIsSwitching() for immediate ref-based check (avoids React state delay)
+    if (tfController.getIsSwitching()) {
       console.warn('handleNext: TF switch in progress - blocking');
       setIsPlaying(false);
       return;
@@ -3880,7 +3881,8 @@ export default function FullscreenBacktesting({
   // Handle forward with skip duration - skips multiple candles based on time
   const handleSkipForward = useCallback(async () => {
     // TRANSACTIONAL GATE: Block ALL replay advancement during TF switches
-    if (tfController.isSwitching) {
+    // Use getIsSwitching() for immediate ref-based check (avoids React state delay)
+    if (tfController.getIsSwitching()) {
       console.warn('handleSkipForward: TF switch in progress - blocking');
       setIsPlaying(false);
       return;
@@ -4097,7 +4099,7 @@ export default function FullscreenBacktesting({
   
   const handleSkipBackward = useCallback(() => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (tfController.isSwitching) return;
+    if (tfController.getIsSwitching()) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4114,7 +4116,7 @@ export default function FullscreenBacktesting({
 
   const handlePrev = useCallback(() => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (tfController.isSwitching) return;
+    if (tfController.getIsSwitching()) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4128,7 +4130,7 @@ export default function FullscreenBacktesting({
 
   const handleNext10 = () => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (tfController.isSwitching) return;
+    if (tfController.getIsSwitching()) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4143,7 +4145,7 @@ export default function FullscreenBacktesting({
 
   const handlePrev10 = () => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (tfController.isSwitching) return;
+    if (tfController.getIsSwitching()) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4157,7 +4159,7 @@ export default function FullscreenBacktesting({
 
   const handleRestart = () => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (tfController.isSwitching) return;
+    if (tfController.getIsSwitching()) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
