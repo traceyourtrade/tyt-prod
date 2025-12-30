@@ -30,8 +30,30 @@ import useAccountDetails from "@/store/accountdetails";
 import symbols from "./components/symbols/Forex";
 import usStocks from "./components/symbols/USAStock";
 import indianStocks from "./components/symbols/IndianStocks";
+import indianFnO from "./components/symbols/IndianFnO";
 import crypto from "./components/symbols/Crypto";
+
 import CustomDateTimePicker from "../../custom date picker/CustomDateTimePicker";
+
+const getCurrencySymbol = (currency: string): string => {
+  switch (currency) {
+    case "INR": return "₹";
+    case "EUR": return "€";
+    case "GBP": return "£";
+    case "JPY": return "¥";
+    default: return "$";
+  }
+};
+
+const getCurrencyForMarket = (market: string): string => {
+  switch (market) {
+    case "INDIAN STOCKS":
+    case "INDIAN F&O":
+      return "INR";
+    default:
+      return "USD";
+  }
+};
 
 interface TradeEntry {
   id: string;
@@ -62,6 +84,7 @@ const markets = [
   { id: "FOREX", label: "Forex", icon: "💱", color: "from-blue-500/20 to-cyan-500/20" },
   { id: "US STOCKS", label: "US Stocks", icon: "🇺🇸", color: "from-red-500/20 to-blue-500/20" },
   { id: "INDIAN STOCKS", label: "Indian Stocks", icon: "🇮🇳", color: "from-orange-500/20 to-green-500/20" },
+  { id: "INDIAN F&O", label: "Indian F&O", icon: "📊", color: "from-amber-500/20 to-orange-500/20" },
   { id: "CRYPTO", label: "Crypto", icon: "₿", color: "from-yellow-500/20 to-orange-500/20" },
 ];
 
@@ -152,6 +175,8 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   const setMarket = (newMarket: string) => {
     updateTrade(activeTrade.id, "market", newMarket);
     updateTrade(activeTrade.id, "symbol", "");
+    updateTrade(activeTrade.id, "currency", getCurrencyForMarket(newMarket));
+    updateTrade(activeTrade.id, "size", "");
   };
 
   const updateTrade = (id: string, field: keyof TradeEntry, value: string) => {
@@ -165,17 +190,19 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     "FOREX": ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "AUDUSD", "USDCAD"],
     "US STOCKS": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"],
     "INDIAN STOCKS": ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "SBIN"],
+    "INDIAN F&O": ["NIFTY", "BANKNIFTY", "SENSEX", "FINNIFTY", "MIDCPNIFTY", "NIFTYIT"],
     "CRYPTO": ["BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "BNBUSD", "ADAUSD"]
   };
 
   const getSymbols = () => {
     const searchLower = symbolSearch.toLowerCase().trim();
-    let source: Array<{ symbol: string; name: string; market?: string; curr?: string }> = [];
+    let source: Array<{ symbol: string; name: string; market?: string; curr?: string; lotSize?: number }> = [];
     
     switch (market) {
       case "FOREX": source = symbols; break;
       case "US STOCKS": source = usStocks; break;
       case "INDIAN STOCKS": source = indianStocks; break;
+      case "INDIAN F&O": source = indianFnO; break;
       case "CRYPTO": source = crypto; break;
     }
     
@@ -191,6 +218,8 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   };
   
   const isShowingPopularSymbols = !symbolSearch.trim();
+  
+  const currencySymbol = getCurrencySymbol(activeTrade.currency);
 
   const selectSymbol = (sym: { symbol: string; market?: string; curr?: string }) => {
     updateTrade(activeTrade.id, "symbol", sym.symbol);
@@ -252,6 +281,12 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     const upperSymbol = symbol.toUpperCase();
     const upperMarket = market.toUpperCase();
     
+    // PRIORITY: Check for Indian F&O - use lot sizes from symbol data
+    if (market === "INDIAN F&O") {
+      const fnoSymbol = indianFnO.find(s => s.symbol.toUpperCase() === upperSymbol);
+      return fnoSymbol?.lotSize || 25; // Default to 25 (Nifty lot size)
+    }
+    
     // PRIORITY: Check for commodities by symbol FIRST
     // Gold/Silver may be listed under FOREX but need commodity contract sizes
     if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
@@ -266,6 +301,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
         return 100000; // 1 lot = 100,000 units
       case "CRYPTO":
         return 1; // Direct units
+      case "INDIAN STOCKS":
       case "INDIAN_STOCK":
       case "INDIAN_INDICES":
       case "STOCK":
@@ -698,32 +734,39 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
           <div>
             <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Entry Price</label>
             <div className="relative">
-              <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                {currencySymbol}
+              </span>
               <input
                 type="number"
                 step="any"
                 placeholder="0.00"
                 value={activeTrade.entryPrice}
                 onChange={(e) => updateTrade(activeTrade.id, "entryPrice", e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
+                className="w-full pl-10 pr-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
               />
             </div>
           </div>
           <div>
             <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              {market === "FOREX" ? "Lot Size" : "Quantity"}
+              {market === "FOREX" ? "Lot Size" : market === "INDIAN F&O" ? "Lots" : "Quantity"}
             </label>
             <input
               type="number"
               step="any"
-              placeholder="0.00"
+              placeholder={market === "INDIAN F&O" ? "1" : "0.00"}
               value={activeTrade.size}
               onChange={(e) => updateTrade(activeTrade.id, "size", e.target.value)}
               className="w-full px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
             />
             {/* Quick Size Presets */}
             <div className="flex gap-1.5 mt-2">
-              {(market === "FOREX" ? [0.01, 0.1, 0.5, 1.0] : [1, 10, 50, 100]).map((preset) => (
+              {(market === "FOREX" 
+                ? [0.01, 0.1, 0.5, 1.0] 
+                : market === "INDIAN F&O" 
+                  ? [1, 2, 5, 10] 
+                  : [1, 10, 50, 100]
+              ).map((preset) => (
                 <button
                   key={preset}
                   type="button"
@@ -751,19 +794,19 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
           >
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-primary" />
+                <span className="text-sm font-bold text-primary">{currencySymbol}</span>
               </div>
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Position Value</p>
                 <p className="text-sm font-bold text-foreground">
-                  ${((parseFloat(activeTrade.entryPrice) || 0) * (parseFloat(activeTrade.size) || 0) * getContractSize(activeTrade.market, activeTrade.symbol)).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                  {currencySymbol}{((parseFloat(activeTrade.entryPrice) || 0) * (parseFloat(activeTrade.size) || 0) * getContractSize(activeTrade.market, activeTrade.symbol)).toLocaleString(activeTrade.currency === 'INR' ? 'en-IN' : 'en-US', { maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[10px] text-muted-foreground">Contract Size</p>
+              <p className="text-[10px] text-muted-foreground">{market === "INDIAN F&O" ? "Lot Size" : "Contract Size"}</p>
               <p className="text-xs font-medium text-muted-foreground">
-                {getContractSize(activeTrade.market, activeTrade.symbol).toLocaleString()} units
+                {getContractSize(activeTrade.market, activeTrade.symbol).toLocaleString()} {market === "INDIAN F&O" ? "qty/lot" : "units"}
               </p>
             </div>
           </motion.div>
@@ -842,14 +885,16 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Exit Price</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                      {currencySymbol}
+                    </span>
                     <input
                       type="number"
                       step="any"
                       placeholder="0.00"
                       value={activeTrade.exitPrice}
                       onChange={(e) => updateTrade(activeTrade.id, "exitPrice", e.target.value)}
-                      className="w-full pl-11 pr-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
+                      className="w-full pl-10 pr-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
                     />
                   </div>
                 </div>
@@ -894,7 +939,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                         "text-lg font-bold",
                         currentPnL >= 0 ? "text-profit" : "text-loss"
                       )}>
-                        {currentPnL >= 0 ? "+" : ""}{currentPnL.toFixed(2)}
+                        {currentPnL >= 0 ? "+" : "-"}{currencySymbol}{Math.abs(currentPnL).toLocaleString(activeTrade.currency === 'INR' ? 'en-IN' : 'en-US', { maximumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
