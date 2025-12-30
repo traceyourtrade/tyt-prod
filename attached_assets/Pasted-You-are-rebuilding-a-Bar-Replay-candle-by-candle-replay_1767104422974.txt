@@ -1,0 +1,199 @@
+You are rebuilding a Bar Replay (candle-by-candle replay) system from ZERO.
+Do NOT reuse existing replay logic.
+Delete all old replay, timeframe, session, and index code.
+
+This system must be TIME-DRIVEN, not index-driven.
+
+––––––––––––––––––––––
+CORE PHILOSOPHY (NON-NEGOTIABLE)
+––––––––––––––––––––––
+1. TIME is the only source of truth.
+2. replayTime represents the current simulated market time.
+3. Candles, indicators, drawings, trades, and metrics are ALL projections of replayTime.
+4. Candle index is ALWAYS derived, NEVER stored as truth.
+
+If replayTime does not change, NOTHING changes.
+
+––––––––––––––––––––––
+GLOBAL STATE (ONLY THESE)
+––––––––––––––––––––––
+globalState = {
+  symbol,
+  timeframe,
+  replayStartTime,
+  replayTime,          // 🔥 ONLY DRIVER
+  isPlaying,
+  speed,
+}
+
+DO NOT store:
+❌ replayIndex as truth
+❌ candle counters per timeframe
+❌ progress by candle count
+
+––––––––––––––––––––––
+DATA MODEL (ROBUST)
+––––––––––––––––––––––
+• Load full historical candles for ALL supported timeframes
+• Each candle MUST have:
+  - openTime
+  - closeTime
+  - OHLC
+
+Candles are immutable.
+Replay NEVER mutates candle data.
+
+––––––––––––––––––––––
+DERIVED STATE (CALCULATED, NOT SAVED)
+––––––––––––––––––––––
+At render time ONLY:
+
+currentCandleIndex =
+  last candle where candle.openTime <= replayTime
+
+visibleCandles =
+  candles.filter(c => c.openTime <= replayTime)
+
+This applies to ALL timeframes.
+
+––––––––––––––––––––––
+PLAY / PAUSE ENGINE (SIMPLE & SAFE)
+––––––––––––––––––––––
+The play loop does ONLY this:
+
+onTick():
+  replayTime += timeframeDuration / speed
+
+DO NOT:
+❌ increment candle index
+❌ touch candles
+❌ infer time from index
+
+If replayTime > lastCandleTime:
+  stop replay
+
+––––––––––––––––––––––
+CANDLE FORWARDING (ALL TIMEFRAMES SYNCED)
+––––––––––––––––––––––
+Lower TF → Higher TF behavior MUST work automatically.
+
+Example:
+• User forwards 12 candles on 5m (60 mins elapsed)
+• replayTime advances by 60 mins
+• Switching to 15m MUST show:
+  floor(60 / 15) = 4 completed 15m candles
+
+This happens naturally because:
+Higher TF candles are derived from replayTime.
+
+NO special-case logic allowed.
+
+––––––––––––––––––––––
+TIMEFRAME SWITCHING (ZERO BUGS)
+––––––––––––––––––––––
+On timeframe change:
+1. DO NOT modify replayTime
+2. Load candles for new timeframe
+3. Recalculate visibleCandles from replayTime
+4. Continue replay
+
+Timeframe is ONLY a VIEW.
+Never reset replay.
+Never remap indexes.
+
+––––––––––––––––––––––
+DRAWINGS (ROBUST & SYNCED)
+––––––––––––––––––––––
+Drawings MUST be TIME-BASED, not candle-based.
+
+Each drawing stores:
+{
+  startTime,
+  endTime,
+  priceLevels,
+  metadata
+}
+
+On render:
+• Show drawing if drawing.startTime <= replayTime
+• Sync automatically across ALL timeframes
+
+DO NOT anchor drawings to candle index.
+
+––––––––––––––––––––––
+INDICATORS (NO FUTURE LEAK)
+––––––––––––––––––––––
+Indicators:
+• Consume only candles with openTime <= replayTime
+• Recalculate incrementally OR from sliced data
+• Must NEVER access future candles
+
+––––––––––––––––––––––
+TRADING / BACKTESTING
+––––––––––––––––––––––
+Trades are evaluated candle-by-candle using replayTime.
+
+Trade execution rules:
+• Orders execute only on candles <= replayTime
+• SL/TP evaluated per candle
+• No future price access
+
+Trades store:
+{
+  entryTime,
+  exitTime,
+  prices,
+  size
+}
+
+––––––––––––––––––––––
+SCROLLING BEHAVIOR
+––––––––––––––––––––––
+Scrolling the chart is VISUAL ONLY.
+
+Rules:
+• Scrolling does NOT affect replayTime
+• User cannot trade on scrolled candles
+• Replay resumes from replayTime
+
+––––––––––––––––––––––
+SESSION SAVE / RESUME (BULLETPROOF)
+––––––––––––––––––––––
+On save:
+• Save replayTime
+• Save trades
+• Save drawings
+• Save symbol & timeframe
+
+On resume:
+1. Restore replayTime
+2. Restore symbol & timeframe
+3. Derive candles from replayTime
+4. Resume replay
+
+NEVER restart from beginning.
+
+––––––––––––––––––––––
+PERFORMANCE RULES
+––––––––––––––––––––––
+• No chart re-initialization per tick
+• No candle recomputation
+• Derived state only
+
+––––––––––––––––––––––
+FINAL ACCEPTANCE TESTS (MUST PASS)
+––––––––––––––––––––––
+✔ Forward candles on lower TF → higher TF shows correct aggregation
+✔ No replay freeze ever
+✔ No reset on timeframe change
+✔ Drawings sync across all timeframes
+✔ Resume continues from exact exit time
+✔ Timer and candles always stay in sync
+
+––––––––––––––––––––––
+MENTAL MODEL (IMPORTANT)
+––––––––––––––––––––––
+Bar Replay is NOT candle playback.
+Bar Replay is simulated TIME flowing forward.
+
+Candles are just snapshots of time.
