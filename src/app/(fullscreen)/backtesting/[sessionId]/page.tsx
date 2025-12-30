@@ -333,7 +333,6 @@ export default function FullscreenBacktesting({
   const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
   const pendingVisibleRangeRef = useRef<{ from: number; to: number } | null>(null); // Stores visible range before resolution change
   const pendingVisibleRangeAppliedRef = useRef<boolean>(false); // Prevents double-application of visible range
-  const wasPlayingBeforeSwitchRef = useRef<boolean>(false); // Tracks if playback should resume after timeframe switch
   const favoriteDrawingToolsRef = useRef<string[]>([]); // Stores favorite drawing tools
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
   const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
@@ -722,8 +721,6 @@ export default function FullscreenBacktesting({
     console.log('Set pendingAnchorTimestampRef:', new Date(barStartTime).toISOString());
     
     // 4. STOP AUTO-PLAY to prevent timestamp drift during switch
-    // Save playback state to resume after switch completes
-    wasPlayingBeforeSwitchRef.current = isPlaying;
     if (autoPlayIntervalRef.current) {
       clearInterval(autoPlayIntervalRef.current);
       autoPlayIntervalRef.current = null;
@@ -816,31 +813,19 @@ export default function FullscreenBacktesting({
         console.log('Fast-path: No cached callback for', targetInterval, '- waiting for TradingView to resubscribe');
       }
       
-      // FIND CORRECT BAR in new timeframe using bar START time (not end time)
-      // This ensures 1H at 18:00 syncs to 15m at 18:00, not 18:45
+      // FIND CORRECT BAR in new timeframe using bar end time
       const targetIntervalMinutes = intervalToMinutes(targetInterval);
       let newIndex = Math.min(5, cachedBars.length - 1);
       
-      // Use the SOURCE bar's START time as the anchor for finding target bar
-      // This keeps both timeframes aligned to the same moment
       for (let i = cachedBars.length - 1; i >= 0; i--) {
         const barTime = cachedBars[i].time;
-        if (barTime <= barStartTime) {
+        const barEnd = barTime + (targetIntervalMinutes * 60 * 1000);
+        if (barTime <= barEndTime && barEndTime < barEnd) {
           newIndex = i;
-          console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString(), 'matching start:', new Date(barStartTime).toISOString());
+          console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
           break;
         }
       }
-      
-      // CRITICAL: Update anchor BEFORE any state changes or TradingView triggers
-      // This ensures any getBars call during React re-render uses the correct timestamp
-      if (cachedBars[newIndex]) {
-        const newBarTime = cachedBars[newIndex].time;
-        replayTimestampRef.current = newBarTime;
-        pendingAnchorTimestampRef.current = newBarTime;
-        console.log('Fast-path: Set anchor BEFORE state update:', new Date(newBarTime).toISOString());
-      }
-      replayIntervalRef.current = targetInterval;
       
       // UPDATE STATE (all at once)
       setAllBars(cachedBars);
@@ -852,6 +837,18 @@ export default function FullscreenBacktesting({
         preserveTimestamp: true,
         pendingSwitch: { fromInterval: sourceInterval }
       });
+      
+      // FINALIZE: Update refs to new state
+      if (cachedBars[newIndex]) {
+        const newBarTime = cachedBars[newIndex].time;
+        replayTimestampRef.current = newBarTime;
+        // CRITICAL: Update the pending anchor to match the ACTUAL new bar position
+        // This ensures getBars filters to the correct timestamp even if it runs after this point
+        pendingAnchorTimestampRef.current = newBarTime;
+        console.log('New replay timestamp:', new Date(newBarTime).toISOString());
+        console.log('Updated pendingAnchorTimestampRef to match:', new Date(newBarTime).toISOString());
+      }
+      replayIntervalRef.current = targetInterval;
       pendingTimeframeSwitchRef.current = null;
       
       // TRIGGER TRADINGVIEW UPDATE if requested (for custom dropdown changes)
@@ -898,33 +895,14 @@ export default function FullscreenBacktesting({
                   console.warn('Error in post-switch cleanup:', e);
                 }
                 isChangingResolutionRef.current = false;
-                // Clear the pending anchor now that switch is complete
-                pendingAnchorTimestampRef.current = null;
-                
-                // Resume playback if it was active before the switch
-                if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
-                  console.log('Resuming playback after timeframe switch');
-                  wasPlayingBeforeSwitchRef.current = false;
-                  setIsPlaying(true);
-                }
               }, 300);
             });
           });
         } catch (e) {
           isChangingResolutionRef.current = false;
-          wasPlayingBeforeSwitchRef.current = false;
-          pendingAnchorTimestampRef.current = null;
         }
       } else {
         isChangingResolutionRef.current = false;
-        // Clear pending anchor for non-TV-switch path
-        pendingAnchorTimestampRef.current = null;
-        // Resume playback if it was active (no TradingView switch needed, callback already ready)
-        if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
-          console.log('Resuming playback after fast-path (no TV switch)');
-          wasPlayingBeforeSwitchRef.current = false;
-          setIsPlaying(true);
-        }
       }
     } else {
       console.log('Using SLOW PATH - will fetch data');
@@ -1601,17 +1579,21 @@ export default function FullscreenBacktesting({
           // Check if this is a timeframe switch (pending switch ref is set)
           const pendingSwitch = pendingTimeframeSwitchRef.current;
           if (pendingSwitch) {
-            // CRITICAL: Use bar START time for consistent alignment across timeframes
-            // This ensures 1H at 18:00 syncs to 15m at 18:00, not 18:45
+            // CRITICAL: Use bar end time logic for correct position finding across timeframes
+            // Use the stable source interval captured at switch initiation
             const { fromInterval, fromTimestamp } = pendingSwitch;
+            const oldIntervalMinutes = intervalToMinutes(fromInterval);
+            const newIntervalMinutes = intervalToMinutes(currentInterval);
+            const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
             
-            console.log('Cached path: Finding bar for start time:', new Date(fromTimestamp).toISOString());
+            console.log('Cached path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
             console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
             
-            // Find the bar in new timeframe at or before the source bar's START time
+            // Find the bar in new timeframe that contains this end time
             for (let i = cachedBars.length - 1; i >= 0; i--) {
               const barTime = cachedBars[i].time;
-              if (barTime <= fromTimestamp) {
+              const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
+              if (barTime <= barEndTime && barEndTime < barEndMs) {
                 newIndex = i;
                 break;
               }
@@ -1761,17 +1743,21 @@ export default function FullscreenBacktesting({
           
           if (targetTs) {
             if (pendingSwitch) {
-              // CRITICAL: Use bar START time for consistent alignment across timeframes
-              // This ensures 1H at 18:00 syncs to 15m at 18:00, not 18:45
+              // CRITICAL: Use bar end time logic for correct position finding across timeframes
+              // Use the stable source interval captured at switch initiation
               const { fromInterval, fromTimestamp } = pendingSwitch;
+              const oldIntervalMinutes = intervalToMinutes(fromInterval);
+              const newIntervalMinutes = intervalToMinutes(currentInterval);
+              const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
               
-              console.log('Slow path: Finding bar for start time:', new Date(fromTimestamp).toISOString());
+              console.log('Slow path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
               console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
               
-              // Find the bar in new timeframe at or before the source bar's START time
+              // Find the bar in new timeframe that contains this end time
               for (let i = bars.length - 1; i >= 0; i--) {
                 const barTime = bars[i].time;
-                if (barTime <= fromTimestamp) {
+                const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
+                if (barTime <= barEndTime && barEndTime < barEndMs) {
                   newIndex = i;
                   break;
                 }
@@ -1900,44 +1886,25 @@ export default function FullscreenBacktesting({
                       console.warn('Error restoring drawings or setting visible range:', e);
                     }
                     isChangingResolutionRef.current = false;
-                    pendingAnchorTimestampRef.current = null;
-                    
-                    // Resume playback if it was active before the switch
-                    if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
-                      console.log('Resuming playback after slow-path timeframe switch');
-                      wasPlayingBeforeSwitchRef.current = false;
-                      setIsPlaying(true);
-                    }
                   }, 300);
                 });
               });
             } catch (e) {
               console.log('setSymbol/setResolution error:', e);
               isChangingResolutionRef.current = false;
-              wasPlayingBeforeSwitchRef.current = false;
-              pendingAnchorTimestampRef.current = null;
             }
           } else {
             isChangingResolutionRef.current = false;
-            pendingAnchorTimestampRef.current = null;
-            // Resume playback if it was active (no widget switch needed)
-            if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
-              console.log('Resuming playback after slow-path (no widget update)');
-              wasPlayingBeforeSwitchRef.current = false;
-              setIsPlaying(true);
-            }
           }
         } else {
           console.log('No data from VPS API:', data);
           // Don't clear bars on failure - keep existing data
           isChangingResolutionRef.current = false;
-          pendingAnchorTimestampRef.current = null;
         }
       } catch (error) {
         console.error("Error fetching history from VPS:", error);
         // Don't clear bars on error - keep existing data and allow retry
         isChangingResolutionRef.current = false;
-        pendingAnchorTimestampRef.current = null;
         // Set error state if this is the first load (no bars cached yet)
         if (Object.keys(barsCacheRef.current).length === 0) {
           setLoadError('Connection failed. The market data server may be temporarily unavailable.');
@@ -2000,10 +1967,10 @@ export default function FullscreenBacktesting({
         const anchorTs = pendingAnchorTimestampRef.current || replayTimestampRef.current;
         const usingPendingAnchor = !!pendingAnchorTimestampRef.current;
         
-        // DON'T clear pendingAnchorTimestampRef here - TradingView may call getBars multiple times
-        // during a single timeframe switch. We'll clear it after the switch is fully complete.
-        if (usingPendingAnchor) {
+        // Clear the pending anchor after use - it's only for the first getBars call after a switch
+        if (pendingAnchorTimestampRef.current) {
           console.log('getBars: Using pending anchor:', new Date(anchorTs).toISOString());
+          pendingAnchorTimestampRef.current = null;
         }
         
         // ONLY use cached bars for the exact requested resolution - no fallback
@@ -2101,16 +2068,6 @@ export default function FullscreenBacktesting({
         
         // Mark callbacks as ready - handleNext can now proceed
         callbacksReadyRef.current = true;
-        
-        // Resume playback if it was active before a timeframe switch
-        if (wasPlayingBeforeSwitchRef.current) {
-          console.log('subscribeBars: Resuming playback after timeframe switch');
-          wasPlayingBeforeSwitchRef.current = false;
-          // Use setTimeout to ensure this runs after current execution context
-          setTimeout(() => {
-            setIsPlaying(true);
-          }, 50);
-        }
       },
       unsubscribeBars: (subscriberUID: string) => {
         // For replay mode, we DON'T clear any callbacks on unsubscribe
