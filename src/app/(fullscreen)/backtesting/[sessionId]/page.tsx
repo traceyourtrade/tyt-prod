@@ -1689,8 +1689,11 @@ export default function FullscreenBacktesting({
               console.log('Slow-path pending callback: replayTime=', new Date(newReplayTime).toISOString(), 'bars=', barsToShow.length);
               callback(barsToShow, { noData: barsToShow.length === 0 });
             } else {
+              // CRITICAL: Filter by periodParams AND by replayTime to prevent future candles leaking
               const filteredBars = bars.filter(
-                (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
+                (bar: any) => bar.time / 1000 >= periodParams.from && 
+                              bar.time / 1000 < periodParams.to &&
+                              (newReplayTime <= 0 || (bar.time + intervalMs) <= newReplayTime)
               );
               callback(filteredBars, { noData: filteredBars.length === 0 });
             }
@@ -1824,9 +1827,13 @@ export default function FullscreenBacktesting({
         // We only update barsCacheRef (for chart rendering), NOT allBarsRef (replay state).
         // The replay continues independently at replayTimestampRef.
         
-        // Filter for requested period
+        // CRITICAL: Filter by periodParams AND by replayTime to prevent future candles leaking
+        const intervalMs = intervalToMs(resolution);
+        const currentReplayTime = replayTimestampRef.current;
         const filteredBars = newBars.filter(
-          (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
+          (bar: any) => bar.time / 1000 >= periodParams.from && 
+                        bar.time / 1000 < periodParams.to &&
+                        (currentReplayTime <= 0 || (bar.time + intervalMs) <= currentReplayTime)
         );
         callback(filteredBars, { noData: filteredBars.length === 0 });
       } else {
@@ -2395,8 +2402,14 @@ export default function FullscreenBacktesting({
           }
         }
         
+        // CRITICAL: Must ALSO filter by replayTime to prevent future candles leaking
+        // Filter by periodParams AND by replayTime (closeTime <= replayTime)
+        const intervalMs = intervalToMs(resolution);
+        const currentReplayTime = replayTimestampRef.current;
         const bars = barsForResolution.filter(
-          (bar) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
+          (bar) => bar.time / 1000 >= periodParams.from && 
+                   bar.time / 1000 < periodParams.to &&
+                   (currentReplayTime <= 0 || (bar.time + intervalMs) <= currentReplayTime)
         );
         onHistoryCallback(bars, { noData: bars.length === 0 });
       },
