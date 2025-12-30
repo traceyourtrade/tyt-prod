@@ -816,16 +816,18 @@ export default function FullscreenBacktesting({
         console.log('Fast-path: No cached callback for', targetInterval, '- waiting for TradingView to resubscribe');
       }
       
-      // FIND CORRECT BAR in new timeframe using bar end time
+      // FIND CORRECT BAR in new timeframe using bar START time (not end time)
+      // This ensures 1H at 18:00 syncs to 15m at 18:00, not 18:45
       const targetIntervalMinutes = intervalToMinutes(targetInterval);
       let newIndex = Math.min(5, cachedBars.length - 1);
       
+      // Use the SOURCE bar's START time as the anchor for finding target bar
+      // This keeps both timeframes aligned to the same moment
       for (let i = cachedBars.length - 1; i >= 0; i--) {
         const barTime = cachedBars[i].time;
-        const barEnd = barTime + (targetIntervalMinutes * 60 * 1000);
-        if (barTime <= barEndTime && barEndTime < barEnd) {
+        if (barTime <= barStartTime) {
           newIndex = i;
-          console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
+          console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString(), 'matching start:', new Date(barStartTime).toISOString());
           break;
         }
       }
@@ -1599,21 +1601,17 @@ export default function FullscreenBacktesting({
           // Check if this is a timeframe switch (pending switch ref is set)
           const pendingSwitch = pendingTimeframeSwitchRef.current;
           if (pendingSwitch) {
-            // CRITICAL: Use bar end time logic for correct position finding across timeframes
-            // Use the stable source interval captured at switch initiation
+            // CRITICAL: Use bar START time for consistent alignment across timeframes
+            // This ensures 1H at 18:00 syncs to 15m at 18:00, not 18:45
             const { fromInterval, fromTimestamp } = pendingSwitch;
-            const oldIntervalMinutes = intervalToMinutes(fromInterval);
-            const newIntervalMinutes = intervalToMinutes(currentInterval);
-            const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
             
-            console.log('Cached path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
+            console.log('Cached path: Finding bar for start time:', new Date(fromTimestamp).toISOString());
             console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
             
-            // Find the bar in new timeframe that contains this end time
+            // Find the bar in new timeframe at or before the source bar's START time
             for (let i = cachedBars.length - 1; i >= 0; i--) {
               const barTime = cachedBars[i].time;
-              const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
-              if (barTime <= barEndTime && barEndTime < barEndMs) {
+              if (barTime <= fromTimestamp) {
                 newIndex = i;
                 break;
               }
@@ -1763,21 +1761,17 @@ export default function FullscreenBacktesting({
           
           if (targetTs) {
             if (pendingSwitch) {
-              // CRITICAL: Use bar end time logic for correct position finding across timeframes
-              // Use the stable source interval captured at switch initiation
+              // CRITICAL: Use bar START time for consistent alignment across timeframes
+              // This ensures 1H at 18:00 syncs to 15m at 18:00, not 18:45
               const { fromInterval, fromTimestamp } = pendingSwitch;
-              const oldIntervalMinutes = intervalToMinutes(fromInterval);
-              const newIntervalMinutes = intervalToMinutes(currentInterval);
-              const barEndTime = fromTimestamp + (oldIntervalMinutes * 60 * 1000) - 1;
               
-              console.log('Slow path: Finding bar for effective end time:', new Date(barEndTime).toISOString());
+              console.log('Slow path: Finding bar for start time:', new Date(fromTimestamp).toISOString());
               console.log('Old interval:', fromInterval, '-> New interval:', currentInterval);
               
-              // Find the bar in new timeframe that contains this end time
+              // Find the bar in new timeframe at or before the source bar's START time
               for (let i = bars.length - 1; i >= 0; i--) {
                 const barTime = bars[i].time;
-                const barEndMs = barTime + (newIntervalMinutes * 60 * 1000);
-                if (barTime <= barEndTime && barEndTime < barEndMs) {
+                if (barTime <= fromTimestamp) {
                   newIndex = i;
                   break;
                 }
