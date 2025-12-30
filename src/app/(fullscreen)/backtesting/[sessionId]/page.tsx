@@ -839,14 +839,16 @@ export default function FullscreenBacktesting({
       });
       
       // FINALIZE: Update refs to new state
+      // NOTE per FX Replay spec: replayTime is ABSOLUTE and NEVER changes on timeframe switch.
+      // Only update pendingAnchorTimestampRef for getBars to filter correctly.
+      // replayTimestampRef stays unchanged - timeframe is just a lens, time is absolute.
       if (cachedBars[newIndex]) {
         const newBarTime = cachedBars[newIndex].time;
-        replayTimestampRef.current = newBarTime;
-        // CRITICAL: Update the pending anchor to match the ACTUAL new bar position
-        // This ensures getBars filters to the correct timestamp even if it runs after this point
+        // CRITICAL: Update the pending anchor to match the bar position for chart rendering
+        // But DO NOT update replayTimestampRef - that only changes when user advances replay
         pendingAnchorTimestampRef.current = newBarTime;
-        console.log('New replay timestamp:', new Date(newBarTime).toISOString());
-        console.log('Updated pendingAnchorTimestampRef to match:', new Date(newBarTime).toISOString());
+        console.log('Timeframe switch - keeping replayTime:', new Date(replayTimestampRef.current).toISOString());
+        console.log('Updated pendingAnchorTimestampRef to bar time:', new Date(newBarTime).toISOString());
       }
       replayIntervalRef.current = targetInterval;
       pendingTimeframeSwitchRef.current = null;
@@ -907,9 +909,10 @@ export default function FullscreenBacktesting({
     } else {
       console.log('Using SLOW PATH - will fetch data');
       // Slow path: need to fetch from API
-      // CRITICAL: Set targetTimestampRef to bar-start for consistent anchoring with fetch logic
+      // CRITICAL: Set targetTimestampRef to bar-start for fetch anchor, but per FX Replay spec,
+      // replayTimestampRef (the absolute replay time) NEVER changes on timeframe switch.
       targetTimestampRef.current = barStartTime;
-      replayTimestampRef.current = barStartTime;
+      // Do NOT update replayTimestampRef here - it only changes when user advances replay
       
       // Keep pending switch info for the effect to use
       // (pendingTimeframeSwitchRef was already set above)
@@ -1485,23 +1488,9 @@ export default function FullscreenBacktesting({
         
         console.log(`Merged bars: ${existingBars.length} + ${newBars.length} = ${mergedBars.length}`);
         
-        // CRITICAL: Sync to allBarsRef if this is the current resolution so handleNext sees new bars
-        if (resolution === currentIntervalRef.current) {
-          console.log('fetchMoreBars: Syncing merged bars to allBarsRef for resolution:', resolution);
-          allBarsRef.current = mergedBars;
-          setAllBars(mergedBars);
-          
-          // Recalculate current bar index if we prepended bars (direction === 'back')
-          if (direction === 'back' && pendingAnchorTimestampRef.current) {
-            const anchorTs = new Date(pendingAnchorTimestampRef.current).getTime();
-            const newIndex = mergedBars.findIndex((b: any) => b.time >= anchorTs);
-            if (newIndex >= 0 && newIndex !== currentBarIndexRef.current) {
-              console.log('fetchMoreBars: Recalculated index from anchor:', newIndex);
-              currentBarIndexRef.current = newIndex;
-              setCurrentBarIndex(newIndex, mergedBars);
-            }
-          }
-        }
+        // NOTE: Per FX Replay spec, scrolling is VIEW-ONLY - it does NOT change replayTime or replayIndex.
+        // We only update barsCacheRef (for chart rendering), NOT allBarsRef (replay state).
+        // The replay continues independently at replayTimestampRef.
         
         // Filter for requested period
         const filteredBars = newBars.filter(
