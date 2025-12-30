@@ -3264,11 +3264,13 @@ export default function FullscreenBacktesting({
                   
                   // CRITICAL: Finalize the controller to re-enable replay controls
                   console.log('onIntervalChanged: Finalizing controller for', newInterval);
+                  callbacksReadyRef.current = true; // Enable replay controls
                   tfController.finalize(newInterval);
                   isChangingResolutionRef.current = false;
                 }, 300);
               });
             } else {
+              callbacksReadyRef.current = true; // Enable replay controls
               tfController.finalize(newInterval);
               isChangingResolutionRef.current = false;
             }
