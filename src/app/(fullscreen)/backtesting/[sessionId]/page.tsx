@@ -3852,6 +3852,13 @@ export default function FullscreenBacktesting({
 
   // Handle forward with skip duration - skips multiple candles based on time
   const handleSkipForward = useCallback(async () => {
+    // TRANSACTIONAL GATE: Block ALL replay advancement during TF switches
+    if (!replayReadyRef.current) {
+      console.warn('handleSkipForward: replayReady=false (TF switch in progress) - blocking');
+      setIsPlaying(false);
+      return;
+    }
+    
     // CRITICAL: Block if widget callbacks aren't ready yet (e.g., during HMR/widget recreation)
     if (!callbacksReadyRef.current) {
       console.warn('handleSkipForward: callbacks not ready (widget recreating?) - pausing playback');
@@ -4062,6 +4069,9 @@ export default function FullscreenBacktesting({
   // ═══════════════════════════════════════════════════════════════════════════
   
   const handleSkipBackward = useCallback(() => {
+    // TRANSACTIONAL GATE: Block during TF switches
+    if (!replayReadyRef.current) return;
+    
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
     if (!bars || bars.length === 0) return;
@@ -4076,6 +4086,9 @@ export default function FullscreenBacktesting({
   }, [getCandlesToSkip]);
 
   const handlePrev = useCallback(() => {
+    // TRANSACTIONAL GATE: Block during TF switches
+    if (!replayReadyRef.current) return;
+    
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
     if (!bars || bars.length === 0) return;
@@ -4087,6 +4100,9 @@ export default function FullscreenBacktesting({
   }, []);
 
   const handleNext10 = () => {
+    // TRANSACTIONAL GATE: Block during TF switches
+    if (!replayReadyRef.current) return;
+    
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
     if (!bars || bars.length === 0) return;
@@ -4099,6 +4115,9 @@ export default function FullscreenBacktesting({
   };
 
   const handlePrev10 = () => {
+    // TRANSACTIONAL GATE: Block during TF switches
+    if (!replayReadyRef.current) return;
+    
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
     if (!bars || bars.length === 0) return;
@@ -4110,6 +4129,9 @@ export default function FullscreenBacktesting({
   };
 
   const handleRestart = () => {
+    // TRANSACTIONAL GATE: Block during TF switches
+    if (!replayReadyRef.current) return;
+    
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
     if (!bars || bars.length === 0) return;
