@@ -2925,8 +2925,8 @@ export default function FullscreenBacktesting({
             console.warn('Failed to capture visible range:', e);
           }
           
-          // With stable symbol suffix (no Date.now()), bar indices remain consistent
-          // so drawings should restore to correct positions
+          // Capture drawings - they will be restored after the timeframe switch
+          // Dynamic symbol suffix forces getBars to be called with fresh filterTime
           try {
             const drawings = DrawingManager.captureDrawings(chart);
             if (drawings.length > 0) {
@@ -2957,7 +2957,7 @@ export default function FullscreenBacktesting({
         subscribedResolutionRef.current = newInterval;
         
         // CRITICAL: Force TradingView to reload data with correct filtering
-        // Use stable symbol suffix (no Date.now()) to preserve drawing bar-index mappings
+        // Use DYNAMIC symbol suffix (with Date.now()) to force getBars call with correct replayTime
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
