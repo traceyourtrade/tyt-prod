@@ -333,6 +333,7 @@ export default function FullscreenBacktesting({
   const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
   const pendingVisibleRangeRef = useRef<{ from: number; to: number } | null>(null); // Stores visible range before resolution change
   const pendingVisibleRangeAppliedRef = useRef<boolean>(false); // Prevents double-application of visible range
+  const wasPlayingBeforeSwitchRef = useRef<boolean>(false); // Tracks if playback should resume after timeframe switch
   const favoriteDrawingToolsRef = useRef<string[]>([]); // Stores favorite drawing tools
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
   const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
@@ -721,6 +722,8 @@ export default function FullscreenBacktesting({
     console.log('Set pendingAnchorTimestampRef:', new Date(barStartTime).toISOString());
     
     // 4. STOP AUTO-PLAY to prevent timestamp drift during switch
+    // Save playback state to resume after switch completes
+    wasPlayingBeforeSwitchRef.current = isPlaying;
     if (autoPlayIntervalRef.current) {
       clearInterval(autoPlayIntervalRef.current);
       autoPlayIntervalRef.current = null;
@@ -895,14 +898,28 @@ export default function FullscreenBacktesting({
                   console.warn('Error in post-switch cleanup:', e);
                 }
                 isChangingResolutionRef.current = false;
+                
+                // Resume playback if it was active before the switch
+                if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
+                  console.log('Resuming playback after timeframe switch');
+                  wasPlayingBeforeSwitchRef.current = false;
+                  setIsPlaying(true);
+                }
               }, 300);
             });
           });
         } catch (e) {
           isChangingResolutionRef.current = false;
+          wasPlayingBeforeSwitchRef.current = false; // Reset on error
         }
       } else {
         isChangingResolutionRef.current = false;
+        // Resume playback if it was active (no TradingView switch needed, callback already ready)
+        if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
+          console.log('Resuming playback after fast-path (no TV switch)');
+          wasPlayingBeforeSwitchRef.current = false;
+          setIsPlaying(true);
+        }
       }
     } else {
       console.log('Using SLOW PATH - will fetch data');
@@ -1886,15 +1903,29 @@ export default function FullscreenBacktesting({
                       console.warn('Error restoring drawings or setting visible range:', e);
                     }
                     isChangingResolutionRef.current = false;
+                    
+                    // Resume playback if it was active before the switch
+                    if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
+                      console.log('Resuming playback after slow-path timeframe switch');
+                      wasPlayingBeforeSwitchRef.current = false;
+                      setIsPlaying(true);
+                    }
                   }, 300);
                 });
               });
             } catch (e) {
               console.log('setSymbol/setResolution error:', e);
               isChangingResolutionRef.current = false;
+              wasPlayingBeforeSwitchRef.current = false; // Reset on error
             }
           } else {
             isChangingResolutionRef.current = false;
+            // Resume playback if it was active (no widget switch needed)
+            if (wasPlayingBeforeSwitchRef.current && callbacksReadyRef.current) {
+              console.log('Resuming playback after slow-path (no widget update)');
+              wasPlayingBeforeSwitchRef.current = false;
+              setIsPlaying(true);
+            }
           }
         } else {
           console.log('No data from VPS API:', data);
