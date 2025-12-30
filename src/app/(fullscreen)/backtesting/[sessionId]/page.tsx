@@ -1298,14 +1298,24 @@ export default function FullscreenBacktesting({
       
       // CRITICAL: Polygon API returns earliest 50k bars from requested range
       // So we need to request a SMALLER window that's biased to include the anchor
-      // For intraday: 1 month back, 1 month forward (will definitely include anchor)
+      // For intraday: 1 month back, 2 months forward (to ensure visible range is covered)
       // For daily+: 5 years back, 5 years forward
       // Note: TradingView sends '1D', '1W', '1M' for daily/weekly/monthly
       const isDailyOrHigher = ['D', 'W', 'M', '1D', '1W', '1M'].includes(resolution);
       const monthsBack = isDailyOrHigher ? 60 : 1;  // 5 years for daily+, 1 month for intraday
-      const monthsForward = isDailyOrHigher ? 60 : 1;
+      const monthsForward = isDailyOrHigher ? 60 : 2;  // 2 months forward for intraday to cover visible range
       const windowStartDate = subMonths(anchorDate, monthsBack);
-      const windowEndDate = addMonths(anchorDate, monthsForward);
+      let windowEndDate = addMonths(anchorDate, monthsForward);
+      
+      // Extend window end if pendingVisibleRangeRef has a later date (ensures visible range is covered)
+      if (pendingVisibleRangeRef.current?.to) {
+        const visibleEndDate = new Date(pendingVisibleRangeRef.current.to * 1000);
+        if (visibleEndDate > windowEndDate) {
+          windowEndDate = addMonths(visibleEndDate, 1); // Add 1 month buffer beyond visible range
+          console.log('Extended fetch window to cover visible range:', windowEndDate.toISOString());
+        }
+      }
+      
       const fromTs = Math.floor(windowStartDate.getTime() / 1000);
       const toTs = Math.floor(windowEndDate.getTime() / 1000);
       const market = session.market || 'FOREX';
@@ -1373,8 +1383,15 @@ export default function FullscreenBacktesting({
             const { firstDataRequest } = periodParams;
             
             if (firstDataRequest) {
-              const barsToShow = replayTs > 0 
-                ? bars.filter((bar: any) => bar.time <= replayTs)
+              // When switching timeframes, include bars up to the visible range's end (if captured)
+              // This ensures the new timeframe shows the same market period as the source
+              const visibleRangeEnd = pendingVisibleRangeRef.current?.to 
+                ? pendingVisibleRangeRef.current.to * 1000  // Convert from seconds to ms
+                : replayTs;
+              const filterEnd = Math.max(replayTs, visibleRangeEnd);
+              
+              const barsToShow = filterEnd > 0 
+                ? bars.filter((bar: any) => bar.time <= filterEnd)
                 : bars.slice(0, newIndex + 1);
               callback(barsToShow, { noData: barsToShow.length === 0 });
             } else {
