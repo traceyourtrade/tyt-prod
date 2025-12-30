@@ -344,6 +344,7 @@ export default function FullscreenBacktesting({
   const dataReadyForLayoutRef = useRef<boolean>(false); // Signal when bars are loaded and ready for layout restoration
   const isUnmountingRef = useRef<boolean>(false); // Track if component is unmounting to prevent empty saves
   const callbacksReadyRef = useRef<boolean>(false); // Gate handleNext until subscribeBars fires on current widget
+  const replayReadyRef = useRef<boolean>(false); // TRANSACTIONAL GATE: blocks ALL replay advancement during TF switches
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -754,14 +755,20 @@ export default function FullscreenBacktesting({
   ) => {
     const { hideDropdown = false, triggerSymbolSwitch = true, captureDrawings = true } = options;
     
+    // ATOMIC TRANSACTION: Block ALL replay advancement during switch
+    replayReadyRef.current = false;
+    setIsPlaying(false); // HARD PAUSE
+    console.log('TF SWITCH: replayReady=false, playback HARD PAUSED');
+    
     // 1. CAPTURE SOURCE STATE (must be done first, before any mutations)
     const sourceInterval = currentIntervalRef.current;
     
     console.log('==== UNIFIED TIMEFRAME SWITCH ====');
     console.log('From:', sourceInterval, 'To:', targetInterval);
     
-    // Skip if same interval
+    // Skip if same interval - restore replayReady since we're not actually switching
     if (sourceInterval === targetInterval) {
+      replayReadyRef.current = true;
       if (hideDropdown) setShowTimeframeDropdown(false);
       return;
     }
@@ -772,9 +779,10 @@ export default function FullscreenBacktesting({
     
     console.log('Anchor source:', source, 'barEndTime:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
     
-    // 3. BLOCK SWITCH only if no valid anchor exists at all
+    // 3. BLOCK SWITCH only if no valid anchor exists at all - restore replayReady
     if (barEndTime <= 0 || source === 'none') {
       console.error('Cannot switch timeframe: no valid anchor available, source:', source);
+      replayReadyRef.current = true; // Restore since switch is blocked
       // Show notification to user
       if (typeof window !== 'undefined') {
         const toast = document.createElement('div');
@@ -951,17 +959,36 @@ export default function FullscreenBacktesting({
                       } catch (e) {}
                     }
                   }
-                  // SAFETY: Ensure callbacksReady is true after TradingView resubscribes
-                  // This handles cases where subscribeBars was already called or will be called shortly
+                  // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+                  // Ensure callbacksReady is true after TradingView resubscribes
                   if (!callbacksReadyRef.current) {
                     const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
                     if (cachedCb) {
                       callbacksReadyRef.current = true;
-                      console.log('Fast-path: Restored callbacksReady after setResolution');
                     }
                   }
+                  
+                  // VERIFY SYNC: Confirm derived state matches replayTime
+                  const bars = allBarsRef.current;
+                  const idx = currentBarIndexRef.current;
+                  const replayTs = replayTimestampRef.current;
+                  const resMinutes = intervalToMinutes(targetInterval);
+                  const intervalMs = resMinutes * 60 * 1000;
+                  
+                  if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
+                    const barCloseTime = bars[idx].time + intervalMs;
+                    if (barCloseTime > replayTs) {
+                      console.error('SYNC VERIFY FAILED: bar close > replayTime', { barCloseTime, replayTs, idx });
+                    } else {
+                      console.log('Fast-path: SYNC VERIFIED, replayReady=true');
+                    }
+                  }
+                  
+                  // Only NOW enable replay
+                  replayReadyRef.current = true;
                 } catch (e) {
                   console.warn('Error in post-switch cleanup:', e);
+                  replayReadyRef.current = true; // Still enable to avoid permanent block
                 }
                 isChangingResolutionRef.current = false;
               }, 50); // Reduced from 300ms to 50ms
@@ -998,16 +1025,35 @@ export default function FullscreenBacktesting({
                         } catch (e) {}
                       }
                     }
-                    // SAFETY: Ensure callbacksReady is true after TradingView resubscribes
+                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay
                     if (!callbacksReadyRef.current) {
                       const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
                       if (cachedCb) {
                         callbacksReadyRef.current = true;
-                        console.log('Fast-path fallback: Restored callbacksReady after setSymbol+setResolution');
                       }
                     }
+                    
+                    // VERIFY SYNC: Confirm derived state matches replayTime
+                    const bars = allBarsRef.current;
+                    const idx = currentBarIndexRef.current;
+                    const replayTs = replayTimestampRef.current;
+                    const resMinutes = intervalToMinutes(targetInterval);
+                    const intervalMs = resMinutes * 60 * 1000;
+                    
+                    if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
+                      const barCloseTime = bars[idx].time + intervalMs;
+                      if (barCloseTime > replayTs) {
+                        console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs, idx });
+                      } else {
+                        console.log('Fast-path fallback: SYNC VERIFIED, replayReady=true');
+                      }
+                    }
+                    
+                    // Only NOW enable replay
+                    replayReadyRef.current = true;
                   } catch (e) {
                     console.warn('Error in post-switch cleanup:', e);
+                    replayReadyRef.current = true; // Still enable to avoid permanent block
                   }
                   isChangingResolutionRef.current = false;
                 }, 150); // Reduced from 300ms
@@ -1747,6 +1793,10 @@ export default function FullscreenBacktesting({
           // Re-enable playback after canonical setter
           const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
           callbacksReadyRef.current = !!cachedCallback;
+          
+          // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+          console.log('Slow-path cached: ATOMIC TRANSACTION COMPLETE, replayReady=true');
+          replayReadyRef.current = true;
           return;
         }
       } else {
@@ -1783,6 +1833,10 @@ export default function FullscreenBacktesting({
         // Re-enable playback after canonical setter
         const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
         callbacksReadyRef.current = !!cachedCallback;
+        
+        // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+        console.log('Slow-path no-replay: ATOMIC TRANSACTION COMPLETE, replayReady=true');
+        replayReadyRef.current = true;
         return;
       }
     }
@@ -1999,25 +2053,35 @@ export default function FullscreenBacktesting({
                     } catch (e) {
                       console.warn('Error restoring drawings or setting visible range:', e);
                     }
+                    
+                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+                    console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, replayReady=true');
+                    replayReadyRef.current = true;
                     isChangingResolutionRef.current = false;
                   }, 300);
                 });
               });
             } catch (e) {
               console.log('setSymbol/setResolution error:', e);
+              replayReadyRef.current = true; // Enable to avoid permanent block
               isChangingResolutionRef.current = false;
             }
           } else {
+            // First load (no TF switch) - enable replay
+            console.log('Slow-path: First load complete, replayReady=true');
+            replayReadyRef.current = true;
             isChangingResolutionRef.current = false;
           }
         } else {
           console.log('No data from VPS API:', data);
           // Don't clear bars on failure - keep existing data
+          replayReadyRef.current = true; // Enable to avoid permanent block
           isChangingResolutionRef.current = false;
         }
       } catch (error) {
         console.error("Error fetching history from VPS:", error);
         // Don't clear bars on error - keep existing data and allow retry
+        replayReadyRef.current = true; // Enable to avoid permanent block
         isChangingResolutionRef.current = false;
         // Set error state if this is the first load (no bars cached yet)
         if (Object.keys(barsCacheRef.current).length === 0) {
@@ -3606,6 +3670,13 @@ export default function FullscreenBacktesting({
   }, [removeTradeLines, lotSize, allBars, tradingState.realisedPL, sessionId, contractSize, sessionData?.symbol]);
 
   const handleNext = useCallback(async () => {
+    // TRANSACTIONAL GATE: Block ALL replay advancement during TF switches
+    if (!replayReadyRef.current) {
+      console.warn('handleNext: replayReady=false (TF switch in progress) - blocking');
+      setIsPlaying(false);
+      return;
+    }
+    
     // CRITICAL: Block if widget callbacks aren't ready yet (e.g., during HMR/widget recreation)
     if (!callbacksReadyRef.current) {
       console.warn('handleNext: callbacks not ready (widget recreating?) - pausing playback');

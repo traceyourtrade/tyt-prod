@@ -1,0 +1,84 @@
+You are fixing a Bar Replay engine that desyncs when switching timeframes
+multiple times (1H → 15m → 1H → 15m).
+
+This is caused by async candle loading and stale derived state.
+
+––––––––––––––––––––––
+ABSOLUTE RULE
+––––––––––––––––––––––
+ReplayTime MUST NEVER advance unless:
+• Candle data is loaded
+• Derived candle index is recalculated
+• Chart state is fully synced
+
+If this rule is violated, replay WILL desync.
+
+––––––––––––––––––––––
+TIMEFRAME SWITCH MUST BE ATOMIC
+––––––––––––––––––––––
+Implement timeframe switching as a TRANSACTION.
+
+On timeframe change:
+
+1. HARD PAUSE replay
+   isPlaying = false
+
+2. BLOCK replayTime updates
+   (disable play loop entirely)
+
+3. Invalidate ALL derived state:
+   - currentCandleIndex = null
+   - visibleCandles = []
+   - indicatorState = reset
+   - chart rendering = suspended
+
+4. LOAD candles for new timeframe (await completion)
+   This must be awaited. No partial render.
+
+5. IMMEDIATELY recalculate derived state FROM replayTime:
+   currentCandleIndex =
+     last candle where openTime <= replayTime
+
+6. Render chart ONCE using this derived state
+
+7. VERIFY SYNC (MANDATORY CHECK):
+   if (candles[currentCandleIndex].openTime > replayTime)
+     throw error("Replay desync detected")
+
+8. ONLY AFTER SUCCESS:
+   allow replay to resume
+
+––––––––––––––––––––––
+PLAY LOOP (STRICT)
+––––––––––––––––––––––
+The play loop must:
+
+• Check a boolean: isReplayReady === true
+• If false → do NOTHING
+• Never advance replayTime optimistically
+
+replayTime may ONLY change when isReplayReady === true
+
+––––––––––––––––––––––
+FORBIDDEN BEHAVIORS
+––––––––––––––––––––––
+❌ Rendering chart before candles load
+❌ Advancing replayTime during TF switch
+❌ Reusing candle index across TFs
+❌ Letting UI drive replay state
+❌ Async candle load without blocking replay
+
+––––––––––––––––––––––
+ACCEPTANCE TEST (MANDATORY)
+––––––––––––––––––––––
+1. Start replay on 1H
+2. Play forward
+3. Switch to 15m → IMMEDIATE sync
+4. Play forward
+5. Switch to 1H → IMMEDIATE sync
+6. Switch to 15m again → IMMEDIATE sync
+7. ▶ Play works instantly every time
+
+NO delays. NO later correction. NO resync after seconds.
+
+If candles or price lag even once, the implementation is incorrect.
