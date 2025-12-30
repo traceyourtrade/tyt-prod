@@ -13,6 +13,7 @@ import "./backtesting.css";
 import { widget as TradingViewWidget } from "../../../../../public/charting_library";
 import { makeApiRequest, parseFullSymbol } from "@/lib/custom-datafeed/helpers";
 import * as DrawingManager from "@/lib/drawing-persistence-manager";
+import { useTimeframeSwitchController, SwitchState } from "@/hooks/useTimeframeSwitchController";
 
 type MarketType = 'FOREX' | 'CRYPTO' | 'INDIAN_INDICES' | 'INDIAN_STOCK';
 
@@ -487,6 +488,20 @@ export default function FullscreenBacktesting({
   const [currentInterval, setCurrentInterval] = useState(initialInterval);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(500);
+  
+  const tfController = useTimeframeSwitchController({
+    onStateChange: (state) => {
+      if (state !== 'IDLE') {
+        setIsPlaying(false);
+      }
+    },
+    onSwitchComplete: (targetInterval) => {
+      console.log('[TF Controller] Switch complete:', targetInterval);
+    },
+    onSwitchError: (error) => {
+      console.error('[TF Controller] Switch error:', error);
+    },
+  });
   const [lotSize, setLotSize] = useState(1);
   const [showPanel, setShowPanel] = useState(false);
   const [drawerHeight, setDrawerHeight] = useState(250);
@@ -756,23 +771,30 @@ export default function FullscreenBacktesting({
   ) => {
     const { hideDropdown = false, triggerSymbolSwitch = true, captureDrawings = true } = options;
     
-    // ATOMIC TRANSACTION: Block ALL replay advancement during switch
-    replayReadyRef.current = false;
-    setIsPlaying(false); // HARD PAUSE
-    console.log('TF SWITCH: replayReady=false, playback HARD PAUSED');
-    
     // 1. CAPTURE SOURCE STATE (must be done first, before any mutations)
     const sourceInterval = currentIntervalRef.current;
     
     console.log('==== UNIFIED TIMEFRAME SWITCH ====');
     console.log('From:', sourceInterval, 'To:', targetInterval);
+    console.log('[TF Controller] State:', tfController.state);
     
-    // Skip if same interval - restore replayReady since we're not actually switching
+    // Skip if same interval
     if (sourceInterval === targetInterval) {
-      replayReadyRef.current = true;
       if (hideDropdown) setShowTimeframeDropdown(false);
       return;
     }
+    
+    // CONTROLLER GATE: If already switching, queue this request and return
+    if (tfController.isSwitching) {
+      console.log('[TF Controller] Already switching, queueing:', targetInterval);
+      tfController.requestSwitch(targetInterval);
+      if (hideDropdown) setShowTimeframeDropdown(false);
+      return;
+    }
+    
+    // START THE SWITCH via controller
+    tfController.requestSwitch(targetInterval);
+    setIsPlaying(false); // HARD PAUSE
     
     // 2. GET VALID ANCHOR - this is critical for correct positioning
     const sourceIntervalMinutes = intervalToMinutes(sourceInterval);
@@ -780,10 +802,10 @@ export default function FullscreenBacktesting({
     
     console.log('Anchor source:', source, 'barEndTime:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
     
-    // 3. BLOCK SWITCH only if no valid anchor exists at all - restore replayReady
+    // 3. BLOCK SWITCH only if no valid anchor exists at all
     if (barEndTime <= 0 || source === 'none') {
       console.error('Cannot switch timeframe: no valid anchor available, source:', source);
-      replayReadyRef.current = true; // Restore since switch is blocked
+      tfController.abort('No valid anchor');
       // Show notification to user
       if (typeof window !== 'undefined') {
         const toast = document.createElement('div');
@@ -986,12 +1008,12 @@ export default function FullscreenBacktesting({
                     }
                   }
                   
-                  // Only NOW enable replay
-                  replayReadyRef.current = true;
+                  // Only NOW enable replay via controller
+                  tfController.finalize(targetInterval);
                   fastPathActiveRef.current = false;
                 } catch (e) {
                   console.warn('Error in post-switch cleanup:', e);
-                  replayReadyRef.current = true; // Still enable to avoid permanent block
+                  tfController.finalize(targetInterval);
                   fastPathActiveRef.current = false;
                 }
                 isChangingResolutionRef.current = false;
@@ -1053,12 +1075,12 @@ export default function FullscreenBacktesting({
                       }
                     }
                     
-                    // Only NOW enable replay
-                    replayReadyRef.current = true;
+                    // Only NOW enable replay via controller
+                    tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
                   } catch (e) {
                     console.warn('Error in post-switch cleanup:', e);
-                    replayReadyRef.current = true; // Still enable to avoid permanent block
+                    tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
                   }
                   isChangingResolutionRef.current = false;
@@ -1800,12 +1822,12 @@ export default function FullscreenBacktesting({
           const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
           callbacksReadyRef.current = !!cachedCallback;
           
-          // ATOMIC TRANSACTION COMPLETE: Re-enable replay (only if fast-path isn't handling it)
+          // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller (only if fast-path isn't handling it)
           if (!fastPathActiveRef.current) {
-            console.log('Slow-path cached: ATOMIC TRANSACTION COMPLETE, replayReady=true');
-            replayReadyRef.current = true;
+            console.log('Slow-path cached: ATOMIC TRANSACTION COMPLETE, finalizing controller');
+            tfController.finalize(currentInterval);
           } else {
-            console.log('Slow-path cached: fastPathActive, skipping replayReady (fast-path will handle)');
+            console.log('Slow-path cached: fastPathActive, controller will be finalized by fast-path');
           }
           return;
         }
@@ -1844,12 +1866,12 @@ export default function FullscreenBacktesting({
         const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
         callbacksReadyRef.current = !!cachedCallback;
         
-        // ATOMIC TRANSACTION COMPLETE: Re-enable replay (only if fast-path isn't handling it)
+        // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller (only if fast-path isn't handling it)
         if (!fastPathActiveRef.current) {
-          console.log('Slow-path no-replay: ATOMIC TRANSACTION COMPLETE, replayReady=true');
-          replayReadyRef.current = true;
+          console.log('Slow-path no-replay: ATOMIC TRANSACTION COMPLETE, finalizing controller');
+          tfController.finalize(currentInterval);
         } else {
-          console.log('Slow-path no-replay: fastPathActive, skipping replayReady (fast-path will handle)');
+          console.log('Slow-path no-replay: fastPathActive, controller will be finalized by fast-path');
         }
         return;
       }
@@ -2068,34 +2090,33 @@ export default function FullscreenBacktesting({
                       console.warn('Error restoring drawings or setting visible range:', e);
                     }
                     
-                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay
-                    console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, replayReady=true');
-                    replayReadyRef.current = true;
+                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller
+                    console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, finalizing controller');
+                    tfController.finalize(currentInterval);
                     isChangingResolutionRef.current = false;
                   }, 300);
                 });
               });
             } catch (e) {
               console.log('setSymbol/setResolution error:', e);
-              replayReadyRef.current = true; // Enable to avoid permanent block
+              tfController.abort('setSymbol/setResolution error');
               isChangingResolutionRef.current = false;
             }
           } else {
-            // First load (no TF switch) - enable replay
-            console.log('Slow-path: First load complete, replayReady=true');
-            replayReadyRef.current = true;
+            // First load (no TF switch) - controller may not be in switching state
+            console.log('Slow-path: First load complete');
             isChangingResolutionRef.current = false;
           }
         } else {
           console.log('No data from VPS API:', data);
           // Don't clear bars on failure - keep existing data
-          replayReadyRef.current = true; // Enable to avoid permanent block
+          tfController.abort('No data from VPS API');
           isChangingResolutionRef.current = false;
         }
       } catch (error) {
         console.error("Error fetching history from VPS:", error);
         // Don't clear bars on error - keep existing data and allow retry
-        replayReadyRef.current = true; // Enable to avoid permanent block
+        tfController.abort('Fetch error');
         isChangingResolutionRef.current = false;
         // Set error state if this is the first load (no bars cached yet)
         if (Object.keys(barsCacheRef.current).length === 0) {
@@ -3685,8 +3706,8 @@ export default function FullscreenBacktesting({
 
   const handleNext = useCallback(async () => {
     // TRANSACTIONAL GATE: Block ALL replay advancement during TF switches
-    if (!replayReadyRef.current) {
-      console.warn('handleNext: replayReady=false (TF switch in progress) - blocking');
+    if (tfController.isSwitching) {
+      console.warn('handleNext: TF switch in progress - blocking');
       setIsPlaying(false);
       return;
     }
@@ -3853,8 +3874,8 @@ export default function FullscreenBacktesting({
   // Handle forward with skip duration - skips multiple candles based on time
   const handleSkipForward = useCallback(async () => {
     // TRANSACTIONAL GATE: Block ALL replay advancement during TF switches
-    if (!replayReadyRef.current) {
-      console.warn('handleSkipForward: replayReady=false (TF switch in progress) - blocking');
+    if (tfController.isSwitching) {
+      console.warn('handleSkipForward: TF switch in progress - blocking');
       setIsPlaying(false);
       return;
     }
@@ -4070,7 +4091,7 @@ export default function FullscreenBacktesting({
   
   const handleSkipBackward = useCallback(() => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (!replayReadyRef.current) return;
+    if (tfController.isSwitching) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4087,7 +4108,7 @@ export default function FullscreenBacktesting({
 
   const handlePrev = useCallback(() => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (!replayReadyRef.current) return;
+    if (tfController.isSwitching) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4101,7 +4122,7 @@ export default function FullscreenBacktesting({
 
   const handleNext10 = () => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (!replayReadyRef.current) return;
+    if (tfController.isSwitching) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4116,7 +4137,7 @@ export default function FullscreenBacktesting({
 
   const handlePrev10 = () => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (!replayReadyRef.current) return;
+    if (tfController.isSwitching) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
@@ -4130,7 +4151,7 @@ export default function FullscreenBacktesting({
 
   const handleRestart = () => {
     // TRANSACTIONAL GATE: Block during TF switches
-    if (!replayReadyRef.current) return;
+    if (tfController.isSwitching) return;
     
     const bars = allBarsRef.current;
     const resolution = currentIntervalRef.current;
