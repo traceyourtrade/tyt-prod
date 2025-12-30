@@ -411,9 +411,15 @@ export default function FullscreenBacktesting({
     let newReplayTime = currentReplayTime + intervalMs;
     let newIndex = deriveBarIndexFromTime(bars, newReplayTime, resolution);
     
+    // GUARD: Bypass smart skip during timeframe switches to preserve replayTime exactly
+    // This prevents time drift when switching between 1H/15m/5m etc.
+    const isSwitching = tfController.getIsSwitching();
+    const callbacksNotReady = !callbacksReadyRef.current;
+    
     // SMART SKIP: Check if we're in a gap by comparing against next bar's close time
     // This works for any step size (1 candle, skip forward, accelerated playback)
-    if (bars && bars.length > 0 && newIndex < bars.length - 1) {
+    // BUT: Only run when NOT switching timeframes
+    if (!isSwitching && !callbacksNotReady && bars && bars.length > 0 && newIndex < bars.length - 1) {
       const nextBarIndex = newIndex + 1;
       const nextBar = bars[nextBarIndex];
       const nextBarCloseTime = nextBar.time + resolutionMs;
