@@ -106,29 +106,8 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       const data = await res.json();
       console.log("setAccounts: response", data, "status", res.status);
 
-      if (res.status === 401) {
-        console.log("setAccounts: 401 Unauthorized - redirecting to login");
-        set({
-          accounts: [],
-          profileData: {},
-          selectedAccounts: [],
-          strategies: [],
-          error: "Session expired. Please login again.",
-          loading: false,
-        });
-        if (typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
-        return;
-      }
-
       if (!res.ok) {
-        console.warn("setAccounts: Server error", res.status, data);
-        set({ 
-          error: data.error || "Failed to fetch accounts. Please try again.",
-          loading: false 
-        });
-        return;
+        throw new Error(data.error || "Failed to fetch accounts");
       }
 
       if (data.error === "Fishy!") {
@@ -160,9 +139,18 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
     } catch (error) {
       console.error("setAccounts: Error fetching accounts:", error);
       set({
-        error: "Network error. Please check your connection.",
+        accounts: [],
+        profileData: {},
+        selectedAccounts: [],
+        strategies: [],
+        error: "Session expired. Please login again.",
         loading: false,
       });
+
+      // Redirect to login page
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
     }
   },
 

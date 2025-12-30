@@ -1432,16 +1432,12 @@ export default function FullscreenBacktesting({
               const barsToShow = filterEnd > 0 
                 ? bars.filter((bar: any) => bar.time <= filterEnd)
                 : bars.slice(0, newIndex + 1);
-              // CRITICAL: TradingView expects time in SECONDS
-              const barsWithSecondsTime = barsToShow.map((bar: any) => ({ ...bar, time: bar.time / 1000 }));
-              callback(barsWithSecondsTime, { noData: barsWithSecondsTime.length === 0 });
+              callback(barsToShow, { noData: barsToShow.length === 0 });
             } else {
               const filteredBars = bars.filter(
                 (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
               );
-              // CRITICAL: TradingView expects time in SECONDS
-              const barsWithSecondsTime = filteredBars.map((bar: any) => ({ ...bar, time: bar.time / 1000 }));
-              callback(barsWithSecondsTime, { noData: barsWithSecondsTime.length === 0 });
+              callback(filteredBars, { noData: filteredBars.length === 0 });
             }
           }
           delete pendingCallbacksRef.current[resolution];
@@ -1556,9 +1552,7 @@ export default function FullscreenBacktesting({
         const filteredBars = newBars.filter(
           (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
         );
-        // CRITICAL: TradingView expects time in SECONDS
-        const barsWithSecondsTime = filteredBars.map((bar: any) => ({ ...bar, time: bar.time / 1000 }));
-        callback(barsWithSecondsTime, { noData: barsWithSecondsTime.length === 0 });
+        callback(filteredBars, { noData: filteredBars.length === 0 });
       } else {
         callback([], { noData: true });
       }
@@ -1888,16 +1882,12 @@ export default function FullscreenBacktesting({
                 const barsToShow = replayTs > 0 
                   ? bars.filter((bar: any) => bar.time <= replayTs)
                   : bars.slice(0, newIndex + 1);
-                // CRITICAL: TradingView expects time in SECONDS
-                const barsWithSecondsTime = barsToShow.map((bar: any) => ({ ...bar, time: bar.time / 1000 }));
-                callback(barsWithSecondsTime, { noData: barsWithSecondsTime.length === 0 });
+                callback(barsToShow, { noData: barsToShow.length === 0 });
               } else {
                 const filteredBars = bars.filter(
                   (bar: any) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
                 );
-                // CRITICAL: TradingView expects time in SECONDS
-                const barsWithSecondsTime = filteredBars.map((bar: any) => ({ ...bar, time: bar.time / 1000 }));
-                callback(barsWithSecondsTime, { noData: barsWithSecondsTime.length === 0 });
+                callback(filteredBars, { noData: filteredBars.length === 0 });
               }
             }
             delete pendingCallbacksRef.current[currentInterval];
@@ -2098,9 +2088,7 @@ export default function FullscreenBacktesting({
           console.log('getBars firstDataRequest: anchor=', anchorTs > 0 ? new Date(anchorTs).toISOString() : 'N/A', 
             'returning', barsToShow.length, 'bars');
           
-          // CRITICAL: TradingView expects time in SECONDS, but we store in milliseconds
-          const barsWithSecondsTime = barsToShow.map((bar: any) => ({ ...bar, time: bar.time / 1000 }));
-          onHistoryCallback(barsWithSecondsTime, { noData: barsWithSecondsTime.length === 0 });
+          onHistoryCallback(barsToShow, { noData: barsToShow.length === 0 });
           return;
         }
         
@@ -2128,9 +2116,7 @@ export default function FullscreenBacktesting({
         const bars = barsForResolution.filter(
           (bar) => bar.time / 1000 >= periodParams.from && bar.time / 1000 < periodParams.to
         );
-        // CRITICAL: TradingView expects time in SECONDS, but we store in milliseconds
-        const barsWithSecondsTime = bars.map((bar: any) => ({ ...bar, time: bar.time / 1000 }));
-        onHistoryCallback(barsWithSecondsTime, { noData: barsWithSecondsTime.length === 0 });
+        onHistoryCallback(bars, { noData: bars.length === 0 });
       },
       subscribeBars: (symbolInfo: any, resolution: string, onRealtimeCallback: any) => {
         console.log('subscribeBars called for resolution:', resolution, 'callback exists:', !!onRealtimeCallback);
@@ -3658,8 +3644,7 @@ export default function FullscreenBacktesting({
             
             const nextBar = mergedBars[idx + 1];
             if (nextBar && onRealtimeCallbackRef.current) {
-              // CRITICAL: TradingView expects time in SECONDS
-              onRealtimeCallbackRef.current({ ...nextBar, time: nextBar.time / 1000 });
+              onRealtimeCallbackRef.current({ ...nextBar, time: nextBar.time });
             }
             
             setCurrentBarIndex(idx + 1, mergedBars);
@@ -3692,11 +3677,10 @@ export default function FullscreenBacktesting({
     }
     
     // Push bar to TradingView if subscribed
-    // CRITICAL: TradingView expects time in SECONDS, but bars are stored in milliseconds
     if (nextBar && callback) {
       callback({
         ...nextBar,
-        time: nextBar.time / 1000,
+        time: nextBar.time,
       });
       // Only advance bar index if we successfully pushed to chart
       setCurrentBarIndex(idx + 1, bars);
@@ -3863,14 +3847,13 @@ export default function FullscreenBacktesting({
     }
     
     // Push all bars in between to TradingView to update the chart
-    // CRITICAL: TradingView expects time in SECONDS, but bars are stored in milliseconds
     if (callback) {
       for (let i = idx + 1; i <= newIndex; i++) {
         const bar = bars[i];
         if (bar) {
           callback({
             ...bar,
-            time: bar.time / 1000,
+            time: bar.time,
           });
         }
       }
