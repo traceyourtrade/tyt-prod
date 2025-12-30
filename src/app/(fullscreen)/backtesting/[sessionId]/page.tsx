@@ -365,8 +365,10 @@ export default function FullscreenBacktesting({
   
   // Helper to convert interval to milliseconds (inline to avoid dependency on useCallback)
   const intervalToMs = (interval: string): number => {
-    if (interval === "1D") return 1440 * 60 * 1000;
-    if (interval === "1W") return 10080 * 60 * 1000;
+    // Handle Daily: TradingView sends both "D" and "1D"
+    if (interval === "1D" || interval === "D") return 1440 * 60 * 1000;
+    // Handle Weekly: TradingView sends both "W" and "1W"
+    if (interval === "1W" || interval === "W") return 10080 * 60 * 1000;
     return (parseInt(interval) || 1) * 60 * 1000;
   };
   
@@ -747,8 +749,10 @@ export default function FullscreenBacktesting({
   
   // Helper to convert interval string to minutes
   const intervalToMinutes = useCallback((interval: string): number => {
-    if (interval === "1D") return 1440;
-    if (interval === "1W") return 10080;
+    // Handle Daily: TradingView sends both "D" and "1D"
+    if (interval === "1D" || interval === "D") return 1440;
+    // Handle Weekly: TradingView sends both "W" and "1W"
+    if (interval === "1W" || interval === "W") return 10080;
     return parseInt(interval) || 1;
   }, []);
   
@@ -839,9 +843,45 @@ export default function FullscreenBacktesting({
     
     // 2. GET VALID ANCHOR - this is critical for correct positioning
     const sourceIntervalMinutes = intervalToMinutes(sourceInterval);
-    const { barEndTime, source } = getValidAnchor(sourceIntervalMinutes);
+    const targetIntervalMinutes = intervalToMinutes(targetInterval);
+    const { barEndTime: rawAnchor, source } = getValidAnchor(sourceIntervalMinutes);
     
-    console.log('Anchor source:', source, 'barEndTime:', barEndTime > 0 ? new Date(barEndTime).toISOString() : 'N/A');
+    console.log('Anchor source:', source, 'rawAnchor:', rawAnchor > 0 ? new Date(rawAnchor).toISOString() : 'N/A');
+    
+    // 2a. HTF BOUNDARY SNAP: When switching from larger TF to smaller TF,
+    // snap anchor to the actual HTF candle close time (not epoch-aligned)
+    // This ensures 1H close price = 5m close price when switching from 1H to 5m
+    // Uses actual bar data to handle session offsets (e.g., FX daily closes at 17:00 NY)
+    let barEndTime = rawAnchor;
+    if (sourceIntervalMinutes > targetIntervalMinutes && rawAnchor > 0) {
+      const sourceIntervalMs = sourceIntervalMinutes * 60 * 1000;
+      const bars = allBarsRef.current;
+      
+      if (bars && bars.length > 0) {
+        // Find the last completed bar in the source timeframe
+        // A bar is completed when its closeTime <= rawAnchor
+        let lastCompletedBarCloseTime: number | null = null;
+        for (let i = bars.length - 1; i >= 0; i--) {
+          const barCloseTime = bars[i].time + sourceIntervalMs;
+          if (barCloseTime <= rawAnchor) {
+            lastCompletedBarCloseTime = barCloseTime;
+            break;
+          }
+        }
+        
+        // Only snap if we found a different anchor (we're not already on a boundary)
+        if (lastCompletedBarCloseTime && lastCompletedBarCloseTime !== rawAnchor) {
+          console.log('HTF BOUNDARY SNAP: Switching to smaller TF, snapping to actual bar close');
+          console.log('  From:', new Date(rawAnchor).toISOString());
+          console.log('  To:  ', new Date(lastCompletedBarCloseTime).toISOString());
+          barEndTime = lastCompletedBarCloseTime;
+          
+          // CRITICAL: Also update the source of truth (replayTimestampRef)
+          // so subsequent switches use the snapped value
+          replayTimestampRef.current = lastCompletedBarCloseTime;
+        }
+      }
+    }
     
     // 3. BLOCK SWITCH only if no valid anchor exists at all
     if (barEndTime <= 0 || source === 'none') {
