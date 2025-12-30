@@ -19,7 +19,9 @@ import {
   CheckCircle2,
   Loader2,
   Plus,
-  HelpCircle
+  HelpCircle,
+  Rocket,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -505,74 +507,39 @@ const AddAccPopup = () => {
               </div>
             </div>
 
-            {/* MT5 Credentials */}
+            {/* Broker Sync Coming Soon Notice */}
             <AnimatePresence>
-              {accountType === "Broker Sync" && broker === "MetaTrader 5" && (
+              {accountType === "Broker Sync" && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="space-y-4 pt-2"
+                  className="pt-2"
                 >
-                  <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
-                    <p className="text-xs text-primary font-medium flex items-center gap-2">
-                      <Key className="w-3 h-3" />
-                      Enter your MT5 investor credentials (read-only access)
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      Investor ID
-                    </label>
-                    <input
-                      type="text"
-                      value={investorId}
-                      onChange={(e) => setInvestorId(e.target.value)}
-                      placeholder="12345678"
-                      className={cn(
-                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
-                        "text-foreground placeholder:text-muted-foreground text-sm",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Key className="w-4 h-4" />
-                      Investor Password
-                    </label>
-                    <input
-                      type="password"
-                      value={investorPw}
-                      onChange={(e) => setInvestorPw(e.target.value)}
-                      placeholder="••••••••"
-                      className={cn(
-                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
-                        "text-foreground placeholder:text-muted-foreground text-sm",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Server className="w-4 h-4" />
-                      Server Name
-                    </label>
-                    <input
-                      type="text"
-                      value={server}
-                      onChange={(e) => setServer(e.target.value)}
-                      placeholder="ICMarkets-Demo"
-                      className={cn(
-                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
-                        "text-foreground placeholder:text-muted-foreground text-sm",
-                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50"
-                      )}
-                    />
+                  <div className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-yellow-500/5 border border-amber-500/30">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                    <div className="relative flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25 flex-shrink-0">
+                        <Rocket className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-foreground text-sm">
+                            Coming Soon
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
+                            Feb 1st, 2025
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Broker auto-sync is launching February 1st. You'll be able to automatically import trades from MT5 and other platforms.
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-2 text-amber-400 text-xs font-medium">
+                          <Calendar className="w-3 h-3" />
+                          <span>Stay tuned!</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -631,21 +598,26 @@ const AddAccPopup = () => {
           {/* Footer */}
           <div className="p-5 border-t border-border space-y-3">
             <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={{ scale: accountType === "Broker Sync" ? 1 : 1.01 }}
+              whileTap={{ scale: accountType === "Broker Sync" ? 1 : 0.99 }}
               onClick={submitFun}
-              disabled={isSubmitting}
+              disabled={isSubmitting || accountType === "Broker Sync"}
               className={cn(
                 "w-full py-3.5 rounded-xl font-semibold text-white transition-all duration-200",
                 "flex items-center justify-center gap-2",
                 "bg-primary hover:bg-primary-dark shadow-lg shadow-primary/20",
-                isSubmitting && "opacity-70 cursor-not-allowed"
+                (isSubmitting || accountType === "Broker Sync") && "opacity-50 cursor-not-allowed hover:bg-primary"
               )}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Creating Account...
+                </>
+              ) : accountType === "Broker Sync" ? (
+                <>
+                  <Rocket className="w-4 h-4" />
+                  Available Feb 1st, 2025
                 </>
               ) : (
                 <>
