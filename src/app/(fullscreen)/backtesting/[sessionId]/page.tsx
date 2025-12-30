@@ -950,12 +950,15 @@ export default function FullscreenBacktesting({
           const chart = tvWidgetRef.current.activeChart();
           const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
           
-          // OPTIMIZATION: If we have cached callback, use setResolution only (skip setSymbol)
-          // setSymbol forces a full re-handshake with datafeed (300-600ms delay)
-          // setResolution alone is much faster when we have cached data
+          // CRITICAL FIX: Always use setSymbol with dynamic timestamp to force getBars call
+          // Previously this used setResolution-only for speed, but that caused stale data
+          // when switching back to previously-used timeframes (TradingView skipped getBars)
           if (cachedCallback) {
-            console.log('Fast-path optimized: Using setResolution only (have cached callback)');
-            chart.setResolution(targetInterval, () => {
+            console.log('Fast-path: Using setSymbol with dynamic timestamp (forcing fresh getBars)');
+            const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
+            const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}_${Date.now()}`;
+            chart.setSymbol(symbolWithSuffix, () => {
+              chart.setResolution(targetInterval, () => {
               // Minimal delay for drawing restoration
               setTimeout(() => {
                 try {
@@ -1019,6 +1022,7 @@ export default function FullscreenBacktesting({
                 isChangingResolutionRef.current = false;
               }, 50); // Reduced from 300ms to 50ms
             });
+            }); // Close setSymbol callback
           } else {
             // Fallback: No cached callback - need full setSymbol + setResolution
             console.log('Fast-path fallback: Using setSymbol + setResolution (no cached callback)');
