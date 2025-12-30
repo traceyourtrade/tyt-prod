@@ -23,7 +23,9 @@ import {
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
-  Hash
+  Hash,
+  Settings2,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
@@ -81,20 +83,19 @@ interface ManualTradeFormProps {
 }
 
 const markets = [
-  { id: "FOREX", label: "Forex", icon: "💱", color: "from-blue-500/20 to-cyan-500/20" },
-  { id: "US STOCKS", label: "US Stocks", icon: "🇺🇸", color: "from-red-500/20 to-blue-500/20" },
-  { id: "INDIAN STOCKS", label: "Indian Stocks", icon: "🇮🇳", color: "from-orange-500/20 to-green-500/20" },
-  { id: "INDIAN F&O", label: "Indian F&O", icon: "📊", color: "from-amber-500/20 to-orange-500/20" },
-  { id: "CRYPTO", label: "Crypto", icon: "₿", color: "from-yellow-500/20 to-orange-500/20" },
+  { id: "FOREX", label: "Forex", icon: "💱" },
+  { id: "US STOCKS", label: "US Stocks", icon: "🇺🇸" },
+  { id: "INDIAN STOCKS", label: "Indian", icon: "🇮🇳" },
+  { id: "INDIAN F&O", label: "F&O", icon: "📊" },
+  { id: "CRYPTO", label: "Crypto", icon: "₿" },
 ];
 
 const formatDateForDisplay = (dateString: string) => {
-  if (!dateString) return "Select date";
+  if (!dateString) return "Now";
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { 
     month: 'short', 
     day: 'numeric',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -153,7 +154,6 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Notify parent of submit state changes
   useEffect(() => {
     if (onSubmitStateChange) {
       const canSubmit = validateForm() === null;
@@ -161,7 +161,6 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     }
   }, [isSubmitting, trades, onSubmitStateChange]);
 
-  // Handle submit trigger from parent - only fire on actual changes
   useEffect(() => {
     if (submitTrigger && submitTrigger > prevSubmitTriggerRef.current) {
       prevSubmitTriggerRef.current = submitTrigger;
@@ -281,26 +280,23 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     const upperSymbol = symbol.toUpperCase();
     const upperMarket = market.toUpperCase();
     
-    // PRIORITY: Check for Indian F&O - use lot sizes from symbol data
     if (market === "INDIAN F&O") {
       const fnoSymbol = indianFnO.find(s => s.symbol.toUpperCase() === upperSymbol);
-      return fnoSymbol?.lotSize || 25; // Default to 25 (Nifty lot size)
+      return fnoSymbol?.lotSize || 25;
     }
     
-    // PRIORITY: Check for commodities by symbol FIRST
-    // Gold/Silver may be listed under FOREX but need commodity contract sizes
     if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
-      return 100; // Gold: 100 oz per lot
+      return 100;
     }
     if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
-      return 5000; // Silver: 5000 oz per lot
+      return 5000;
     }
     
     switch (market) {
       case "FOREX":
-        return 100000; // 1 lot = 100,000 units
+        return 100000;
       case "CRYPTO":
-        return 1; // Direct units
+        return 1;
       case "INDIAN STOCKS":
       case "INDIAN_STOCK":
       case "INDIAN_INDICES":
@@ -308,28 +304,25 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       case "US_STOCK":
       case "US STOCKS":
       case "STOCKS":
-        return 1; // Direct units for stocks
+        return 1;
       case "COMMODITIES":
         if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
-          return 100; // Gold: 100 oz per lot
+          return 100;
         }
         if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
-          return 5000; // Silver: 5000 oz per lot
+          return 5000;
         }
-        return 100; // Default commodity lot size
+        return 100;
       default:
-        // Check if it's a stock-related market type
         if (upperMarket.includes("STOCK") || upperMarket.includes("EQUIT")) {
-          return 1; // Direct units for any stock market
+          return 1;
         }
-        // Check for commodities by symbol
         if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
-          return 100; // Gold: 100 oz per lot
+          return 100;
         }
         if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
-          return 5000; // Silver: 5000 oz per lot
+          return 5000;
         }
-        // Default to direct units (1) for unknown markets - safer than assuming Forex
         return 1;
     }
   };
@@ -350,37 +343,32 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     
     let pnl = priceDiff * size * contractSize;
     
-    // For non-USD quote currencies, convert P&L to USD
-    // The quote currency (last 3 chars) determines what currency P&L is calculated in
     const upperSymbol = trade.symbol.toUpperCase();
     if (trade.market === "FOREX" && upperSymbol.length >= 6) {
       const quoteCurrency = upperSymbol.slice(-3);
       
-      // Approximate conversion rates to USD (as of late 2024)
-      // These are rough estimates - actual rates vary
       switch (quoteCurrency) {
         case "JPY":
-          pnl = pnl / 150; // USD/JPY ~150
+          pnl = pnl / 150;
           break;
         case "CHF":
-          pnl = pnl * 1.13; // USD/CHF ~0.88, so multiply by 1/0.88
+          pnl = pnl * 1.13;
           break;
         case "CAD":
-          pnl = pnl * 0.71; // USD/CAD ~1.40, so multiply by 1/1.40
+          pnl = pnl * 0.71;
           break;
         case "GBP":
-          pnl = pnl * 1.27; // GBP/USD ~1.27
+          pnl = pnl * 1.27;
           break;
         case "AUD":
-          pnl = pnl * 0.62; // AUD/USD ~0.62
+          pnl = pnl * 0.62;
           break;
         case "NZD":
-          pnl = pnl * 0.57; // NZD/USD ~0.57
+          pnl = pnl * 0.57;
           break;
         case "EUR":
-          pnl = pnl * 1.04; // EUR/USD ~1.04
+          pnl = pnl * 1.04;
           break;
-        // USD quote currency - no conversion needed
         case "USD":
         default:
           break;
@@ -485,8 +473,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                       (activeTrade.status !== "completed" || activeTrade.exitPrice);
 
   return (
-    <div className="space-y-4">
-      {/* Success Animation */}
+    <div className="space-y-3">
       <AnimatePresence>
         {showSuccess && (
           <motion.div
@@ -500,111 +487,90 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", damping: 10, delay: 0.1 }}
-                className="w-20 h-20 rounded-full bg-gradient-to-br from-profit/20 to-profit/5 flex items-center justify-center mx-auto mb-4 ring-4 ring-profit/20"
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-profit/20 to-profit/5 flex items-center justify-center mx-auto mb-3 ring-4 ring-profit/20"
               >
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <Check className="w-10 h-10 text-profit" strokeWidth={3} />
+                  <Check className="w-8 h-8 text-profit" strokeWidth={3} />
                 </motion.div>
               </motion.div>
               <motion.p 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-xl font-semibold text-foreground"
+                className="text-lg font-semibold text-foreground"
               >
                 Trade Added!
-              </motion.p>
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-sm text-muted-foreground mt-1"
-              >
-                Your trade has been recorded successfully
               </motion.p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Error Message */}
       <AnimatePresence>
         {errorMessage && (
           <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="bg-gradient-to-r from-loss/10 to-loss/5 border border-loss/20 rounded-xl p-3 flex items-start gap-3"
+            className="bg-loss/10 border border-loss/20 rounded-lg p-2.5 flex items-center gap-2"
           >
-            <div className="w-8 h-8 rounded-full bg-loss/10 flex items-center justify-center shrink-0">
-              <AlertCircle className="w-4 h-4 text-loss" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-loss">Something went wrong</p>
-              <p className="text-xs text-loss/70 mt-0.5">{errorMessage}</p>
-            </div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-loss/50 hover:text-loss transition-colors p-1 hover:bg-loss/10 rounded-lg"
-            >
-              <X className="w-4 h-4" />
+            <AlertCircle className="w-4 h-4 text-loss shrink-0" />
+            <p className="text-xs text-loss flex-1">{errorMessage}</p>
+            <button onClick={() => setErrorMessage(null)} className="text-loss/50 hover:text-loss p-0.5">
+              <X className="w-3.5 h-3.5" />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Market Pills */}
-      <div>
-        <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Market</label>
-        <div className="flex gap-2 flex-wrap">
-          {markets.map((m) => (
-            <motion.button
-              key={m.id}
-              onClick={() => setMarket(m.id)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                market === m.id
-                  ? "bg-gradient-to-r " + m.color + " text-foreground ring-1 ring-primary/30 shadow-sm"
-                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              <span className="text-base">{m.icon}</span>
-              <span>{m.label}</span>
-            </motion.button>
-          ))}
-        </div>
+      {/* Compact Market Pills - Horizontal Scroll */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+        {markets.map((m) => (
+          <motion.button
+            key={m.id}
+            onClick={() => setMarket(m.id)}
+            whileTap={{ scale: 0.95 }}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0",
+              market === m.id
+                ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            )}
+          >
+            <span className="text-sm">{m.icon}</span>
+            <span>{m.label}</span>
+          </motion.button>
+        ))}
       </div>
 
       {/* Trade Tabs (for multiple trades) */}
       {trades.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
           {trades.map((trade, index) => (
             <motion.div
               key={trade.id}
               layout
               onClick={() => setActiveTradeId(trade.id)}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 cursor-pointer",
+                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 cursor-pointer",
                 activeTradeId === trade.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
             >
               <Hash className="w-3 h-3" />
-              Trade {index + 1}
+              {index + 1}
               {trades.length > 1 && (
                 <span
                   onClick={(e) => {
                     e.stopPropagation();
                     removeTrade(trade.id);
                   }}
-                  className="w-4 h-4 rounded-full hover:bg-loss/20 flex items-center justify-center cursor-pointer ml-1"
+                  className="w-4 h-4 rounded-full hover:bg-loss/20 flex items-center justify-center cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </span>
@@ -614,127 +580,110 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
         </div>
       )}
 
-      {/* Main Form Card */}
-      <div className="bg-gradient-to-b from-muted/30 via-muted/10 to-transparent border border-border/40 rounded-2xl p-5 space-y-4 backdrop-blur-sm shadow-lg shadow-black/5">
+      {/* Main Compact Form */}
+      <div className="bg-muted/20 border border-border/30 rounded-xl p-3 space-y-3">
         
-        {/* Symbol Search */}
-        <div className="relative">
-          <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Symbol</label>
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              ref={symbolInputRef}
-              type="text"
-              placeholder="Search or type symbol..."
-              value={activeTrade.symbol || symbolSearch}
-              onChange={(e) => {
-                const val = e.target.value.toUpperCase();
-                setSymbolSearch(val);
-                updateTrade(activeTrade.id, "symbol", val);
-                setShowSymbolDropdown(true);
-              }}
-              onFocus={() => setShowSymbolDropdown(true)}
-              className="w-full pl-11 pr-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
-            />
-            {activeTrade.symbol && (
-              <button
-                onClick={() => updateTrade(activeTrade.id, "symbol", "")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          
-          <AnimatePresence>
-            {showSymbolDropdown && getSymbols().length > 0 && (
-              <motion.div
-                ref={symbolDropdownRef}
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-card/95 backdrop-blur-md border border-border rounded-xl shadow-2xl z-30 max-h-72 overflow-y-auto"
-              >
-                {isShowingPopularSymbols && (
-                  <div className="px-4 py-2 border-b border-border/50">
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Sparkles className="w-3 h-3 text-primary" />
-                      Popular {market === "FOREX" ? "Pairs" : "Symbols"}
-                    </span>
-                  </div>
-                )}
-                {getSymbols().map((sym, idx) => (
-                  <button
-                    key={sym.symbol}
-                    onClick={() => selectSymbol(sym)}
-                    className={cn(
-                      "w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-primary/10 transition-all",
-                      idx === getSymbols().length - 1 && "rounded-b-xl"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-1 ring-primary/20">
-                        <span className="text-xs font-bold text-primary">{sym.symbol.slice(0, 2)}</span>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-foreground">{sym.symbol}</span>
-                        <p className="text-[10px] text-muted-foreground truncate max-w-[140px]">{sym.name}</p>
-                      </div>
+        {/* Row 1: Symbol + Direction (side by side) */}
+        <div className="grid grid-cols-5 gap-2">
+          {/* Symbol - takes 3 cols */}
+          <div className="col-span-3 relative">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                ref={symbolInputRef}
+                type="text"
+                placeholder="Symbol..."
+                value={activeTrade.symbol || symbolSearch}
+                onChange={(e) => {
+                  const val = e.target.value.toUpperCase();
+                  setSymbolSearch(val);
+                  updateTrade(activeTrade.id, "symbol", val);
+                  setShowSymbolDropdown(true);
+                }}
+                onFocus={() => setShowSymbolDropdown(true)}
+                className="w-full pl-9 pr-8 py-2.5 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
+              />
+              {activeTrade.symbol && (
+                <button
+                  onClick={() => updateTrade(activeTrade.id, "symbol", "")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            
+            <AnimatePresence>
+              {showSymbolDropdown && getSymbols().length > 0 && (
+                <motion.div
+                  ref={symbolDropdownRef}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="absolute top-full left-0 right-0 mt-1 bg-card/95 backdrop-blur-md border border-border rounded-lg shadow-xl z-30 max-h-48 overflow-y-auto"
+                >
+                  {isShowingPopularSymbols && (
+                    <div className="px-3 py-1.5 border-b border-border/50">
+                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                        <Zap className="w-2.5 h-2.5 text-amber-500" />
+                        Popular
+                      </span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  )}
+                  {getSymbols().map((sym, idx) => (
+                    <button
+                      key={sym.symbol}
+                      onClick={() => selectSymbol(sym)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-xs text-left hover:bg-primary/10 transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground">{sym.symbol}</span>
+                        <span className="text-muted-foreground/70 truncate max-w-[80px]">{sym.name}</span>
+                      </div>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-        {/* Direction Toggle */}
-        <div>
-          <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Direction</label>
-          <div className="grid grid-cols-2 gap-2 p-1 bg-muted/20 rounded-xl">
+          {/* Direction - takes 2 cols */}
+          <div className="col-span-2 grid grid-cols-2 gap-1 p-0.5 bg-muted/30 rounded-lg">
             <motion.button
               onClick={() => updateTrade(activeTrade.id, "side", "buy")}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.95 }}
               className={cn(
-                "flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-semibold transition-all duration-200",
+                "flex items-center justify-center gap-1 py-2 rounded-md text-xs font-semibold transition-all",
                 activeTrade.side === "buy"
-                  ? "bg-profit text-white shadow-lg shadow-profit/25"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                  ? "bg-profit text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-3.5 h-3.5" />
               Long
             </motion.button>
             <motion.button
               onClick={() => updateTrade(activeTrade.id, "side", "sell")}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.95 }}
               className={cn(
-                "flex items-center justify-center gap-2 py-3.5 rounded-lg text-sm font-semibold transition-all duration-200",
+                "flex items-center justify-center gap-1 py-2 rounded-md text-xs font-semibold transition-all",
                 activeTrade.side === "sell"
-                  ? "bg-loss text-white shadow-lg shadow-loss/25"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                  ? "bg-loss text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <ArrowDownRight className="w-4 h-4" />
+              <ArrowDownRight className="w-3.5 h-3.5" />
               Short
             </motion.button>
           </div>
         </div>
 
-        {/* Section Divider */}
-        <div className="flex items-center gap-3 pt-2">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-          <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-widest">Trade Details</span>
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-        </div>
-
-        {/* Price & Size Row */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Row 2: Entry Price + Size (with quick presets) */}
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Entry Price</label>
+            <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Entry</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
                 {currencySymbol}
               </span>
               <input
@@ -743,13 +692,13 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                 placeholder="0.00"
                 value={activeTrade.entryPrice}
                 onChange={(e) => updateTrade(activeTrade.id, "entryPrice", e.target.value)}
-                className="w-full pl-10 pr-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
+                className="w-full pl-7 pr-3 py-2.5 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
               />
             </div>
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              {market === "FOREX" ? "Lot Size" : market === "INDIAN F&O" ? "Lots" : "Quantity"}
+            <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+              {market === "FOREX" ? "Lots" : market === "INDIAN F&O" ? "Lots" : "Qty"}
             </label>
             <input
               type="number"
@@ -757,135 +706,82 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
               placeholder={market === "INDIAN F&O" ? "1" : "0.00"}
               value={activeTrade.size}
               onChange={(e) => updateTrade(activeTrade.id, "size", e.target.value)}
-              className="w-full px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
+              className="w-full px-3 py-2.5 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
             />
-            {/* Quick Size Presets */}
-            <div className="flex gap-1.5 mt-2">
-              {(market === "FOREX" 
-                ? [0.01, 0.1, 0.5, 1.0] 
-                : market === "INDIAN F&O" 
-                  ? [1, 2, 5, 10] 
-                  : [1, 10, 50, 100]
-              ).map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => updateTrade(activeTrade.id, "size", preset.toString())}
-                  className={cn(
-                    "flex-1 py-1.5 text-[10px] font-semibold rounded-lg transition-all",
-                    parseFloat(activeTrade.size) === preset
-                      ? "bg-primary/20 text-primary ring-1 ring-primary/30"
-                      : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                  )}
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Position Value Display */}
-        {activeTrade.entryPrice && activeTrade.size && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border border-primary/20 rounded-xl"
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <span className="text-sm font-bold text-primary">{currencySymbol}</span>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Position Value</p>
-                <p className="text-sm font-bold text-foreground">
-                  {currencySymbol}{((parseFloat(activeTrade.entryPrice) || 0) * (parseFloat(activeTrade.size) || 0) * getContractSize(activeTrade.market, activeTrade.symbol)).toLocaleString(activeTrade.currency === 'INR' ? 'en-IN' : 'en-US', { maximumFractionDigits: 2 })}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] text-muted-foreground">{market === "INDIAN F&O" ? "Lot Size" : "Contract Size"}</p>
-              <p className="text-xs font-medium text-muted-foreground">
-                {getContractSize(activeTrade.market, activeTrade.symbol).toLocaleString()} {market === "INDIAN F&O" ? "qty/lot" : "units"}
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Section Divider - Timing */}
-        <div className="flex items-center gap-3 pt-2">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
-          <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-widest">Timing & Status</span>
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+        {/* Quick Lot Presets - Prominent with color */}
+        <div className="flex gap-1">
+          {(market === "FOREX" 
+            ? [0.01, 0.1, 0.5, 1.0] 
+            : market === "INDIAN F&O" 
+              ? [1, 2, 5, 10] 
+              : [1, 10, 50, 100]
+          ).map((preset) => (
+            <button
+              key={preset}
+              type="button"
+              onClick={() => updateTrade(activeTrade.id, "size", preset.toString())}
+              className={cn(
+                "flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all",
+                parseFloat(activeTrade.size) === preset
+                  ? "bg-cyan-500/20 text-cyan-400 ring-1 ring-cyan-500/40"
+                  : "bg-muted/40 text-muted-foreground hover:bg-cyan-500/10 hover:text-cyan-400"
+              )}
+            >
+              {preset}
+            </button>
+          ))}
         </div>
 
-        {/* Entry Date */}
-        <div>
-          <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Entry Date & Time</label>
-          <button
-            onClick={() => setShowDatePicker(`entry-${activeTrade.id}`)}
-            className="w-full flex items-center justify-between px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Calendar className="w-4 h-4 text-primary" />
-              </div>
-              <span className="text-sm font-medium">{formatDateForDisplay(activeTrade.entryDate)}</span>
-            </div>
-            <Clock className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-          </button>
+        {/* Row 3: Status Toggle - Compact */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { id: "waiting", label: "Open", icon: Clock, color: "primary" },
+            { id: "pending", label: "Pending", icon: Loader2, color: "warning" },
+            { id: "completed", label: "Closed", icon: Check, color: "profit" }
+          ].map((status) => {
+            const Icon = status.icon;
+            const isActive = activeTrade.status === status.id;
+            return (
+              <motion.button
+                key={status.id}
+                onClick={() => updateTrade(activeTrade.id, "status", status.id)}
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all",
+                  isActive
+                    ? status.color === "profit" 
+                      ? "bg-profit/15 text-profit ring-1 ring-profit/30"
+                      : status.color === "warning"
+                      ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
+                      : "bg-primary/15 text-primary ring-1 ring-primary/30"
+                    : "bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                )}
+              >
+                <Icon className={cn("w-3 h-3", status.id === "pending" && isActive && "animate-spin")} />
+                {status.label}
+              </motion.button>
+            );
+          })}
         </div>
 
-        {/* Status Toggle */}
-        <div>
-          <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Trade Status</label>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { id: "waiting", label: "Open", icon: Clock, color: "primary" },
-              { id: "pending", label: "Pending", icon: Loader2, color: "warning" },
-              { id: "completed", label: "Closed", icon: Check, color: "profit" }
-            ].map((status) => {
-              const Icon = status.icon;
-              const isActive = activeTrade.status === status.id;
-              return (
-                <motion.button
-                  key={status.id}
-                  onClick={() => updateTrade(activeTrade.id, "status", status.id)}
-                  whileTap={{ scale: 0.97 }}
-                  className={cn(
-                    "flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-semibold transition-all",
-                    isActive
-                      ? status.color === "profit" 
-                        ? "bg-profit/15 text-profit ring-1 ring-profit/30"
-                        : status.color === "warning"
-                        ? "bg-yellow-500/15 text-yellow-500 ring-1 ring-yellow-500/30"
-                        : "bg-primary/15 text-primary ring-1 ring-primary/30"
-                      : "bg-muted/20 text-muted-foreground hover:bg-muted/40"
-                  )}
-                >
-                  <Icon className={cn("w-3.5 h-3.5", status.id === "pending" && isActive && "animate-spin")} />
-                  {status.label}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Exit Fields (for completed trades) */}
+        {/* Exit Fields (for completed trades) - Compact */}
         <AnimatePresence>
           {activeTrade.status === "completed" && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-4 pt-4 border-t border-border/30"
+              transition={{ duration: 0.15 }}
+              className="space-y-2 pt-2 border-t border-border/20"
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Exit Price</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Exit Price</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
                       {currencySymbol}
                     </span>
                     <input
@@ -894,75 +790,71 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                       placeholder="0.00"
                       value={activeTrade.exitPrice}
                       onChange={(e) => updateTrade(activeTrade.id, "exitPrice", e.target.value)}
-                      className="w-full pl-10 pr-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
+                      className="w-full pl-7 pr-3 py-2.5 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Exit Date</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Exit Date</label>
                   <button
                     onClick={() => setShowDatePicker(`exit-${activeTrade.id}`)}
-                    className="w-full flex items-center gap-2 px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground hover:bg-muted/30 transition-colors text-sm font-medium"
+                    className="w-full flex items-center gap-2 px-3 py-2.5 bg-background/60 border border-border/50 rounded-lg text-foreground hover:bg-muted/30 transition-colors text-xs font-medium"
                   >
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="truncate">{formatDateForDisplay(activeTrade.exitDate)}</span>
                   </button>
                 </div>
               </div>
 
-              {/* P&L Preview */}
+              {/* P&L Preview - More prominent with color psychology */}
               {activeTrade.exitPrice && activeTrade.entryPrice && activeTrade.size && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className={cn(
-                    "p-4 rounded-xl flex items-center justify-between",
+                    "p-3 rounded-lg flex items-center justify-between",
                     currentPnL >= 0 
-                      ? "bg-gradient-to-r from-profit/10 to-profit/5 border border-profit/20"
-                      : "bg-gradient-to-r from-loss/10 to-loss/5 border border-loss/20"
+                      ? "bg-gradient-to-r from-profit/15 to-profit/5 border border-profit/25"
+                      : "bg-gradient-to-r from-loss/15 to-loss/5 border border-loss/25"
                   )}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center",
+                      "w-8 h-8 rounded-full flex items-center justify-center",
                       currentPnL >= 0 ? "bg-profit/20" : "bg-loss/20"
                     )}>
                       {currentPnL >= 0 ? (
-                        <TrendingUp className="w-5 h-5 text-profit" />
+                        <TrendingUp className="w-4 h-4 text-profit" />
                       ) : (
-                        <TrendingDown className="w-5 h-5 text-loss" />
+                        <TrendingDown className="w-4 h-4 text-loss" />
                       )}
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Estimated P&L</p>
+                      <p className="text-[10px] text-muted-foreground">P&L</p>
                       <p className={cn(
-                        "text-lg font-bold",
+                        "text-base font-bold",
                         currentPnL >= 0 ? "text-profit" : "text-loss"
                       )}>
                         {currentPnL >= 0 ? "+" : "-"}{currencySymbol}{Math.abs(currentPnL).toLocaleString(activeTrade.currency === 'INR' ? 'en-IN' : 'en-US', { maximumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
-                  <Sparkles className={cn("w-5 h-5", currentPnL >= 0 ? "text-profit/50" : "text-loss/50")} />
                 </motion.div>
               )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Optional Fields Toggle */}
+        {/* Optional Fields Toggle - More subtle */}
         <button
           onClick={() => setShowOptionalFields(!showOptionalFields)}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+          className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors py-1"
         >
-          <motion.div
-            animate={{ rotate: showOptionalFields ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronRight className="w-4 h-4" />
+          <Settings2 className="w-3 h-3" />
+          <span>More options</span>
+          <motion.div animate={{ rotate: showOptionalFields ? 90 : 0 }} transition={{ duration: 0.15 }}>
+            <ChevronRight className="w-3 h-3" />
           </motion.div>
-          <span>Optional fields</span>
-          <span className="text-xs text-muted-foreground/50">(SL, TP, Commission)</span>
         </button>
 
         <AnimatePresence>
@@ -971,13 +863,27 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-3 overflow-hidden"
+              transition={{ duration: 0.15 }}
+              className="space-y-2 overflow-hidden"
             >
-              <div className="grid grid-cols-2 gap-3">
+              {/* Entry Date */}
+              <div>
+                <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Entry Date</label>
+                <button
+                  onClick={() => setShowDatePicker(`entry-${activeTrade.id}`)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 bg-background/60 border border-border/50 rounded-lg text-foreground hover:bg-muted/30 transition-all text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
+                    <span className="font-medium">{formatDateForDisplay(activeTrade.entryDate)}</span>
+                  </div>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                    <Shield className="w-3 h-3 inline mr-1" />
+                  <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    <Shield className="w-2.5 h-2.5 inline mr-0.5" />
                     Stop Loss
                   </label>
                   <input
@@ -986,12 +892,12 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                     placeholder="Optional"
                     value={activeTrade.stopLoss}
                     onChange={(e) => updateTrade(activeTrade.id, "stopLoss", e.target.value)}
-                    className="w-full px-4 py-3 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm"
+                    className="w-full px-3 py-2 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                    <Target className="w-3 h-3 inline mr-1" />
+                  <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    <Target className="w-2.5 h-2.5 inline mr-0.5" />
                     Take Profit
                   </label>
                   <input
@@ -1000,14 +906,14 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                     placeholder="Optional"
                     value={activeTrade.takeProfit}
                     onChange={(e) => updateTrade(activeTrade.id, "takeProfit", e.target.value)}
-                    className="w-full px-4 py-3 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm"
+                    className="w-full px-3 py-2 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-xs"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                    <Receipt className="w-3 h-3 inline mr-1" />
+                  <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    <Receipt className="w-2.5 h-2.5 inline mr-0.5" />
                     Commission
                   </label>
                   <input
@@ -1016,18 +922,18 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                     placeholder="0.00"
                     value={activeTrade.commission}
                     onChange={(e) => updateTrade(activeTrade.id, "commission", e.target.value)}
-                    className="w-full px-4 py-3 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm"
+                    className="w-full px-3 py-2 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Other Charges</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Other Charges</label>
                   <input
                     type="number"
                     step="any"
                     placeholder="0.00"
                     value={activeTrade.otherCharges}
                     onChange={(e) => updateTrade(activeTrade.id, "otherCharges", e.target.value)}
-                    className="w-full px-4 py-3 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm"
+                    className="w-full px-3 py-2 bg-background/60 border border-border/50 rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-xs"
                   />
                 </div>
               </div>
@@ -1036,13 +942,13 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
         </AnimatePresence>
       </div>
 
-      {/* Add Another Trade */}
+      {/* Add Another Trade - More subtle */}
       {trades.length === 1 && (
         <button
           onClick={addNewTrade}
-          className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-border/50 rounded-xl text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
+          className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-border/40 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           Add another trade
         </button>
       )}
