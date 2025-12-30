@@ -813,19 +813,28 @@ export default function FullscreenBacktesting({
         console.log('Fast-path: No cached callback for', targetInterval, '- waiting for TradingView to resubscribe');
       }
       
-      // FIND CORRECT BAR in new timeframe using bar end time
+      // FIND CORRECT BAR in new timeframe using replayTimestampRef (the SINGLE source of truth)
+      // Per FX Replay spec: replayIndex = candle where candle.openTime <= replayTime < candle.closeTime
       const targetIntervalMinutes = intervalToMinutes(targetInterval);
       let newIndex = Math.min(5, cachedBars.length - 1);
+      
+      // CRITICAL: Use replayTimestampRef.current, NOT barEndTime from source timeframe
+      const replayTs = replayTimestampRef.current;
+      console.log('Finding bar in new TF using replayTime:', new Date(replayTs).toISOString());
       
       for (let i = cachedBars.length - 1; i >= 0; i--) {
         const barTime = cachedBars[i].time;
         const barEnd = barTime + (targetIntervalMinutes * 60 * 1000);
-        if (barTime <= barEndTime && barEndTime < barEnd) {
+        // Spec: candle.openTime <= replayTime < candle.closeTime
+        if (barTime <= replayTs && replayTs < barEnd) {
           newIndex = i;
           console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
           break;
         }
       }
+      
+      // Clamp index within bounds
+      newIndex = Math.max(0, Math.min(newIndex, cachedBars.length - 1));
       
       // UPDATE STATE (all at once)
       setAllBars(cachedBars);
@@ -1055,37 +1064,56 @@ export default function FullscreenBacktesting({
             allBarsRef.current = bars;
             setAllBars(bars);
             
-            // Calculate initial bar index
-            // If session has trades with progress, resume from there
-            // Otherwise, start at the replay start timestamp (session fromDate)
-            let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
-            const sessionHasTrades = sessionResult.trades && sessionResult.trades.length > 0;
-            const targetTs = sessionHasTrades ? sessionResult.progressPointer : null;
+            // ═══════════════════════════════════════════════════════════════════
+            // FX REPLAY SPEC: Session Resume
+            // 1) Restore replayTime FIRST (from progressPointer or fromDate)
+            // 2) Recalculate replayIndex from replayTime
+            // 3) replayIndex is ALWAYS derived from replayTime, never the reverse
+            // ═══════════════════════════════════════════════════════════════════
             
-            if (targetTs) {
-              // Resume from progress pointer (where user left off)
-              for (let i = bars.length - 1; i >= 0; i--) {
-                if (bars[i].time <= targetTs) {
-                  newIndex = i;
-                  break;
-                }
-              }
+            // Get resolution interval in ms for checking candle boundaries
+            const resolutionMinutes = intervalToMinutes(result.resolution);
+            const intervalMs = resolutionMinutes * 60 * 1000;
+            
+            // STEP 1: Restore replayTime FIRST (use progressPointer if exists, otherwise fromDate)
+            let targetReplayTime: number;
+            if (sessionResult.progressPointer && sessionResult.progressPointer > 0) {
+              // Resume from saved progress position
+              targetReplayTime = typeof sessionResult.progressPointer === 'number' 
+                ? sessionResult.progressPointer 
+                : new Date(sessionResult.progressPointer).getTime();
+              console.log('Session resume: Restoring replayTime from progressPointer:', new Date(targetReplayTime).toISOString());
             } else {
-              // Use replayStartTs from API (session.fromDate in seconds)
-              // This is where playback should begin - user sees all history before this
-              const replayStartTimestamp = result.replayStartTs ? result.replayStartTs * 1000 : new Date(sessionResult.fromDate).getTime();
-              console.log('Setting initial bar index to replay start:', { replayStartTs: result.replayStartTs, replayStartTimestamp, barsCount: bars.length });
-              
-              // Find the first bar at or after the replay start
-              for (let i = 0; i < bars.length; i++) {
-                if (bars[i].time >= replayStartTimestamp) {
-                  newIndex = i;
-                  console.log('Found replay start bar at index:', newIndex, 'time:', new Date(bars[i].time).toISOString());
-                  break;
-                }
+              // Fresh session - start at fromDate
+              targetReplayTime = result.replayStartTs ? result.replayStartTs * 1000 : new Date(sessionResult.fromDate).getTime();
+              console.log('Session resume: Using fromDate as replayTime:', new Date(targetReplayTime).toISOString());
+            }
+            
+            // CRITICAL: Set replayTimestampRef FIRST - this is the single source of truth
+            replayTimestampRef.current = targetReplayTime;
+            replayIntervalRef.current = result.resolution;
+            console.log('Set replayTimestampRef:', new Date(targetReplayTime).toISOString());
+            
+            // STEP 2: Derive replayIndex from replayTime
+            // Per spec: replayIndex = candle where candle.openTime <= replayTime < candle.closeTime
+            let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+            
+            for (let i = bars.length - 1; i >= 0; i--) {
+              const barTime = bars[i].time;
+              const barEnd = barTime + intervalMs;
+              // Spec: candle.openTime <= replayTime < candle.closeTime
+              if (barTime <= targetReplayTime && targetReplayTime < barEnd) {
+                newIndex = i;
+                console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
+                break;
               }
             }
-            setCurrentBarIndex(newIndex, bars, false);
+            
+            // Clamp index within bounds
+            newIndex = Math.max(0, Math.min(newIndex, bars.length - 1));
+            
+            // STEP 3: Set the bar index (preserveTimestamp=true since we already set replayTimestampRef)
+            setCurrentBarIndex(newIndex, bars, true);
           }
           
           // Load existing trades from session
@@ -1350,13 +1378,24 @@ export default function FullscreenBacktesting({
         setAllBars(bars);
         
         // Calculate the appropriate bar index based on replay timestamp or 'from' date
+        // Per FX Replay spec: replayIndex = candle where candle.openTime <= replayTime < candle.closeTime
         const replayTs = replayTimestampRef.current;
         let newIndex = bars.length >= 6 ? 5 : Math.max(0, bars.length - 1);
+        
+        // Get resolution interval in ms for checking candle boundaries
+        const resolutionMinutes = intervalToMinutes(resolution);
+        const intervalMs = resolutionMinutes * 60 * 1000;
+        
         if (replayTs > 0) {
-          // Use replay timestamp for timeframe switches
+          // Use replay timestamp for timeframe switches - find bar containing replayTs
+          console.log('Slow-path: Finding bar using replayTime:', new Date(replayTs).toISOString());
           for (let i = bars.length - 1; i >= 0; i--) {
-            if (bars[i].time <= replayTs) {
+            const barTime = bars[i].time;
+            const barEnd = barTime + intervalMs;
+            // Spec: candle.openTime <= replayTime < candle.closeTime
+            if (barTime <= replayTs && replayTs < barEnd) {
               newIndex = i;
+              console.log('Found bar at index:', i, 'time:', new Date(barTime).toISOString());
               break;
             }
           }
