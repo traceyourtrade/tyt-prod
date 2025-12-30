@@ -1023,7 +1023,8 @@ export default function FullscreenBacktesting({
             // Fallback: No cached callback - need full setSymbol + setResolution
             console.log('Fast-path fallback: Using setSymbol + setResolution (no cached callback)');
             const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-            const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}`;
+            // Use DYNAMIC symbol suffix to force TradingView to call getBars with fresh filterTime
+            const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}_${Date.now()}`;
             
             chart.setSymbol(symbolWithSuffix, () => {
               chart.setResolution(targetInterval, () => {
@@ -2040,8 +2041,9 @@ export default function FullscreenBacktesting({
             try {
               const chart = tvWidgetRef.current.activeChart();
               const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              const symbolWithSuffix = `${baseSymbol}#tf_${currentInterval}`;
-              console.log('Slow path: switching to symbol with resolution suffix:', symbolWithSuffix);
+              // Use DYNAMIC symbol suffix to force TradingView to call getBars with fresh filterTime
+              const symbolWithSuffix = `${baseSymbol}#tf_${currentInterval}_${Date.now()}`;
+              console.log('Slow path: switching to symbol with dynamic suffix:', symbolWithSuffix);
               
               // Add small delay to ensure cache is fully synchronized before TradingView queries
               await new Promise(resolve => setTimeout(resolve, 50));
@@ -2961,10 +2963,12 @@ export default function FullscreenBacktesting({
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
               const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              // Use STABLE symbol suffix - no Date.now() to preserve drawing positions
-              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}`;
+              // Use DYNAMIC symbol suffix with timestamp to FORCE TradingView to call getBars
+              // This is critical because stable symbols cause TradingView to skip getBars
+              // and use cached data that doesn't reflect the current replayTime
+              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}_${Date.now()}`;
               
-              console.log('Switching timeframe with stable symbol:', symbolWithSuffix);
+              console.log('Switching timeframe with dynamic symbol:', symbolWithSuffix);
               
               // Set the anchor AGAIN right before triggering getBars
               // This ensures it's available when TradingView calls getBars
