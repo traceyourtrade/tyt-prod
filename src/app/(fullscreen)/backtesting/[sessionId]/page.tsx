@@ -2099,6 +2099,16 @@ export default function FullscreenBacktesting({
         
         // Mark callbacks as ready - handleNext can now proceed
         callbacksReadyRef.current = true;
+        
+        // Resume playback if it was active before a timeframe switch
+        if (wasPlayingBeforeSwitchRef.current) {
+          console.log('subscribeBars: Resuming playback after timeframe switch');
+          wasPlayingBeforeSwitchRef.current = false;
+          // Use setTimeout to ensure this runs after current execution context
+          setTimeout(() => {
+            setIsPlaying(true);
+          }, 50);
+        }
       },
       unsubscribeBars: (subscriberUID: string) => {
         // For replay mode, we DON'T clear any callbacks on unsubscribe
