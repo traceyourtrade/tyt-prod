@@ -3644,7 +3644,8 @@ export default function FullscreenBacktesting({
             
             const nextBar = mergedBars[idx + 1];
             if (nextBar && onRealtimeCallbackRef.current) {
-              onRealtimeCallbackRef.current({ ...nextBar, time: nextBar.time });
+              // CRITICAL: TradingView expects time in SECONDS
+              onRealtimeCallbackRef.current({ ...nextBar, time: nextBar.time / 1000 });
             }
             
             setCurrentBarIndex(idx + 1, mergedBars);
@@ -3677,10 +3678,11 @@ export default function FullscreenBacktesting({
     }
     
     // Push bar to TradingView if subscribed
+    // CRITICAL: TradingView expects time in SECONDS, but bars are stored in milliseconds
     if (nextBar && callback) {
       callback({
         ...nextBar,
-        time: nextBar.time,
+        time: nextBar.time / 1000,
       });
       // Only advance bar index if we successfully pushed to chart
       setCurrentBarIndex(idx + 1, bars);
@@ -3847,13 +3849,14 @@ export default function FullscreenBacktesting({
     }
     
     // Push all bars in between to TradingView to update the chart
+    // CRITICAL: TradingView expects time in SECONDS, but bars are stored in milliseconds
     if (callback) {
       for (let i = idx + 1; i <= newIndex; i++) {
         const bar = bars[i];
         if (bar) {
           callback({
             ...bar,
-            time: bar.time,
+            time: bar.time / 1000,
           });
         }
       }
