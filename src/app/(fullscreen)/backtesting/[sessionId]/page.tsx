@@ -1675,14 +1675,13 @@ export default function FullscreenBacktesting({
             preserveTimestamp: Object.keys(barsCacheRef.current).length > 0,
             pendingSwitch: pendingSwitch ? { fromInterval: pendingSwitch.fromInterval } : undefined
           });
-          // CRITICAL: After switch completes, update both refs to the NEW state
-          // This ensures future switches start from the correct position
+          // CRITICAL: After switch completes, update interval ref to the NEW state
+          // Per FX Replay spec: "Simulated time must NOT change" during timeframe switch
+          // So we do NOT update replayTimestampRef - only replayIntervalRef
           if (pendingSwitch) {
-            if (cachedBars[newIndex]) {
-              replayTimestampRef.current = cachedBars[newIndex].time;
-            }
             replayIntervalRef.current = currentInterval;
             pendingTimeframeSwitchRef.current = null;
+            console.log('Timeframe switch complete - replayTime preserved at:', new Date(replayTimestampRef.current).toISOString());
           }
           return;
         }
@@ -1856,14 +1855,13 @@ export default function FullscreenBacktesting({
             preserveTimestamp: shouldPreserveTimestamp,
             pendingSwitch: pendingSwitch ? { fromInterval: pendingSwitch.fromInterval } : undefined
           });
-          // CRITICAL: After switch completes, update both refs to the NEW state
-          // This ensures future switches start from the correct position
+          // CRITICAL: After switch completes, update interval ref to the NEW state
+          // Per FX Replay spec: "Simulated time must NOT change" during timeframe switch
+          // So we do NOT update replayTimestampRef - only replayIntervalRef
           if (pendingSwitch) {
-            if (bars[newIndex]) {
-              replayTimestampRef.current = bars[newIndex].time;
-            }
             replayIntervalRef.current = currentInterval;
             pendingTimeframeSwitchRef.current = null;
+            console.log('Slow-path: Timeframe switch complete - replayTime preserved at:', new Date(replayTimestampRef.current).toISOString());
           }
           setIsPlaying(false);
           
