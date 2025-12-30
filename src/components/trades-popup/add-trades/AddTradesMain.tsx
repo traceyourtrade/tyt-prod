@@ -78,30 +78,30 @@ const AddtradesMain = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-[95%] max-w-[720px] max-h-[88vh] bg-card border border-border/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          className="w-[92%] max-w-[480px] max-h-[85vh] bg-card border border-border/50 rounded-xl shadow-2xl overflow-hidden flex flex-col"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary" />
+          {/* Compact Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Add Trade</h2>
-                <p className="text-xs text-muted-foreground">Record your trading activity</p>
+                <h2 className="text-sm font-semibold text-foreground">Add Trade</h2>
+                <p className="text-[10px] text-muted-foreground">Record your activity</p>
               </div>
             </div>
             <button
               onClick={handleClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="px-6 pt-4">
-            <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
+          {/* Compact Tab Navigation */}
+          <div className="px-4 pt-3">
+            <div className="flex gap-0.5 p-0.5 bg-muted/30 rounded-lg">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = selectedTab === tab.id;
@@ -110,38 +110,38 @@ const AddtradesMain = () => {
                     key={tab.id}
                     onClick={() => setSelectedTab(tab.id)}
                     className={cn(
-                      "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
+                      "flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200",
                       isActive
                         ? "bg-card text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{tab.label}</span>
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Account Selector */}
-          <div className="px-6 py-4">
-            <div className="flex items-center gap-3">
+          {/* Compact Account Selector */}
+          <div className="px-4 py-2.5">
+            <div className="flex items-center gap-2">
               <div className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg border",
+                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs",
                 isPropFirmMode 
                   ? "bg-amber-500/10 border-amber-500/30" 
                   : "bg-muted/30 border-border/50"
               )}>
                 {isPropFirmMode ? (
-                  <Zap className="w-4 h-4 text-amber-500" />
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
                 ) : (
-                  <Briefcase className="w-4 h-4 text-muted-foreground" />
+                  <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
                 <select
                   value={selectedAccount}
                   onChange={(e) => setSelectedAccount(e.target.value)}
-                  className="bg-transparent text-sm font-medium text-foreground outline-none cursor-pointer min-w-[120px]"
+                  className="bg-transparent text-xs font-medium text-foreground outline-none cursor-pointer min-w-[100px]"
                 >
                   {filteredAccounts.length > 0 ? (
                     filteredAccounts.map((account) => (
@@ -157,15 +157,15 @@ const AddtradesMain = () => {
                 </select>
               </div>
               {selectedAccount && (
-                <span className="text-xs text-muted-foreground">
-                  {isPropFirmMode ? "Prop firm" : "Trading"} account selected
+                <span className="text-[10px] text-muted-foreground">
+                  Account selected
                 </span>
               )}
             </div>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={selectedTab}
@@ -188,29 +188,29 @@ const AddtradesMain = () => {
             </AnimatePresence>
           </div>
 
-          {/* Sticky Footer - Submit Button (only for Manual tab) */}
+          {/* Compact Footer - Submit Button (only for Manual tab) */}
           {selectedTab === 1 && (
-            <div className="flex-shrink-0 px-6 py-4 border-t border-border/50 bg-card">
+            <div className="flex-shrink-0 px-4 py-3 border-t border-border/50 bg-card">
               <motion.button
                 onClick={triggerSubmit}
                 disabled={isSubmitting}
                 whileHover={!isSubmitting ? { scale: 1.01 } : {}}
-                whileTap={!isSubmitting ? { scale: 0.99 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.98 } : {}}
                 className={cn(
-                  "w-full py-4 rounded-xl text-sm font-semibold transition-all relative overflow-hidden",
+                  "w-full py-3 rounded-lg text-xs font-semibold transition-all relative overflow-hidden",
                   isSubmitting
                     ? "bg-muted text-muted-foreground cursor-wait"
-                    : "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:shadow-lg hover:shadow-primary/25"
+                    : "bg-gradient-to-r from-profit to-profit/80 text-white hover:shadow-lg hover:shadow-profit/25"
                 )}
               >
                 {isSubmitting ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="flex items-center justify-center gap-1.5">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     Saving...
                   </span>
                 ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <Plus className="w-4 h-4" />
+                  <span className="flex items-center justify-center gap-1.5">
+                    <Plus className="w-3.5 h-3.5" />
                     {tradesCount > 1 ? `Add ${tradesCount} Trades` : "Add Trade"}
                   </span>
                 )}
