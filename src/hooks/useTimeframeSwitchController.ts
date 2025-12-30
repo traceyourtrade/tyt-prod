@@ -1,6 +1,6 @@
 import { useRef, useCallback, useState } from 'react';
 
-export type SwitchState = 'IDLE' | 'PREPARING' | 'LOADING' | 'APPLYING' | 'FINALIZING';
+export type SwitchState = 'IDLE' | 'SWITCHING';
 
 interface SwitchRequest {
   targetInterval: string;
@@ -20,9 +20,7 @@ export interface TimeframeSwitchController {
   isIdle: boolean;
   isSwitching: boolean;
   currentTarget: string | null;
-  requestSwitch: (targetInterval: string) => Promise<void>;
-  confirmDataReady: () => void;
-  confirmApplied: () => void;
+  requestSwitch: (targetInterval: string) => void;
   finalize: (completedInterval?: string) => void;
   abort: (reason?: string) => void;
   reset: () => void;
@@ -38,7 +36,6 @@ export function useTimeframeSwitchController(
   const queueRef = useRef<SwitchRequest[]>([]);
   const currentRequestRef = useRef<SwitchRequest | null>(null);
   const currentTargetRef = useRef<string | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const updateState = useCallback((newState: SwitchState) => {
     stateRef.current = newState;
@@ -56,64 +53,46 @@ export function useTimeframeSwitchController(
     currentRequestRef.current = request;
     currentTargetRef.current = request.targetInterval;
     
-    updateState('PREPARING');
+    updateState('SWITCHING');
     onSwitchStart?.(request.targetInterval);
-    
-    timeoutRef.current = setTimeout(() => {
-      console.error('[TF Controller] Switch timeout - aborting');
-      abort('Timeout');
-    }, 10000);
   }, [updateState, onSwitchStart]);
   
-  const requestSwitch = useCallback((targetInterval: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (currentTargetRef.current === targetInterval && stateRef.current !== 'IDLE') {
-        console.log('[TF Controller] Same interval already switching, skipping');
-        resolve();
-        return;
-      }
-      
-      if (stateRef.current !== 'IDLE') {
-        queueRef.current = queueRef.current.filter(r => r.targetInterval !== targetInterval);
-      }
-      
-      queueRef.current.push({ targetInterval, resolve, reject });
-      console.log('[TF Controller] Queued switch to:', targetInterval, 'Queue length:', queueRef.current.length);
-      
-      if (stateRef.current === 'IDLE') {
-        processQueue();
-      }
-    });
+  const requestSwitch = useCallback((targetInterval: string): void => {
+    // If already switching to same interval, ignore
+    if (currentTargetRef.current === targetInterval && stateRef.current !== 'IDLE') {
+      console.log('[TF Controller] Same interval already switching, skipping');
+      return;
+    }
+    
+    // Remove any pending requests for this interval
+    if (stateRef.current !== 'IDLE') {
+      queueRef.current = queueRef.current.filter(r => r.targetInterval !== targetInterval);
+    }
+    
+    // Create a simple request (no promise tracking needed for sync usage)
+    const request: SwitchRequest = { 
+      targetInterval, 
+      resolve: () => {}, 
+      reject: () => {} 
+    };
+    
+    queueRef.current.push(request);
+    console.log('[TF Controller] Queued switch to:', targetInterval, 'Queue length:', queueRef.current.length);
+    
+    if (stateRef.current === 'IDLE') {
+      processQueue();
+    }
   }, [processQueue]);
-  
-  const confirmDataReady = useCallback(() => {
-    if (stateRef.current !== 'PREPARING') {
-      console.warn('[TF Controller] confirmDataReady called in wrong state:', stateRef.current);
-      return;
-    }
-    updateState('LOADING');
-  }, [updateState]);
-  
-  const confirmApplied = useCallback(() => {
-    if (stateRef.current !== 'LOADING') {
-      console.warn('[TF Controller] confirmApplied called in wrong state:', stateRef.current);
-      return;
-    }
-    updateState('APPLYING');
-  }, [updateState]);
   
   const finalize = useCallback((completedInterval?: string) => {
     if (stateRef.current === 'IDLE') {
-      console.log('[TF Controller] finalize called in IDLE state - no active switch to finalize');
+      // Already idle, nothing to finalize - this is safe to call
       return;
     }
     
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    
     const completedTarget = completedInterval || currentTargetRef.current;
+    console.log('[TF Controller] Finalize:', completedTarget);
+    
     currentRequestRef.current?.resolve();
     currentRequestRef.current = null;
     currentTargetRef.current = null;
@@ -121,14 +100,16 @@ export function useTimeframeSwitchController(
     updateState('IDLE');
     onSwitchComplete?.(completedTarget || '');
     
+    // Process next queued switch if any
     setTimeout(() => processQueue(), 0);
   }, [updateState, onSwitchComplete, processQueue]);
   
   const abort = useCallback((reason?: string) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    if (stateRef.current === 'IDLE') {
+      return;
     }
+    
+    console.log('[TF Controller] Abort:', reason);
     
     const error = new Error(reason || 'Switch aborted');
     currentRequestRef.current?.reject(error);
@@ -138,15 +119,11 @@ export function useTimeframeSwitchController(
     updateState('IDLE');
     onSwitchError?.(error);
     
+    // Process next queued switch if any
     setTimeout(() => processQueue(), 0);
   }, [updateState, onSwitchError, processQueue]);
   
   const reset = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    
     queueRef.current = [];
     currentRequestRef.current = null;
     currentTargetRef.current = null;
@@ -159,8 +136,6 @@ export function useTimeframeSwitchController(
     isSwitching: state !== 'IDLE',
     currentTarget: currentTargetRef.current,
     requestSwitch,
-    confirmDataReady,
-    confirmApplied,
     finalize,
     abort,
     reset,
