@@ -885,13 +885,15 @@ export default function FullscreenBacktesting({
       if (triggerSymbolSwitch && tvWidgetRef.current) {
         try {
           const chart = tvWidgetRef.current.activeChart();
-          const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-          const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}`;
+          const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
           
-          // Use setSymbol + setResolution to trigger TradingView to call getBars
-          // Note: Do NOT call resetData() here - it causes infinite loops
-          chart.setSymbol(symbolWithSuffix, () => {
+          // OPTIMIZATION: If we have cached callback, use setResolution only (skip setSymbol)
+          // setSymbol forces a full re-handshake with datafeed (300-600ms delay)
+          // setResolution alone is much faster when we have cached data
+          if (cachedCallback) {
+            console.log('Fast-path optimized: Using setResolution only (have cached callback)');
             chart.setResolution(targetInterval, () => {
+              // Minimal delay for drawing restoration
               setTimeout(() => {
                 try {
                   const innerChart = tvWidgetRef.current?.activeChart();
@@ -909,13 +911,10 @@ export default function FullscreenBacktesting({
                     const replayTs = replayTimestampRef.current;
                     if (replayTs > 0) {
                       const resolutionMinutes = intervalToMinutes(targetInterval);
-                      // Show ~80 bars: 60 before replay position, 20 after
                       const barMs = resolutionMinutes * 60 * 1000;
                       const visibleFrom = (replayTs - barMs * 60) / 1000;
                       const visibleTo = (replayTs + barMs * 20) / 1000;
                       innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                      
-                      // Reset price scale to auto-fit the visible bars
                       try {
                         innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
                       } catch (e) {}
@@ -925,9 +924,48 @@ export default function FullscreenBacktesting({
                   console.warn('Error in post-switch cleanup:', e);
                 }
                 isChangingResolutionRef.current = false;
-              }, 300);
+              }, 50); // Reduced from 300ms to 50ms
             });
-          });
+          } else {
+            // Fallback: No cached callback - need full setSymbol + setResolution
+            console.log('Fast-path fallback: Using setSymbol + setResolution (no cached callback)');
+            const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
+            const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}`;
+            
+            chart.setSymbol(symbolWithSuffix, () => {
+              chart.setResolution(targetInterval, () => {
+                setTimeout(() => {
+                  try {
+                    const innerChart = tvWidgetRef.current?.activeChart();
+                    if (innerChart) {
+                      if (pendingDrawingsRef.current.length > 0) {
+                        const currentShapes = DrawingManager.getShapeCount(innerChart);
+                        if (currentShapes === 0) {
+                          DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                        }
+                        pendingDrawingsRef.current = [];
+                      }
+                      
+                      const replayTs = replayTimestampRef.current;
+                      if (replayTs > 0) {
+                        const resolutionMinutes = intervalToMinutes(targetInterval);
+                        const barMs = resolutionMinutes * 60 * 1000;
+                        const visibleFrom = (replayTs - barMs * 60) / 1000;
+                        const visibleTo = (replayTs + barMs * 20) / 1000;
+                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        try {
+                          innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                        } catch (e) {}
+                      }
+                    }
+                  } catch (e) {
+                    console.warn('Error in post-switch cleanup:', e);
+                  }
+                  isChangingResolutionRef.current = false;
+                }, 150); // Reduced from 300ms
+              });
+            });
+          }
         } catch (e) {
           isChangingResolutionRef.current = false;
         }
