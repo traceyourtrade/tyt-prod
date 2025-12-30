@@ -25,10 +25,13 @@ import calendarPopUp from "@/store/calendarPopUp";
 import notifications from "@/store/notifications";
 import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import { useDataStore } from "@/store/store";
+import useAccountDetails from "@/store/accountdetails";
 
 
 interface Trade {
-  id: string;
+  id?: string;
+  _id?: string;
+  tradeId?: string;
   date: string;
   time: string;
   OpenTime: string;
@@ -71,6 +74,7 @@ const CalendarPopup = () => {
   const { setAlertBoxG } = notifications();
   const { selectedAccounts } = useModeFilteredAccounts();
   const { bkurl } = useDataStore();
+  const { setAccounts } = useAccountDetails();
   const tokenn = Cookies.get("ProJournX");
   const popupRef = useRef<HTMLDivElement>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; tradeId: string | null }>({ show: false, tradeId: null });
@@ -367,6 +371,8 @@ const CalendarPopup = () => {
       }
 
       const data = await response.json();
+      setAlertBoxG("Trade deleted successfully", "success");
+      await setAccounts();
     } catch (error) {
       console.error("Error deleting trade:", error);
       setAlertBoxG("An error occurred while deleting the trade.", "error");
@@ -670,7 +676,7 @@ const CalendarPopup = () => {
                               <FontAwesomeIcon icon={faPenToSquare} className="text-gray-400 hover:text-emerald-400 text-[10px] md:text-xs" />
                             </button>
                             <button 
-                              onClick={() => confirmDelete(data.id)}
+                              onClick={() => confirmDelete(data._id || data.id || data.tradeId || String(data.Ticket))}
                               className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-white/[0.04] hover:bg-red-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-red-500/30"
                             >
                               <FontAwesomeIcon icon={faTrashCan} className="text-gray-400 hover:text-red-400 text-[10px] md:text-xs" />
