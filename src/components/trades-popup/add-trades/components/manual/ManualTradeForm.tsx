@@ -161,8 +161,15 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     if (errorMessage) setErrorMessage(null);
   };
 
+  const popularSymbols: Record<string, string[]> = {
+    "FOREX": ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "AUDUSD", "USDCAD"],
+    "US STOCKS": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"],
+    "INDIAN STOCKS": ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK", "SBIN"],
+    "CRYPTO": ["BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "BNBUSD", "ADAUSD"]
+  };
+
   const getSymbols = () => {
-    const searchLower = symbolSearch.toLowerCase();
+    const searchLower = symbolSearch.toLowerCase().trim();
     let source: Array<{ symbol: string; name: string; market?: string; curr?: string }> = [];
     
     switch (market) {
@@ -172,11 +179,18 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       case "CRYPTO": source = crypto; break;
     }
     
+    if (!searchLower) {
+      const popular = popularSymbols[market] || [];
+      return source.filter(s => popular.includes(s.symbol)).slice(0, 6);
+    }
+    
     return source.filter(s => 
       s.symbol.toLowerCase().includes(searchLower) ||
       s.name.toLowerCase().includes(searchLower)
     ).slice(0, 8);
   };
+  
+  const isShowingPopularSymbols = !symbolSearch.trim();
 
   const selectSymbol = (sym: { symbol: string; market?: string; curr?: string }) => {
     updateTrade(activeTrade.id, "symbol", sym.symbol);
@@ -565,7 +579,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       )}
 
       {/* Main Form Card */}
-      <div className="bg-gradient-to-b from-muted/20 to-transparent border border-border/40 rounded-2xl p-4 space-y-4">
+      <div className="bg-gradient-to-b from-muted/30 via-muted/10 to-transparent border border-border/40 rounded-2xl p-5 space-y-4 backdrop-blur-sm shadow-lg shadow-black/5">
         
         {/* Symbol Search */}
         <div className="relative">
@@ -603,25 +617,35 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-30 max-h-64 overflow-y-auto"
+                className="absolute top-full left-0 right-0 mt-2 bg-card/95 backdrop-blur-md border border-border rounded-xl shadow-2xl z-30 max-h-72 overflow-y-auto"
               >
+                {isShowingPopularSymbols && (
+                  <div className="px-4 py-2 border-b border-border/50">
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-primary" />
+                      Popular {market === "FOREX" ? "Pairs" : "Symbols"}
+                    </span>
+                  </div>
+                )}
                 {getSymbols().map((sym, idx) => (
                   <button
                     key={sym.symbol}
                     onClick={() => selectSymbol(sym)}
                     className={cn(
-                      "w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-muted/50 transition-colors",
-                      idx === 0 && "rounded-t-xl",
+                      "w-full flex items-center justify-between px-4 py-3 text-sm text-left hover:bg-primary/10 transition-all",
                       idx === getSymbols().length - 1 && "rounded-b-xl"
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center ring-1 ring-primary/20">
                         <span className="text-xs font-bold text-primary">{sym.symbol.slice(0, 2)}</span>
                       </div>
-                      <span className="font-semibold text-foreground">{sym.symbol}</span>
+                      <div>
+                        <span className="font-semibold text-foreground">{sym.symbol}</span>
+                        <p className="text-[10px] text-muted-foreground truncate max-w-[140px]">{sym.name}</p>
+                      </div>
                     </div>
-                    <span className="text-xs text-muted-foreground truncate max-w-[120px]">{sym.name}</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
                   </button>
                 ))}
               </motion.div>
@@ -662,6 +686,13 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
           </div>
         </div>
 
+        {/* Section Divider */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+          <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-widest">Trade Details</span>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+        </div>
+
         {/* Price & Size Row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -690,7 +721,59 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
               onChange={(e) => updateTrade(activeTrade.id, "size", e.target.value)}
               className="w-full px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-sm font-medium"
             />
+            {/* Quick Size Presets */}
+            <div className="flex gap-1.5 mt-2">
+              {(market === "FOREX" ? [0.01, 0.1, 0.5, 1.0] : [1, 10, 50, 100]).map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => updateTrade(activeTrade.id, "size", preset.toString())}
+                  className={cn(
+                    "flex-1 py-1.5 text-[10px] font-semibold rounded-lg transition-all",
+                    parseFloat(activeTrade.size) === preset
+                      ? "bg-primary/20 text-primary ring-1 ring-primary/30"
+                      : "bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  )}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* Position Value Display */}
+        {activeTrade.entryPrice && activeTrade.size && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border border-primary/20 rounded-xl"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Position Value</p>
+                <p className="text-sm font-bold text-foreground">
+                  ${((parseFloat(activeTrade.entryPrice) || 0) * (parseFloat(activeTrade.size) || 0) * getContractSize(activeTrade.market, activeTrade.symbol)).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground">Contract Size</p>
+              <p className="text-xs font-medium text-muted-foreground">
+                {getContractSize(activeTrade.market, activeTrade.symbol).toLocaleString()} units
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Section Divider - Timing */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
+          <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-widest">Timing & Status</span>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border/50 to-transparent" />
         </div>
 
         {/* Entry Date */}
@@ -698,13 +781,15 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
           <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Entry Date & Time</label>
           <button
             onClick={() => setShowDatePicker(`entry-${activeTrade.id}`)}
-            className="w-full flex items-center justify-between px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground hover:bg-muted/30 transition-colors group"
+            className="w-full flex items-center justify-between px-4 py-3.5 bg-background/50 border border-border/50 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 transition-all group"
           >
             <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Calendar className="w-4 h-4 text-primary" />
+              </div>
               <span className="text-sm font-medium">{formatDateForDisplay(activeTrade.entryDate)}</span>
             </div>
-            <Clock className="w-4 h-4 text-muted-foreground" />
+            <Clock className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </button>
         </div>
 
