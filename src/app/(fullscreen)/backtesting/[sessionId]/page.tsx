@@ -399,16 +399,51 @@ export default function FullscreenBacktesting({
   };
   
   // Advance replayTime by one candle duration and derive new index
+  // SMART SKIP: If we land in a gap (weekend/market closure), jump to next available bar
   const advanceReplayTime = (intervalMs: number): { newReplayTime: number; newIndex: number } => {
     const bars = allBarsRef.current;
     const currentReplayTime = replayTimestampRef.current;
+    const currentIndex = currentBarIndexRef.current;
+    const resolution = currentIntervalRef.current;
+    const resolutionMs = intervalToMs(resolution); // Use resolution interval, not caller's interval
     
-    // Advance time by one candle
-    const newReplayTime = currentReplayTime + intervalMs;
+    // First, try advancing by the requested amount
+    let newReplayTime = currentReplayTime + intervalMs;
+    let newIndex = deriveBarIndexFromTime(bars, newReplayTime, resolution);
+    
+    // SMART SKIP: Check if we're in a gap by comparing against next bar's close time
+    // This works for any step size (1 candle, skip forward, accelerated playback)
+    if (bars && bars.length > 0 && newIndex < bars.length - 1) {
+      const nextBarIndex = newIndex + 1;
+      const nextBar = bars[nextBarIndex];
+      const nextBarCloseTime = nextBar.time + resolutionMs;
+      
+      // If our new time hasn't reached the next bar's close, but the next bar exists
+      // and there's a significant gap (more than 2x the resolution), smart skip to it
+      const timeSinceCurrentBarClose = newReplayTime - (bars[newIndex].time + resolutionMs);
+      const timeToNextBarClose = nextBarCloseTime - newReplayTime;
+      
+      // Detect gap: if time since current bar close is positive (we're past it)
+      // but next bar's close is still far away (more than 1 resolution interval ahead)
+      if (timeSinceCurrentBarClose > 0 && timeToNextBarClose > resolutionMs) {
+        // We're in a gap - jump directly to the next bar's close time
+        const gapHours = Math.round(timeToNextBarClose / (1000 * 60 * 60));
+        
+        // Only log and skip if it's a significant gap (more than 2 hours for any timeframe)
+        if (timeToNextBarClose > 2 * 60 * 60 * 1000) {
+          console.log('advanceReplayTime: SMART SKIP over gap (weekend/holiday)', {
+            skippedFrom: new Date(newReplayTime).toISOString(),
+            skippedTo: new Date(nextBarCloseTime).toISOString(),
+            gapHours,
+          });
+          
+          newReplayTime = nextBarCloseTime;
+          newIndex = nextBarIndex;
+        }
+      }
+    }
+    
     replayTimestampRef.current = newReplayTime;
-    
-    // Derive new bar index from the new replay time
-    const newIndex = deriveBarIndexFromTime(bars, newReplayTime, currentIntervalRef.current);
     
     console.log('advanceReplayTime:', {
       oldTime: new Date(currentReplayTime).toISOString(),
