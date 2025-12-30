@@ -42,9 +42,17 @@ interface Trade {
   Commission: number;
   Swap: number;
   Profit: number;
+  Currency?: string;
+  marketType?: string;
   accountName?: string;
   accountId?: string;
 }
+
+const getCurrencySymbol = (currency?: string, marketType?: string): string => {
+  if (currency === 'INR') return '₹';
+  if (marketType === 'INDIAN F&O' || marketType === 'INDIAN STOCKS' || marketType === 'INDIAN_STOCK') return '₹';
+  return '$';
+};
 
 interface GroupedTrade {
   date: string;
@@ -115,6 +123,16 @@ const CalendarPopup = () => {
   const grossWins = dataToday.filter(t => t.Profit > 0).reduce((a, t) => a + t.Profit, 0);
   const grossLosses = Math.abs(dataToday.filter(t => t.Profit < 0).reduce((a, t) => a + t.Profit, 0));
   const profitFactor = grossLosses > 0 ? (grossWins / grossLosses).toFixed(2) : grossWins > 0 ? "∞" : "0.00";
+  
+  const primaryCurrency = dataToday[0]?.Currency || 'USD';
+  const primaryMarketType = dataToday[0]?.marketType;
+  const dayCurrencySymbol = getCurrencySymbol(primaryCurrency, primaryMarketType);
+  const isINR = primaryCurrency === 'INR';
+  
+  const formatPnLValue = (value: number, decimals: number = 2): string => {
+    const absValue = Math.abs(value);
+    return absValue.toLocaleString(isINR ? 'en-IN' : 'en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  };
 
   const GraphComp = () => {
     let cumulativeSum = 0;
@@ -472,7 +490,7 @@ const CalendarPopup = () => {
             <div className="flex items-center gap-2 flex-wrap">
               <div className={`px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl ${grossPnL >= 0 ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
                 <span className={`text-[11px] md:text-sm font-bold ${grossPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {grossPnL >= 0 ? '+' : ''}${Math.abs(grossPnL).toFixed(0)}
+                  {grossPnL >= 0 ? '+' : '-'}{dayCurrencySymbol}{formatPnLValue(grossPnL, 0)}
                 </span>
               </div>
               
@@ -502,7 +520,7 @@ const CalendarPopup = () => {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-gray-500 font-medium">Cumulative P&L</span>
                   <div className={`px-2 md:px-2.5 py-0.5 md:py-1 rounded-lg text-[9px] md:text-[10px] font-semibold ${grossPnL >= 0 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/15 text-red-400 border border-red-500/20'}`}>
-                    {grossPnL >= 0 ? '+' : ''}{grossPnL.toFixed(2)}
+                    {grossPnL >= 0 ? '+' : '-'}{dayCurrencySymbol}{formatPnLValue(grossPnL)}
                   </div>
                 </div>
                 <div className="h-24 md:h-36">
@@ -514,7 +532,7 @@ const CalendarPopup = () => {
                 <StatCard 
                   icon={faChartLine} 
                   label="Gross P&L" 
-                  value={`$${grossPnL.toFixed(2)}`}
+                  value={`${dayCurrencySymbol}${formatPnLValue(grossPnL)}`}
                   valueColor={grossPnL >= 0 ? "text-emerald-400" : "text-red-400"}
                   iconBg={grossPnL >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
                 />
@@ -528,7 +546,7 @@ const CalendarPopup = () => {
                 <StatCard 
                   icon={faCoins} 
                   label="Commissions" 
-                  value={`$${totalCommissions.toFixed(2)}`}
+                  value={`${dayCurrencySymbol}${formatPnLValue(totalCommissions)}`}
                   valueColor="text-amber-400"
                   iconBg="bg-amber-500/10"
                 />
@@ -594,7 +612,7 @@ const CalendarPopup = () => {
                         </td>
                         <td className="px-3 md:px-5 py-3 md:py-4">
                           <span className={`text-xs md:text-sm font-bold whitespace-nowrap ${data.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                            {data.Profit >= 0 ? '+' : ''}{data.Profit < 0 ? `-$${Math.abs(data.Profit).toFixed(2)}` : `$${data.Profit.toFixed(2)}`}
+                            {data.Profit >= 0 ? '+' : '-'}{getCurrencySymbol(data.Currency, data.marketType)}{Math.abs(data.Profit).toLocaleString(data.Currency === 'INR' ? 'en-IN' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </td>
                         <td className="px-3 md:px-5 py-3 md:py-4">
