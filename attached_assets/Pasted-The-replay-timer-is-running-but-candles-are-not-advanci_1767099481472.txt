@@ -1,0 +1,94 @@
+The replay timer is running, but candles are not advancing.
+This means the play loop is active, but replayIndex is NOT changing.
+
+This is a LOGIC BUG, not a UI or chart issue.
+
+––––––––––––––––––––––
+ROOT CAUSE (DO NOT IGNORE)
+––––––––––––––––––––––
+The play timer is incrementing time or ticks,
+but replayIndex is blocked by a guard condition OR
+replayIndex is already at an invalid boundary.
+
+Common incorrect patterns that MUST be removed:
+
+❌ if (replayIndex < candles.length - 1) replayIndex++
+❌ if (replayIndex === lastIndex) return
+❌ advancing time without advancing replayIndex
+❌ using replayTime to drive UI while replayIndex stays constant
+
+––––––––––––––––––––––
+MANDATORY FIX
+––––––––––––––––––––––
+
+1) There must be EXACTLY ONE function that advances replay:
+
+function advanceReplay() {
+  const nextIndex = replayIndex + 1;
+
+  if (!candles[nextIndex]) {
+    console.warn("Replay reached end of candles");
+    stopReplay(); // or pause
+    return;
+  }
+
+  replayIndex = nextIndex;
+  replayTime = candles[replayIndex].time;
+}
+
+• Timer MUST call ONLY this function
+• Timer must NOT modify replayTime directly
+• UI must NOT modify replayIndex directly
+
+––––––––––––––––––––––
+CRITICAL RULE
+––––––––––––––––––––––
+If replayTime changes but replayIndex does NOT,
+the system is BROKEN.
+
+ReplayTime may ONLY change INSIDE advanceReplay().
+
+––––––––––––––––––––––
+FORCE SYNC AFTER TF SWITCH / RESUME
+––––––––––––––––––––––
+
+After loading candles (timeframe switch OR session resume),
+you MUST call:
+
+syncReplayIndexFromTime()
+
+AND THEN immediately validate:
+
+if (!candles[replayIndex + 1]) {
+  console.error("Replay cannot advance — index at boundary");
+}
+
+If this error logs, your replayIndex mapping is wrong.
+
+––––––––––––––––––––––
+ADD THESE DEBUG LOGS (REQUIRED)
+––––––––––––––––––––––
+
+Inside the timer tick:
+
+console.log("TICK", {
+  replayIndex,
+  replayTime,
+  nextCandleExists: !!candles[replayIndex + 1],
+  currentCandleTime: candles[replayIndex]?.time,
+  nextCandleTime: candles[replayIndex + 1]?.time
+});
+
+If nextCandleExists is false while timer runs,
+THAT is why candles are stuck.
+
+––––––––––––––––––––––
+ACCEPTANCE CONDITIONS
+––––––––––––––––––––––
+✔ Each timer tick increases replayIndex by exactly 1
+✔ replayTime always equals candles[replayIndex].time
+✔ Timer stops when no next candle exists
+✔ Candles NEVER freeze while timer runs
+
+If timer runs but replayIndex does not change,
+the fix is NOT complete.
