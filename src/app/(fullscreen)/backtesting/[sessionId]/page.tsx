@@ -2725,16 +2725,12 @@ export default function FullscreenBacktesting({
           captureDrawings: false  // Already captured above
         });
         
-        // CRITICAL: Clear bars cache for new resolution to force fresh data fetch
-        // This is safer than using Date.now() in symbol (which breaks drawing coordinates)
-        delete barsCacheRef.current[newInterval];
-        console.log('Cleared bars cache for resolution:', newInterval);
+        // NOTE: Do NOT clear bars cache here - processTimeframeSwitch handles cache validation
+        // Clearing after processTimeframeSwitch causes bar index mismatch (fast path sets index
+        // then cache clear triggers new fetch which resets index to wrong position)
         
         // Update subscribed resolution ref so handleNext uses correct bars
         subscribedResolutionRef.current = newInterval;
-        
-        // NOTE: Don't clear callback here - subscribeBars will be called by TradingView
-        // and will update onRealtimeCallbackRef.current with fresh callback
         
         // CRITICAL: Force TradingView to reload data with correct filtering
         // Use stable symbol suffix (no Date.now()) to preserve drawing bar-index mappings
