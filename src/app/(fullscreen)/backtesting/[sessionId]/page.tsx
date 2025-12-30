@@ -331,6 +331,8 @@ export default function FullscreenBacktesting({
   const pendingTimeframeSwitchRef = useRef<{ fromInterval: string; fromTimestamp: number } | null>(null); // Captures source interval at switch initiation
   const pendingAnchorTimestampRef = useRef<number | null>(null); // Set BEFORE resolution change so getBars can use correct anchor even when called early
   const pendingDrawingsRef = useRef<any[]>([]); // Stores drawings before resolution change for restoration
+  const pendingVisibleRangeRef = useRef<{ from: number; to: number } | null>(null); // Stores visible range before resolution change
+  const pendingVisibleRangeAppliedRef = useRef<boolean>(false); // Prevents double-application of visible range
   const favoriteDrawingToolsRef = useRef<string[]>([]); // Stores favorite drawing tools
   const lastSavedDrawingsCountRef = useRef<number>(0); // Tracks drawing count to prevent empty overwrites
   const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
@@ -734,7 +736,22 @@ export default function FullscreenBacktesting({
       fromTimestamp: barStartTime
     };
     
-    // 5. CAPTURE DRAWINGS before resolution change (if requested)
+    // 5a. CAPTURE VISIBLE RANGE before resolution change (for zoom preservation)
+    if (tvWidgetRef.current) {
+      try {
+        const chart = tvWidgetRef.current.activeChart();
+        const visibleRange = chart.getVisibleRange();
+        if (visibleRange && visibleRange.from != null && visibleRange.to != null) {
+          pendingVisibleRangeRef.current = visibleRange;
+          pendingVisibleRangeAppliedRef.current = false; // Reset flag for new capture
+          console.log('Captured visible range:', visibleRange);
+        }
+      } catch (e) {
+        console.warn('Could not capture visible range:', e);
+      }
+    }
+    
+    // 5b. CAPTURE DRAWINGS before resolution change (if requested)
     if (captureDrawings && tvWidgetRef.current) {
       try {
         const chart = tvWidgetRef.current.activeChart();
@@ -1836,16 +1853,27 @@ export default function FullscreenBacktesting({
                           pendingDrawingsRef.current = [];
                         }
                         
-                        // Set visible range centered on replay timestamp
-                        const replayTs = replayTimestampRef.current;
-                        if (replayTs > 0) {
-                          const resolutionMinutes = intervalToMinutes(currentInterval);
-                          const barsToShow = 50;
-                          const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
-                          const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
-                          const visibleTo = (replayTs + windowMs * 0.1) / 1000;
-                          console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
-                          innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        // CRITICAL: Restore the captured visible range to preserve zoom level
+                        // This prevents the chart from zooming in when switching timeframes
+                        // Use flag to prevent double-application if onIntervalChanged callback already applied it
+                        const savedRange = pendingVisibleRangeRef.current;
+                        if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
+                          console.log('Restoring captured visible range (slow path):', savedRange);
+                          innerChart.setVisibleRange(savedRange);
+                          pendingVisibleRangeAppliedRef.current = true; // Mark as applied
+                        } else if (!pendingVisibleRangeAppliedRef.current) {
+                          // Fallback: Set visible range centered on replay timestamp (only if nothing was applied yet)
+                          const replayTs = replayTimestampRef.current;
+                          if (replayTs > 0) {
+                            const resolutionMinutes = intervalToMinutes(currentInterval);
+                            const barsToShow = 50;
+                            const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
+                            const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
+                            const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+                            console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
+                            innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                            pendingVisibleRangeAppliedRef.current = true;
+                          }
                         }
                       }
                     } catch (e) {
@@ -2680,8 +2708,9 @@ export default function FullscreenBacktesting({
           }
         }
         
-        // Store saved range for use in callback
-        const capturedVisibleRange = savedVisibleRange;
+        // Store saved range for use in callback AND in the slow path
+        pendingVisibleRangeRef.current = savedVisibleRange;
+        pendingVisibleRangeAppliedRef.current = false; // Reset flag for new switch
         
         // Update refs and state via the unified helper
         processTimeframeSwitch(newInterval, { 
@@ -2739,10 +2768,13 @@ export default function FullscreenBacktesting({
                     if (innerChart) {
                       // CRITICAL: Restore the captured visible range to preserve zoom level
                       // This prevents the chart from zooming in when switching timeframes
-                      if (capturedVisibleRange && capturedVisibleRange.from && capturedVisibleRange.to) {
-                        console.log('Restoring captured visible range:', capturedVisibleRange);
-                        innerChart.setVisibleRange(capturedVisibleRange);
-                      } else {
+                      // Use the ref (authoritative source) and flag to prevent double-application
+                      const savedRange = pendingVisibleRangeRef.current;
+                      if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
+                        console.log('Restoring captured visible range (fast path):', savedRange);
+                        innerChart.setVisibleRange(savedRange);
+                        pendingVisibleRangeAppliedRef.current = true; // Mark as applied
+                      } else if (!pendingVisibleRangeAppliedRef.current) {
                         // Fallback: calculate a reasonable default range if no captured range
                         const replayTs = replayTimestampRef.current;
                         if (replayTs > 0) {
@@ -2751,6 +2783,7 @@ export default function FullscreenBacktesting({
                           const visibleFrom = (replayTs - barMs * 60) / 1000;
                           const visibleTo = (replayTs + barMs * 20) / 1000;
                           innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                          pendingVisibleRangeAppliedRef.current = true;
                         }
                       }
                       
