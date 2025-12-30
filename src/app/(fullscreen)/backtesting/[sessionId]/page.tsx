@@ -345,6 +345,7 @@ export default function FullscreenBacktesting({
   const isUnmountingRef = useRef<boolean>(false); // Track if component is unmounting to prevent empty saves
   const callbacksReadyRef = useRef<boolean>(false); // Gate handleNext until subscribeBars fires on current widget
   const replayReadyRef = useRef<boolean>(false); // TRANSACTIONAL GATE: blocks ALL replay advancement during TF switches
+  const fastPathActiveRef = useRef<boolean>(false); // Prevents effect from enabling replayReady during fast-path TF switch
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -872,6 +873,7 @@ export default function FullscreenBacktesting({
     currentIntervalRef.current = targetInterval;
     
     if (useFastPath && cachedBars) {
+      fastPathActiveRef.current = true; // Prevent effect from enabling replayReady
       console.log('Using FAST PATH with', cachedBars.length, 'cached bars');
       
       // Set flag to prevent data fetch effect from running
@@ -986,9 +988,11 @@ export default function FullscreenBacktesting({
                   
                   // Only NOW enable replay
                   replayReadyRef.current = true;
+                  fastPathActiveRef.current = false;
                 } catch (e) {
                   console.warn('Error in post-switch cleanup:', e);
                   replayReadyRef.current = true; // Still enable to avoid permanent block
+                  fastPathActiveRef.current = false;
                 }
                 isChangingResolutionRef.current = false;
               }, 50); // Reduced from 300ms to 50ms
@@ -1051,9 +1055,11 @@ export default function FullscreenBacktesting({
                     
                     // Only NOW enable replay
                     replayReadyRef.current = true;
+                    fastPathActiveRef.current = false;
                   } catch (e) {
                     console.warn('Error in post-switch cleanup:', e);
                     replayReadyRef.current = true; // Still enable to avoid permanent block
+                    fastPathActiveRef.current = false;
                   }
                   isChangingResolutionRef.current = false;
                 }, 150); // Reduced from 300ms
@@ -1794,9 +1800,13 @@ export default function FullscreenBacktesting({
           const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
           callbacksReadyRef.current = !!cachedCallback;
           
-          // ATOMIC TRANSACTION COMPLETE: Re-enable replay
-          console.log('Slow-path cached: ATOMIC TRANSACTION COMPLETE, replayReady=true');
-          replayReadyRef.current = true;
+          // ATOMIC TRANSACTION COMPLETE: Re-enable replay (only if fast-path isn't handling it)
+          if (!fastPathActiveRef.current) {
+            console.log('Slow-path cached: ATOMIC TRANSACTION COMPLETE, replayReady=true');
+            replayReadyRef.current = true;
+          } else {
+            console.log('Slow-path cached: fastPathActive, skipping replayReady (fast-path will handle)');
+          }
           return;
         }
       } else {
@@ -1834,9 +1844,13 @@ export default function FullscreenBacktesting({
         const cachedCallback = realtimeCallbacksRef.current.get(currentInterval);
         callbacksReadyRef.current = !!cachedCallback;
         
-        // ATOMIC TRANSACTION COMPLETE: Re-enable replay
-        console.log('Slow-path no-replay: ATOMIC TRANSACTION COMPLETE, replayReady=true');
-        replayReadyRef.current = true;
+        // ATOMIC TRANSACTION COMPLETE: Re-enable replay (only if fast-path isn't handling it)
+        if (!fastPathActiveRef.current) {
+          console.log('Slow-path no-replay: ATOMIC TRANSACTION COMPLETE, replayReady=true');
+          replayReadyRef.current = true;
+        } else {
+          console.log('Slow-path no-replay: fastPathActive, skipping replayReady (fast-path will handle)');
+        }
         return;
       }
     }
