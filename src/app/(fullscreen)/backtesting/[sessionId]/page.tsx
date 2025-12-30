@@ -2724,13 +2724,11 @@ export default function FullscreenBacktesting({
         delete barsCacheRef.current[newInterval];
         console.log('Cleared bars cache for resolution:', newInterval);
         
-        // CRITICAL: Also clear the stale callback from the map
-        // TradingView will call subscribeBars with a fresh callback after setSymbol/resetData
-        // Using a stale cached callback causes playback to get stuck
-        realtimeCallbacksRef.current.delete(newInterval);
+        // Update subscribed resolution ref so handleNext uses correct bars
+        subscribedResolutionRef.current = newInterval;
         
-        // Mark callbacks as not ready until subscribeBars is called with fresh callback
-        callbacksReadyRef.current = false;
+        // NOTE: Don't clear callback here - subscribeBars will be called by TradingView
+        // and will update onRealtimeCallbackRef.current with fresh callback
         
         // CRITICAL: Force TradingView to reload data with correct filtering
         // Use stable symbol suffix (no Date.now()) to preserve drawing bar-index mappings
