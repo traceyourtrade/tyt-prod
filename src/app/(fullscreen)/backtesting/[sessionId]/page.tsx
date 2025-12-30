@@ -360,6 +360,13 @@ export default function FullscreenBacktesting({
     pendingSwitch?: { fromInterval: string };
   };
   
+  // Helper to convert interval to milliseconds (inline to avoid dependency on useCallback)
+  const intervalToMs = (interval: string): number => {
+    if (interval === "1D") return 1440 * 60 * 1000;
+    if (interval === "1W") return 10080 * 60 * 1000;
+    return (parseInt(interval) || 1) * 60 * 1000;
+  };
+  
   const setCurrentBarIndex = (newIndex: number, bars?: any[], options: SetBarIndexOptions | boolean = false) => {
     // Handle legacy boolean signature for backward compatibility
     const opts: SetBarIndexOptions = typeof options === 'boolean' 
@@ -375,7 +382,12 @@ export default function FullscreenBacktesting({
       // Normal playback/seek: update both timestamp and interval
       const barsToUse = bars || barsCacheRef.current[currentIntervalRef.current] || allBars;
       if (barsToUse && barsToUse[newIndex]) {
-        replayTimestampRef.current = barsToUse[newIndex].time;
+        // CRITICAL FIX: Store bar END time (completed time), not bar START time
+        // This ensures replay progress represents ELAPSED simulated time
+        // Per FX Replay spec: replayTime = time after the current candle has closed
+        // Formula: bar.time + interval - 1ms = the last moment of this candle
+        const currentIntervalMs = intervalToMs(currentIntervalRef.current);
+        replayTimestampRef.current = barsToUse[newIndex].time + currentIntervalMs - 1;
         replayIntervalRef.current = currentIntervalRef.current;
       }
     } else if (pendingSwitch) {
@@ -603,24 +615,28 @@ export default function FullscreenBacktesting({
   
   // ============================================================================
   // GET VALID ANCHOR - finds the most reliable timestamp for timeframe switching
-  // Scans through multiple sources to find a valid anchor point
+  // CRITICAL: replayTimestampRef is the SINGLE SOURCE OF TRUTH for replay position
+  // Per FX Replay spec: Time is absolute, index is derived
+  // NOTE: replayTimestampRef now stores bar END time (elapsed time), not bar start
   // ============================================================================
   const getValidAnchor = useCallback((sourceIntervalMinutes: number): { barEndTime: number; source: string } => {
-    // Priority 1: Current bar at replay index
+    // PRIORITY 1: replayTimestampRef - THE SINGLE SOURCE OF TRUTH
+    // This is the absolute elapsed time in the replay (bar END time)
+    const replayTs = replayTimestampRef.current;
+    if (replayTs > 0) {
+      // replayTs IS already the bar end time - return it directly
+      return {
+        barEndTime: replayTs,
+        source: 'replayTimestamp'
+      };
+    }
+    
+    // Priority 2: Current bar at replay index (fallback if replayTs not set)
     const currentBar = allBarsRef.current[currentBarIndexRef.current];
     if (currentBar && currentBar.time > 0) {
       return {
         barEndTime: currentBar.time + (sourceIntervalMinutes * 60 * 1000) - 1,
         source: 'currentBar'
-      };
-    }
-    
-    // Priority 2: replayTimestampRef (last known position)
-    const replayTs = replayTimestampRef.current;
-    if (replayTs > 0) {
-      return {
-        barEndTime: replayTs + (sourceIntervalMinutes * 60 * 1000) - 1,
-        source: 'replayTimestamp'
       };
     }
     
@@ -640,15 +656,15 @@ export default function FullscreenBacktesting({
     if (sessionDataRef.current?.progressPointer) {
       const progressTs = new Date(sessionDataRef.current.progressPointer).getTime();
       if (progressTs > 0) {
+        // progressPointer is stored as bar end time
         return {
-          barEndTime: progressTs + (sourceIntervalMinutes * 60 * 1000) - 1,
+          barEndTime: progressTs,
           source: 'progressPointer'
         };
       }
     }
     
     // Priority 5: Session start date (last resort)
-    // Add interval to get bar-end time consistent with other branches
     if (sessionDataRef.current?.startDate) {
       const startTs = new Date(sessionDataRef.current.startDate).getTime();
       if (startTs > 0) {
@@ -712,13 +728,12 @@ export default function FullscreenBacktesting({
       return;
     }
     
-    // Calculate bar-start timestamp for consistent anchoring
-    const barStartTime = barEndTime - (sourceIntervalMinutes * 60 * 1000) + 1;
-    
-    // CRITICAL: Set pending anchor IMMEDIATELY - getBars may be called before onIntervalChanged
-    // This ensures getBars uses the correct timestamp even when called early by TradingView
-    pendingAnchorTimestampRef.current = barStartTime;
-    console.log('Set pendingAnchorTimestampRef:', new Date(barStartTime).toISOString());
+    // CRITICAL: Use barEndTime directly as the anchor - it represents elapsed replay time
+    // Per FX Replay spec: replayTime is the SINGLE SOURCE OF TRUTH
+    // getBars filters bars where bar.time <= anchor, so using barEndTime ensures all
+    // completed candles up to this point are shown in the target timeframe
+    pendingAnchorTimestampRef.current = barEndTime;
+    console.log('Set pendingAnchorTimestampRef (elapsed time):', new Date(barEndTime).toISOString());
     
     // 4. STOP AUTO-PLAY to prevent timestamp drift during switch
     if (autoPlayIntervalRef.current) {
@@ -733,13 +748,13 @@ export default function FullscreenBacktesting({
     onRealtimeCallbackRef.current = null;
     console.log('Reset callback state for timeframe switch');
     
-    console.log('Bar end time:', new Date(barEndTime).toISOString());
+    console.log('Bar end time (replay elapsed):', new Date(barEndTime).toISOString());
     
     // 5. STORE PENDING SWITCH INFO for async callbacks
-    // Use the validated barStartTime as the anchor, not stale refs
+    // Use barEndTime as the anchor - it represents elapsed replay time
     pendingTimeframeSwitchRef.current = { 
       fromInterval: sourceInterval, 
-      fromTimestamp: barStartTime
+      fromTimestamp: barEndTime
     };
     
     // 5a. CAPTURE VISIBLE RANGE before resolution change (for zoom preservation)
@@ -868,15 +883,13 @@ export default function FullscreenBacktesting({
       
       // FINALIZE: Update refs to new state
       // NOTE per FX Replay spec: replayTime is ABSOLUTE and NEVER changes on timeframe switch.
-      // Only update pendingAnchorTimestampRef for getBars to filter correctly.
+      // Keep pendingAnchorTimestampRef as replayTimestampRef (elapsed time) for consistent filtering.
       // replayTimestampRef stays unchanged - timeframe is just a lens, time is absolute.
       if (cachedBars[newIndex]) {
-        const newBarTime = cachedBars[newIndex].time;
-        // CRITICAL: Update the pending anchor to match the bar position for chart rendering
-        // But DO NOT update replayTimestampRef - that only changes when user advances replay
-        pendingAnchorTimestampRef.current = newBarTime;
-        console.log('Timeframe switch - keeping replayTime:', new Date(replayTimestampRef.current).toISOString());
-        console.log('Updated pendingAnchorTimestampRef to bar time:', new Date(newBarTime).toISOString());
+        // Keep anchor as elapsed time (replayTimestampRef) for consistent bar filtering
+        // DO NOT update pendingAnchorTimestampRef to bar start - that breaks elapsed time tracking
+        console.log('Timeframe switch complete - replayTime:', new Date(replayTimestampRef.current).toISOString());
+        console.log('Target bar at index:', newIndex, 'time:', new Date(cachedBars[newIndex].time).toISOString());
       }
       replayIntervalRef.current = targetInterval;
       pendingTimeframeSwitchRef.current = null;
