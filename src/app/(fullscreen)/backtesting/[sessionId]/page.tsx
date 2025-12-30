@@ -3872,25 +3872,29 @@ export default function FullscreenBacktesting({
         return;
       }
       
-      let currentRange = loadedRangeRef.current[resolution];
-      if (!currentRange) {
-        // If no range exists, derive from the last bar's timestamp
-        const lastBar = bars[bars.length - 1];
-        if (lastBar) {
-          const lastBarTime = lastBar.time / 1000;
-          currentRange = { from: lastBarTime - (30 * 24 * 60 * 60), to: lastBarTime };
-          loadedRangeRef.current[resolution] = currentRange;
-        } else {
-          setIsPlaying(false);
-          return;
-        }
+      // ALWAYS use the actual last bar's timestamp as the starting point
+      // This prevents gaps when cached range is stale
+      const lastBar = bars[bars.length - 1];
+      if (!lastBar) {
+        setIsPlaying(false);
+        return;
       }
       
-      // Fetch 2 months of future data
-      const currentToDate = new Date(currentRange.to * 1000);
-      const newToDate = addMonths(currentToDate, 2);
-      const fetchFrom = currentRange.to;
+      // Use last bar's OPEN time as the fetch start (in seconds)
+      // This ensures overlap at the boundary - Polygon aggregates by open time
+      // The merge will dedupe the overlapping bar
+      const lastBarOpenTime = lastBar.time / 1000;
+      
+      // Fetch 2 months of future data from the last bar's open time
+      const newToDate = addMonths(new Date(lastBar.time), 2);
+      const fetchFrom = Math.floor(lastBarOpenTime);
       const fetchTo = Math.floor(newToDate.getTime() / 1000);
+      
+      console.log('Fetch more bars: Using last bar open time for overlap', {
+        lastBarTime: new Date(lastBar.time).toISOString(),
+        fetchFrom,
+        fetchTo,
+      });
       
       const market = session.market || 'FOREX';
       const apiUrl = `/api/backtest/bars?market=${market}&symbol=${session.symbol}&resolution=${resolution}&to=${fetchTo}&from=${fetchFrom}`;
@@ -3920,8 +3924,11 @@ export default function FullscreenBacktesting({
           console.log(`Merged bars: ${existingBars.length} + ${uniqueNewBars.length} = ${mergedBars.length}`);
           
           barsCacheRef.current[resolution] = mergedBars;
+          
+          // Update loaded range - use first bar's time for 'from' if not already set
+          const existingRange = loadedRangeRef.current[resolution];
           loadedRangeRef.current[resolution] = {
-            from: currentRange.from,
+            from: existingRange?.from || (mergedBars[0]?.time / 1000) || fetchFrom,
             to: fetchTo
           };
           
@@ -3931,8 +3938,8 @@ export default function FullscreenBacktesting({
             setAllBars(mergedBars);
             
             // TIME-DRIVEN: Advance replayTime by one candle, then derive index
-            const intervalMs = intervalToMs(resolution);
-            const newReplayTime = replayTimestampRef.current + intervalMs;
+            const iMs = intervalToMs(resolution);
+            const newReplayTime = replayTimestampRef.current + iMs;
             const newIndex = deriveBarIndexFromTime(mergedBars, newReplayTime, resolution);
             
             const nextBar = mergedBars[newIndex];
