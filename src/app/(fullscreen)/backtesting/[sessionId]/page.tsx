@@ -2654,11 +2654,21 @@ export default function FullscreenBacktesting({
         // Set guard BEFORE any work to prevent resetData from re-triggering this callback
         isChangingResolutionRef.current = true;
         
-        // CRITICAL: Capture drawings BEFORE any chart operations
-        // With stable symbol suffix (no Date.now()), bar indices remain consistent
-        // so drawings should restore to correct positions
+        // CRITICAL: Capture drawings AND visible range BEFORE any chart operations
         const chart = tvWidgetRef.current?.activeChart();
+        let savedVisibleRange: { from: number; to: number } | null = null;
+        
         if (chart) {
+          // Capture visible range to preserve zoom level across timeframe switches
+          try {
+            savedVisibleRange = chart.getVisibleRange();
+            console.log('Captured visible range:', savedVisibleRange);
+          } catch (e) {
+            console.warn('Failed to capture visible range:', e);
+          }
+          
+          // With stable symbol suffix (no Date.now()), bar indices remain consistent
+          // so drawings should restore to correct positions
           try {
             const drawings = DrawingManager.captureDrawings(chart);
             if (drawings.length > 0) {
@@ -2669,6 +2679,9 @@ export default function FullscreenBacktesting({
             console.warn('Failed to capture drawings:', e);
           }
         }
+        
+        // Store saved range for use in callback
+        const capturedVisibleRange = savedVisibleRange;
         
         // Update refs and state via the unified helper
         processTimeframeSwitch(newInterval, { 
@@ -2720,16 +2733,26 @@ export default function FullscreenBacktesting({
               }
               
               innerChart.setSymbol(symbolWithSuffix, () => {
-                // After symbol change, scroll to replay position and reset price scale
+                // After symbol change, restore visible range and reset price scale
                 setTimeout(() => {
                   try {
-                    const replayTs = replayTimestampRef.current;
-                    if (innerChart && replayTs > 0) {
-                      const resolutionMinutes = intervalToMinutes(newInterval);
-                      const barMs = resolutionMinutes * 60 * 1000;
-                      const visibleFrom = (replayTs - barMs * 60) / 1000;
-                      const visibleTo = (replayTs + barMs * 20) / 1000;
-                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                    if (innerChart) {
+                      // CRITICAL: Restore the captured visible range to preserve zoom level
+                      // This prevents the chart from zooming in when switching timeframes
+                      if (capturedVisibleRange && capturedVisibleRange.from && capturedVisibleRange.to) {
+                        console.log('Restoring captured visible range:', capturedVisibleRange);
+                        innerChart.setVisibleRange(capturedVisibleRange);
+                      } else {
+                        // Fallback: calculate a reasonable default range if no captured range
+                        const replayTs = replayTimestampRef.current;
+                        if (replayTs > 0) {
+                          const resolutionMinutes = intervalToMinutes(newInterval);
+                          const barMs = resolutionMinutes * 60 * 1000;
+                          const visibleFrom = (replayTs - barMs * 60) / 1000;
+                          const visibleTo = (replayTs + barMs * 20) / 1000;
+                          innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        }
+                      }
                       
                       try {
                         innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
