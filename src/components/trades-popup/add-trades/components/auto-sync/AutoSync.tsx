@@ -18,7 +18,9 @@ import {
   User,
   Loader2,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  Calendar,
+  Rocket
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
@@ -40,7 +42,7 @@ const brokerConnections: BrokerConnection[] = [
     name: "MetaTrader 5",
     logo: "MT5",
     description: "Connect your MT5 account for automatic trade sync",
-    status: "disconnected"
+    status: "coming_soon"
   },
   {
     id: "binance",
@@ -492,9 +494,10 @@ const AutoSync = () => {
   const [showMT5Modal, setShowMT5Modal] = useState(false);
 
   const handleBrokerClick = (brokerId: string) => {
-    if (brokerId === "mt5") {
-      setShowMT5Modal(true);
-    }
+    // Feature launching Feb 1st - disable all broker clicks for now
+    // if (brokerId === "mt5") {
+    //   setShowMT5Modal(true);
+    // }
   };
 
   return (
@@ -504,6 +507,38 @@ const AutoSync = () => {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6 p-1"
       >
+        {/* Coming Soon Banner */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-yellow-500/5 border border-amber-500/30"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative flex items-start gap-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
+              <Rocket className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-bold text-foreground text-lg">
+                  Coming Soon
+                </h3>
+                <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
+                  Feb 1st, 2025
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                We're putting the finishing touches on our broker auto-sync feature. 
+                Starting February 1st, you'll be able to automatically import trades from your connected accounts.
+              </p>
+              <div className="flex items-center gap-2 mt-3 text-amber-400 text-sm font-medium">
+                <Calendar className="w-4 h-4" />
+                <span>Mark your calendar - launching in just a few weeks!</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         <div className="p-5 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
