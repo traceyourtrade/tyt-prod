@@ -73,6 +73,7 @@ const CalendarPopup = () => {
   const { bkurl } = useDataStore();
   const tokenn = Cookies.get("ProJournX");
   const popupRef = useRef<HTMLDivElement>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; tradeId: string | null }>({ show: false, tradeId: null });
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "";
@@ -373,9 +374,18 @@ const CalendarPopup = () => {
   };
 
   const confirmDelete = (tradeId: string) => {
-    if (window.confirm("Are you sure you want to delete this trade?")) {
-      handleDelete(tradeId);
+    setDeleteConfirmation({ show: true, tradeId });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmation.tradeId) {
+      handleDelete(deleteConfirmation.tradeId);
     }
+    setDeleteConfirmation({ show: false, tradeId: null });
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmation({ show: false, tradeId: null });
   };
 
   const closePopup = () => {
@@ -403,7 +413,43 @@ const CalendarPopup = () => {
   );
 
   return (
-    <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-all duration-300 ${showTr ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
+    <>
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation.show && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[70] flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f] rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
+            
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faTrashCan} className="text-red-400 text-xl" />
+              </div>
+              
+              <h3 className="text-lg font-bold text-white mb-2">Delete Trade</h3>
+              <p className="text-gray-400 text-sm mb-6">
+                Are you sure you want to delete this trade? This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-gray-300 font-medium text-sm transition-all duration-200 border border-white/[0.06]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="flex-1 px-4 py-3 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium text-sm transition-all duration-200 border border-red-500/30"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-all duration-300 ${showTr ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}>
       {dataToday.length === 0 ? (
         <div 
           ref={popupRef} 
@@ -641,6 +687,7 @@ const CalendarPopup = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
