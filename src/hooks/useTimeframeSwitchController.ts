@@ -25,6 +25,7 @@ export interface TimeframeSwitchController {
   abort: (reason?: string) => void;
   reset: () => void;
   getIsSwitching: () => boolean;
+  getCurrentTarget: () => string | null;
 }
 
 export function useTimeframeSwitchController(
@@ -133,6 +134,7 @@ export function useTimeframeSwitchController(
   
   // Use ref for immediate reads (avoids React state async delays)
   const getIsSwitching = useCallback(() => stateRef.current !== 'IDLE', []);
+  const getCurrentTarget = useCallback(() => currentTargetRef.current, []);
   
   return {
     state,
@@ -143,7 +145,8 @@ export function useTimeframeSwitchController(
     finalize,
     abort,
     reset,
-    // Provide a getter for immediate ref-based check
+    // Provide getters for immediate ref-based checks (avoids stale closures in async code)
     getIsSwitching,
+    getCurrentTarget,
   };
 }

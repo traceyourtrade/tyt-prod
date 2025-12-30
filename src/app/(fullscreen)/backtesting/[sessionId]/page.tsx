@@ -363,6 +363,15 @@ export default function FullscreenBacktesting({
     pendingSwitch?: { fromInterval: string };
   };
   
+  // Normalize resolution to canonical form for consistent cache key usage
+  // TradingView sends both "D"/"1D" and "W"/"1W" - normalize to long form
+  const normalizeResolution = (resolution: string): string => {
+    if (resolution === "D") return "1D";
+    if (resolution === "W") return "1W";
+    if (resolution === "M") return "1M";
+    return resolution;
+  };
+  
   // Helper to convert interval to milliseconds (inline to avoid dependency on useCallback)
   const intervalToMs = (interval: string): number => {
     // Handle Daily: TradingView sends both "D" and "1D"
@@ -1429,7 +1438,7 @@ export default function FullscreenBacktesting({
     
     // Background preload function for common timeframes - runs ALL in parallel for faster cache warming
     const preloadCommonTimeframes = async (session: SessionData) => {
-      const allTimeframes = ['1', '5', '15', '30', '60', '120', '240', 'D'];
+      const allTimeframes = ['1', '5', '15', '30', '60', '120', '240', '1D'];
       const currentTf = currentIntervalRef.current;
       
       // Filter out already cached and current timeframe
@@ -1543,7 +1552,10 @@ export default function FullscreenBacktesting({
 
   // Helper function to fetch bars for a specific resolution and fulfill pending callbacks
   // This is called from getBars when TradingView requests a resolution we don't have cached
-  const fetchBarsForResolution = async (resolution: string) => {
+  const fetchBarsForResolution = async (rawResolution: string) => {
+    // Normalize resolution to canonical form for consistent cache keys
+    const resolution = normalizeResolution(rawResolution);
+    
     // Avoid duplicate fetches for the same resolution
     if (fetchingResolutionsRef.current.has(resolution)) {
       console.log('Already fetching resolution', resolution, '- skipping duplicate');
@@ -1688,7 +1700,8 @@ export default function FullscreenBacktesting({
         
         // CRITICAL: Finalize the TF controller if this resolution matches the switch target
         // This ensures Daily and other slow-path TF switches complete properly
-        if (tfController.getIsSwitching() && tfController.currentTarget === resolution) {
+        // Use getCurrentTarget() getter to avoid stale closure values in async code
+        if (tfController.getIsSwitching() && tfController.getCurrentTarget() === resolution) {
           console.log('Slow-path fetch: Finalizing TF controller for', resolution);
           callbacksReadyRef.current = true; // Enable replay controls
           tfController.finalize(resolution);
@@ -1705,7 +1718,7 @@ export default function FullscreenBacktesting({
         }
         
         // Also finalize controller on no-data to prevent permanent blocking
-        if (tfController.getIsSwitching() && tfController.currentTarget === resolution) {
+        if (tfController.getIsSwitching() && tfController.getCurrentTarget() === resolution) {
           console.log('Slow-path fetch (no data): Finalizing TF controller for', resolution);
           tfController.finalize(resolution);
         }
@@ -1722,7 +1735,7 @@ export default function FullscreenBacktesting({
       }
       
       // Also finalize controller on error to prevent permanent blocking
-      if (tfController.getIsSwitching() && tfController.currentTarget === resolution) {
+      if (tfController.getIsSwitching() && tfController.getCurrentTarget() === resolution) {
         console.log('Slow-path fetch (error): Finalizing TF controller for', resolution);
         tfController.finalize(resolution);
       }
@@ -2279,8 +2292,11 @@ export default function FullscreenBacktesting({
         };
         setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
       },
-      getBars: (symbolInfo: any, resolution: string, periodParams: any, onHistoryCallback: any) => {
+      getBars: (symbolInfo: any, rawResolution: string, periodParams: any, onHistoryCallback: any) => {
         const { firstDataRequest } = periodParams;
+        
+        // Normalize resolution to canonical form for consistent cache keys
+        const resolution = normalizeResolution(rawResolution);
         
         // CRITICAL: Use pending anchor if set (during timeframe switch)
         // This handles the race condition where TradingView calls getBars BEFORE our onIntervalChanged
