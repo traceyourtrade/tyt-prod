@@ -727,6 +727,12 @@ export default function FullscreenBacktesting({
     }
     setIsPlaying(false);
     
+    // 4a. CRITICAL: Reset callback state to prevent stale callbacks from being used
+    // This forces handleNext to wait until TradingView calls subscribeBars with fresh callback
+    callbacksReadyRef.current = false;
+    onRealtimeCallbackRef.current = null;
+    console.log('Reset callback state for timeframe switch');
+    
     console.log('Bar end time:', new Date(barEndTime).toISOString());
     
     // 5. STORE PENDING SWITCH INFO for async callbacks
