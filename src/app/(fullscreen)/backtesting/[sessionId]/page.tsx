@@ -951,6 +951,15 @@ export default function FullscreenBacktesting({
                       } catch (e) {}
                     }
                   }
+                  // SAFETY: Ensure callbacksReady is true after TradingView resubscribes
+                  // This handles cases where subscribeBars was already called or will be called shortly
+                  if (!callbacksReadyRef.current) {
+                    const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
+                    if (cachedCb) {
+                      callbacksReadyRef.current = true;
+                      console.log('Fast-path: Restored callbacksReady after setResolution');
+                    }
+                  }
                 } catch (e) {
                   console.warn('Error in post-switch cleanup:', e);
                 }
@@ -987,6 +996,14 @@ export default function FullscreenBacktesting({
                         try {
                           innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
                         } catch (e) {}
+                      }
+                    }
+                    // SAFETY: Ensure callbacksReady is true after TradingView resubscribes
+                    if (!callbacksReadyRef.current) {
+                      const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
+                      if (cachedCb) {
+                        callbacksReadyRef.current = true;
+                        console.log('Fast-path fallback: Restored callbacksReady after setSymbol+setResolution');
                       }
                     }
                   } catch (e) {
