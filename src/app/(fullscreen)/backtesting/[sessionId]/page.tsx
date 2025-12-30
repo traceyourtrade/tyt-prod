@@ -1235,7 +1235,33 @@ export default function FullscreenBacktesting({
   });
 
   const totalBalance = initialBalance + tradingState.realisedPL + tradingState.unrealisedPL;
-  const isEndReached = currentBarIndex >= allBars.length - 1;
+  
+  // isEndReached: Check if we've reached the SESSION end date, not just loaded bars
+  // This allows fetching more bars when at the end of loaded data
+  // NOTE: Not using useMemo because replayTimestampRef is a ref and won't trigger re-renders
+  const getIsEndReached = (): boolean => {
+    const atEndOfLoadedBars = currentBarIndex >= allBars.length - 1;
+    
+    // If not at end of loaded bars, definitely not at end
+    if (!atEndOfLoadedBars) return false;
+    
+    // If no session data or no toDate, only check loaded bars
+    if (!sessionData?.toDate) return atEndOfLoadedBars;
+    
+    // Parse toDate and set to END of day (23:59:59.999) to ensure full day coverage
+    // toDate is typically "YYYY-MM-DD" which parses to midnight START of that day
+    const sessionEndDate = new Date(sessionData.toDate);
+    sessionEndDate.setHours(23, 59, 59, 999);
+    const sessionEndTs = sessionEndDate.getTime();
+    
+    const currentReplayTime = replayTimestampRef.current;
+    
+    // Only consider "end reached" if we're past the session end date
+    return currentReplayTime >= sessionEndTs;
+  };
+  
+  // For UI elements that need the value (buttons, etc.)
+  const isEndReached = getIsEndReached();
   const winTrades = tradingState.tradeHistory.filter((trade) => trade.pnl > 0);
   const winRate = tradingState.tradeHistory.length > 0
     ? (winTrades.length / tradingState.tradeHistory.length) * 100 : 0;
