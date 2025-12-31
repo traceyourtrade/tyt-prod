@@ -159,9 +159,18 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
     const rect = element.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return null;
-    if (rect.top < 0 || rect.left < 0) return null;
-    if (rect.bottom > window.innerHeight || rect.right > window.innerWidth) {
+    
+    // Check if element is reasonably visible (at least partially in viewport)
+    const isPartiallyVisible = 
+      rect.bottom > 0 && 
+      rect.top < window.innerHeight && 
+      rect.right > 0 && 
+      rect.left < window.innerWidth;
+    
+    if (!isPartiallyVisible) {
+      // Element is completely off-screen, scroll it into view
       element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      // Return null to retry after scroll animation
       return null;
     }
 
