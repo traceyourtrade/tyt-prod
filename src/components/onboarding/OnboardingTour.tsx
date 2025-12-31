@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Sparkles, Crown, Rocket, BookOpen, BarChart3, Target } from 'lucide-react';
 
@@ -127,40 +127,138 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [isReady, setIsReady] = useState(false);
+  const retryIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const observerRef = useRef<MutationObserver | null>(null);
 
-  const updateTargetPosition = useCallback(() => {
-    if (!isOpen || !steps[currentStep]) return;
+  const currentStepData = steps[currentStep];
+  const currentSelector = currentStepData?.target;
+
+  const expandBacktestingIfNeeded = useCallback(() => {
+    if (!currentSelector?.includes('backtesting')) return;
     
-    const targetElement = document.querySelector(steps[currentStep].target);
-    if (targetElement) {
-      const rect = targetElement.getBoundingClientRect();
-      setTargetRect(rect);
+    const accordionTrigger = document.querySelector('[data-tour="nav-backtesting"]');
+    if (accordionTrigger) {
+      const button = accordionTrigger.querySelector('button');
+      if (button) {
+        const isExpanded = button.getAttribute('data-state') === 'open';
+        if (!isExpanded) {
+          button.click();
+        }
+      }
+    }
+  }, [currentSelector]);
+
+  const findAndMeasureElement = useCallback(() => {
+    if (!currentSelector) return null;
+
+    expandBacktestingIfNeeded();
+
+    const element = document.querySelector(currentSelector);
+    if (!element) return null;
+
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
+    if (rect.top < 0 || rect.left < 0) return null;
+    if (rect.bottom > window.innerHeight || rect.right > window.innerWidth) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      return null;
+    }
+
+    return rect;
+  }, [currentSelector, expandBacktestingIfNeeded]);
+
+  const startPolling = useCallback(() => {
+    setIsReady(false);
+    setTargetRect(null);
+
+    if (retryIntervalRef.current) {
+      clearInterval(retryIntervalRef.current);
+    }
+
+    let attempts = 0;
+    const maxAttempts = 50;
+
+    const poll = () => {
+      attempts++;
+      const rect = findAndMeasureElement();
       
-      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [currentStep, steps, isOpen]);
-
-  useEffect(() => {
-    setCurrentStep(0);
-  }, [isOpen]);
-
-  useEffect(() => {
-    updateTargetPosition();
-    window.addEventListener('resize', updateTargetPosition);
-    window.addEventListener('scroll', updateTargetPosition);
-    
-    return () => {
-      window.removeEventListener('resize', updateTargetPosition);
-      window.removeEventListener('scroll', updateTargetPosition);
+      if (rect) {
+        setTargetRect(rect);
+        setIsReady(true);
+        if (retryIntervalRef.current) {
+          clearInterval(retryIntervalRef.current);
+          retryIntervalRef.current = null;
+        }
+      } else if (attempts >= maxAttempts) {
+        setIsReady(true);
+        if (retryIntervalRef.current) {
+          clearInterval(retryIntervalRef.current);
+          retryIntervalRef.current = null;
+        }
+        console.warn(`Tour: Could not find element "${currentSelector}" after ${maxAttempts} attempts`);
+      }
     };
-  }, [updateTargetPosition]);
+
+    poll();
+    retryIntervalRef.current = setInterval(poll, 100);
+
+    return () => {
+      if (retryIntervalRef.current) {
+        clearInterval(retryIntervalRef.current);
+        retryIntervalRef.current = null;
+      }
+    };
+  }, [currentSelector, findAndMeasureElement]);
 
   useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(updateTargetPosition, 150);
-      return () => clearTimeout(timer);
+    if (!isOpen) {
+      setCurrentStep(0);
+      setTargetRect(null);
+      setIsReady(false);
+      return;
     }
-  }, [isOpen, currentStep, updateTargetPosition]);
+
+    const cleanup = startPolling();
+    return cleanup;
+  }, [isOpen, currentStep, startPolling]);
+
+  useEffect(() => {
+    if (!isOpen || !isReady || !currentSelector) return;
+
+    const handleUpdate = () => {
+      const rect = findAndMeasureElement();
+      if (rect) {
+        setTargetRect(rect);
+      }
+    };
+
+    window.addEventListener('resize', handleUpdate);
+    window.addEventListener('scroll', handleUpdate, true);
+
+    observerRef.current = new MutationObserver(handleUpdate);
+    observerRef.current.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'data-state']
+    });
+
+    return () => {
+      window.removeEventListener('resize', handleUpdate);
+      window.removeEventListener('scroll', handleUpdate, true);
+      observerRef.current?.disconnect();
+    };
+  }, [isOpen, isReady, currentSelector, findAndMeasureElement]);
+
+  useEffect(() => {
+    return () => {
+      if (retryIntervalRef.current) {
+        clearInterval(retryIntervalRef.current);
+      }
+      observerRef.current?.disconnect();
+    };
+  }, []);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -177,69 +275,102 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
     }
   };
 
-  const getTooltipPosition = () => {
-    if (!targetRect) return { top: '50%', left: '50%' };
+  const getTooltipPosition = useCallback(() => {
+    if (!targetRect) {
+      return { 
+        top: '50%', 
+        left: '50%',
+        transform: 'translate(-50%, -50%)'
+      };
+    }
     
-    const step = steps[currentStep];
-    const position = step.position || 'right';
-    const padding = 20;
+    const position = currentStepData?.position || 'right';
+    const padding = 16;
     const tooltipWidth = 320;
-    const tooltipHeight = 200;
+    const tooltipHeight = 180;
+
+    let top: number;
+    let left: number;
 
     switch (position) {
       case 'top':
-        return {
-          top: `${Math.max(padding, targetRect.top - tooltipHeight - padding)}px`,
-          left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
-        };
+        top = targetRect.top - tooltipHeight - padding;
+        left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
+        break;
       case 'bottom':
-        return {
-          top: `${Math.min(window.innerHeight - tooltipHeight - padding, targetRect.bottom + padding)}px`,
-          left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
-        };
+        top = targetRect.bottom + padding;
+        left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
+        break;
       case 'left':
-        return {
-          top: `${Math.max(padding, Math.min(targetRect.top + targetRect.height / 2 - tooltipHeight / 2, window.innerHeight - tooltipHeight - padding))}px`,
-          left: `${Math.max(padding, targetRect.left - tooltipWidth - padding)}px`,
-        };
+        top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
+        left = targetRect.left - tooltipWidth - padding;
+        break;
       case 'right':
       default:
-        return {
-          top: `${Math.max(padding, Math.min(targetRect.top + targetRect.height / 2 - tooltipHeight / 2, window.innerHeight - tooltipHeight - padding))}px`,
-          left: `${Math.min(window.innerWidth - tooltipWidth - padding, targetRect.right + padding)}px`,
-        };
+        top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
+        left = targetRect.right + padding;
+        break;
     }
-  };
+
+    top = Math.max(padding, Math.min(top, window.innerHeight - tooltipHeight - padding));
+    left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
+
+    return {
+      top: `${top}px`,
+      left: `${left}px`,
+      transform: 'none'
+    };
+  }, [targetRect, currentStepData]);
 
   if (!isOpen) return null;
 
-  const currentStepData = steps[currentStep];
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999]">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
-        />
+      <div className="fixed inset-0 z-[9998]">
+        <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
+          <defs>
+            <mask id="spotlight-mask">
+              <rect x="0" y="0" width="100%" height="100%" fill="white" />
+              {targetRect && (
+                <rect
+                  x={targetRect.left - 6}
+                  y={targetRect.top - 6}
+                  width={targetRect.width + 12}
+                  height={targetRect.height + 12}
+                  rx="10"
+                  fill="black"
+                />
+              )}
+            </mask>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="rgba(0, 0, 0, 0.75)"
+            mask="url(#spotlight-mask)"
+            onClick={onSkip}
+            style={{ cursor: 'pointer' }}
+          />
+        </svg>
 
         {targetRect && (
           <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, scale: 0.9 }}
+            key={`highlight-${currentStep}`}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className="absolute rounded-xl pointer-events-none"
             style={{
+              zIndex: 2,
               top: targetRect.top - 6,
               left: targetRect.left - 6,
               width: targetRect.width + 12,
               height: targetRect.height + 12,
-              boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.5), 0 0 0 9999px rgba(0, 0, 0, 0.5)',
-              background: 'transparent',
+              border: '2px solid rgba(59, 130, 246, 0.8)',
+              boxShadow: '0 0 0 4px rgba(59, 130, 246, 0.25), 0 0 30px rgba(59, 130, 246, 0.4)',
             }}
           />
         )}
@@ -247,11 +378,11 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
         <motion.div
           key={`tooltip-${currentStep}`}
           initial={{ opacity: 0, y: 10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
+          animate={{ opacity: isReady ? 1 : 0, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.25 }}
           className="absolute w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
-          style={getTooltipPosition()}
+          style={{ ...getTooltipPosition(), zIndex: 10 }}
         >
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">

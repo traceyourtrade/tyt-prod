@@ -69,27 +69,29 @@ import DjImgPopup from "@/components/dashboard-components/popups/DjImgPopup";
 import AccountsDropdown from "@/components/dashboard-components/AccountsDropdown";
 import CurrencyDropdown from "@/components/dashboard-components/CurrencyDropdown";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import OnboardingTour, { WelcomeModal } from "@/components/onboarding/OnboardingTour";
+import { useOnboardingTour, platformTourSteps } from "@/hooks/useOnboardingTour";
 
 import useAccountDetails from "@/store/accountdetails";
 import calendarPopUp from "@/store/calendarPopUp";
 
 const tradingItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "#6B8ACD" },
-  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, color: "#9B8AC4" },
-  { name: "Notebook", href: "/notebook", icon: FileText, color: "#C9A86C" },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "#6B8ACD", tourId: "nav-dashboard" },
+  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, color: "#9B8AC4", tourId: "nav-daily-journal" },
+  { name: "Notebook", href: "/notebook", icon: FileText, color: "#C9A86C", tourId: "nav-notebook" },
 ];
 
 const analysisItems = [
-  { name: "Reports", href: "/reports", icon: BarChart3, color: "#7CB89E" },
-  { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A" },
-  { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B" },
-  { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, color: "#8B5CF6", badge: "New" },
+  { name: "Reports", href: "/reports", icon: BarChart3, color: "#7CB89E", tourId: "nav-reports" },
+  { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A", tourId: "nav-strategies" },
+  { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B", tourId: "nav-playbook" },
+  { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, color: "#8B5CF6", badge: "New", tourId: "nav-ai-analysis" },
 ];
 
 const toolsItems = [
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "#F59E0B" },
-  { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8" },
-  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4" },
+  { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8", tourId: "nav-resources" },
+  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4", tourId: "nav-calculator" },
   { name: "Affiliate", href: "/affiliate", icon: Gift, color: "#4EBF94" },
 ];
 
@@ -150,6 +152,33 @@ export default function RootLayout({
   const { profileData, setAccounts } = useAccountDetails();
   const checkoutUrl = "/checkout";
   const { setAddTrades, setAddAcc } = calendarPopUp();
+  const { isOpen: isTourOpen, showWelcome, startTour, completeTour, skipTour, dismissWelcome } = useOnboardingTour();
+
+  // Auto-expand sidebar when tour is active, restore when tour ends
+  const [preTourCollapsed, setPreTourCollapsed] = useState<boolean | null>(null);
+  const [preTourMobileOpen, setPreTourMobileOpen] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (isTourOpen) {
+      // Save current state before expanding
+      setPreTourCollapsed(collapsed);
+      setPreTourMobileOpen(mobileOpen);
+      // Expand sidebar for tour
+      setCollapsed(false);
+      // Also open mobile sidebar on smaller screens
+      if (window.innerWidth < 1024) {
+        setMobileOpen(true);
+      }
+    } else if (preTourCollapsed !== null) {
+      // Restore previous state after tour ends
+      setCollapsed(preTourCollapsed);
+      if (preTourMobileOpen !== null) {
+        setMobileOpen(preTourMobileOpen);
+      }
+      setPreTourCollapsed(null);
+      setPreTourMobileOpen(null);
+    }
+  }, [isTourOpen]);
   
   // Pages that don't require subscription (checkout, settings, support)
   const publicPages = ['/checkout', '/settings', '/support'];
@@ -277,7 +306,7 @@ export default function RootLayout({
 
   const isExpanded = !collapsed || mobileOpen;
 
-  const NavItem = ({ item, showLabel = true }: { item: { name: string; href: string; icon: React.ElementType; color: string; badge?: string }; showLabel?: boolean }) => {
+  const NavItem = ({ item, showLabel = true }: { item: { name: string; href: string; icon: React.ElementType; color: string; badge?: string; tourId?: string }; showLabel?: boolean }) => {
     const Icon = item.icon;
     const active = isActive(item.href);
     
@@ -285,6 +314,7 @@ export default function RootLayout({
       <Link
         href={item.href}
         onClick={() => setMobileOpen(false)}
+        data-tour={item.tourId}
         className={cn(
           "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
           active 
@@ -416,6 +446,7 @@ export default function RootLayout({
       {/* Add Trade Button */}
       <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
         <motion.button
+          data-tour="add-trade-btn"
           className={cn(
             "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
             "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
@@ -446,7 +477,7 @@ export default function RootLayout({
         </div>
 
         {/* Backtesting Section - Premium Feature */}
-        <div className="mb-2 mt-3">
+        <div className="mb-2 mt-3" data-tour="nav-backtesting">
           {isExpanded && (
             <div className="px-3 mb-1.5">
               <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
@@ -899,6 +930,19 @@ export default function RootLayout({
         {/* Page Content */}
         <main className={pathname === "/daily-journal" || pathname === "/notebook" ? "p-0" : "p-4 lg:p-6"}>{children}</main>
       </div>
+
+      {/* Onboarding Tour */}
+      <WelcomeModal
+        isOpen={showWelcome}
+        onStartTour={startTour}
+        onSkip={dismissWelcome}
+      />
+      <OnboardingTour
+        steps={platformTourSteps}
+        isOpen={isTourOpen}
+        onComplete={completeTour}
+        onSkip={skipTour}
+      />
     </div>
   );
 }
