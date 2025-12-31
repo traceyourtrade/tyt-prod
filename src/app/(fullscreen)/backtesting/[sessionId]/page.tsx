@@ -340,6 +340,7 @@ export default function FullscreenBacktesting({
   const userDeletedAllDrawingsRef = useRef<boolean>(false); // Tracks if user explicitly deleted all drawings
   const initialRestoreCompleteRef = useRef<boolean>(false); // Tracks if initial chart restore is complete
   const isRestoringDrawingsRef = useRef<boolean>(false); // Guards capture/save during drawing restoration
+  const lastTfSwitchTimeRef = useRef<number>(0); // Timestamp of last TF switch completion - prevents auto-save from capturing TradingView-adjusted coords
   const allBarsRef = useRef<any[]>([]); // Ref for bars data to avoid widget recreation on data changes
   const widgetInitializedRef = useRef<boolean>(false); // Track if widget has been created
   const fetchingResolutionsRef = useRef<Set<string>>(new Set()); // Track in-flight resolution fetches
@@ -1082,7 +1083,7 @@ export default function FullscreenBacktesting({
                       DrawingManager.clearAllDrawings(innerChart);
                       DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
                       pendingDrawingsRef.current = [];
-                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
                     } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
                       console.log('Fast-path: Skipping restore - newer switch in progress (', restoreSwitchId, 'vs', drawingSwitchIdRef.current, ')');
                     }
@@ -1125,10 +1126,12 @@ export default function FullscreenBacktesting({
                     }
                     
                     // Only NOW enable replay via controller
+                    lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
                   } catch (e) {
                     console.warn('Error in post-switch cleanup:', e);
+                    lastTfSwitchTimeRef.current = Date.now();
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
                   }
@@ -1161,7 +1164,7 @@ export default function FullscreenBacktesting({
                       DrawingManager.clearAllDrawings(innerChart);
                       DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
                       pendingDrawingsRef.current = [];
-                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
                     } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
                       console.log('Fast-path fallback: Skipping restore - newer switch in progress');
                     }
@@ -1203,10 +1206,12 @@ export default function FullscreenBacktesting({
                     }
                     
                     // Only NOW enable replay via controller
+                    lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
                   } catch (e) {
                     console.warn('Error in post-switch cleanup:', e);
+                    lastTfSwitchTimeRef.current = Date.now();
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
                   }
@@ -2237,7 +2242,7 @@ export default function FullscreenBacktesting({
                         DrawingManager.clearAllDrawings(innerChart);
                         DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
                         pendingDrawingsRef.current = [];
-                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
                       } else if (drawingSwitchIdRef.current !== slowPathSwitchId) {
                         console.log('Slow path: Skipping restore - newer switch in progress');
                       }
@@ -2267,6 +2272,7 @@ export default function FullscreenBacktesting({
                     
                     // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller
                     console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, finalizing controller');
+                    lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                     tfController.finalize(currentInterval);
                     isChangingResolutionRef.current = false;
                   }); // Close dataReady callback
@@ -2901,6 +2907,15 @@ export default function FullscreenBacktesting({
           return;
         }
         
+        // CRITICAL: Skip auto-save if TF switch completed within last 3 seconds
+        // TradingView internally adjusts drawing coordinates to match current TF bar boundaries,
+        // so capturing too soon after switch would save these adjusted (incorrect) coordinates
+        const timeSinceSwitch = Date.now() - lastTfSwitchTimeRef.current;
+        if (lastTfSwitchTimeRef.current > 0 && timeSinceSwitch < 3000) {
+          console.log('Skipping auto-save: TF switch completed', timeSinceSwitch, 'ms ago (waiting 3000ms)');
+          return;
+        }
+        
         try {
           // Use DrawingManager to capture all valid drawings (validates timestamps are in seconds)
           const drawings = DrawingManager.captureDrawings(chart);
@@ -3169,7 +3184,7 @@ export default function FullscreenBacktesting({
                         DrawingManager.clearAllDrawings(innerChart);
                         DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
                         pendingDrawingsRef.current = [];
-                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
                       } else if (drawingSwitchIdRef.current !== nativeSwitchId) {
                         console.log('Native TF: Skipping restore - newer switch in progress');
                       }
@@ -3199,12 +3214,14 @@ export default function FullscreenBacktesting({
                     
                     // Finalize the controller to re-enable replay controls
                     console.log('Native TF switch: Finalizing controller for', newInterval);
+                    lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                     tfController.finalize(newInterval);
                     isChangingResolutionRef.current = false;
                   }); // Close dataReady callback
                 }); // Close setResolution callback
               }); // Close setSymbol callback
             } else {
+              lastTfSwitchTimeRef.current = Date.now();
               tfController.finalize(newInterval);
               isChangingResolutionRef.current = false;
             }
