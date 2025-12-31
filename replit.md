@@ -27,7 +27,11 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Daily Journal:** Modern glassmorphic three-pane layout with TradingView chart integration, trade notes, and detailed statistics.
 - **Notebook:** Premium three-column layout with a comprehensive template system for various trading analyses and notes.
 - **Reports & Strategies:** Redesigned pages with theme-aware charts for analytics.
-- **Playbook:** AI-powered (rule-based) pattern detection for identifying winning trade setups.
+- **Playbook:** AI-powered (rule-based) pattern detection for identifying winning trade setups. Features include:
+  - **Pattern Detection:** Analyzes trades across 4 dimensions (Strategy ≥50% win rate, Symbol/Time/Day ≥55% win rate) with 5+ trades minimum per category.
+  - **Near-Miss Patterns:** Shows patterns close to qualifying (3-4 trades) with progress bars and specific requirements.
+  - **Trade Distribution Diagnostics:** Displays breakdown of trades by symbol, strategy, day, and time to help users understand why patterns aren't detected.
+  - **Intelligent Fallback:** Shows demo data only when <10 total trades; otherwise shows real diagnostics and near-miss patterns.
 - **Prop Firm Mode:** Comprehensive prop firm challenge tracking system with amber/gold accents:
   - **Multi-Challenge Support:** Track up to 4 simultaneous prop firm challenges with per-challenge isolation of settings, metrics, violations, and phase progression. Uses `challenges: Record<string, PropChallenge>` with `activeChallengeIds` array and `viewingChallengeId` for selection. Persist migration (version 2) handles legacy single-challenge data conversion.
   - **Portfolio Overview:** Aggregate stats view showing total capital, total P&L, active count, and at-risk challenges count with individual challenge cards.
