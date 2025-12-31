@@ -1062,36 +1062,44 @@ export default function FullscreenBacktesting({
             
             chart.setSymbol(symbolWithSuffix, () => {
               chart.setResolution(targetInterval, () => {
-                // Wait for chart to stabilize before restoring drawings
-                setTimeout(() => {
+                // CRITICAL: Wait for dataReady before restoring drawings
+                // This ensures bars are loaded so drawings anchor to correct timestamps
+                const innerChart = tvWidgetRef.current?.activeChart();
+                if (!innerChart) {
+                  tfController.finalize(targetInterval);
+                  fastPathActiveRef.current = false;
+                  isChangingResolutionRef.current = false;
+                  return;
+                }
+                
+                innerChart.dataReady(() => {
+                  console.log('Fast-path: dataReady fired, restoring drawings');
                   try {
-                    const innerChart = tvWidgetRef.current?.activeChart();
-                    if (innerChart) {
-                      // RESTORE DRAWINGS after symbol load (only if switch ID matches to prevent race conditions)
-                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
-                        console.log('Fast-path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
-                        isRestoringDrawingsRef.current = true;
-                        DrawingManager.clearAllDrawings(innerChart);
-                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                        pendingDrawingsRef.current = [];
-                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
-                      } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
-                        console.log('Fast-path: Skipping restore - newer switch in progress (', restoreSwitchId, 'vs', drawingSwitchIdRef.current, ')');
-                      }
-                      
-                      // Center chart on replay position
-                      const replayTs = replayTimestampRef.current;
-                      if (replayTs > 0) {
-                        const resolutionMinutes = intervalToMinutes(targetInterval);
-                        const barMs = resolutionMinutes * 60 * 1000;
-                        const visibleFrom = (replayTs - barMs * 60) / 1000;
-                        const visibleTo = (replayTs + barMs * 20) / 1000;
-                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                        try {
-                          innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                        } catch (e) {}
-                      }
+                    // RESTORE DRAWINGS after data loaded (only if switch ID matches to prevent race conditions)
+                    if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
+                      console.log('Fast-path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
+                      isRestoringDrawingsRef.current = true;
+                      DrawingManager.clearAllDrawings(innerChart);
+                      DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                      pendingDrawingsRef.current = [];
+                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                    } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
+                      console.log('Fast-path: Skipping restore - newer switch in progress (', restoreSwitchId, 'vs', drawingSwitchIdRef.current, ')');
                     }
+                    
+                    // Center chart on replay position
+                    const replayTs = replayTimestampRef.current;
+                    if (replayTs > 0) {
+                      const resolutionMinutes = intervalToMinutes(targetInterval);
+                      const barMs = resolutionMinutes * 60 * 1000;
+                      const visibleFrom = (replayTs - barMs * 60) / 1000;
+                      const visibleTo = (replayTs + barMs * 20) / 1000;
+                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                      try {
+                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                      } catch (e) {}
+                    }
+                    
                     // ATOMIC TRANSACTION COMPLETE: Re-enable replay
                     if (!callbacksReadyRef.current) {
                       const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
@@ -1103,14 +1111,14 @@ export default function FullscreenBacktesting({
                     // VERIFY SYNC: Confirm derived state matches replayTime
                     const bars = allBarsRef.current;
                     const idx = currentBarIndexRef.current;
-                    const replayTs = replayTimestampRef.current;
+                    const replayTs2 = replayTimestampRef.current;
                     const resMinutes = intervalToMinutes(targetInterval);
                     const intervalMs = resMinutes * 60 * 1000;
                     
                     if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
                       const barCloseTime = bars[idx].time + intervalMs;
-                      if (barCloseTime > replayTs) {
-                        console.error('SYNC VERIFY FAILED: bar close > replayTime', { barCloseTime, replayTs, idx });
+                      if (barCloseTime > replayTs2) {
+                        console.error('SYNC VERIFY FAILED: bar close > replayTime', { barCloseTime, replayTs: replayTs2, idx });
                       } else {
                         console.log('Fast-path: SYNC VERIFIED, replayReady=true');
                       }
@@ -1125,7 +1133,7 @@ export default function FullscreenBacktesting({
                     fastPathActiveRef.current = false;
                   }
                   isChangingResolutionRef.current = false;
-                }, 200);
+                }); // Close dataReady callback
               }); // Close setResolution callback
             }); // Close setSymbol callback
           } else {
@@ -1134,34 +1142,42 @@ export default function FullscreenBacktesting({
             
             chart.setSymbol(symbolWithSuffix, () => {
               chart.setResolution(targetInterval, () => {
-                setTimeout(() => {
+                // CRITICAL: Wait for dataReady before restoring drawings
+                const innerChart = tvWidgetRef.current?.activeChart();
+                if (!innerChart) {
+                  tfController.finalize(targetInterval);
+                  fastPathActiveRef.current = false;
+                  isChangingResolutionRef.current = false;
+                  return;
+                }
+                
+                innerChart.dataReady(() => {
+                  console.log('Fast-path fallback: dataReady fired, restoring drawings');
                   try {
-                    const innerChart = tvWidgetRef.current?.activeChart();
-                    if (innerChart) {
-                      // RESTORE DRAWINGS after symbol load (only if switch ID matches)
-                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
-                        console.log('Fast-path fallback: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
-                        isRestoringDrawingsRef.current = true;
-                        DrawingManager.clearAllDrawings(innerChart);
-                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                        pendingDrawingsRef.current = [];
-                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
-                      } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
-                        console.log('Fast-path fallback: Skipping restore - newer switch in progress');
-                      }
-                      
-                      const replayTs = replayTimestampRef.current;
-                      if (replayTs > 0) {
-                        const resolutionMinutes = intervalToMinutes(targetInterval);
-                        const barMs = resolutionMinutes * 60 * 1000;
-                        const visibleFrom = (replayTs - barMs * 60) / 1000;
-                        const visibleTo = (replayTs + barMs * 20) / 1000;
-                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                        try {
-                          innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                        } catch (e) {}
-                      }
+                    // RESTORE DRAWINGS after data loaded (only if switch ID matches)
+                    if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
+                      console.log('Fast-path fallback: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
+                      isRestoringDrawingsRef.current = true;
+                      DrawingManager.clearAllDrawings(innerChart);
+                      DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                      pendingDrawingsRef.current = [];
+                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                    } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
+                      console.log('Fast-path fallback: Skipping restore - newer switch in progress');
                     }
+                    
+                    const replayTs = replayTimestampRef.current;
+                    if (replayTs > 0) {
+                      const resolutionMinutes = intervalToMinutes(targetInterval);
+                      const barMs = resolutionMinutes * 60 * 1000;
+                      const visibleFrom = (replayTs - barMs * 60) / 1000;
+                      const visibleTo = (replayTs + barMs * 20) / 1000;
+                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                      try {
+                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                      } catch (e) {}
+                    }
+                    
                     // ATOMIC TRANSACTION COMPLETE: Re-enable replay
                     if (!callbacksReadyRef.current) {
                       const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
@@ -1173,14 +1189,14 @@ export default function FullscreenBacktesting({
                     // VERIFY SYNC: Confirm derived state matches replayTime
                     const bars = allBarsRef.current;
                     const idx = currentBarIndexRef.current;
-                    const replayTs = replayTimestampRef.current;
+                    const replayTs2 = replayTimestampRef.current;
                     const resMinutes = intervalToMinutes(targetInterval);
                     const intervalMs = resMinutes * 60 * 1000;
                     
                     if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
                       const barCloseTime = bars[idx].time + intervalMs;
-                      if (barCloseTime > replayTs) {
-                        console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs, idx });
+                      if (barCloseTime > replayTs2) {
+                        console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs: replayTs2, idx });
                       } else {
                         console.log('Fast-path fallback: SYNC VERIFIED, replayReady=true');
                       }
@@ -1195,7 +1211,7 @@ export default function FullscreenBacktesting({
                     fastPathActiveRef.current = false;
                   }
                   isChangingResolutionRef.current = false;
-                }, 200);
+                }); // Close dataReady callback
               }); // Close setResolution callback
             }); // Close setSymbol callback
           }
@@ -2202,41 +2218,47 @@ export default function FullscreenBacktesting({
               
               chart.setSymbol(symbolWithSuffix, () => {
                 chart.setResolution(currentInterval, () => {
-                  // Set visible range and restore drawings after resolution change
-                  setTimeout(() => {
+                  // CRITICAL: Wait for dataReady before restoring drawings
+                  // This ensures bars are loaded so drawings anchor to correct timestamps
+                  const innerChart = tvWidgetRef.current?.activeChart();
+                  if (!innerChart) {
+                    tfController.finalize(currentInterval);
+                    isChangingResolutionRef.current = false;
+                    return;
+                  }
+                  
+                  innerChart.dataReady(() => {
+                    console.log('Slow path: dataReady fired, restoring drawings');
                     try {
-                      const innerChart = tvWidgetRef.current?.activeChart();
-                      if (innerChart) {
-                        // RESTORE DRAWINGS after symbol load (only if switch ID matches)
-                        if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === slowPathSwitchId) {
-                          console.log('Slow path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', slowPathSwitchId, ')');
-                          isRestoringDrawingsRef.current = true;
-                          DrawingManager.clearAllDrawings(innerChart);
-                          DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                          pendingDrawingsRef.current = [];
-                          setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
-                        } else if (drawingSwitchIdRef.current !== slowPathSwitchId) {
-                          console.log('Slow path: Skipping restore - newer switch in progress');
-                        }
-                        
-                        // Restore the captured visible range to preserve zoom level
-                        const savedRange = pendingVisibleRangeRef.current;
-                        if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
-                          console.log('Restoring captured visible range (slow path):', savedRange);
-                          innerChart.setVisibleRange(savedRange);
+                      // RESTORE DRAWINGS after data loaded (only if switch ID matches)
+                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === slowPathSwitchId) {
+                        console.log('Slow path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', slowPathSwitchId, ')');
+                        isRestoringDrawingsRef.current = true;
+                        DrawingManager.clearAllDrawings(innerChart);
+                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                        pendingDrawingsRef.current = [];
+                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                      } else if (drawingSwitchIdRef.current !== slowPathSwitchId) {
+                        console.log('Slow path: Skipping restore - newer switch in progress');
+                      }
+                      
+                      // Restore the captured visible range to preserve zoom level
+                      const savedRange = pendingVisibleRangeRef.current;
+                      if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
+                        console.log('Restoring captured visible range (slow path):', savedRange);
+                        innerChart.setVisibleRange(savedRange);
+                        pendingVisibleRangeAppliedRef.current = true;
+                      } else if (!pendingVisibleRangeAppliedRef.current) {
+                        const replayTs = replayTimestampRef.current;
+                        if (replayTs > 0) {
+                          const resolutionMinutes = intervalToMinutes(currentInterval);
+                          const barsToShow = 50;
+                          const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
+                          const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
+                          const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+                          console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
+                          innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
                           pendingVisibleRangeAppliedRef.current = true;
-                        } else if (!pendingVisibleRangeAppliedRef.current) {
-                          const replayTs = replayTimestampRef.current;
-                          if (replayTs > 0) {
-                            const resolutionMinutes = intervalToMinutes(currentInterval);
-                            const barsToShow = 50;
-                            const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
-                            const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
-                            const visibleTo = (replayTs + windowMs * 0.1) / 1000;
-                            console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
-                            innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                            pendingVisibleRangeAppliedRef.current = true;
-                          }
                         }
                       }
                     } catch (e) {
@@ -2247,7 +2269,7 @@ export default function FullscreenBacktesting({
                     console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, finalizing controller');
                     tfController.finalize(currentInterval);
                     isChangingResolutionRef.current = false;
-                  }, 200);
+                  }); // Close dataReady callback
                 }); // Close setResolution callback
               }); // Close setSymbol callback
             } catch (e) {
@@ -3135,10 +3157,12 @@ export default function FullscreenBacktesting({
               // Use setSymbol + setResolution to force fresh data fetch
               innerChart.setSymbol(symbolWithSuffix, () => {
                 innerChart.setResolution(newInterval, () => {
-                  // Wait for chart to stabilize, then restore drawings and visible range
-                  setTimeout(() => {
+                  // CRITICAL: Wait for dataReady before restoring drawings
+                  // This ensures bars are loaded so drawings anchor to correct timestamps
+                  innerChart.dataReady(() => {
+                    console.log('Native TF: dataReady fired, restoring drawings');
                     try {
-                      // RESTORE DRAWINGS after symbol load (only if switch ID matches)
+                      // RESTORE DRAWINGS after data loaded (only if switch ID matches)
                       if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === nativeSwitchId) {
                         console.log('Native TF: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', nativeSwitchId, ')');
                         isRestoringDrawingsRef.current = true;
@@ -3177,7 +3201,7 @@ export default function FullscreenBacktesting({
                     console.log('Native TF switch: Finalizing controller for', newInterval);
                     tfController.finalize(newInterval);
                     isChangingResolutionRef.current = false;
-                  }, 200);
+                  }); // Close dataReady callback
                 }); // Close setResolution callback
               }); // Close setSymbol callback
             } else {
