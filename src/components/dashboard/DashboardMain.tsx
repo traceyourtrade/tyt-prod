@@ -13,8 +13,8 @@ import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
 
 import { PropFirmModeToggle, PropFirmDashboard } from "@/components/prop-firm";
 import { EditModeToolbar } from "@/components/dashboard/DraggableWidgetGrid";
-import OnboardingTour from "@/components/onboarding/OnboardingTour";
-import { useOnboardingTour, dashboardTourSteps } from "@/hooks/useOnboardingTour";
+import OnboardingTour, { WelcomeModal } from "@/components/onboarding/OnboardingTour";
+import { useOnboardingTour, platformTourSteps } from "@/hooks/useOnboardingTour";
 
 import { cn } from "@/lib/utils";
 
@@ -35,7 +35,7 @@ const DashboardMain = () => {
   const { hrBarTxt, hrBarType } = notifications();
   const { isEnabled: isPropFirmMode } = usePropFirmStore();
   const { currency, exchangeRate } = useCurrencyStore();
-  const { isOpen: isTourOpen, startTour, completeTour, skipTour } = useOnboardingTour();
+  const { isOpen: isTourOpen, showWelcome, startTour, completeTour, skipTour, dismissWelcome } = useOnboardingTour();
 
   useEffect(() => {
     setAccounts();
@@ -291,8 +291,14 @@ const DashboardMain = () => {
         )}
       </div>
 
+      <WelcomeModal
+        isOpen={showWelcome}
+        onStartTour={startTour}
+        onSkip={dismissWelcome}
+      />
+
       <OnboardingTour
-        steps={dashboardTourSteps}
+        steps={platformTourSteps}
         isOpen={isTourOpen}
         onComplete={completeTour}
         onSkip={skipTour}

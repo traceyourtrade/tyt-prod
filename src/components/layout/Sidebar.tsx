@@ -53,22 +53,22 @@ interface SidebarProps {
 }
 
 const tradingItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen },
-  { name: "Notebook", href: "/notebook", icon: FileText },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, tourId: "nav-dashboard" },
+  { name: "Daily Journal", href: "/daily-journal", icon: BookOpen, tourId: "nav-daily-journal" },
+  { name: "Notebook", href: "/notebook", icon: FileText, tourId: "nav-notebook" },
 ]
 
 const analysisItems = [
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Strategies", href: "/strategies", icon: Target },
-  { name: "Playbook", href: "/playbook", icon: Sparkles },
-  { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, badge: "New" },
+  { name: "Reports", href: "/reports", icon: BarChart3, tourId: "nav-reports" },
+  { name: "Strategies", href: "/strategies", icon: Target, tourId: "nav-strategies" },
+  { name: "Playbook", href: "/playbook", icon: Sparkles, tourId: "nav-playbook" },
+  { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, badge: "New", tourId: "nav-ai-analysis" },
 ]
 
 const toolsItems = [
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
-  { name: "Resources", href: "/resources", icon: GraduationCap },
-  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator },
+  { name: "Resources", href: "/resources", icon: GraduationCap, tourId: "nav-resources" },
+  { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, tourId: "nav-calculator" },
 ]
 
 const backtestingItems = [
@@ -149,13 +149,14 @@ export function Sidebar({
     return pathname.startsWith(href)
   }
 
-  const NavItem = ({ item, collapsed: isCollapsed }: { item: { name: string; href: string; icon: React.ElementType; badge?: string }; collapsed: boolean }) => {
+  const NavItem = ({ item, collapsed: isCollapsed }: { item: { name: string; href: string; icon: React.ElementType; badge?: string; tourId?: string }; collapsed: boolean }) => {
     const Icon = item.icon
     const active = isActive(item.href)
     
     return (
       <Link
         href={item.href}
+        data-tour={item.tourId}
         className={cn(
           "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4EBF94]/50",
@@ -336,6 +337,7 @@ export function Sidebar({
         {/* Add Trade Button */}
         <div className={cn("px-3 mt-4", collapsed && "mt-2")}>
           <motion.button
+            data-tour="add-trade-btn"
             className={cn(
               "group relative w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-[13px] transition-all duration-300 overflow-hidden",
               "bg-gradient-to-r from-[#4EBF94] via-[#45B08A] to-[#3AA07A]",
@@ -419,6 +421,7 @@ export function Sidebar({
           <div className="mb-2">
             <button
               onClick={() => setBacktestingOpen(!backtestingOpen)}
+              data-tour="nav-backtesting"
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200",
                 "text-white/50 hover:text-white hover:bg-white/[0.06]",
