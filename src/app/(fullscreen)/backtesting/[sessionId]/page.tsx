@@ -1042,135 +1042,79 @@ export default function FullscreenBacktesting({
           const chart = tvWidgetRef.current.activeChart();
           const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
           
-          // DRAWING PRESERVATION FIX: Use setResolution + resetData instead of setSymbol
-          // Changing the symbol (even with dynamic suffix) causes TradingView to clear all drawings
-          // By using setResolution only, we preserve user drawings during timeframe switches
-          // resetData() forces TradingView to refetch bars without clearing drawings
+          // DRAWING PRESERVATION: Capture drawings BEFORE setSymbol, restore AFTER
+          // Using setSymbol with dynamic suffix ensures TradingView calls getBars with fresh data
+          // Drawings are captured/restored manually since setSymbol clears them
+          const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
+          const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}_${Date.now()}`;
+          
+          // CAPTURE DRAWINGS BEFORE SWITCH
+          let capturedDrawings: any[] = [];
+          try {
+            capturedDrawings = DrawingManager.captureDrawings(chart);
+            if (capturedDrawings.length > 0) {
+              console.log('Fast-path: Captured', capturedDrawings.length, 'drawings before switch');
+              pendingDrawingsRef.current = capturedDrawings;
+            }
+          } catch (e) {
+            console.warn('Failed to capture drawings:', e);
+          }
+          
           if (cachedCallback) {
-            console.log('Fast-path: Using setResolution + resetData (preserves drawings)');
+            console.log('Fast-path: Using setSymbol with dynamic suffix:', symbolWithSuffix);
             
-            // First, force data refresh by calling resetData
-            try {
-              chart.resetData();
-              console.log('Called resetData to force fresh getBars');
-            } catch (e) {
-              console.log('resetData not available, continuing with setResolution');
-            }
-            
-            chart.setResolution(targetInterval, () => {
-              // Minimal delay for chart stabilization
-              setTimeout(() => {
-                try {
-                  const innerChart = tvWidgetRef.current?.activeChart();
-                  if (innerChart) {
-                    // NOTE: Drawings are preserved when using setResolution-only
-                    // No need to restore drawings manually
-                    pendingDrawingsRef.current = [];
+            chart.setSymbol(symbolWithSuffix, () => {
+              chart.setResolution(targetInterval, () => {
+                // Wait for chart to stabilize before restoring drawings
+                setTimeout(() => {
+                  try {
+                    const innerChart = tvWidgetRef.current?.activeChart();
+                    if (innerChart) {
+                      // RESTORE DRAWINGS after symbol load
+                      if (pendingDrawingsRef.current.length > 0) {
+                        console.log('Fast-path: Restoring', pendingDrawingsRef.current.length, 'drawings');
+                        isRestoringDrawingsRef.current = true;
+                        DrawingManager.clearAllDrawings(innerChart);
+                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                        pendingDrawingsRef.current = [];
+                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                      }
+                      
+                      // Center chart on replay position
+                      const replayTs = replayTimestampRef.current;
+                      if (replayTs > 0) {
+                        const resolutionMinutes = intervalToMinutes(targetInterval);
+                        const barMs = resolutionMinutes * 60 * 1000;
+                        const visibleFrom = (replayTs - barMs * 60) / 1000;
+                        const visibleTo = (replayTs + barMs * 20) / 1000;
+                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        try {
+                          innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                        } catch (e) {}
+                      }
+                    }
+                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+                    if (!callbacksReadyRef.current) {
+                      const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
+                      if (cachedCb) {
+                        callbacksReadyRef.current = true;
+                      }
+                    }
                     
-                    // Center chart on replay position
+                    // VERIFY SYNC: Confirm derived state matches replayTime
+                    const bars = allBarsRef.current;
+                    const idx = currentBarIndexRef.current;
                     const replayTs = replayTimestampRef.current;
-                    if (replayTs > 0) {
-                      const resolutionMinutes = intervalToMinutes(targetInterval);
-                      const barMs = resolutionMinutes * 60 * 1000;
-                      const visibleFrom = (replayTs - barMs * 60) / 1000;
-                      const visibleTo = (replayTs + barMs * 20) / 1000;
-                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                      try {
-                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                      } catch (e) {}
-                    }
-                  }
-                  // ATOMIC TRANSACTION COMPLETE: Re-enable replay
-                  // Ensure callbacksReady is true after TradingView resubscribes
-                  if (!callbacksReadyRef.current) {
-                    const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
-                    if (cachedCb) {
-                      callbacksReadyRef.current = true;
-                    }
-                  }
-                  
-                  // VERIFY SYNC: Confirm derived state matches replayTime
-                  const bars = allBarsRef.current;
-                  const idx = currentBarIndexRef.current;
-                  const replayTs = replayTimestampRef.current;
-                  const resMinutes = intervalToMinutes(targetInterval);
-                  const intervalMs = resMinutes * 60 * 1000;
-                  
-                  if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
-                    const barCloseTime = bars[idx].time + intervalMs;
-                    if (barCloseTime > replayTs) {
-                      console.error('SYNC VERIFY FAILED: bar close > replayTime', { barCloseTime, replayTs, idx });
-                    } else {
-                      console.log('Fast-path: SYNC VERIFIED, replayReady=true');
-                    }
-                  }
-                  
-                  // Only NOW enable replay via controller
-                  tfController.finalize(targetInterval);
-                  fastPathActiveRef.current = false;
-                } catch (e) {
-                  console.warn('Error in post-switch cleanup:', e);
-                  tfController.finalize(targetInterval);
-                  fastPathActiveRef.current = false;
-                }
-                isChangingResolutionRef.current = false;
-              }, 50); // Reduced from 300ms to 50ms
-            }); // Close setResolution callback
-          } else {
-            // Fallback: No cached callback - use resetData + setResolution (preserves drawings)
-            console.log('Fast-path fallback: Using resetData + setResolution (preserves drawings)');
-            
-            // Force data refresh by calling resetData
-            try {
-              chart.resetData();
-              console.log('Fallback: Called resetData to force fresh getBars');
-            } catch (e) {
-              console.log('Fallback: resetData not available, continuing with setResolution');
-            }
-            
-            chart.setResolution(targetInterval, () => {
-              setTimeout(() => {
-                try {
-                  const innerChart = tvWidgetRef.current?.activeChart();
-                  if (innerChart) {
-                    // NOTE: Drawings are preserved when using setResolution-only
-                    // No need to restore drawings manually
-                    pendingDrawingsRef.current = [];
+                    const resMinutes = intervalToMinutes(targetInterval);
+                    const intervalMs = resMinutes * 60 * 1000;
                     
-                    const replayTs = replayTimestampRef.current;
-                    if (replayTs > 0) {
-                      const resolutionMinutes = intervalToMinutes(targetInterval);
-                      const barMs = resolutionMinutes * 60 * 1000;
-                      const visibleFrom = (replayTs - barMs * 60) / 1000;
-                      const visibleTo = (replayTs + barMs * 20) / 1000;
-                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                      try {
-                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                      } catch (e) {}
-                    }
-                  }
-                  // ATOMIC TRANSACTION COMPLETE: Re-enable replay
-                  if (!callbacksReadyRef.current) {
-                    const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
-                    if (cachedCb) {
-                      callbacksReadyRef.current = true;
-                    }
-                  }
-                  
-                  // VERIFY SYNC: Confirm derived state matches replayTime
-                  const bars = allBarsRef.current;
-                  const idx = currentBarIndexRef.current;
-                  const replayTs = replayTimestampRef.current;
-                  const resMinutes = intervalToMinutes(targetInterval);
-                  const intervalMs = resMinutes * 60 * 1000;
-                  
-                  if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
-                    const barCloseTime = bars[idx].time + intervalMs;
-                    if (barCloseTime > replayTs) {
-                      console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs, idx });
-                    } else {
-                      console.log('Fast-path fallback: SYNC VERIFIED, replayReady=true');
-                    }
+                    if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
+                      const barCloseTime = bars[idx].time + intervalMs;
+                      if (barCloseTime > replayTs) {
+                        console.error('SYNC VERIFY FAILED: bar close > replayTime', { barCloseTime, replayTs, idx });
+                      } else {
+                        console.log('Fast-path: SYNC VERIFIED, replayReady=true');
+                      }
                     }
                     
                     // Only NOW enable replay via controller
@@ -1182,8 +1126,77 @@ export default function FullscreenBacktesting({
                     fastPathActiveRef.current = false;
                   }
                   isChangingResolutionRef.current = false;
-                }, 150); // Reduced from 300ms
+                }, 200);
               }); // Close setResolution callback
+            }); // Close setSymbol callback
+          } else {
+            // Fallback: No cached callback - use same setSymbol approach
+            console.log('Fast-path fallback: Using setSymbol with dynamic suffix:', symbolWithSuffix);
+            
+            chart.setSymbol(symbolWithSuffix, () => {
+              chart.setResolution(targetInterval, () => {
+                setTimeout(() => {
+                  try {
+                    const innerChart = tvWidgetRef.current?.activeChart();
+                    if (innerChart) {
+                      // RESTORE DRAWINGS after symbol load
+                      if (pendingDrawingsRef.current.length > 0) {
+                        console.log('Fast-path fallback: Restoring', pendingDrawingsRef.current.length, 'drawings');
+                        isRestoringDrawingsRef.current = true;
+                        DrawingManager.clearAllDrawings(innerChart);
+                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                        pendingDrawingsRef.current = [];
+                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 500);
+                      }
+                      
+                      const replayTs = replayTimestampRef.current;
+                      if (replayTs > 0) {
+                        const resolutionMinutes = intervalToMinutes(targetInterval);
+                        const barMs = resolutionMinutes * 60 * 1000;
+                        const visibleFrom = (replayTs - barMs * 60) / 1000;
+                        const visibleTo = (replayTs + barMs * 20) / 1000;
+                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        try {
+                          innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                        } catch (e) {}
+                      }
+                    }
+                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+                    if (!callbacksReadyRef.current) {
+                      const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
+                      if (cachedCb) {
+                        callbacksReadyRef.current = true;
+                      }
+                    }
+                    
+                    // VERIFY SYNC: Confirm derived state matches replayTime
+                    const bars = allBarsRef.current;
+                    const idx = currentBarIndexRef.current;
+                    const replayTs = replayTimestampRef.current;
+                    const resMinutes = intervalToMinutes(targetInterval);
+                    const intervalMs = resMinutes * 60 * 1000;
+                    
+                    if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
+                      const barCloseTime = bars[idx].time + intervalMs;
+                      if (barCloseTime > replayTs) {
+                        console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs, idx });
+                      } else {
+                        console.log('Fast-path fallback: SYNC VERIFIED, replayReady=true');
+                      }
+                    }
+                    
+                    // Only NOW enable replay via controller
+                    tfController.finalize(targetInterval);
+                    fastPathActiveRef.current = false;
+                  } catch (e) {
+                    console.warn('Error in post-switch cleanup:', e);
+                    tfController.finalize(targetInterval);
+                    fastPathActiveRef.current = false;
+                  }
+                  isChangingResolutionRef.current = false;
+                }, 200);
+              }); // Close setResolution callback
+            }); // Close setSymbol callback
           }
         } catch (e) {
           isChangingResolutionRef.current = false;
