@@ -224,6 +224,29 @@ function getDayFromDate(dateStr: string): string {
   return date.toLocaleDateString('en-US', { weekday: 'long' });
 }
 
+interface NearMissPattern {
+  type: 'strategy' | 'symbol' | 'time' | 'day';
+  name: string;
+  value: string;
+  currentTrades: number;
+  requiredTrades: number;
+  currentWinRate: number;
+  requiredWinRate: number;
+  reason: string;
+}
+
+interface DiagnosticInfo {
+  totalTrades: number;
+  tradesWithStrategy: number;
+  tradesWithSymbol: number;
+  tradesWithTime: number;
+  tradesWithDay: number;
+  strategyDistribution: Record<string, number>;
+  symbolDistribution: Record<string, number>;
+  timeDistribution: Record<string, number>;
+  dayDistribution: Record<string, number>;
+}
+
 export async function detectPatternsHandler(req: any, userId: string, token: string) {
   try {
     const rootUser = await getUserFromToken(token);
@@ -238,14 +261,29 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
       }
     });
 
+    const diagnostics: DiagnosticInfo = {
+      totalTrades: allTrades.length,
+      tradesWithStrategy: 0,
+      tradesWithSymbol: 0,
+      tradesWithTime: 0,
+      tradesWithDay: 0,
+      strategyDistribution: {},
+      symbolDistribution: {},
+      timeDistribution: {},
+      dayDistribution: {}
+    };
+
     if (allTrades.length < 10) {
       return NextResponse.json({ 
         data: [], 
-        message: "Need at least 10 trades to detect patterns" 
+        nearMissPatterns: [],
+        diagnostics: { ...diagnostics, tradesNeeded: 10 - allTrades.length },
+        message: `Need ${10 - allTrades.length} more trades to start pattern detection (minimum 10 required)` 
       }, { status: 200 });
     }
 
     const detectedPatterns: DetectedPattern[] = [];
+    const nearMissPatterns: NearMissPattern[] = [];
 
     const strategyGroups: Record<string, Trade[]> = {};
     allTrades.forEach(trade => {
@@ -255,12 +293,14 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
           strategyGroups[strategy] = [];
         }
         strategyGroups[strategy].push(trade);
+        diagnostics.tradesWithStrategy++;
       }
+      diagnostics.strategyDistribution[strategy] = (diagnostics.strategyDistribution[strategy] || 0) + 1;
     });
 
     Object.entries(strategyGroups).forEach(([strategy, trades]) => {
+      const stats = calculatePatternStats(trades);
       if (trades.length >= 5) {
-        const stats = calculatePatternStats(trades);
         if (stats.winRate >= 50 && stats.totalProfit > 0) {
           detectedPatterns.push({
             type: 'strategy',
@@ -269,7 +309,31 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
             stats,
             description: `Your ${strategy} strategy shows a ${stats.winRate.toFixed(1)}% win rate across ${stats.totalTrades} trades with $${stats.totalProfit.toFixed(2)} total profit.`
           });
+        } else if (stats.winRate >= 40 || stats.totalProfit > 0) {
+          nearMissPatterns.push({
+            type: 'strategy',
+            name: `${strategy} Strategy`,
+            value: strategy,
+            currentTrades: trades.length,
+            requiredTrades: 5,
+            currentWinRate: stats.winRate,
+            requiredWinRate: 50,
+            reason: stats.winRate < 50 
+              ? `Win rate ${stats.winRate.toFixed(1)}% - need 50%+`
+              : `Negative profit $${stats.totalProfit.toFixed(2)} - need positive`
+          });
         }
+      } else if (trades.length >= 3) {
+        nearMissPatterns.push({
+          type: 'strategy',
+          name: `${strategy} Strategy`,
+          value: strategy,
+          currentTrades: trades.length,
+          requiredTrades: 5,
+          currentWinRate: stats.winRate,
+          requiredWinRate: 50,
+          reason: `Need ${5 - trades.length} more trades (${trades.length}/5)`
+        });
       }
     });
 
@@ -281,12 +345,14 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
           symbolGroups[symbol] = [];
         }
         symbolGroups[symbol].push(trade);
+        diagnostics.tradesWithSymbol++;
       }
+      diagnostics.symbolDistribution[symbol || 'Unknown'] = (diagnostics.symbolDistribution[symbol || 'Unknown'] || 0) + 1;
     });
 
     Object.entries(symbolGroups).forEach(([symbol, trades]) => {
+      const stats = calculatePatternStats(trades);
       if (trades.length >= 5) {
-        const stats = calculatePatternStats(trades);
         if (stats.winRate >= 55 && stats.totalProfit > 0) {
           detectedPatterns.push({
             type: 'symbol',
@@ -295,7 +361,31 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
             stats,
             description: `Trading ${symbol} yields ${stats.winRate.toFixed(1)}% wins across ${stats.totalTrades} trades with $${stats.totalProfit.toFixed(2)} profit.`
           });
+        } else if (stats.winRate >= 45 || stats.totalProfit > 0) {
+          nearMissPatterns.push({
+            type: 'symbol',
+            name: `${symbol} Trading`,
+            value: symbol,
+            currentTrades: trades.length,
+            requiredTrades: 5,
+            currentWinRate: stats.winRate,
+            requiredWinRate: 55,
+            reason: stats.winRate < 55 
+              ? `Win rate ${stats.winRate.toFixed(1)}% - need 55%+`
+              : `Negative profit $${stats.totalProfit.toFixed(2)} - need positive`
+          });
         }
+      } else if (trades.length >= 3) {
+        nearMissPatterns.push({
+          type: 'symbol',
+          name: `${symbol} Trading`,
+          value: symbol,
+          currentTrades: trades.length,
+          requiredTrades: 5,
+          currentWinRate: stats.winRate,
+          requiredWinRate: 55,
+          reason: `Need ${5 - trades.length} more trades (${trades.length}/5)`
+        });
       }
     });
 
@@ -308,15 +398,18 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
           hourGroups[hour] = [];
         }
         hourGroups[hour].push(trade);
+        diagnostics.tradesWithTime++;
       }
+      const hourKey = hour >= 0 ? `${hour}:00` : 'Unknown';
+      diagnostics.timeDistribution[hourKey] = (diagnostics.timeDistribution[hourKey] || 0) + 1;
     });
 
     Object.entries(hourGroups).forEach(([hourStr, trades]) => {
       const hour = parseInt(hourStr, 10);
+      const timeLabel = hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`;
+      const stats = calculatePatternStats(trades);
       if (trades.length >= 5) {
-        const stats = calculatePatternStats(trades);
         if (stats.winRate >= 55 && stats.totalProfit > 0) {
-          const timeLabel = hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`;
           detectedPatterns.push({
             type: 'time',
             name: `${timeLabel} Session`,
@@ -324,7 +417,31 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
             stats,
             description: `Trading at ${timeLabel} shows ${stats.winRate.toFixed(1)}% win rate with ${stats.totalTrades} trades and $${stats.totalProfit.toFixed(2)} profit.`
           });
+        } else if (stats.winRate >= 45 || stats.totalProfit > 0) {
+          nearMissPatterns.push({
+            type: 'time',
+            name: `${timeLabel} Session`,
+            value: hourStr,
+            currentTrades: trades.length,
+            requiredTrades: 5,
+            currentWinRate: stats.winRate,
+            requiredWinRate: 55,
+            reason: stats.winRate < 55 
+              ? `Win rate ${stats.winRate.toFixed(1)}% - need 55%+`
+              : `Negative profit $${stats.totalProfit.toFixed(2)} - need positive`
+          });
         }
+      } else if (trades.length >= 3) {
+        nearMissPatterns.push({
+          type: 'time',
+          name: `${timeLabel} Session`,
+          value: hourStr,
+          currentTrades: trades.length,
+          requiredTrades: 5,
+          currentWinRate: stats.winRate,
+          requiredWinRate: 55,
+          reason: `Need ${5 - trades.length} more trades (${trades.length}/5)`
+        });
       }
     });
 
@@ -336,12 +453,14 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
           dayGroups[day] = [];
         }
         dayGroups[day].push(trade);
+        diagnostics.tradesWithDay++;
       }
+      diagnostics.dayDistribution[day || 'Unknown'] = (diagnostics.dayDistribution[day || 'Unknown'] || 0) + 1;
     });
 
     Object.entries(dayGroups).forEach(([day, trades]) => {
+      const stats = calculatePatternStats(trades);
       if (trades.length >= 5) {
-        const stats = calculatePatternStats(trades);
         if (stats.winRate >= 55 && stats.totalProfit > 0) {
           detectedPatterns.push({
             type: 'day',
@@ -350,7 +469,31 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
             stats,
             description: `Trading on ${day}s achieves ${stats.winRate.toFixed(1)}% win rate across ${stats.totalTrades} trades with $${stats.totalProfit.toFixed(2)} profit.`
           });
+        } else if (stats.winRate >= 45 || stats.totalProfit > 0) {
+          nearMissPatterns.push({
+            type: 'day',
+            name: `${day}s`,
+            value: day,
+            currentTrades: trades.length,
+            requiredTrades: 5,
+            currentWinRate: stats.winRate,
+            requiredWinRate: 55,
+            reason: stats.winRate < 55 
+              ? `Win rate ${stats.winRate.toFixed(1)}% - need 55%+`
+              : `Negative profit $${stats.totalProfit.toFixed(2)} - need positive`
+          });
         }
+      } else if (trades.length >= 3) {
+        nearMissPatterns.push({
+          type: 'day',
+          name: `${day}s`,
+          value: day,
+          currentTrades: trades.length,
+          requiredTrades: 5,
+          currentWinRate: stats.winRate,
+          requiredWinRate: 55,
+          reason: `Need ${5 - trades.length} more trades (${trades.length}/5)`
+        });
       }
     });
 
@@ -360,10 +503,22 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
       return scoreB - scoreA;
     });
 
+    nearMissPatterns.sort((a, b) => {
+      const progressA = a.currentTrades / a.requiredTrades;
+      const progressB = b.currentTrades / b.requiredTrades;
+      return progressB - progressA;
+    });
+
     return NextResponse.json({ 
       data: detectedPatterns.slice(0, 10),
+      nearMissPatterns: nearMissPatterns.slice(0, 8),
+      diagnostics,
       totalTrades: allTrades.length,
-      message: `Detected ${detectedPatterns.length} winning patterns from ${allTrades.length} trades`
+      message: detectedPatterns.length > 0 
+        ? `Detected ${detectedPatterns.length} winning patterns from ${allTrades.length} trades`
+        : nearMissPatterns.length > 0
+          ? `No qualifying patterns yet, but ${nearMissPatterns.length} patterns are close to qualifying`
+          : `Analyzed ${allTrades.length} trades - add more trades with consistent strategies to detect patterns`
     }, { status: 200 });
 
   } catch (error) {

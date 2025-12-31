@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { BookOpen, Sparkles, Plus, Target, TrendingUp, Clock, Calendar, BarChart3, Zap, ChevronRight, Trash2, Eye, EyeOff } from "lucide-react"
+import { BookOpen, Sparkles, Plus, Target, TrendingUp, Clock, Calendar, BarChart3, Zap, ChevronRight, Trash2, Eye, EyeOff, AlertCircle, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore"
 
@@ -22,6 +22,30 @@ interface DetectedPattern {
   value: string
   stats: PatternStats
   description: string
+}
+
+interface NearMissPattern {
+  type: 'strategy' | 'symbol' | 'time' | 'day'
+  name: string
+  value: string
+  currentTrades: number
+  requiredTrades: number
+  currentWinRate: number
+  requiredWinRate: number
+  reason: string
+}
+
+interface DiagnosticInfo {
+  totalTrades: number
+  tradesWithStrategy: number
+  tradesWithSymbol: number
+  tradesWithTime: number
+  tradesWithDay: number
+  strategyDistribution: Record<string, number>
+  symbolDistribution: Record<string, number>
+  timeDistribution: Record<string, number>
+  dayDistribution: Record<string, number>
+  tradesNeeded?: number
 }
 
 interface PlaybookEntry {
@@ -209,6 +233,9 @@ const demoPlaybooks: PlaybookEntry[] = [
 export default function PlaybookMain() {
   const [activeTab, setActiveTab] = useState<'patterns' | 'playbook'>('patterns')
   const [detectedPatterns, setDetectedPatterns] = useState<DetectedPattern[]>([])
+  const [nearMissPatterns, setNearMissPatterns] = useState<NearMissPattern[]>([])
+  const [diagnostics, setDiagnostics] = useState<DiagnosticInfo | null>(null)
+  const [apiMessage, setApiMessage] = useState<string>('')
   const [playbooks, setPlaybooks] = useState<PlaybookEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [totalTrades, setTotalTrades] = useState(0)
@@ -231,35 +258,52 @@ export default function PlaybookMain() {
         fetch('/api/playbook/get?apiName=getPlaybooks', { credentials: 'include' })
       ])
 
-      let hasData = false
+      let fetchedTotalTrades = 0
+      let hasRealPatternData = false
 
       if (patternsRes.ok) {
         const patternsData = await patternsRes.json()
-        if (patternsData.data && patternsData.data.length > 0) {
-          setDetectedPatterns(patternsData.data)
-          setTotalTrades(patternsData.totalTrades || 0)
-          hasData = true
+        fetchedTotalTrades = patternsData.totalTrades || 0
+        setTotalTrades(fetchedTotalTrades)
+        setApiMessage(patternsData.message || '')
+        
+        if (patternsData.diagnostics) {
+          setDiagnostics(patternsData.diagnostics)
+        } else {
+          setDiagnostics(null)
+        }
+        
+        setNearMissPatterns(patternsData.nearMissPatterns || [])
+        setDetectedPatterns(patternsData.data || [])
+        
+        if ((patternsData.data && patternsData.data.length > 0) || 
+            (patternsData.nearMissPatterns && patternsData.nearMissPatterns.length > 0) ||
+            patternsData.diagnostics) {
+          hasRealPatternData = true
         }
       }
 
       if (playbooksRes.ok) {
         const playbooksData = await playbooksRes.json()
-        if (playbooksData.data && playbooksData.data.length > 0) {
-          setPlaybooks(playbooksData.data)
-          hasData = true
-        }
+        setPlaybooks(playbooksData.data || [])
       }
 
-      if (!hasData) {
+      if (!hasRealPatternData && fetchedTotalTrades < 10) {
         setDetectedPatterns(demoPatterns)
         setPlaybooks(demoPlaybooks)
+        setNearMissPatterns([])
+        setDiagnostics(null)
         setTotalTrades(221)
         setIsDemo(true)
+      } else {
+        setIsDemo(false)
       }
     } catch (error) {
       console.error('Error fetching playbook data:', error)
       setDetectedPatterns(demoPatterns)
       setPlaybooks(demoPlaybooks)
+      setNearMissPatterns([])
+      setDiagnostics(null)
       setTotalTrades(221)
       setIsDemo(true)
     } finally {
@@ -407,13 +451,112 @@ export default function PlaybookMain() {
           </div>
 
           {detectedPatterns.length === 0 ? (
-            <div className="text-center py-16 bg-card/50 rounded-2xl border border-border">
-              <Sparkles className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No patterns detected yet</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Continue trading and logging your trades. Once you have at least 10 trades, 
-                we'll analyze your data to find winning patterns.
-              </p>
+            <div className="space-y-6">
+              {apiMessage && !isDemo && (
+                <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">{apiMessage}</p>
+                    {diagnostics && diagnostics.tradesNeeded && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Add {diagnostics.tradesNeeded} more trades to enable pattern detection
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {nearMissPatterns.length > 0 && !isDemo && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">Almost Qualifying Patterns</h3>
+                    <span className="text-xs text-muted-foreground">({nearMissPatterns.length} patterns close to detection)</span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {nearMissPatterns.map((pattern, index) => {
+                      const Icon = typeIcons[pattern.type]
+                      const colorClass = typeColors[pattern.type]
+                      const progress = (pattern.currentTrades / pattern.requiredTrades) * 100
+
+                      return (
+                        <div
+                          key={index}
+                          className="bg-card/50 border border-dashed border-border rounded-xl p-4"
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border opacity-60", colorClass)}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-foreground text-sm">{pattern.name}</h4>
+                              <span className="text-xs text-muted-foreground capitalize">{pattern.type}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Progress</span>
+                              <span className="text-foreground font-medium">{pattern.currentTrades}/{pattern.requiredTrades} trades</span>
+                            </div>
+                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary/60 rounded-full transition-all"
+                                style={{ width: `${Math.min(progress, 100)}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-amber-600 dark:text-amber-400">{pattern.reason}</p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {diagnostics && !isDemo && Object.keys(diagnostics.strategyDistribution).length > 0 && (
+                <div className="bg-card/30 border border-border rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Trade Distribution</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                    <div>
+                      <p className="text-muted-foreground mb-1">By Symbol</p>
+                      {Object.entries(diagnostics.symbolDistribution).slice(0, 3).map(([symbol, count]) => (
+                        <p key={symbol} className="text-foreground">{symbol}: {count}</p>
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground mb-1">By Strategy</p>
+                      {Object.entries(diagnostics.strategyDistribution).slice(0, 3).map(([strategy, count]) => (
+                        <p key={strategy} className="text-foreground">{strategy}: {count}</p>
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground mb-1">By Day</p>
+                      {Object.entries(diagnostics.dayDistribution).slice(0, 3).map(([day, count]) => (
+                        <p key={day} className="text-foreground">{day}: {count}</p>
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground mb-1">By Time</p>
+                      {Object.entries(diagnostics.timeDistribution).slice(0, 3).map(([time, count]) => (
+                        <p key={time} className="text-foreground">{time}: {count}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(nearMissPatterns.length === 0 || isDemo) && (
+                <div className="text-center py-16 bg-card/50 rounded-2xl border border-border">
+                  <Sparkles className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No patterns detected yet</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {isDemo 
+                      ? "This is demo data. Continue trading and logging your trades with at least 10 trades to see real pattern detection."
+                      : "Continue trading and logging your trades. Ensure you select a strategy for each trade and have at least 5 trades per category."
+                    }
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
