@@ -137,11 +137,13 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
   const expandBacktestingIfNeeded = useCallback(() => {
     if (!currentSelector?.includes('backtesting')) return;
     
-    const accordionTrigger = document.querySelector('[data-tour="nav-backtesting"]');
-    if (accordionTrigger) {
-      const button = accordionTrigger.querySelector('button');
+    const backtestingWrapper = document.querySelector('[data-tour="nav-backtesting"]');
+    if (backtestingWrapper) {
+      const button = backtestingWrapper.querySelector('button');
+      
       if (button) {
-        const isExpanded = button.getAttribute('data-state') === 'open';
+        // Check aria-expanded attribute to determine if accordion is open
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
         if (!isExpanded) {
           button.click();
         }
@@ -154,7 +156,16 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
     expandBacktestingIfNeeded();
 
-    const element = document.querySelector(currentSelector);
+    let element: Element | null = document.querySelector(currentSelector);
+    
+    // For backtesting, target the button inside the wrapper for better measurement
+    if (currentSelector?.includes('backtesting') && element) {
+      const button = element.querySelector('button');
+      if (button) {
+        element = button;
+      }
+    }
+    
     if (!element) return null;
 
     const rect = element.getBoundingClientRect();

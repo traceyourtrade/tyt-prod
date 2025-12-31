@@ -496,6 +496,7 @@ export default function RootLayout({
             
             <button
               onClick={() => setBacktestingOpen(!backtestingOpen)}
+              aria-expanded={backtestingOpen}
               className={cn(
                 "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
                 "text-blue-400 hover:text-blue-300",
