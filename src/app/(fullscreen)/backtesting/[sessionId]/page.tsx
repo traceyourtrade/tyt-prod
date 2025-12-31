@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import "./backtesting.css";
 import { widget as TradingViewWidget } from "../../../../../public/charting_library";
 import { makeApiRequest, parseFullSymbol } from "@/lib/custom-datafeed/helpers";
-import * as DrawingManager from "@/lib/drawing-persistence-manager";
 import { useTimeframeSwitchController } from "@/hooks/useTimeframeSwitchController";
 
 type MarketType = 'FOREX' | 'CRYPTO' | 'INDIAN_INDICES' | 'INDIAN_STOCK';
