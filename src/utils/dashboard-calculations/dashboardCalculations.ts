@@ -4,6 +4,7 @@ interface Trade {
 
 interface Account {
     accountBalance?: number;
+    tradeData?: Trade[];
 }
 
 interface RiskRewardResult {
@@ -84,7 +85,12 @@ function calculateRiskRewardRatio(trades: Trade[]): RiskRewardResult {
 
 function calculateBalance(accounts: Account[]): number {
     let totalBalance = 0;
-    totalBalance = accounts.reduce((sum, account) => sum + (account.accountBalance || 0), 0);
+    
+    accounts.forEach(account => {
+        const initialBalance = account.accountBalance || 0;
+        const tradePnL = (account.tradeData || []).reduce((sum, trade) => sum + (trade.Profit || 0), 0);
+        totalBalance += initialBalance + tradePnL;
+    });
     
     return totalBalance;
 }
