@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import "./backtesting.css";
 import { widget as TradingViewWidget } from "../../../../../public/charting_library";
 import { makeApiRequest, parseFullSymbol } from "@/lib/custom-datafeed/helpers";
+import * as DrawingManager from "@/lib/drawing-persistence-manager";
 import { useTimeframeSwitchController } from "@/hooks/useTimeframeSwitchController";
 
 type MarketType = 'FOREX' | 'CRYPTO' | 'INDIAN_INDICES' | 'INDIAN_STOCK';
@@ -1063,9 +1064,19 @@ export default function FullscreenBacktesting({
                 }
                 
                 innerChart.dataReady(() => {
-                  console.log('Fast-path: dataReady fired (drawings handled by TradingView natively)');
+                  console.log('Fast-path: dataReady fired, restoring drawings');
                   try {
-                    // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
+                    // RESTORE DRAWINGS after data loaded (only if switch ID matches to prevent race conditions)
+                    if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
+                      console.log('Fast-path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
+                      isRestoringDrawingsRef.current = true;
+                      DrawingManager.clearAllDrawings(innerChart);
+                      DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                      pendingDrawingsRef.current = [];
+                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
+                    } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
+                      console.log('Fast-path: Skipping restore - newer switch in progress (', restoreSwitchId, 'vs', drawingSwitchIdRef.current, ')');
+                    }
                     
                     // Center chart on replay position
                     const replayTs = replayTimestampRef.current;
@@ -1134,9 +1145,19 @@ export default function FullscreenBacktesting({
                 }
                 
                 innerChart.dataReady(() => {
-                  console.log('Fast-path fallback: dataReady fired (drawings handled by TradingView natively)');
+                  console.log('Fast-path fallback: dataReady fired, restoring drawings');
                   try {
-                    // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
+                    // RESTORE DRAWINGS after data loaded (only if switch ID matches)
+                    if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
+                      console.log('Fast-path fallback: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
+                      isRestoringDrawingsRef.current = true;
+                      DrawingManager.clearAllDrawings(innerChart);
+                      DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                      pendingDrawingsRef.current = [];
+                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
+                    } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
+                      console.log('Fast-path fallback: Skipping restore - newer switch in progress');
+                    }
                     
                     const replayTs = replayTimestampRef.current;
                     if (replayTs > 0) {
@@ -2202,9 +2223,19 @@ export default function FullscreenBacktesting({
                   }
                   
                   innerChart.dataReady(() => {
-                    console.log('Slow path: dataReady fired (drawings handled by TradingView natively)');
+                    console.log('Slow path: dataReady fired, restoring drawings');
                     try {
-                      // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
+                      // RESTORE DRAWINGS after data loaded (only if switch ID matches)
+                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === slowPathSwitchId) {
+                        console.log('Slow path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', slowPathSwitchId, ')');
+                        isRestoringDrawingsRef.current = true;
+                        DrawingManager.clearAllDrawings(innerChart);
+                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                        pendingDrawingsRef.current = [];
+                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
+                      } else if (drawingSwitchIdRef.current !== slowPathSwitchId) {
+                        console.log('Slow path: Skipping restore - newer switch in progress');
+                      }
                       
                       // Restore the captured visible range to preserve zoom level
                       const savedRange = pendingVisibleRangeRef.current;
@@ -3116,8 +3147,17 @@ export default function FullscreenBacktesting({
             console.warn('Failed to capture visible range:', e);
           }
           
-          // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
-          console.log('Native TF: Drawings handled by TradingView natively');
+          // CAPTURE DRAWINGS BEFORE SWITCH - setSymbol will clear them
+          let capturedDrawings: any[] = [];
+          try {
+            capturedDrawings = DrawingManager.captureDrawings(chart);
+            if (capturedDrawings.length > 0) {
+              console.log('Native TF: Captured', capturedDrawings.length, 'drawings before switch');
+              pendingDrawingsRef.current = capturedDrawings;
+            }
+          } catch (e) {
+            console.warn('Failed to capture drawings:', e);
+          }
         }
         
         // Store saved range for use in callback AND in the slow path
@@ -3162,11 +3202,22 @@ export default function FullscreenBacktesting({
               // Use setSymbol + setResolution to force fresh data fetch
               innerChart.setSymbol(symbolWithSuffix, () => {
                 innerChart.setResolution(newInterval, () => {
-                  // CRITICAL: Wait for dataReady before handling post-switch logic
+                  // CRITICAL: Wait for dataReady before restoring drawings
+                  // This ensures bars are loaded so drawings anchor to correct timestamps
                   innerChart.dataReady(() => {
-                    console.log('Native TF: dataReady fired (drawings handled by TradingView natively)');
+                    console.log('Native TF: dataReady fired, restoring drawings');
                     try {
-                      // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
+                      // RESTORE DRAWINGS after data loaded (only if switch ID matches)
+                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === nativeSwitchId) {
+                        console.log('Native TF: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', nativeSwitchId, ')');
+                        isRestoringDrawingsRef.current = true;
+                        DrawingManager.clearAllDrawings(innerChart);
+                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
+                        pendingDrawingsRef.current = [];
+                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
+                      } else if (drawingSwitchIdRef.current !== nativeSwitchId) {
+                        console.log('Native TF: Skipping restore - newer switch in progress');
+                      }
                       
                       // Restore captured visible range or calculate default
                       const savedRange = pendingVisibleRangeRef.current;
