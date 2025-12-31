@@ -372,6 +372,16 @@ export default function FullscreenBacktesting({
     return (parseInt(interval) || 1) * 60 * 1000;
   };
   
+  // Normalize resolution for cache key consistency
+  // TradingView sends both "1D" and "D" for daily, "1W" and "W" for weekly
+  // We normalize to a single key to prevent cache misses
+  const normalizeCacheKey = (resolution: string): string => {
+    if (resolution === "1D" || resolution === "D") return "D";
+    if (resolution === "1W" || resolution === "W") return "W";
+    if (resolution === "1M" || resolution === "M") return "M";
+    return resolution;
+  };
+  
   // ═══════════════════════════════════════════════════════════════════════════
   // TIME-DRIVEN REPLAY SYSTEM (per FX Replay Spec)
   // replayTime is the ONLY source of truth. Candle index is ALWAYS derived.
@@ -955,7 +965,8 @@ export default function FullscreenBacktesting({
     }
     
     // 6. CHECK CACHE and determine fast/slow path
-    const cachedBars = barsCacheRef.current[targetInterval];
+    const targetCacheKey = normalizeCacheKey(targetInterval);
+    const cachedBars = barsCacheRef.current[targetCacheKey];
     let useFastPath = false;
     
     if (cachedBars && cachedBars.length > 0) {
@@ -967,8 +978,8 @@ export default function FullscreenBacktesting({
         useFastPath = true;
       } else {
         console.log('Cache invalid for target position - using slow path');
-        delete barsCacheRef.current[targetInterval];
-        delete loadedRangeRef.current[targetInterval];
+        delete barsCacheRef.current[targetCacheKey];
+        delete loadedRangeRef.current[targetCacheKey];
       }
     }
     
@@ -1340,11 +1351,13 @@ export default function FullscreenBacktesting({
             setDecimalPlaces(symbolDecimalPlaces);
             
             // Cache bars for this resolution and track loaded range
-            barsCacheRef.current[result.resolution] = bars;
+            // Use normalized cache key for consistency (1D/D -> D)
+            const initialCacheKey = normalizeCacheKey(result.resolution);
+            barsCacheRef.current[initialCacheKey] = bars;
             // Track the actual loaded data range (10 years history to session end)
             const firstBarTs = bars.length > 0 ? bars[0].time / 1000 : 0;
             const lastBarTs = bars.length > 0 ? bars[bars.length - 1].time / 1000 : 0;
-            loadedRangeRef.current[result.resolution] = { from: firstBarTs, to: lastBarTs };
+            loadedRangeRef.current[initialCacheKey] = { from: firstBarTs, to: lastBarTs };
             lastSessionKeyRef.current = `${sessionResult.symbol}-${sessionResult.market}-${sessionResult.fromDate}-${sessionResult.toDate}`;
             
             // Signal that data is ready for layout restoration
@@ -1459,7 +1472,12 @@ export default function FullscreenBacktesting({
       const currentTf = currentIntervalRef.current;
       
       // Filter out already cached and current timeframe
-      const toPreload = allTimeframes.filter(tf => tf !== currentTf && !barsCacheRef.current[tf]);
+      // Use normalized keys for cache check
+      const currentCacheKey = normalizeCacheKey(currentTf);
+      const toPreload = allTimeframes.filter(tf => {
+        const tfCacheKey = normalizeCacheKey(tf);
+        return tfCacheKey !== currentCacheKey && !barsCacheRef.current[tfCacheKey];
+      });
       if (toPreload.length === 0) return;
       
       console.log('Pre-warming cache for timeframes:', toPreload.join(', '));
@@ -1504,9 +1522,10 @@ export default function FullscreenBacktesting({
               close: data.c[i],
               volume: data.v?.[i] || 0,
             }));
-            barsCacheRef.current[tf] = bars;
-            loadedRangeRef.current[tf] = { from: fromTs, to: toTs };
-            console.log('Preloaded', bars.length, 'bars for timeframe', tf);
+            const preloadCacheKey = normalizeCacheKey(tf);
+            barsCacheRef.current[preloadCacheKey] = bars;
+            loadedRangeRef.current[preloadCacheKey] = { from: fromTs, to: toTs };
+            console.log('Preloaded', bars.length, 'bars for timeframe', tf, '(key:', preloadCacheKey, ')');
             return { tf, success: true, count: bars.length };
           }
           return { tf, success: false };
@@ -1644,9 +1663,11 @@ export default function FullscreenBacktesting({
         setDecimalPlaces(symbolDecimalPlaces);
         
         // Cache the bars for this resolution and track loaded range
-        barsCacheRef.current[resolution] = bars;
-        loadedRangeRef.current[resolution] = { from: fromTs, to: toTs };
-        console.log('Cached', bars.length, 'bars for resolution', resolution);
+        // Use normalized key to prevent D/1D cache misses
+        const cacheKey = normalizeCacheKey(resolution);
+        barsCacheRef.current[cacheKey] = bars;
+        loadedRangeRef.current[cacheKey] = { from: fromTs, to: toTs };
+        console.log('Cached', bars.length, 'bars for resolution', resolution, '(key:', cacheKey, ')');
         
         // CRITICAL: Update ref IMMEDIATELY so handleNext sees correct bars
         allBarsRef.current = bars;
@@ -1739,8 +1760,8 @@ export default function FullscreenBacktesting({
 
   // Fetch additional bars when user scrolls beyond loaded range
   const fetchMoreBars = async (resolution: string, direction: 'back' | 'forward', periodParams: any, callback: any) => {
-    const rangeKey = resolution;
-    if (fetchingRangeRef.current[rangeKey]) {
+    const cacheKey = normalizeCacheKey(resolution);
+    if (fetchingRangeRef.current[cacheKey]) {
       callback([], { noData: true });
       return;
     }
@@ -1751,8 +1772,8 @@ export default function FullscreenBacktesting({
       return;
     }
     
-    fetchingRangeRef.current[rangeKey] = true;
-    const currentRange = loadedRangeRef.current[resolution];
+    fetchingRangeRef.current[cacheKey] = true;
+    const currentRange = loadedRangeRef.current[cacheKey];
     
     try {
       let fetchFrom: number, fetchTo: number;
@@ -1790,7 +1811,7 @@ export default function FullscreenBacktesting({
         }));
         
         // Merge with existing cache
-        const existingBars = barsCacheRef.current[resolution] || [];
+        const existingBars = barsCacheRef.current[cacheKey] || [];
         let mergedBars: any[];
         
         if (direction === 'back') {
@@ -1798,18 +1819,18 @@ export default function FullscreenBacktesting({
           const existingTimes = new Set(existingBars.map((b: any) => b.time));
           const uniqueNewBars = newBars.filter((b: any) => !existingTimes.has(b.time));
           mergedBars = [...uniqueNewBars, ...existingBars];
-          loadedRangeRef.current[resolution] = { from: fetchFrom, to: currentRange.to };
+          loadedRangeRef.current[cacheKey] = { from: fetchFrom, to: currentRange.to };
         } else {
           // Append new bars, remove duplicates
           const existingTimes = new Set(existingBars.map((b: any) => b.time));
           const uniqueNewBars = newBars.filter((b: any) => !existingTimes.has(b.time));
           mergedBars = [...existingBars, ...uniqueNewBars];
-          loadedRangeRef.current[resolution] = { from: currentRange.from, to: fetchTo };
+          loadedRangeRef.current[cacheKey] = { from: currentRange.from, to: fetchTo };
         }
         
         // Sort by time
         mergedBars.sort((a, b) => a.time - b.time);
-        barsCacheRef.current[resolution] = mergedBars;
+        barsCacheRef.current[cacheKey] = mergedBars;
         
         console.log(`Merged bars: ${existingBars.length} + ${newBars.length} = ${mergedBars.length}`);
         
@@ -1829,7 +1850,7 @@ export default function FullscreenBacktesting({
       console.error('Failed to fetch more bars:', error);
       callback([], { noData: true });
     } finally {
-      fetchingRangeRef.current[rangeKey] = false;
+      fetchingRangeRef.current[cacheKey] = false;
     }
   };
 
@@ -1882,8 +1903,9 @@ export default function FullscreenBacktesting({
       return;
     }
     
-    // Check cache first
-    const cachedBars = barsCacheRef.current[currentInterval];
+    // Check cache first - use normalized key for lookup
+    const effectCacheKey = normalizeCacheKey(currentInterval);
+    const cachedBars = barsCacheRef.current[effectCacheKey];
     if (cachedBars && cachedBars.length > 0) {
       const savedTimestamp = targetTimestampRef.current;
       
@@ -1894,11 +1916,11 @@ export default function FullscreenBacktesting({
         const firstBarTime = cachedBars[0].time;
         const lastBarTime = cachedBars[cachedBars.length - 1].time;
         if (replayTs < firstBarTime || replayTs > lastBarTime) {
-          console.log('Replay timestamp outside cached range, invalidating cache for', currentInterval);
+          console.log('Replay timestamp outside cached range, invalidating cache for', effectCacheKey);
           console.log('Replay:', new Date(replayTs).toISOString(), 'Cached:', new Date(firstBarTime).toISOString(), '-', new Date(lastBarTime).toISOString());
           // Delete the cached bars so fetchAllHistory runs with correct anchor
-          delete barsCacheRef.current[currentInterval];
-          delete loadedRangeRef.current[currentInterval];
+          delete barsCacheRef.current[effectCacheKey];
+          delete loadedRangeRef.current[effectCacheKey];
           // Don't return - fall through to fetchAllHistory
         } else {
           // Replay timestamp is within range - use cache
@@ -2058,8 +2080,10 @@ export default function FullscreenBacktesting({
           setDecimalPlaces(symbolDecimalPlaces);
           
           // Cache the bars for this resolution and track loaded range
-          barsCacheRef.current[currentInterval] = bars;
-          loadedRangeRef.current[currentInterval] = { from: fromTs, to: toTs };
+          // Use normalized cache key for consistency (1D/D -> D)
+          const fetchCacheKey = normalizeCacheKey(currentInterval);
+          barsCacheRef.current[fetchCacheKey] = bars;
+          loadedRangeRef.current[fetchCacheKey] = { from: fromTs, to: toTs };
           
           // Signal that data is ready for layout restoration
           dataReadyForLayoutRef.current = true;
@@ -2288,6 +2312,9 @@ export default function FullscreenBacktesting({
       getBars: (symbolInfo: any, resolution: string, periodParams: any, onHistoryCallback: any) => {
         const { firstDataRequest } = periodParams;
         
+        // Normalize resolution for cache lookup (1D/D -> D, 1W/W -> W)
+        const cacheKey = normalizeCacheKey(resolution);
+        
         // CRITICAL: Use pending anchor if set (during timeframe switch)
         // This handles the race condition where TradingView calls getBars BEFORE our onIntervalChanged
         const anchorTs = pendingAnchorTimestampRef.current || replayTimestampRef.current;
@@ -2301,10 +2328,11 @@ export default function FullscreenBacktesting({
         
         // ONLY use cached bars for the exact requested resolution - no fallback
         // This prevents mixing data between resolutions
-        const barsForResolution = barsCacheRef.current[resolution];
+        const barsForResolution = barsCacheRef.current[cacheKey];
         
         console.log('getBars called:', { 
-          resolution, 
+          resolution,
+          cacheKey,
           firstDataRequest, 
           cachedKeys: Object.keys(barsCacheRef.current),
           hasBarsForResolution: !!barsForResolution,
@@ -2318,19 +2346,19 @@ export default function FullscreenBacktesting({
           const firstBarTime = barsForResolution[0].time;
           const lastBarTime = barsForResolution[barsForResolution.length - 1].time;
           if (anchorTs < firstBarTime || anchorTs > lastBarTime) {
-            console.log('getBars: Anchor timestamp outside cached range, invalidating for', resolution);
+            console.log('getBars: Anchor timestamp outside cached range, invalidating for', cacheKey);
             console.log('Anchor:', new Date(anchorTs).toISOString(), 
               'Cache:', new Date(firstBarTime).toISOString(), '-', new Date(lastBarTime).toISOString());
             // Invalidate this cache - it's stale for the current replay position
-            delete barsCacheRef.current[resolution];
-            delete loadedRangeRef.current[resolution];
+            delete barsCacheRef.current[cacheKey];
+            delete loadedRangeRef.current[cacheKey];
             validCache = false;
           }
         }
         
         if (!validCache) {
           // No data for this resolution yet - queue callback and trigger fetch
-          console.log('No valid bars for resolution', resolution, '- queuing callback and triggering fetch');
+          console.log('No valid bars for resolution', resolution, '(key:', cacheKey, ') - queuing callback and triggering fetch');
           if (!pendingCallbacksRef.current[resolution]) {
             pendingCallbacksRef.current[resolution] = [];
           }
@@ -2365,7 +2393,7 @@ export default function FullscreenBacktesting({
         }
         
         // Check if requested period is outside the loaded range - fetch more if needed
-        const loadedRange = loadedRangeRef.current[resolution];
+        const loadedRange = loadedRangeRef.current[cacheKey];
         if (loadedRange) {
           const requestedFrom = periodParams.from;
           const requestedTo = periodParams.to;
@@ -3915,19 +3943,20 @@ export default function FullscreenBacktesting({
             volume: data.v?.[i] || 0,
           }));
           
-          // Merge with existing bars
-          const existingBars = barsCacheRef.current[resolution] || [];
+          // Merge with existing bars - use normalized cache key
+          const nextCacheKey = normalizeCacheKey(resolution);
+          const existingBars = barsCacheRef.current[nextCacheKey] || [];
           const allTimestamps = new Set(existingBars.map((b: any) => b.time));
           const uniqueNewBars = newBars.filter((b: any) => !allTimestamps.has(b.time));
           const mergedBars = [...existingBars, ...uniqueNewBars].sort((a, b) => a.time - b.time);
           
           console.log(`Merged bars: ${existingBars.length} + ${uniqueNewBars.length} = ${mergedBars.length}`);
           
-          barsCacheRef.current[resolution] = mergedBars;
+          barsCacheRef.current[nextCacheKey] = mergedBars;
           
           // Update loaded range - use first bar's time for 'from' if not already set
-          const existingRange = loadedRangeRef.current[resolution];
-          loadedRangeRef.current[resolution] = {
+          const existingRange = loadedRangeRef.current[nextCacheKey];
+          loadedRangeRef.current[nextCacheKey] = {
             from: existingRange?.from || (mergedBars[0]?.time / 1000) || fetchFrom,
             to: fetchTo
           };
@@ -4049,14 +4078,15 @@ export default function FullscreenBacktesting({
         return;
       }
       
-      let currentRange = loadedRangeRef.current[resolution];
+      const skipCacheKey = normalizeCacheKey(resolution);
+      let currentRange = loadedRangeRef.current[skipCacheKey];
       if (!currentRange) {
         // If no range exists, derive from the last bar's timestamp
         const lastBar = bars[bars.length - 1];
         if (lastBar) {
           const lastBarTime = lastBar.time / 1000;
           currentRange = { from: lastBarTime - (30 * 24 * 60 * 60), to: lastBarTime };
-          loadedRangeRef.current[resolution] = currentRange;
+          loadedRangeRef.current[skipCacheKey] = currentRange;
           console.log('Skip forward: created range from last bar', { lastBarTime, currentRange });
         } else {
           console.log('Skip forward: no range and no bars');
@@ -4090,16 +4120,16 @@ export default function FullscreenBacktesting({
             volume: data.v?.[i] || 0,
           }));
           
-          // Merge with existing bars
-          const existingBars = barsCacheRef.current[resolution] || [];
+          // Merge with existing bars - use normalized cache key
+          const existingBars = barsCacheRef.current[skipCacheKey] || [];
           const allTimestamps = new Set(existingBars.map((b: any) => b.time));
           const uniqueNewBars = newBars.filter((b: any) => !allTimestamps.has(b.time));
           const mergedBars = [...existingBars, ...uniqueNewBars].sort((a, b) => a.time - b.time);
           
           console.log(`Merged bars: ${existingBars.length} + ${uniqueNewBars.length} = ${mergedBars.length}`);
           
-          barsCacheRef.current[resolution] = mergedBars;
-          loadedRangeRef.current[resolution] = {
+          barsCacheRef.current[skipCacheKey] = mergedBars;
+          loadedRangeRef.current[skipCacheKey] = {
             from: currentRange.from,
             to: fetchTo
           };
