@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { ChevronDown, Calendar, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChevronDown, Calendar, Sparkles, TrendingUp, TrendingDown, Minus, HelpCircle } from "lucide-react";
 
 import DashboardCustom from "@/components/dashboard-components/dasboard-range/DashboardCustom";
 import DashboardDay from "@/components/dashboard-components/dasboard-range/DashboardDay";
@@ -13,6 +13,8 @@ import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
 
 import { PropFirmModeToggle, PropFirmDashboard } from "@/components/prop-firm";
 import { EditModeToolbar } from "@/components/dashboard/DraggableWidgetGrid";
+import OnboardingTour from "@/components/onboarding/OnboardingTour";
+import { useOnboardingTour, dashboardTourSteps } from "@/hooks/useOnboardingTour";
 
 import { cn } from "@/lib/utils";
 
@@ -33,6 +35,7 @@ const DashboardMain = () => {
   const { hrBarTxt, hrBarType } = notifications();
   const { isEnabled: isPropFirmMode } = usePropFirmStore();
   const { currency, exchangeRate } = useCurrencyStore();
+  const { isOpen: isTourOpen, startTour, completeTour, skipTour } = useOnboardingTour();
 
   useEffect(() => {
     setAccounts();
@@ -207,6 +210,17 @@ const DashboardMain = () => {
         
         {!isPropFirmMode && (
           <div className="flex items-center gap-3">
+            <button
+              onClick={startTour}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                "bg-blue-500/10 border border-blue-500/20 text-blue-500 hover:bg-blue-500/20"
+              )}
+              title="Start dashboard tour"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Tour</span>
+            </button>
             <div className="relative" ref={dropdownRef}>
               <button
                 className={cn(
@@ -276,6 +290,13 @@ const DashboardMain = () => {
           </>
         )}
       </div>
+
+      <OnboardingTour
+        steps={dashboardTourSteps}
+        isOpen={isTourOpen}
+        onComplete={completeTour}
+        onSkip={skipTour}
+      />
     </div>
   );
 };

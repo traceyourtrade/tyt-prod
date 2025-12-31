@@ -34,6 +34,7 @@ interface StatCardProps {
   status?: string;
   valueType?: 'profit' | 'loss' | 'neutral';
   children?: React.ReactNode;
+  dataTour?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ 
@@ -44,7 +45,8 @@ const StatCard: React.FC<StatCardProps> = ({
   iconColor = 'neutral',
   status,
   valueType = 'neutral',
-  children 
+  children,
+  dataTour,
 }) => {
   const getValueColor = () => {
     switch (valueType) {
@@ -66,7 +68,10 @@ const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border">
+    <div 
+      className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border"
+      {...(dataTour && { 'data-tour': dataTour })}
+    >
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           {icon && (
@@ -173,13 +178,14 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         iconColor="emerald"
         valueType={numericPnl > 0 ? 'profit' : numericPnl < 0 ? 'loss' : 'neutral'}
         subtitle={numericPnl !== 0 ? `${numericPnl >= 0 ? '+' : ''}${((numericPnl / (balanceValue || 1)) * 100).toFixed(1)}% return` : 'No change'}
+        dataTour="net-pnl"
       >
         <div className="w-16 h-8">
           <TinyChart data={data} />
         </div>
       </StatCard>
 
-      <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border">
+      <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border" data-tour="win-rate">
         <div className="flex items-center gap-2 mb-2">
           <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
             <Target className="w-4 h-4" />
@@ -213,6 +219,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         icon={<Activity className="w-4 h-4" />}
         iconColor="amber"
         status={profitFactorNum >= 1.5 ? "Profitable" : profitFactorNum < 1 ? "Losing" : "Breakeven"}
+        dataTour="profit-factor"
       />
 
       <StatCard
@@ -221,6 +228,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         icon={<Wallet className="w-4 h-4" />}
         iconColor="violet"
         subtitle="Current balance"
+        dataTour="account-balance"
       >
         <div className="w-16 h-8">
           <TinyChart data={data} />
@@ -232,6 +240,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         value={typeof rrRatio === 'number' ? `1:${rrRatio.toFixed(1)}` : `1:${rrRatio}`}
         icon={<Scale className="w-4 h-4" />}
         iconColor="rose"
+        dataTour="risk-reward"
       >
         <div className="w-full">
           <div className="w-full h-1.5 bg-muted/30 rounded-full overflow-hidden flex">
