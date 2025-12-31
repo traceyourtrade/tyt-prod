@@ -1042,28 +1042,30 @@ export default function FullscreenBacktesting({
           const chart = tvWidgetRef.current.activeChart();
           const cachedCallback = realtimeCallbacksRef.current.get(targetInterval);
           
-          // CRITICAL FIX: Always use setSymbol with dynamic timestamp to force getBars call
-          // Previously this used setResolution-only for speed, but that caused stale data
-          // when switching back to previously-used timeframes (TradingView skipped getBars)
+          // DRAWING PRESERVATION FIX: Use setResolution + resetData instead of setSymbol
+          // Changing the symbol (even with dynamic suffix) causes TradingView to clear all drawings
+          // By using setResolution only, we preserve user drawings during timeframe switches
+          // resetData() forces TradingView to refetch bars without clearing drawings
           if (cachedCallback) {
-            console.log('Fast-path: Using setSymbol with dynamic timestamp (forcing fresh getBars)');
-            const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-            const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}_${Date.now()}`;
-            chart.setSymbol(symbolWithSuffix, () => {
-              chart.setResolution(targetInterval, () => {
-              // Minimal delay for drawing restoration
+            console.log('Fast-path: Using setResolution + resetData (preserves drawings)');
+            
+            // First, force data refresh by calling resetData
+            try {
+              chart.resetData();
+              console.log('Called resetData to force fresh getBars');
+            } catch (e) {
+              console.log('resetData not available, continuing with setResolution');
+            }
+            
+            chart.setResolution(targetInterval, () => {
+              // Minimal delay for chart stabilization
               setTimeout(() => {
                 try {
                   const innerChart = tvWidgetRef.current?.activeChart();
                   if (innerChart) {
-                    // Restore drawings if lost
-                    if (pendingDrawingsRef.current.length > 0) {
-                      const currentShapes = DrawingManager.getShapeCount(innerChart);
-                      if (currentShapes === 0) {
-                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                      }
-                      pendingDrawingsRef.current = [];
-                    }
+                    // NOTE: Drawings are preserved when using setResolution-only
+                    // No need to restore drawings manually
+                    pendingDrawingsRef.current = [];
                     
                     // Center chart on replay position
                     const replayTs = replayTimestampRef.current;
@@ -1113,63 +1115,62 @@ export default function FullscreenBacktesting({
                 }
                 isChangingResolutionRef.current = false;
               }, 50); // Reduced from 300ms to 50ms
-            });
-            }); // Close setSymbol callback
+            }); // Close setResolution callback
           } else {
-            // Fallback: No cached callback - need full setSymbol + setResolution
-            console.log('Fast-path fallback: Using setSymbol + setResolution (no cached callback)');
-            const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-            // Use DYNAMIC symbol suffix to force TradingView to call getBars with fresh filterTime
-            const symbolWithSuffix = `${baseSymbol}#tf_${targetInterval}_${Date.now()}`;
+            // Fallback: No cached callback - use resetData + setResolution (preserves drawings)
+            console.log('Fast-path fallback: Using resetData + setResolution (preserves drawings)');
             
-            chart.setSymbol(symbolWithSuffix, () => {
-              chart.setResolution(targetInterval, () => {
-                setTimeout(() => {
-                  try {
-                    const innerChart = tvWidgetRef.current?.activeChart();
-                    if (innerChart) {
-                      if (pendingDrawingsRef.current.length > 0) {
-                        const currentShapes = DrawingManager.getShapeCount(innerChart);
-                        if (currentShapes === 0) {
-                          DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                        }
-                        pendingDrawingsRef.current = [];
-                      }
-                      
-                      const replayTs = replayTimestampRef.current;
-                      if (replayTs > 0) {
-                        const resolutionMinutes = intervalToMinutes(targetInterval);
-                        const barMs = resolutionMinutes * 60 * 1000;
-                        const visibleFrom = (replayTs - barMs * 60) / 1000;
-                        const visibleTo = (replayTs + barMs * 20) / 1000;
-                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                        try {
-                          innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                        } catch (e) {}
-                      }
-                    }
-                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay
-                    if (!callbacksReadyRef.current) {
-                      const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
-                      if (cachedCb) {
-                        callbacksReadyRef.current = true;
-                      }
-                    }
+            // Force data refresh by calling resetData
+            try {
+              chart.resetData();
+              console.log('Fallback: Called resetData to force fresh getBars');
+            } catch (e) {
+              console.log('Fallback: resetData not available, continuing with setResolution');
+            }
+            
+            chart.setResolution(targetInterval, () => {
+              setTimeout(() => {
+                try {
+                  const innerChart = tvWidgetRef.current?.activeChart();
+                  if (innerChart) {
+                    // NOTE: Drawings are preserved when using setResolution-only
+                    // No need to restore drawings manually
+                    pendingDrawingsRef.current = [];
                     
-                    // VERIFY SYNC: Confirm derived state matches replayTime
-                    const bars = allBarsRef.current;
-                    const idx = currentBarIndexRef.current;
                     const replayTs = replayTimestampRef.current;
-                    const resMinutes = intervalToMinutes(targetInterval);
-                    const intervalMs = resMinutes * 60 * 1000;
-                    
-                    if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
-                      const barCloseTime = bars[idx].time + intervalMs;
-                      if (barCloseTime > replayTs) {
-                        console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs, idx });
-                      } else {
-                        console.log('Fast-path fallback: SYNC VERIFIED, replayReady=true');
-                      }
+                    if (replayTs > 0) {
+                      const resolutionMinutes = intervalToMinutes(targetInterval);
+                      const barMs = resolutionMinutes * 60 * 1000;
+                      const visibleFrom = (replayTs - barMs * 60) / 1000;
+                      const visibleTo = (replayTs + barMs * 20) / 1000;
+                      innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                      try {
+                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                      } catch (e) {}
+                    }
+                  }
+                  // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+                  if (!callbacksReadyRef.current) {
+                    const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
+                    if (cachedCb) {
+                      callbacksReadyRef.current = true;
+                    }
+                  }
+                  
+                  // VERIFY SYNC: Confirm derived state matches replayTime
+                  const bars = allBarsRef.current;
+                  const idx = currentBarIndexRef.current;
+                  const replayTs = replayTimestampRef.current;
+                  const resMinutes = intervalToMinutes(targetInterval);
+                  const intervalMs = resMinutes * 60 * 1000;
+                  
+                  if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
+                    const barCloseTime = bars[idx].time + intervalMs;
+                    if (barCloseTime > replayTs) {
+                      console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs, idx });
+                    } else {
+                      console.log('Fast-path fallback: SYNC VERIFIED, replayReady=true');
+                    }
                     }
                     
                     // Only NOW enable replay via controller
@@ -1182,8 +1183,7 @@ export default function FullscreenBacktesting({
                   }
                   isChangingResolutionRef.current = false;
                 }, 150); // Reduced from 300ms
-              });
-            });
+              }); // Close setResolution callback
           }
         } catch (e) {
           isChangingResolutionRef.current = false;
@@ -2170,73 +2170,66 @@ export default function FullscreenBacktesting({
             delete pendingCallbacksRef.current[currentInterval];
           }
           
-          // If widget exists and this isn't the first load, update the resolution
-          // Use setSymbol + setResolution to force fresh subscription
+          // DRAWING PRESERVATION: Use resetData + setResolution instead of setSymbol
+          // This preserves user drawings while still forcing fresh data fetch
           if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
             try {
               const chart = tvWidgetRef.current.activeChart();
-              const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              // Use DYNAMIC symbol suffix to force TradingView to call getBars with fresh filterTime
-              const symbolWithSuffix = `${baseSymbol}#tf_${currentInterval}_${Date.now()}`;
-              console.log('Slow path: switching to symbol with dynamic suffix:', symbolWithSuffix);
+              console.log('Slow path: Using resetData + setResolution (preserves drawings)');
+              
+              // Force data refresh by calling resetData
+              try {
+                chart.resetData();
+                console.log('Slow path: Called resetData to force fresh getBars');
+              } catch (e) {
+                console.log('Slow path: resetData not available');
+              }
               
               // Add small delay to ensure cache is fully synchronized before TradingView queries
               await new Promise(resolve => setTimeout(resolve, 50));
               
-              chart.setSymbol(symbolWithSuffix, () => {
-                chart.setResolution(currentInterval, () => {
-                  // Restore drawings and set visible range after resolution change
-                  setTimeout(() => {
-                    try {
-                      const innerChart = tvWidgetRef.current?.activeChart();
-                      if (innerChart) {
-                        // Restore drawings if they were lost
-                        if (pendingDrawingsRef.current.length > 0) {
-                          const currentShapes = DrawingManager.getShapeCount(innerChart);
-                          if (currentShapes === 0) {
-                            console.log('Drawings lost during resolution change (slow path), restoring', pendingDrawingsRef.current.length, 'drawings');
-                            DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                          }
-                          pendingDrawingsRef.current = [];
-                        }
-                        
-                        // CRITICAL: Restore the captured visible range to preserve zoom level
-                        // This prevents the chart from zooming in when switching timeframes
-                        // Use flag to prevent double-application if onIntervalChanged callback already applied it
-                        const savedRange = pendingVisibleRangeRef.current;
-                        if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
-                          console.log('Restoring captured visible range (slow path):', savedRange);
-                          innerChart.setVisibleRange(savedRange);
-                          pendingVisibleRangeAppliedRef.current = true; // Mark as applied
-                        } else if (!pendingVisibleRangeAppliedRef.current) {
-                          // Fallback: Set visible range centered on replay timestamp (only if nothing was applied yet)
-                          const replayTs = replayTimestampRef.current;
-                          if (replayTs > 0) {
-                            const resolutionMinutes = intervalToMinutes(currentInterval);
-                            const barsToShow = 50;
-                            const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
-                            const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
-                            const visibleTo = (replayTs + windowMs * 0.1) / 1000;
-                            console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
-                            innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                            pendingVisibleRangeAppliedRef.current = true;
-                          }
+              chart.setResolution(currentInterval, () => {
+                // Set visible range after resolution change
+                setTimeout(() => {
+                  try {
+                    const innerChart = tvWidgetRef.current?.activeChart();
+                    if (innerChart) {
+                      // NOTE: Drawings are preserved by resetData() - no manual restore needed
+                      pendingDrawingsRef.current = [];
+                      
+                      // Restore the captured visible range to preserve zoom level
+                      const savedRange = pendingVisibleRangeRef.current;
+                      if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
+                        console.log('Restoring captured visible range (slow path):', savedRange);
+                        innerChart.setVisibleRange(savedRange);
+                        pendingVisibleRangeAppliedRef.current = true;
+                      } else if (!pendingVisibleRangeAppliedRef.current) {
+                        const replayTs = replayTimestampRef.current;
+                        if (replayTs > 0) {
+                          const resolutionMinutes = intervalToMinutes(currentInterval);
+                          const barsToShow = 50;
+                          const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
+                          const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
+                          const visibleTo = (replayTs + windowMs * 0.1) / 1000;
+                          console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
+                          innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                          pendingVisibleRangeAppliedRef.current = true;
                         }
                       }
-                    } catch (e) {
-                      console.warn('Error restoring drawings or setting visible range:', e);
                     }
-                    
-                    // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller
-                    console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, finalizing controller');
-                    tfController.finalize(currentInterval);
-                    isChangingResolutionRef.current = false;
-                  }, 300);
-                });
-              });
+                  } catch (e) {
+                    console.warn('Error setting visible range:', e);
+                  }
+                  
+                  // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller
+                  console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, finalizing controller');
+                  tfController.finalize(currentInterval);
+                  isChangingResolutionRef.current = false;
+                }, 300);
+              }); // Close setResolution callback
             } catch (e) {
-              console.log('setSymbol/setResolution error:', e);
-              tfController.abort('setSymbol/setResolution error');
+              console.log('resetData/setResolution error:', e);
+              tfController.abort('resetData/setResolution error');
               isChangingResolutionRef.current = false;
             }
           } else {
@@ -3064,17 +3057,8 @@ export default function FullscreenBacktesting({
             console.warn('Failed to capture visible range:', e);
           }
           
-          // Capture drawings - they will be restored after the timeframe switch
-          // Dynamic symbol suffix forces getBars to be called with fresh filterTime
-          try {
-            const drawings = DrawingManager.captureDrawings(chart);
-            if (drawings.length > 0) {
-              console.log('Captured', drawings.length, 'drawings before timeframe switch');
-              pendingDrawingsRef.current = drawings;
-            }
-          } catch (e) {
-            console.warn('Failed to capture drawings:', e);
-          }
+          // NOTE: Drawings are no longer captured/restored manually
+          // Using resetData() preserves drawings natively in TradingView
         }
         
         // Store saved range for use in callback AND in the slow path
@@ -3095,19 +3079,14 @@ export default function FullscreenBacktesting({
         // Update subscribed resolution ref so handleNext uses correct bars
         subscribedResolutionRef.current = newInterval;
         
-        // CRITICAL: Force TradingView to reload data with correct filtering
-        // Use DYNAMIC symbol suffix (with Date.now()) to force getBars call with correct replayTime
+        // DRAWING PRESERVATION: Use resetData + setResolution instead of setSymbol
+        // Changing the symbol causes TradingView to clear all user drawings
+        // resetData() forces fresh getBars calls while preserving drawings
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
-              const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              // Use DYNAMIC symbol suffix with timestamp to FORCE TradingView to call getBars
-              // This is critical because stable symbols cause TradingView to skip getBars
-              // and use cached data that doesn't reflect the current replayTime
-              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}_${Date.now()}`;
-              
-              console.log('Switching timeframe with dynamic symbol:', symbolWithSuffix);
+              console.log('Native TF switch: Using resetData (preserves drawings)');
               
               // Set the anchor AGAIN right before triggering getBars
               // This ensures it's available when TradingView calls getBars
@@ -3117,175 +3096,51 @@ export default function FullscreenBacktesting({
               }
               
               // CRITICAL: Call resetData to force TradingView to refetch bars
-              // This is necessary because TradingView caches series data internally
-              // and won't call getBars for a symbol it already loaded
+              // This triggers onResetCacheNeededCallback in the datafeed
               try {
                 innerChart.resetData();
-                console.log('Called resetData to force TradingView data refetch');
+                console.log('Called resetData to force fresh getBars');
               } catch (e) {
-                console.log('resetData not available, continuing with setSymbol');
+                console.log('resetData not available');
               }
               
-              innerChart.setSymbol(symbolWithSuffix, () => {
-                // After symbol change, restore visible range and reset price scale
-                setTimeout(() => {
-                  try {
-                    if (innerChart) {
-                      // CRITICAL: Restore the captured visible range to preserve zoom level
-                      // This prevents the chart from zooming in when switching timeframes
-                      // Use the ref (authoritative source) and flag to prevent double-application
-                      const savedRange = pendingVisibleRangeRef.current;
-                      if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
-                        console.log('Restoring captured visible range (fast path):', savedRange);
-                        innerChart.setVisibleRange(savedRange);
-                        pendingVisibleRangeAppliedRef.current = true; // Mark as applied
-                      } else if (!pendingVisibleRangeAppliedRef.current) {
-                        // Fallback: calculate a reasonable default range if no captured range
-                        const replayTs = replayTimestampRef.current;
-                        if (replayTs > 0) {
-                          const resolutionMinutes = intervalToMinutes(newInterval);
-                          const barMs = resolutionMinutes * 60 * 1000;
-                          const visibleFrom = (replayTs - barMs * 60) / 1000;
-                          const visibleTo = (replayTs + barMs * 20) / 1000;
-                          innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                          pendingVisibleRangeAppliedRef.current = true;
-                        }
-                      }
-                      
-                      try {
-                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                      } catch (e) {}
-                      
-                      // CRITICAL: Redraw trade lines after chart reload
-                      // The old shape IDs are invalid after setSymbol, so clear and redraw
-                      const openTrades = openTradesRef.current || [];
-                      if (openTrades.length > 0) {
-                        console.log('Redrawing trade lines after timeframe switch:', openTrades.length, 'trades');
-                        // Clear stale shape references
-                        tradeLinesRef.current = {};
-                        // Redraw each trade's lines
-                        for (const trade of openTrades) {
-                          try {
-                            const tradeForDraw = {
-                              id: trade.id,
-                              type: trade.type,
-                              entry: trade.entry,
-                              target: trade.target,
-                              stopLoss: trade.stopLoss,
-                              lotSize: trade.lotSize
-                            };
-                            // Use setTimeout to ensure chart is fully ready
-                            setTimeout(() => {
-                              if (tvWidgetRef.current) {
-                                const chart = tvWidgetRef.current.activeChart();
-                                if (!chart) return;
-                                
-                                // Draw entry line
-                                const entryId = chart.createShape(
-                                  { price: trade.entry },
-                                  {
-                                    shape: "horizontal_line",
-                                    lock: true,
-                                    disableSelection: true,
-                                    overrides: {
-                                      linecolor: "rgba(245, 158, 11, 0.9)",
-                                      linestyle: 2,
-                                      linewidth: 1,
-                                    }
-                                  }
-                                );
-                                
-                                let tpId = null;
-                                let slId = null;
-                                
-                                // Draw TP line if exists
-                                if (trade.target !== undefined) {
-                                  tpId = chart.createShape(
-                                    { price: trade.target },
-                                    {
-                                      shape: "horizontal_line",
-                                      lock: false,
-                                      disableSelection: false,
-                                      overrides: {
-                                        linecolor: "rgba(34, 197, 94, 0.9)",
-                                        linestyle: 0,
-                                        linewidth: 2,
-                                      }
-                                    }
-                                  );
-                                }
-                                
-                                // Draw SL line if exists
-                                if (trade.stopLoss !== undefined) {
-                                  slId = chart.createShape(
-                                    { price: trade.stopLoss },
-                                    {
-                                      shape: "horizontal_line",
-                                      lock: false,
-                                      disableSelection: false,
-                                      overrides: {
-                                        linecolor: "rgba(239, 68, 68, 0.9)",
-                                        linestyle: 0,
-                                        linewidth: 2,
-                                      }
-                                    }
-                                  );
-                                }
-                                
-                                // Store new shape IDs
-                                tradeLinesRef.current[trade.id] = {
-                                  entry: entryId,
-                                  tp: tpId,
-                                  sl: slId
-                                };
-                                
-                                console.log('Trade lines redrawn for trade:', trade.id);
-                              }
-                            }, 100);
-                          } catch (e) {
-                            console.error('Error redrawing trade lines:', e);
-                          }
-                        }
-                      }
-                      
-                      // CRITICAL: Restore user drawings after chart reload
-                      // Drawings were captured before the timeframe switch
-                      if (pendingDrawingsRef.current && pendingDrawingsRef.current.length > 0) {
-                        setTimeout(() => {
-                          try {
-                            const currentChart = tvWidgetRef.current?.activeChart();
-                            if (currentChart) {
-                              // Set guard to prevent auto-save from capturing just-restored drawings
-                              isRestoringDrawingsRef.current = true;
-                              
-                              // Clear any existing drawings to prevent duplicates
-                              DrawingManager.clearAllDrawings(currentChart);
-                              
-                              console.log('Restoring drawings after timeframe switch:', pendingDrawingsRef.current.length, 'drawings');
-                              const restoredCount = DrawingManager.restoreDrawings(currentChart, pendingDrawingsRef.current);
-                              console.log('Drawings restored:', restoredCount);
-                              
-                              // Clear pending and release guard after a delay to let auto-save settle
-                              pendingDrawingsRef.current = [];
-                              setTimeout(() => {
-                                isRestoringDrawingsRef.current = false;
-                              }, 500);
-                            }
-                          } catch (e) {
-                            console.error('Error restoring drawings:', e);
-                            isRestoringDrawingsRef.current = false;
-                          }
-                        }, 200);
+              // Wait for chart to stabilize after resetData, then adjust view
+              setTimeout(() => {
+                try {
+                  if (innerChart) {
+                    // Restore captured visible range or calculate default
+                    const savedRange = pendingVisibleRangeRef.current;
+                    if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
+                      console.log('Native TF: Restoring visible range:', savedRange);
+                      innerChart.setVisibleRange(savedRange);
+                      pendingVisibleRangeAppliedRef.current = true;
+                    } else if (!pendingVisibleRangeAppliedRef.current) {
+                      const replayTs = replayTimestampRef.current;
+                      if (replayTs > 0) {
+                        const resolutionMinutes = intervalToMinutes(newInterval);
+                        const barMs = resolutionMinutes * 60 * 1000;
+                        const visibleFrom = (replayTs - barMs * 60) / 1000;
+                        const visibleTo = (replayTs + barMs * 20) / 1000;
+                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        pendingVisibleRangeAppliedRef.current = true;
                       }
                     }
-                  } catch (e) {}
-                  
-                  // CRITICAL: Finalize the controller to re-enable replay controls
-                  console.log('onIntervalChanged: Finalizing controller for', newInterval);
-                  tfController.finalize(newInterval);
-                  isChangingResolutionRef.current = false;
-                }, 300);
-              });
+                    
+                    try {
+                      innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                    } catch (e) {}
+                    
+                    // NOTE: User drawings are preserved by resetData() - no manual restore needed
+                    // Clear the pending drawings ref since we don't need them
+                    pendingDrawingsRef.current = [];
+                  }
+                } catch (e) {}
+                
+                // Finalize the controller to re-enable replay controls
+                console.log('Native TF switch: Finalizing controller for', newInterval);
+                tfController.finalize(newInterval);
+                isChangingResolutionRef.current = false;
+              }, 300);
             } else {
               tfController.finalize(newInterval);
               isChangingResolutionRef.current = false;
