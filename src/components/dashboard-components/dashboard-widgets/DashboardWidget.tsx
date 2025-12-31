@@ -180,24 +180,24 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
       </StatCard>
 
       <div className="group bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border">
-        <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-2 mb-2">
           <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
             <Target className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium text-muted-foreground">Win Rate</span>
         </div>
         
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-lg font-bold text-foreground">{winrate}%</p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-shrink-0">
+            <p className="text-xl font-bold text-foreground">{winrate}%</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{totalTrades} trades</p>
           </div>
           
-          <div className="flex flex-col items-center">
-            <div className="relative w-20 h-12">
+          <div className="flex flex-col items-center flex-1">
+            <div className="relative w-full max-w-[80px] h-[44px]">
               <Doughnut data={dataWinLoss} options={optionsWinLoss} />
             </div>
-            <div className="flex items-center gap-1 -mt-1">
+            <div className="flex items-center justify-center gap-1.5 mt-0.5">
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-profit/20 text-profit">{winners}</span>
               <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-muted/50 text-muted-foreground">0</span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-loss/20 text-loss">{losers}</span>
