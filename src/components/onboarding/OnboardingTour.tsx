@@ -335,8 +335,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9998]">
-        <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
+      <div className="fixed inset-0 z-[9998] pointer-events-none">
+        <svg className="absolute inset-0 w-full h-full pointer-events-auto" style={{ zIndex: 1 }}>
           <defs>
             <mask id="spotlight-mask">
               <rect x="0" y="0" width="100%" height="100%" fill="white" />
@@ -390,7 +390,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
           animate={{ opacity: isReady ? 1 : 0, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.25 }}
-          className="absolute w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+          className="absolute w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
           style={{ ...getTooltipPosition(), zIndex: 10 }}
         >
           <div className="p-4">
