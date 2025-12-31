@@ -32,6 +32,13 @@ export const platformTourSteps: TourStep[] = [
     position: 'right',
   },
   {
+    target: '[data-tour="nav-backtesting"]',
+    title: 'Backtesting',
+    description: 'Practice trading on historical data with our TradingView-powered replay simulator. Perfect your strategy risk-free.',
+    position: 'right',
+    isPro: true,
+  },
+  {
     target: '[data-tour="nav-reports"]',
     title: 'Reports',
     description: 'Deep dive into your trading performance with detailed analytics, charts, and insights to identify patterns.',
@@ -54,13 +61,6 @@ export const platformTourSteps: TourStep[] = [
     target: '[data-tour="nav-ai-analysis"]',
     title: 'AI Analysis',
     description: 'Advanced statistical analysis including streak patterns, risk metrics, time analysis, and trade correlations.',
-    position: 'right',
-    isPro: true,
-  },
-  {
-    target: '[data-tour="nav-backtesting"]',
-    title: 'Backtesting',
-    description: 'Practice trading on historical data with our TradingView-powered replay simulator. Perfect your strategy risk-free.',
     position: 'right',
     isPro: true,
   },
