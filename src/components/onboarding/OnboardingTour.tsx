@@ -168,6 +168,31 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
     
     if (!element) return null;
 
+    // Get the sidebar scroll container
+    const sidebarScroll = document.querySelector('[data-tour-scroll="sidebar"]');
+    
+    // Check if element is inside the sidebar scroll container
+    if (sidebarScroll && sidebarScroll.contains(element)) {
+      const htmlElement = element as HTMLElement;
+      const containerRect = sidebarScroll.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      
+      // Check if element is visible within the sidebar scroll container
+      const isVisibleInContainer = 
+        elementRect.top >= containerRect.top &&
+        elementRect.bottom <= containerRect.bottom;
+      
+      if (!isVisibleInContainer) {
+        // Scroll the sidebar container to center the element
+        const container = sidebarScroll as HTMLElement;
+        const elementTop = htmlElement.offsetTop;
+        const scrollTarget = elementTop - container.clientHeight / 2 + htmlElement.offsetHeight / 2;
+        container.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+        // Return null to retry after scroll animation
+        return null;
+      }
+    }
+
     const rect = element.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return null;
     

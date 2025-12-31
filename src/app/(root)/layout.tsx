@@ -466,7 +466,7 @@ export default function RootLayout({
 
 
       {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide relative">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide relative" data-tour-scroll="sidebar">
         
         {/* Trading Section */}
         <SectionLabel label="Trading" />
