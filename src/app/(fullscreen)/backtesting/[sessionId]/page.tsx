@@ -955,21 +955,11 @@ export default function FullscreenBacktesting({
       }
     }
     
-    // 5b. CAPTURE DRAWINGS before resolution change (if requested)
-    // Increment switch ID to prevent race conditions where concurrent switches overwrite each other's captures
+    // 5b. Drawing switch tracking (for legacy compatibility, but drawings now handled by TradingView natively)
+    // Increment switch ID for logging
     drawingSwitchIdRef.current += 1;
     const currentSwitchId = drawingSwitchIdRef.current;
-    console.log('Timeframe switch ID:', currentSwitchId);
-    
-    if (captureDrawings && tvWidgetRef.current) {
-      try {
-        const chart = tvWidgetRef.current.activeChart();
-        pendingDrawingsRef.current = DrawingManager.captureDrawings(chart);
-        console.log('Captured', pendingDrawingsRef.current.length, 'drawings for switch', currentSwitchId);
-      } catch (e) {
-        console.warn('Could not capture drawings:', e);
-      }
-    }
+    console.log('Timeframe switch ID:', currentSwitchId, '(drawings handled by TradingView natively)');
     
     // 6. CHECK CACHE and determine fast/slow path
     const targetCacheKey = normalizeCacheKey(targetInterval);
@@ -1074,19 +1064,9 @@ export default function FullscreenBacktesting({
                 }
                 
                 innerChart.dataReady(() => {
-                  console.log('Fast-path: dataReady fired, restoring drawings');
+                  console.log('Fast-path: dataReady fired (drawings handled by TradingView natively)');
                   try {
-                    // RESTORE DRAWINGS after data loaded (only if switch ID matches to prevent race conditions)
-                    if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
-                      console.log('Fast-path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
-                      isRestoringDrawingsRef.current = true;
-                      DrawingManager.clearAllDrawings(innerChart);
-                      DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                      pendingDrawingsRef.current = [];
-                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
-                    } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
-                      console.log('Fast-path: Skipping restore - newer switch in progress (', restoreSwitchId, 'vs', drawingSwitchIdRef.current, ')');
-                    }
+                    // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
                     
                     // Center chart on replay position
                     const replayTs = replayTimestampRef.current;
@@ -1155,19 +1135,9 @@ export default function FullscreenBacktesting({
                 }
                 
                 innerChart.dataReady(() => {
-                  console.log('Fast-path fallback: dataReady fired, restoring drawings');
+                  console.log('Fast-path fallback: dataReady fired (drawings handled by TradingView natively)');
                   try {
-                    // RESTORE DRAWINGS after data loaded (only if switch ID matches)
-                    if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === restoreSwitchId) {
-                      console.log('Fast-path fallback: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', restoreSwitchId, ')');
-                      isRestoringDrawingsRef.current = true;
-                      DrawingManager.clearAllDrawings(innerChart);
-                      DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                      pendingDrawingsRef.current = [];
-                      setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
-                    } else if (drawingSwitchIdRef.current !== restoreSwitchId) {
-                      console.log('Fast-path fallback: Skipping restore - newer switch in progress');
-                    }
+                    // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
                     
                     const replayTs = replayTimestampRef.current;
                     if (replayTs > 0) {
@@ -2233,19 +2203,9 @@ export default function FullscreenBacktesting({
                   }
                   
                   innerChart.dataReady(() => {
-                    console.log('Slow path: dataReady fired, restoring drawings');
+                    console.log('Slow path: dataReady fired (drawings handled by TradingView natively)');
                     try {
-                      // RESTORE DRAWINGS after data loaded (only if switch ID matches)
-                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === slowPathSwitchId) {
-                        console.log('Slow path: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', slowPathSwitchId, ')');
-                        isRestoringDrawingsRef.current = true;
-                        DrawingManager.clearAllDrawings(innerChart);
-                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                        pendingDrawingsRef.current = [];
-                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
-                      } else if (drawingSwitchIdRef.current !== slowPathSwitchId) {
-                        console.log('Slow path: Skipping restore - newer switch in progress');
-                      }
+                      // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
                       
                       // Restore the captured visible range to preserve zoom level
                       const savedRange = pendingVisibleRangeRef.current;
@@ -2552,6 +2512,82 @@ export default function FullscreenBacktesting({
       },
       saveDrawingTemplate: async (toolName: string, templateName: string, content: string) => {
         await saveDrawingTemplate(sessionId, `${toolName}_${templateName}`, content);
+      },
+      
+      // TradingView native drawing persistence (saveload_separate_drawings_storage featureset)
+      // These methods are called automatically by TradingView to save/load drawings
+      saveLineToolsAndGroups: async (layoutId: string, chartId: string | number, state: any) => {
+        console.log('[save_load_adapter] saveLineToolsAndGroups called:', { layoutId, chartId, sourcesCount: state?.sources?.size || 0 });
+        
+        // Convert Map to array for JSON serialization
+        const serializedState: any = {};
+        if (state.sources instanceof Map) {
+          serializedState.sources = Array.from(state.sources.entries());
+        } else if (state.sources) {
+          serializedState.sources = state.sources;
+        }
+        if (state.groups instanceof Map) {
+          serializedState.groups = Array.from(state.groups.entries());
+        } else if (state.groups) {
+          serializedState.groups = state.groups;
+        }
+        
+        try {
+          await fetch('/api/backtest-sessions/chart-layout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId,
+              type: 'lineTools',
+              layoutId: layoutId || sessionId,
+              chartId: String(chartId || 'main'),
+              state: serializedState
+            })
+          });
+        } catch (e) {
+          console.error('[save_load_adapter] Failed to save line tools:', e);
+        }
+      },
+      
+      loadLineToolsAndGroups: async (layoutId: string | undefined, chartId: string | number, requestType: string, requestContext: any) => {
+        console.log('[save_load_adapter] loadLineToolsAndGroups called:', { layoutId, chartId, requestType });
+        
+        try {
+          const effectiveLayoutId = layoutId || sessionId;
+          const effectiveChartId = String(chartId || 'main');
+          
+          const response = await fetch(
+            `/api/backtest-sessions/chart-layout?sessionId=${sessionId}&lineToolsLayoutId=${effectiveLayoutId}&lineToolsChartId=${effectiveChartId}`
+          );
+          const result = await response.json();
+          
+          if (!result.success || !result.data) {
+            console.log('[save_load_adapter] No saved line tools found');
+            return null;
+          }
+          
+          // Convert arrays back to Maps
+          const state = result.data;
+          const sources = new Map();
+          const groups = new Map();
+          
+          if (Array.isArray(state.sources)) {
+            for (const [key, value] of state.sources) {
+              sources.set(key, value);
+            }
+          }
+          if (Array.isArray(state.groups)) {
+            for (const [key, value] of state.groups) {
+              groups.set(key, value);
+            }
+          }
+          
+          console.log('[save_load_adapter] Loaded line tools:', { sourcesCount: sources.size, groupsCount: groups.size });
+          return { sources, groups };
+        } catch (e) {
+          console.error('[save_load_adapter] Failed to load line tools:', e);
+          return null;
+        }
       }
     };
 
@@ -2570,6 +2606,7 @@ export default function FullscreenBacktesting({
       enabled_features: [
         "side_toolbar_in_fullscreen_mode",
         "items_favoriting",
+        "saveload_separate_drawings_storage",
       ],
       fullscreen: false,
       autosize: true,
@@ -2632,88 +2669,73 @@ export default function FullscreenBacktesting({
               const savedData = JSON.parse(latestLayout.content);
               console.log('Restoring chart layout:', latestLayout.name, 'Data keys:', Object.keys(savedData));
               
-              // Check if this is new format (has drawings array) or old format
-              if (savedData.drawings && Array.isArray(savedData.drawings)) {
-                // Clear all existing studies/indicators (including default Volume)
-                // This ensures user's deletion of indicators is respected
-                try {
-                  const existingStudies = chart.getAllStudies();
-                  console.log('Clearing', existingStudies.length, 'existing studies before restore');
-                  for (const study of existingStudies) {
-                    try {
-                      chart.removeEntity(study.id);
-                    } catch (e) {
-                      // Some studies may not be removable
-                    }
-                  }
-                } catch (e) {
-                  console.warn('Could not clear existing studies:', e);
-                }
-                
-                // Validate payload and restore drawings using DrawingManager
-                // This validates timestamps are in seconds and filters invalid drawings
-                const validatedPayload = DrawingManager.validatePayload(savedData);
-                console.log('Validated payload:', validatedPayload.drawings.length, 'valid drawings');
-                
-                // Restore drawings using the manager (handles seconds-based timestamps correctly)
-                const restoredCount = DrawingManager.restoreDrawings(chart, validatedPayload.drawings);
-                
-                // Restore studies/indicators - DEDUPLICATE to prevent accumulation
-                if (savedData.studies && Array.isArray(savedData.studies)) {
-                  // Deduplicate studies by name before restoring
-                  const uniqueStudies = savedData.studies.reduce((acc: any[], study: any) => {
-                    if (!acc.find((s: any) => s.name === study.name)) {
-                      acc.push(study);
-                    }
-                    return acc;
-                  }, []);
-                  
-                  console.log('Restoring', uniqueStudies.length, 'unique studies (from', savedData.studies.length, 'saved)');
-                  for (const study of uniqueStudies) {
-                    try {
-                      if (study.name) {
-                        chart.createStudy(study.name, study.forceOverlay || false, study.lock || false, study.inputs || [], study.overrides || {});
-                      }
-                    } catch (studyError) {
-                      console.warn('Could not restore study:', study.name, studyError);
-                    }
-                  }
-                }
-                
-                // Restore chart properties (canvas color, etc.) if saved
-                if (savedData.chartProperties) {
-                  console.log('Restoring chart properties:', savedData.chartProperties);
+              // NOTE: Drawings are now restored by TradingView natively via loadLineToolsAndGroups
+              // We only restore studies (indicators) and chart properties here
+              
+              // Clear all existing studies/indicators (including default Volume)
+              // This ensures user's deletion of indicators is respected
+              try {
+                const existingStudies = chart.getAllStudies();
+                console.log('Clearing', existingStudies.length, 'existing studies before restore');
+                for (const study of existingStudies) {
                   try {
-                    const overrides: any = {};
-                    if (savedData.chartProperties.background) {
-                      overrides['paneProperties.background'] = savedData.chartProperties.background;
-                    }
-                    if (savedData.chartProperties.backgroundType) {
-                      overrides['paneProperties.backgroundType'] = savedData.chartProperties.backgroundType;
-                    }
-                    if (savedData.chartProperties.scalesBackground) {
-                      overrides['scalesProperties.backgroundColor'] = savedData.chartProperties.scalesBackground;
-                    }
-                    if (Object.keys(overrides).length > 0) {
-                      chart.applyOverrides(overrides);
-                      console.log('Applied chart property overrides:', overrides);
-                    }
+                    chart.removeEntity(study.id);
                   } catch (e) {
-                    console.warn('Could not restore chart properties:', e);
+                    // Some studies may not be removable
                   }
                 }
-              } else {
-                // Old format - try tvWidget.load() as fallback
-                console.log('Using old format - attempting tvWidget.load()');
-                try {
-                  tvWidget.load(savedData);
-                  console.log('Loaded chart via tvWidget.load()');
-                } catch (loadError) {
-                  console.warn('tvWidget.load() failed:', loadError);
+              } catch (e) {
+                console.warn('Could not clear existing studies:', e);
+              }
+              
+              console.log('Drawings will be restored by TradingView via loadLineToolsAndGroups');
+              
+              // Restore studies/indicators - DEDUPLICATE to prevent accumulation
+              if (savedData.studies && Array.isArray(savedData.studies)) {
+                // Deduplicate studies by name before restoring
+                const uniqueStudies = savedData.studies.reduce((acc: any[], study: any) => {
+                  if (!acc.find((s: any) => s.name === study.name)) {
+                    acc.push(study);
+                  }
+                  return acc;
+                }, []);
+                
+                console.log('Restoring', uniqueStudies.length, 'unique studies (from', savedData.studies.length, 'saved)');
+                for (const study of uniqueStudies) {
+                  try {
+                    if (study.name) {
+                      chart.createStudy(study.name, study.forceOverlay || false, study.lock || false, study.inputs || [], study.overrides || {});
+                    }
+                  } catch (studyError) {
+                    console.warn('Could not restore study:', study.name, studyError);
+                  }
                 }
               }
               
-              console.log('Chart layout restore complete');
+              // Restore chart properties (canvas color, etc.) if saved
+              if (savedData.chartProperties) {
+                console.log('Restoring chart properties:', savedData.chartProperties);
+                try {
+                  const overrides: any = {};
+                  if (savedData.chartProperties.background) {
+                    overrides['paneProperties.background'] = savedData.chartProperties.background;
+                  }
+                  if (savedData.chartProperties.backgroundType) {
+                    overrides['paneProperties.backgroundType'] = savedData.chartProperties.backgroundType;
+                  }
+                  if (savedData.chartProperties.scalesBackground) {
+                    overrides['scalesProperties.backgroundColor'] = savedData.chartProperties.scalesBackground;
+                  }
+                  if (Object.keys(overrides).length > 0) {
+                    chart.applyOverrides(overrides);
+                    console.log('Applied chart property overrides:', overrides);
+                  }
+                } catch (e) {
+                  console.warn('Could not restore chart properties:', e);
+                }
+              }
+              
+              console.log('Chart layout restore complete (drawings handled by TradingView)');
               
               // Restore favorite drawing tools if saved
               if (savedData.favoriteDrawingTools && Array.isArray(savedData.favoriteDrawingTools)) {
@@ -2917,8 +2939,8 @@ export default function FullscreenBacktesting({
         }
         
         try {
-          // Use DrawingManager to capture all valid drawings (validates timestamps are in seconds)
-          const drawings = DrawingManager.captureDrawings(chart);
+          // NOTE: Drawings are now saved by TradingView natively via save_load_adapter.saveLineToolsAndGroups
+          // This auto-save only handles studies (indicators) and chart properties
           
           // Get all studies (indicators) on the chart - DEDUPLICATE by name
           const allStudies = chart.getAllStudies();
@@ -2950,28 +2972,6 @@ export default function FullscreenBacktesting({
             }
           }
           
-          // CORRUPTION PROTECTION: Never save more than 100 drawings
-          // If we have more, it indicates duplication bugs
-          const MAX_DRAWINGS = 100;
-          if (drawings.length > MAX_DRAWINGS) {
-            console.error('Skipping auto-save: too many drawings (' + drawings.length + '), indicates corruption');
-            return;
-          }
-          
-          // Prevent overwriting saved drawings with empty state
-          // Only allow empty save if user explicitly deleted all drawings
-          if (drawings.length === 0 && lastSavedDrawingsCountRef.current > 0 && !userDeletedAllDrawingsRef.current) {
-            console.log('Skipping auto-save: would overwrite', lastSavedDrawingsCountRef.current, 'drawings with empty state');
-            return;
-          }
-          
-          // Update the count and reset delete flag after successful save
-          lastSavedDrawingsCountRef.current = drawings.length;
-          if (drawings.length === 0 && userDeletedAllDrawingsRef.current) {
-            userDeletedAllDrawingsRef.current = false; // Reset after saving the empty state
-            console.log('Saved empty state after user deletion');
-          }
-          
           // Get chart properties including canvas/background colors
           // TradingView Charting Library properties API
           let chartProperties: any = null;
@@ -2997,10 +2997,10 @@ export default function FullscreenBacktesting({
             console.log('TradingView properties API not available, skipping chartProperties save');
           }
           
-          // Build saved data object - only include chartProperties if successfully captured
-          // This prevents overwriting user's settings with fallback dark colors
+          // Build saved data object - drawings are handled by TradingView natively
+          // This saves only studies, chart properties, and favorites
           const savedData: any = {
-            drawings,
+            drawings: [], // Empty - TradingView handles drawings via saveLineToolsAndGroups
             studies,
             interval: currentInterval,
             timestamp: Date.now(),
@@ -3021,7 +3021,7 @@ export default function FullscreenBacktesting({
           };
           
           saveChartLayout(sessionId, layoutData);
-          console.log('Chart auto-saved:', drawings.length, 'drawings,', studies.length, 'studies');
+          console.log('Chart auto-saved (studies only):', studies.length, 'studies (drawings handled by TradingView)');
         } catch (error) {
           console.error('Error auto-saving chart:', error);
         }
@@ -3117,17 +3117,8 @@ export default function FullscreenBacktesting({
             console.warn('Failed to capture visible range:', e);
           }
           
-          // CAPTURE DRAWINGS BEFORE SWITCH - setSymbol will clear them
-          let capturedDrawings: any[] = [];
-          try {
-            capturedDrawings = DrawingManager.captureDrawings(chart);
-            if (capturedDrawings.length > 0) {
-              console.log('Native TF: Captured', capturedDrawings.length, 'drawings before switch');
-              pendingDrawingsRef.current = capturedDrawings;
-            }
-          } catch (e) {
-            console.warn('Failed to capture drawings:', e);
-          }
+          // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
+          console.log('Native TF: Drawings handled by TradingView natively');
         }
         
         // Store saved range for use in callback AND in the slow path
@@ -3172,22 +3163,11 @@ export default function FullscreenBacktesting({
               // Use setSymbol + setResolution to force fresh data fetch
               innerChart.setSymbol(symbolWithSuffix, () => {
                 innerChart.setResolution(newInterval, () => {
-                  // CRITICAL: Wait for dataReady before restoring drawings
-                  // This ensures bars are loaded so drawings anchor to correct timestamps
+                  // CRITICAL: Wait for dataReady before handling post-switch logic
                   innerChart.dataReady(() => {
-                    console.log('Native TF: dataReady fired, restoring drawings');
+                    console.log('Native TF: dataReady fired (drawings handled by TradingView natively)');
                     try {
-                      // RESTORE DRAWINGS after data loaded (only if switch ID matches)
-                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === nativeSwitchId) {
-                        console.log('Native TF: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', nativeSwitchId, ')');
-                        isRestoringDrawingsRef.current = true;
-                        DrawingManager.clearAllDrawings(innerChart);
-                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                        pendingDrawingsRef.current = [];
-                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
-                      } else if (drawingSwitchIdRef.current !== nativeSwitchId) {
-                        console.log('Native TF: Skipping restore - newer switch in progress');
-                      }
+                      // NOTE: Drawings are now handled by TradingView natively via saveLineToolsAndGroups/loadLineToolsAndGroups
                       
                       // Restore captured visible range or calculate default
                       const savedRange = pendingVisibleRangeRef.current;

@@ -43,6 +43,27 @@ export async function GET(req: NextRequest) {
 
     const typedSession = session as any;
 
+    // Check for lineTools request (TradingView's loadLineToolsAndGroups)
+    const lineToolsLayoutId = searchParams.get('lineToolsLayoutId');
+    const lineToolsChartId = searchParams.get('lineToolsChartId');
+    
+    if (lineToolsLayoutId && lineToolsChartId) {
+      const key = `${lineToolsLayoutId}_${lineToolsChartId}`;
+      const stateJson = typedSession.lineToolsState?.[key];
+      
+      if (!stateJson) {
+        return NextResponse.json({ success: true, data: null });
+      }
+      
+      try {
+        const state = JSON.parse(stateJson);
+        return NextResponse.json({ success: true, data: state });
+      } catch (e) {
+        console.error('Failed to parse lineTools state:', e);
+        return NextResponse.json({ success: true, data: null });
+      }
+    }
+
     if (layoutId) {
       const layout = typedSession.chartLayouts?.find((l: any) => l.id === layoutId);
       if (!layout) {
@@ -56,7 +77,8 @@ export async function GET(req: NextRequest) {
       data: {
         chartLayouts: typedSession.chartLayouts || [],
         studyTemplates: typedSession.studyTemplates || {},
-        drawingTemplates: typedSession.drawingTemplates || {}
+        drawingTemplates: typedSession.drawingTemplates || {},
+        lineToolsState: typedSession.lineToolsState || {}
       }
     });
 
@@ -150,6 +172,26 @@ export async function POST(req: NextRequest) {
       await BacktestSession.updateOne(
         { uniqueId: userId, sessionId: parseInt(sessionId) },
         { $set: { [`drawingTemplates.${name}`]: content } }
+      );
+
+      return NextResponse.json({ success: true });
+
+    } else if (type === 'lineTools') {
+      // TradingView's save_load_adapter saveLineToolsAndGroups
+      // Stores native TradingView drawing state per layoutId/chartId
+      const { layoutId, chartId, state } = data;
+      
+      if (!layoutId || !chartId) {
+        return NextResponse.json({ error: "Layout ID and Chart ID are required" }, { status: 400 });
+      }
+
+      const key = `${layoutId}_${chartId}`;
+      
+      // state.sources is a Map in TradingView, but we receive it as an array of [key, value] pairs
+      // We store the serialized state directly
+      await BacktestSession.updateOne(
+        { uniqueId: userId, sessionId: parseInt(sessionId) },
+        { $set: { [`lineToolsState.${key}`]: JSON.stringify(state) } }
       );
 
       return NextResponse.json({ success: true });
