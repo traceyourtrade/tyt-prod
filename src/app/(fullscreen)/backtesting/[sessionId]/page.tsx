@@ -1761,6 +1761,12 @@ export default function FullscreenBacktesting({
             }
           }
           delete pendingCallbacksRef.current[resolution];
+          
+          // CRITICAL: Finalize the controller to re-enable replay controls
+          // This completes the slow path atomic transaction
+          console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, finalizing controller for', resolution);
+          lastTfSwitchTimeRef.current = Date.now();
+          tfController.finalize(resolution);
         }
       } else {
         console.log('No data returned for resolution', resolution);
@@ -1772,6 +1778,10 @@ export default function FullscreenBacktesting({
           }
           delete pendingCallbacksRef.current[resolution];
         }
+        // Finalize even with no data to unblock controls
+        console.log('Slow-path: No data, finalizing controller for', resolution);
+        lastTfSwitchTimeRef.current = Date.now();
+        tfController.finalize(resolution);
       }
     } catch (error) {
       console.error('Failed to fetch bars for resolution', resolution, error);
@@ -1783,6 +1793,10 @@ export default function FullscreenBacktesting({
         }
         delete pendingCallbacksRef.current[resolution];
       }
+      // Finalize on error to unblock controls
+      console.log('Slow-path: Error, finalizing controller for', resolution);
+      lastTfSwitchTimeRef.current = Date.now();
+      tfController.finalize(resolution);
     } finally {
       fetchingResolutionsRef.current.delete(resolution);
     }
