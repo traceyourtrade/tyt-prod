@@ -1924,11 +1924,11 @@ export default function FullscreenBacktesting({
       replayTimestampRef.current = 0; // Reset replay timestamp for new session/symbol
     }
     
-    // If we're changing resolution with cached data, skip fetch
-    if (isChangingResolutionRef.current) {
-      isChangingResolutionRef.current = false;
-      return;
-    }
+    // NOTE: We removed the isChangingResolutionRef early return here because it was
+    // causing slow path switches to fail. The fast path sets this flag but if the user
+    // then switches to a non-cached interval (slow path), the useEffect would skip
+    // entirely, leaving the controller stuck in SWITCHING state.
+    // The flag is now only used to prevent widget recreation, not to skip the fetch.
     
     // Check cache first - use normalized key for lookup
     const effectCacheKey = normalizeCacheKey(currentInterval);
