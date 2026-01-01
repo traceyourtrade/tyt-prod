@@ -1217,6 +1217,8 @@ export default function FullscreenBacktesting({
         isChangingResolutionRef.current = false;
       }
     } else {
+      // CRITICAL: Reset fastPathActiveRef so the native TF handler knows we're on slow path
+      fastPathActiveRef.current = false;
       console.log('Using SLOW PATH - will fetch data');
       // Slow path: need to fetch from API
       // CRITICAL: Set targetTimestampRef to bar-start for fetch anchor, but per FX Replay spec,
