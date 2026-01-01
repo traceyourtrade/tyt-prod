@@ -1219,6 +1219,9 @@ export default function FullscreenBacktesting({
     } else {
       // CRITICAL: Reset fastPathActiveRef so the native TF handler knows we're on slow path
       fastPathActiveRef.current = false;
+      // CRITICAL: Reset isChangingResolutionRef so the useEffect can run fetchAllHistory
+      // Without this, the slow path would leave the flag stuck at true
+      isChangingResolutionRef.current = false;
       console.log('Using SLOW PATH - will fetch data');
       // Slow path: need to fetch from API
       // CRITICAL: Set targetTimestampRef to bar-start for fetch anchor, but per FX Replay spec,
@@ -3198,10 +3201,12 @@ export default function FullscreenBacktesting({
         // then the slow path's own completion handler will finalize things.
         // Running resetData() during slow path interferes with the data fetch.
         setTimeout(() => {
-          // Check if fast path is being used - if not, skip this block
-          // Slow path handles its own finalization after data loads
+          // Check if fast path is being used - if not, skip TradingView operations
+          // Slow path handles its own finalization after data loads via useEffect -> fetchAllHistory
           if (!fastPathActiveRef.current) {
-            console.log('Native TF switch: SLOW PATH detected - skipping setResolution/resetData (slow path handles finalization)');
+            console.log('Native TF switch: SLOW PATH detected - useEffect will handle data fetch and finalization');
+            // NOTE: Don't reset isChangingResolutionRef here - it was already reset in processTimeframeSwitch
+            // The useEffect will call fetchAllHistory which will finalize the controller
             return;
           }
           
