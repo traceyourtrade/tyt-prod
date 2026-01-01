@@ -70,7 +70,8 @@ import AccountsDropdown from "@/components/dashboard-components/AccountsDropdown
 import CurrencyDropdown from "@/components/dashboard-components/CurrencyDropdown";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import OnboardingTour, { WelcomeModal } from "@/components/onboarding/OnboardingTour";
-import { useOnboardingTour, platformTourSteps } from "@/hooks/useOnboardingTour";
+import { platformTourSteps } from "@/hooks/useOnboardingTour";
+import { useTourStore } from "@/stores/useTourStore";
 
 import useAccountDetails from "@/store/accountdetails";
 import calendarPopUp from "@/store/calendarPopUp";
@@ -152,7 +153,7 @@ export default function RootLayout({
   const { profileData, setAccounts } = useAccountDetails();
   const checkoutUrl = "/checkout";
   const { setAddTrades, setAddAcc } = calendarPopUp();
-  const { isOpen: isTourOpen, showWelcome, startTour, completeTour, skipTour, dismissWelcome } = useOnboardingTour();
+  const { isOpen: isTourOpen, showWelcome, startTour, completeTour, skipTour, dismissWelcome, initFromStorage } = useTourStore();
 
   // Auto-expand sidebar when tour is active, restore when tour ends
   const [preTourCollapsed, setPreTourCollapsed] = useState<boolean | null>(null);
@@ -186,6 +187,10 @@ export default function RootLayout({
   useEffect(() => {
     setAccounts();
   }, []);
+
+  useEffect(() => {
+    initFromStorage();
+  }, [initFromStorage]);
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {

@@ -13,7 +13,7 @@ import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
 
 import { PropFirmModeToggle, PropFirmDashboard } from "@/components/prop-firm";
 import { EditModeToolbar } from "@/components/dashboard/DraggableWidgetGrid";
-import { useOnboardingTour } from "@/hooks/useOnboardingTour";
+import { useTourStore } from "@/stores/useTourStore";
 
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ const DashboardMain = () => {
   const { hrBarTxt, hrBarType } = notifications();
   const { isEnabled: isPropFirmMode } = usePropFirmStore();
   const { currency, exchangeRate } = useCurrencyStore();
-  const { startTour } = useOnboardingTour();
+  const startTour = useTourStore((state) => state.startTour);
 
   useEffect(() => {
     setAccounts();
