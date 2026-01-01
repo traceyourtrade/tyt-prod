@@ -1108,21 +1108,29 @@ export default function FullscreenBacktesting({
                         onRealtimeCallbackRef.current = cachedCb;
                         callbacksReadyRef.current = true;
                       } else if (isStale) {
-                        console.log('Fast-path: Resolution', targetInterval, 'was unsubscribed - forcing resubscription via delayed resetData');
-                        // Clear stale flag since we're about to force a fresh subscription
-                        staleResolutionsRef.current.delete(normalizedTarget);
+                        console.log('Fast-path: Resolution', targetInterval, 'was unsubscribed - waiting for fresh subscribeBars + forcing via delayed resetData');
+                        // DON'T clear stale flag here - it will be cleared when subscribeBars is called
                         // Force TradingView to resubscribe by calling resetData again after a short delay
-                        setTimeout(() => {
-                          if (!callbacksReadyRef.current && currentIntervalRef.current === targetInterval) {
-                            console.log('Fast-path: Forcing resubscription with delayed resetData');
-                            try {
-                              const chart = tvWidgetRef.current?.activeChart();
-                              if (chart) chart.resetData();
-                            } catch (e) {
-                              console.warn('Fast-path: Delayed resetData failed:', e);
+                        // Retry up to 3 times with increasing delays
+                        const scheduleRetry = (attempt: number) => {
+                          const delay = 150 * (attempt + 1); // 150ms, 300ms, 450ms
+                          setTimeout(() => {
+                            if (!callbacksReadyRef.current && currentIntervalRef.current === targetInterval && attempt < 3) {
+                              console.log('Fast-path: Retry', attempt + 1, '- forcing resubscription with resetData');
+                              try {
+                                const chart = tvWidgetRef.current?.activeChart();
+                                if (chart) {
+                                  chart.resetData();
+                                  // Schedule next retry if this one doesn't work
+                                  scheduleRetry(attempt + 1);
+                                }
+                              } catch (e) {
+                                console.warn('Fast-path: Delayed resetData failed:', e);
+                              }
                             }
-                          }
-                        }, 200);
+                          }, delay);
+                        };
+                        scheduleRetry(0);
                       } else {
                         console.warn('Fast-path: No cached callback for', targetInterval);
                       }
@@ -1229,21 +1237,27 @@ export default function FullscreenBacktesting({
                         onRealtimeCallbackRef.current = cachedCb;
                         callbacksReadyRef.current = true;
                       } else if (isStale2) {
-                        console.log('Fast-path fallback: Resolution', targetInterval, 'was unsubscribed - forcing resubscription via delayed resetData');
-                        // Clear stale flag since we're about to force a fresh subscription
-                        staleResolutionsRef.current.delete(normalizedTarget2);
+                        console.log('Fast-path fallback: Resolution', targetInterval, 'was unsubscribed - waiting for fresh subscribeBars + forcing via delayed resetData');
+                        // DON'T clear stale flag here - it will be cleared when subscribeBars is called
                         // Force TradingView to resubscribe by calling resetData again after a short delay
-                        setTimeout(() => {
-                          if (!callbacksReadyRef.current && currentIntervalRef.current === targetInterval) {
-                            console.log('Fast-path fallback: Forcing resubscription with delayed resetData');
-                            try {
-                              const chart = tvWidgetRef.current?.activeChart();
-                              if (chart) chart.resetData();
-                            } catch (e) {
-                              console.warn('Fast-path fallback: Delayed resetData failed:', e);
+                        const scheduleRetry2 = (attempt: number) => {
+                          const delay = 150 * (attempt + 1);
+                          setTimeout(() => {
+                            if (!callbacksReadyRef.current && currentIntervalRef.current === targetInterval && attempt < 3) {
+                              console.log('Fast-path fallback: Retry', attempt + 1, '- forcing resubscription with resetData');
+                              try {
+                                const chart = tvWidgetRef.current?.activeChart();
+                                if (chart) {
+                                  chart.resetData();
+                                  scheduleRetry2(attempt + 1);
+                                }
+                              } catch (e) {
+                                console.warn('Fast-path fallback: Delayed resetData failed:', e);
+                              }
                             }
-                          }
-                        }, 200);
+                          }, delay);
+                        };
+                        scheduleRetry2(0);
                       } else {
                         console.warn('Fast-path fallback: No cached callback for', targetInterval);
                       }
@@ -3463,21 +3477,24 @@ export default function FullscreenBacktesting({
                       onRealtimeCallbackRef.current = cachedCallback;
                       callbacksReadyRef.current = true;
                     } else if (isStale) {
-                      console.log('Native TF: Resolution', newInterval, 'was unsubscribed - forcing resubscription via delayed resetData');
-                      // Clear stale flag since we're about to force a fresh subscription
-                      staleResolutionsRef.current.delete(normalizedInterval);
+                      console.log('Native TF: Resolution', newInterval, 'was unsubscribed - waiting for fresh subscribeBars + forcing via delayed resetData');
+                      // DON'T clear stale flag here - it will be cleared when subscribeBars is called
                       // Force TradingView to resubscribe by calling resetData again after a short delay
-                      // This gives TradingView time to complete its internal cleanup
-                      setTimeout(() => {
-                        if (!callbacksReadyRef.current && currentIntervalRef.current === newInterval) {
-                          console.log('Native TF: Forcing resubscription with delayed resetData');
-                          try {
-                            innerChart.resetData();
-                          } catch (e) {
-                            console.warn('Native TF: Delayed resetData failed:', e);
+                      const scheduleNativeRetry = (attempt: number) => {
+                        const delay = 150 * (attempt + 1);
+                        setTimeout(() => {
+                          if (!callbacksReadyRef.current && currentIntervalRef.current === newInterval && attempt < 3) {
+                            console.log('Native TF: Retry', attempt + 1, '- forcing resubscription with resetData');
+                            try {
+                              innerChart.resetData();
+                              scheduleNativeRetry(attempt + 1);
+                            } catch (e) {
+                              console.warn('Native TF: Delayed resetData failed:', e);
+                            }
                           }
-                        }
-                      }, 200);
+                        }, delay);
+                      };
+                      scheduleNativeRetry(0);
                     } else {
                       console.warn('Native TF: No cached callback for', newInterval, '- replay controls may not work');
                     }
