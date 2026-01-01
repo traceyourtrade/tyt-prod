@@ -2112,6 +2112,24 @@ export default function FullscreenBacktesting({
           barsCacheRef.current[fetchCacheKey] = bars;
           loadedRangeRef.current[fetchCacheKey] = { from: fromTs, to: toTs };
           
+          // ═══════════════════════════════════════════════════════════════════════════
+          // CRITICAL: Check if user has switched to a different interval during fetch
+          // If so, data is cached but we should NOT update state or finalize
+          // This prevents stale data from overwriting current state
+          // ═══════════════════════════════════════════════════════════════════════════
+          if (currentIntervalRef.current !== currentInterval) {
+            console.log('Slow path: Aborting processing - user switched from', currentInterval, 'to', currentIntervalRef.current, 'during fetch');
+            // CRITICAL: Abort the controller so queued switches can proceed
+            // The new interval's handler should have already started its own switch
+            tfController.abort('Interval changed during fetch');
+            // NOTE: Do NOT clear pendingTimeframeSwitchRef/pendingAnchorTimestampRef here!
+            // They may have been set by the NEW switch that's in progress
+            // Only clear isChangingResolutionRef for this (aborted) interval's context
+            isChangingResolutionRef.current = false;
+            setIsLoading(false);
+            return; // Data is cached, let the new interval's handler process it
+          }
+          
           // Signal that data is ready for layout restoration
           dataReadyForLayoutRef.current = true;
           console.log('Data ready signal set - layout can now restore safely');
@@ -2200,11 +2218,13 @@ export default function FullscreenBacktesting({
           // DRAWING PRESERVATION: Use setResolution + resetData (no symbol change)
           // This preserves TradingView's native drawing persistence across timeframe switches
           // We avoid setSymbol because dynamic suffixes break drawing persistence
-          // NOTE: Use pendingSwitch (not cache length) to detect TF switch vs first load
-          // Cache length check fails when we've deleted stale caches during slow path
-          console.log('Slow path: Using setResolution + resetData for drawing preservation');
+          // NOTE: Use widgetInitializedRef (not pendingSwitch) to detect TF switch vs first load
+          // pendingSwitch can be overwritten by rapid switches, causing race conditions
+          // widgetInitializedRef is stable - it's true once widget exists, never gets reset during session
+          const isTimeframeSwitch = widgetInitializedRef.current;
+          console.log('Slow path: isTimeframeSwitch=', isTimeframeSwitch, '(using setResolution + resetData for drawing preservation)');
           
-          if (tvWidgetRef.current && pendingSwitch) {
+          if (tvWidgetRef.current && isTimeframeSwitch) {
             try {
               const chart = tvWidgetRef.current.activeChart();
               
