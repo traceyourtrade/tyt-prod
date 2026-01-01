@@ -2200,9 +2200,11 @@ export default function FullscreenBacktesting({
           // DRAWING PRESERVATION: Use setResolution + resetData (no symbol change)
           // This preserves TradingView's native drawing persistence across timeframe switches
           // We avoid setSymbol because dynamic suffixes break drawing persistence
+          // NOTE: Use pendingSwitch (not cache length) to detect TF switch vs first load
+          // Cache length check fails when we've deleted stale caches during slow path
           console.log('Slow path: Using setResolution + resetData for drawing preservation');
           
-          if (tvWidgetRef.current && Object.keys(barsCacheRef.current).length > 1) {
+          if (tvWidgetRef.current && pendingSwitch) {
             try {
               const chart = tvWidgetRef.current.activeChart();
               
