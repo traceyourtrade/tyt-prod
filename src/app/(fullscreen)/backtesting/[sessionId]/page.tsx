@@ -1633,18 +1633,21 @@ export default function FullscreenBacktesting({
       sessionStartTimeRef.current = Date.now(); // Reset for next interval
       
       try {
+        // CRITICAL: Save replayTimestampRef.current (bar CLOSE time / simulation time)
+        // NOT currentBar.time (bar OPEN time) - this caused TF switch time drift
+        const replayTimeToSave = replayTimestampRef.current;
         await fetch('/api/backtest-sessions', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sessionId: parseInt(sessionId),
-            progressPointer: currentBar.time,
+            progressPointer: replayTimeToSave,
             currentBalance: currentBalance,
             timeInvested: newTimeInvested,
           }),
         });
         // Update local session data via ref (avoid state update that would trigger effect)
-        sessionDataRef.current = { ...currentSession, timeInvested: newTimeInvested, progressPointer: currentBar.time };
+        sessionDataRef.current = { ...currentSession, timeInvested: newTimeInvested, progressPointer: replayTimeToSave };
       } catch (error) {
         console.error("Failed to save progress:", error);
       }
@@ -1954,12 +1957,15 @@ export default function FullscreenBacktesting({
       const elapsedMinutes = Math.floor((Date.now() - sessionStartTimeRef.current) / 60000);
       
       // Use fetch with keepalive for PATCH requests (sendBeacon only supports POST)
+      // CRITICAL: Save replayTimestampRef.current (bar CLOSE time / simulation time)
+      // NOT currentBar.time (bar OPEN time) - this caused TF switch time drift
+      const replayTimeToSave = replayTimestampRef.current;
       fetch('/api/backtest-sessions', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: parseInt(sessionId),
-          progressPointer: currentBar.time,
+          progressPointer: replayTimeToSave,
           currentBalance: currentBalance,
           timeInvested: (currentSession.timeInvested || 0) + elapsedMinutes,
         }),
@@ -3958,17 +3964,20 @@ export default function FullscreenBacktesting({
         const currentBar = allBars[currentBarIndexRef.current];
         if (currentBar) {
           const newBalance = (sessionDataRef.current?.currentBalance || 0) + pnl;
+          // CRITICAL: Save replayTimestampRef.current (bar CLOSE time / simulation time)
+          // NOT currentBar.time (bar OPEN time) - this caused TF switch time drift
+          const replayTimeToSave = replayTimestampRef.current;
           await fetch('/api/backtest-sessions', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               sessionId: parsedSessionId,
-              progressPointer: currentBar.time,
+              progressPointer: replayTimeToSave,
               currentBalance: newBalance,
             }),
           });
           if (sessionDataRef.current) {
-            sessionDataRef.current = { ...sessionDataRef.current, progressPointer: currentBar.time, currentBalance: newBalance };
+            sessionDataRef.current = { ...sessionDataRef.current, progressPointer: replayTimeToSave, currentBalance: newBalance };
           }
         }
       } catch (error) {
@@ -5139,8 +5148,15 @@ export default function FullscreenBacktesting({
   const barsFromRef = tfSwitchRenderKey >= 0 ? allBarsRef.current : allBarsRef.current;
   const indexFromRef = currentBarIndexRef.current;
   const currentBar = barsFromRef[indexFromRef] || allBars[currentBarIndex];
-  const currentTime = currentBar
-    ? new Date(currentBar.time).toLocaleString("en-US", {
+  
+  // CRITICAL: Show replayTime (simulation time / bar CLOSE time) instead of bar.time (open time)
+  // This ensures the time stays consistent when switching timeframes
+  // replayTimestampRef.current is the single source of truth for replay position
+  const displayTime = replayTimestampRef.current > 0 
+    ? replayTimestampRef.current 
+    : (currentBar ? currentBar.time + intervalToMinutes(currentInterval) * 60 * 1000 : 0);
+  const currentTime = displayTime > 0
+    ? new Date(displayTime).toLocaleString("en-US", {
         month: "short",
         day: "numeric",
         hour: "2-digit",
