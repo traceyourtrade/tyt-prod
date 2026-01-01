@@ -1931,6 +1931,14 @@ export default function FullscreenBacktesting({
   useEffect(() => {
     if (!sessionData || !fromDate || !toDate || !sessionData.symbol) return;
     
+    // DEBUG: Log when this effect runs to trace slow path flow
+    console.log('=== DATA FETCH EFFECT TRIGGERED ===', {
+      currentInterval,
+      replayTs: replayTimestampRef.current,
+      cacheKeys: Object.keys(barsCacheRef.current),
+      tfControllerState: tfController.state
+    });
+    
     // Invalidate cache when symbol or date range changes
     const sessionKey = `${sessionData.symbol}-${sessionData.market}-${fromDate}-${toDate}`;
     if (sessionKey !== lastSessionKeyRef.current) {
@@ -1950,6 +1958,8 @@ export default function FullscreenBacktesting({
     // Check cache first - use normalized key for lookup
     const effectCacheKey = normalizeCacheKey(currentInterval);
     const cachedBars = barsCacheRef.current[effectCacheKey];
+    console.log('Effect cache check:', { effectCacheKey, hasCachedBars: !!cachedBars, barCount: cachedBars?.length || 0 });
+    
     if (cachedBars && cachedBars.length > 0) {
       const savedTimestamp = targetTimestampRef.current;
       
