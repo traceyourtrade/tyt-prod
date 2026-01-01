@@ -5050,7 +5050,11 @@ export default function FullscreenBacktesting({
   ];
   const currentSpeed = 500 / playbackSpeed;
 
-  const currentBar = allBars[currentBarIndex];
+  // CRITICAL: Use ref directly to avoid React state lag during TF switches
+  // allBarsRef is updated synchronously, while allBars state lags behind
+  const barsFromRef = allBarsRef.current;
+  const indexFromRef = currentBarIndexRef.current;
+  const currentBar = barsFromRef[indexFromRef] || allBars[currentBarIndex];
   const currentTime = currentBar
     ? new Date(currentBar.time).toLocaleString("en-US", {
         month: "short",
@@ -5136,7 +5140,7 @@ export default function FullscreenBacktesting({
           <div className="bt-meta-pill">
             <span className="bt-meta-time">{currentTime}</span>
             <span className="bt-meta-divider">•</span>
-            <span className="bt-meta-progress">{currentBarIndex + 1} / {allBars.length}</span>
+            <span className="bt-meta-progress">{indexFromRef + 1} / {barsFromRef.length || allBars.length}</span>
           </div>
         </div>
 
