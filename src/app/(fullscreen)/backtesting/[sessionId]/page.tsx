@@ -543,6 +543,8 @@ export default function FullscreenBacktesting({
   const [currentInterval, setCurrentInterval] = useState(initialInterval);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(500);
+  // Force re-render counter - increment after TF switch to ensure UI reads fresh refs
+  const [tfSwitchRenderKey, setTfSwitchRenderKey] = useState(0);
   
   const tfController = useTimeframeSwitchController({
     onStateChange: (state) => {
@@ -1107,31 +1109,45 @@ export default function FullscreenBacktesting({
                     }
                     console.log('Fast-path: callbacksReady=', callbacksReadyRef.current);
                     
-                    // VERIFY SYNC: Confirm derived state matches replayTime
-                    const bars = allBarsRef.current;
-                    const idx = currentBarIndexRef.current;
-                    const replayTs2 = replayTimestampRef.current;
-                    const resMinutes = intervalToMinutes(targetInterval);
-                    const intervalMs = resMinutes * 60 * 1000;
-                    
-                    if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
-                      const barCloseTime = bars[idx].time + intervalMs;
-                      if (barCloseTime > replayTs2) {
-                        console.error('SYNC VERIFY FAILED: bar close > replayTime', { barCloseTime, replayTs: replayTs2, idx });
-                      } else {
-                        console.log('Fast-path: SYNC VERIFIED, replayReady=true');
+                    // CRITICAL: Atomically update refs AND trigger re-render in same callback
+                    // This ensures the next render reads fresh data from the refs
+                    // Only proceed if we have valid cached data - otherwise skip re-render
+                    const cachedBarsForTF = barsCacheRef.current[normalizeCacheKey(targetInterval)];
+                    let didUpdateRefs = false;
+                    if (cachedBarsForTF && cachedBarsForTF.length > 0) {
+                      allBarsRef.current = cachedBarsForTF;
+                      // Re-derive bar index from current replayTime for this resolution
+                      const replayTimeMs = replayTimestampRef.current;
+                      const resMinutes = intervalToMinutes(targetInterval);
+                      const intervalMs = resMinutes * 60 * 1000;
+                      let derivedIdx = 0;
+                      for (let i = cachedBarsForTF.length - 1; i >= 0; i--) {
+                        if (cachedBarsForTF[i].time + intervalMs <= replayTimeMs) {
+                          derivedIdx = i;
+                          break;
+                        }
                       }
+                      currentBarIndexRef.current = derivedIdx;
+                      console.log('Fast-path dataReady: Atomic sync - bars:', cachedBarsForTF.length, 'index:', derivedIdx, 'bar time:', new Date(cachedBarsForTF[derivedIdx]?.time || 0).toISOString());
+                      didUpdateRefs = true;
                     }
                     
                     // Only NOW enable replay via controller
                     lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
+                    
+                    // CRITICAL: Only trigger re-render if we successfully updated refs
+                    // This prevents rendering stale data on cache misses
+                    if (didUpdateRefs) {
+                      setTfSwitchRenderKey(k => k + 1);
+                    }
                   } catch (e) {
                     console.warn('Error in post-switch cleanup:', e);
                     lastTfSwitchTimeRef.current = Date.now();
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
+                    setTfSwitchRenderKey(k => k + 1);
                   }
                   isChangingResolutionRef.current = false;
                 }); // Close dataReady callback
@@ -1195,31 +1211,43 @@ export default function FullscreenBacktesting({
                     }
                     console.log('Fast-path fallback: callbacksReady=', callbacksReadyRef.current);
                     
-                    // VERIFY SYNC: Confirm derived state matches replayTime
-                    const bars = allBarsRef.current;
-                    const idx = currentBarIndexRef.current;
-                    const replayTs2 = replayTimestampRef.current;
-                    const resMinutes = intervalToMinutes(targetInterval);
-                    const intervalMs = resMinutes * 60 * 1000;
-                    
-                    if (bars && bars.length > 0 && idx >= 0 && idx < bars.length) {
-                      const barCloseTime = bars[idx].time + intervalMs;
-                      if (barCloseTime > replayTs2) {
-                        console.error('SYNC VERIFY FAILED (fallback): bar close > replayTime', { barCloseTime, replayTs: replayTs2, idx });
-                      } else {
-                        console.log('Fast-path fallback: SYNC VERIFIED, replayReady=true');
+                    // CRITICAL: Atomically update refs AND trigger re-render in same callback
+                    // Only proceed if we have valid cached data - otherwise skip re-render
+                    const cachedBarsForTF = barsCacheRef.current[normalizeCacheKey(targetInterval)];
+                    let didUpdateRefs = false;
+                    if (cachedBarsForTF && cachedBarsForTF.length > 0) {
+                      allBarsRef.current = cachedBarsForTF;
+                      // Re-derive bar index from current replayTime for this resolution
+                      const replayTimeMs = replayTimestampRef.current;
+                      const resMinutes = intervalToMinutes(targetInterval);
+                      const intervalMs = resMinutes * 60 * 1000;
+                      let derivedIdx = 0;
+                      for (let i = cachedBarsForTF.length - 1; i >= 0; i--) {
+                        if (cachedBarsForTF[i].time + intervalMs <= replayTimeMs) {
+                          derivedIdx = i;
+                          break;
+                        }
                       }
+                      currentBarIndexRef.current = derivedIdx;
+                      console.log('Fast-path fallback dataReady: Atomic sync - bars:', cachedBarsForTF.length, 'index:', derivedIdx, 'bar time:', new Date(cachedBarsForTF[derivedIdx]?.time || 0).toISOString());
+                      didUpdateRefs = true;
                     }
                     
                     // Only NOW enable replay via controller
                     lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
+                    
+                    // CRITICAL: Only trigger re-render if we successfully updated refs
+                    if (didUpdateRefs) {
+                      setTfSwitchRenderKey(k => k + 1);
+                    }
                   } catch (e) {
                     console.warn('Error in post-switch cleanup:', e);
                     lastTfSwitchTimeRef.current = Date.now();
                     tfController.finalize(targetInterval);
                     fastPathActiveRef.current = false;
+                    setTfSwitchRenderKey(k => k + 1);
                   }
                   isChangingResolutionRef.current = false;
                 }); // Close dataReady callback
@@ -2319,10 +2347,37 @@ export default function FullscreenBacktesting({
                   }
                   
                   // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller
+                  // CRITICAL: Atomically update refs AND trigger re-render in same callback
+                  // Only proceed if we have valid cached data - otherwise skip re-render
+                  const cachedBarsForTF = barsCacheRef.current[normalizeCacheKey(currentInterval)];
+                  let didUpdateRefs = false;
+                  if (cachedBarsForTF && cachedBarsForTF.length > 0) {
+                    allBarsRef.current = cachedBarsForTF;
+                    // Re-derive bar index from current replayTime for this resolution
+                    const replayTimeMs = replayTimestampRef.current;
+                    const resMinutes = intervalToMinutes(currentInterval);
+                    const intMs = resMinutes * 60 * 1000;
+                    let derivedIdx = 0;
+                    for (let i = cachedBarsForTF.length - 1; i >= 0; i--) {
+                      if (cachedBarsForTF[i].time + intMs <= replayTimeMs) {
+                        derivedIdx = i;
+                        break;
+                      }
+                    }
+                    currentBarIndexRef.current = derivedIdx;
+                    console.log('Slow-path dataReady: Atomic sync - bars:', cachedBarsForTF.length, 'index:', derivedIdx, 'bar time:', new Date(cachedBarsForTF[derivedIdx]?.time || 0).toISOString());
+                    didUpdateRefs = true;
+                  }
+                  
                   console.log('Slow-path: ATOMIC TRANSACTION COMPLETE, finalizing controller');
                   lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                   tfController.finalize(currentInterval);
                   isChangingResolutionRef.current = false;
+                  
+                  // CRITICAL: Only trigger re-render if we successfully updated refs
+                  if (didUpdateRefs) {
+                    setTfSwitchRenderKey(k => k + 1);
+                  }
                 }); // Close dataReady callback
               }); // Close setResolution callback
             } catch (e) {
@@ -3320,11 +3375,38 @@ export default function FullscreenBacktesting({
                   }
                   console.log('Native TF: callbacksReady=', callbacksReadyRef.current, 'before finalizing');
                   
+                  // CRITICAL: Atomically update refs AND trigger re-render in same callback
+                  // Only proceed if we have valid cached data - otherwise skip re-render
+                  const cachedBarsForTF = barsCacheRef.current[normalizeCacheKey(newInterval)];
+                  let didUpdateRefs = false;
+                  if (cachedBarsForTF && cachedBarsForTF.length > 0) {
+                    allBarsRef.current = cachedBarsForTF;
+                    // Re-derive bar index from current replayTime for this resolution
+                    const replayTimeMs = replayTimestampRef.current;
+                    const resMinutes = intervalToMinutes(newInterval);
+                    const intervalMs = resMinutes * 60 * 1000;
+                    let derivedIdx = 0;
+                    for (let i = cachedBarsForTF.length - 1; i >= 0; i--) {
+                      if (cachedBarsForTF[i].time + intervalMs <= replayTimeMs) {
+                        derivedIdx = i;
+                        break;
+                      }
+                    }
+                    currentBarIndexRef.current = derivedIdx;
+                    console.log('Native TF dataReady: Atomic sync - bars:', cachedBarsForTF.length, 'index:', derivedIdx, 'bar time:', new Date(cachedBarsForTF[derivedIdx]?.time || 0).toISOString());
+                    didUpdateRefs = true;
+                  }
+                  
                   // Finalize the controller to re-enable replay controls
                   console.log('Native TF switch: Finalizing controller for', newInterval);
                   lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
                   tfController.finalize(newInterval);
                   isChangingResolutionRef.current = false;
+                  
+                  // CRITICAL: Only trigger re-render if we successfully updated refs
+                  if (didUpdateRefs) {
+                    setTfSwitchRenderKey(k => k + 1);
+                  }
                 }); // Close dataReady callback
               }); // Close setResolution callback
             } else {
@@ -5051,8 +5133,10 @@ export default function FullscreenBacktesting({
   const currentSpeed = 500 / playbackSpeed;
 
   // CRITICAL: Use ref directly to avoid React state lag during TF switches
-  // allBarsRef is updated synchronously, while allBars state lags behind
-  const barsFromRef = allBarsRef.current;
+  // allBarsRef and currentBarIndexRef are atomically updated in dataReady callbacks
+  // tfSwitchRenderKey triggers re-render so we read fresh ref values
+  // We read tfSwitchRenderKey here so React tracks this component as dependent on it
+  const barsFromRef = tfSwitchRenderKey >= 0 ? allBarsRef.current : allBarsRef.current;
   const indexFromRef = currentBarIndexRef.current;
   const currentBar = barsFromRef[indexFromRef] || allBars[currentBarIndex];
   const currentTime = currentBar
