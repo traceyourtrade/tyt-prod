@@ -555,7 +555,12 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
       );
       
       // Pass points directly in seconds - TradingView handles the conversion internally
+      // Log exact point coordinates being passed to TradingView
+      console.log('[DrawingManager] Creating shape with exact points:', 
+        JSON.stringify(drawing.points.map(p => ({ time: p.time, price: p.price }))));
+      
       const shapeId = chart.createMultipointShape(drawing.points, shapeOptions);
+      console.log('[DrawingManager] createMultipointShape returned:', shapeId, 'type:', typeof shapeId);
       
       // For trend lines, explicitly set properties after creation if needed
       if (shapeId && toolName === 'trend_line') {
@@ -568,9 +573,24 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
             });
             console.log('[DrawingManager] Applied extend properties to restored trend line');
           }
+          // Verify the restored shape's coordinates
+          if (createdShape && typeof createdShape.getPoints === 'function') {
+            const verifyPoints = createdShape.getPoints();
+            console.log('[DrawingManager] VERIFY restored shape points:', 
+              JSON.stringify(verifyPoints.map((p: any) => ({ time: p.time, price: p.price }))));
+          }
         } catch (propError) {
           // setProperties may not be available on all shape types
           console.log('[DrawingManager] Could not set properties post-creation:', propError);
+        }
+      } else if (!shapeId) {
+        console.warn('[DrawingManager] createMultipointShape returned falsy shapeId:', shapeId);
+        // Try to verify shape was created by checking all shapes
+        try {
+          const allShapes = chart.getAllShapes();
+          console.log('[DrawingManager] getAllShapes after creation:', allShapes.length, 'shapes');
+        } catch (e) {
+          // ignore
         }
       }
       
