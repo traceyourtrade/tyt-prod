@@ -3200,6 +3200,11 @@ export default function FullscreenBacktesting({
               
               // Use setResolution ONLY - this preserves drawings natively
               innerChart.setResolution(newInterval, () => {
+                // CRITICAL: Call resetData() to force TradingView to re-subscribe the datafeed
+                // Without this, subscribeBars is never called and replay guards stay blocked
+                console.log('Native TF: Calling resetData() to re-subscribe datafeed');
+                innerChart.resetData();
+                
                 // Wait for dataReady to ensure bars are loaded
                 innerChart.dataReady(() => {
                   console.log('Native TF: dataReady fired - drawings preserved natively');
