@@ -1092,12 +1092,20 @@ export default function FullscreenBacktesting({
                     }
                     
                     // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+                    // CRITICAL: Ensure callbacksReady is true - TradingView may not call subscribeBars
+                    // on repeated switches to same resolution, so restore from cached callbacks
                     if (!callbacksReadyRef.current) {
                       const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
                       if (cachedCb) {
+                        console.log('Fast-path: Restoring cached callback for', targetInterval);
+                        subscribedResolutionRef.current = targetInterval;
+                        onRealtimeCallbackRef.current = cachedCb;
                         callbacksReadyRef.current = true;
+                      } else {
+                        console.warn('Fast-path: No cached callback for', targetInterval);
                       }
                     }
+                    console.log('Fast-path: callbacksReady=', callbacksReadyRef.current);
                     
                     // VERIFY SYNC: Confirm derived state matches replayTime
                     const bars = allBarsRef.current;
@@ -1172,12 +1180,20 @@ export default function FullscreenBacktesting({
                     }
                     
                     // ATOMIC TRANSACTION COMPLETE: Re-enable replay
+                    // CRITICAL: Ensure callbacksReady is true - TradingView may not call subscribeBars
+                    // on repeated switches to same resolution, so restore from cached callbacks
                     if (!callbacksReadyRef.current) {
                       const cachedCb = realtimeCallbacksRef.current.get(targetInterval);
                       if (cachedCb) {
+                        console.log('Fast-path fallback: Restoring cached callback for', targetInterval);
+                        subscribedResolutionRef.current = targetInterval;
+                        onRealtimeCallbackRef.current = cachedCb;
                         callbacksReadyRef.current = true;
+                      } else {
+                        console.warn('Fast-path fallback: No cached callback for', targetInterval);
                       }
                     }
+                    console.log('Fast-path fallback: callbacksReady=', callbacksReadyRef.current);
                     
                     // VERIFY SYNC: Confirm derived state matches replayTime
                     const bars = allBarsRef.current;
@@ -3287,6 +3303,22 @@ export default function FullscreenBacktesting({
                       innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
                     } catch (e) {}
                   } catch (e) {}
+                  
+                  // CRITICAL: Ensure callbacksReady is true before finalizing
+                  // TradingView may not call subscribeBars on repeated switches to same resolution
+                  // In that case, restore from cached callbacks
+                  if (!callbacksReadyRef.current) {
+                    const cachedCallback = realtimeCallbacksRef.current.get(newInterval);
+                    if (cachedCallback) {
+                      console.log('Native TF: Restoring cached callback for', newInterval);
+                      subscribedResolutionRef.current = newInterval;
+                      onRealtimeCallbackRef.current = cachedCallback;
+                      callbacksReadyRef.current = true;
+                    } else {
+                      console.warn('Native TF: No cached callback for', newInterval, '- replay controls may not work');
+                    }
+                  }
+                  console.log('Native TF: callbacksReady=', callbacksReadyRef.current, 'before finalizing');
                   
                   // Finalize the controller to re-enable replay controls
                   console.log('Native TF switch: Finalizing controller for', newInterval);
