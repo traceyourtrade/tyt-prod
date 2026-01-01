@@ -452,14 +452,24 @@ export function captureDrawings(chart: any): SavedDrawing[] {
           // Ignore - will use display name mapping as fallback
         }
         
-        console.log('[DrawingManager] Captured shape:', shape.name, 'toolname:', toolname);
+        // Log full properties for debugging extend issues
+        console.log('[DrawingManager] Captured shape:', shape.name, 'toolname:', toolname, 
+          'extendLeft:', properties?.extendLeft, 'extendRight:', properties?.extendRight);
+        
+        // Ensure extend properties are explicitly captured (defaults to false if not set)
+        const cleanedOverrides: Record<string, any> = properties ? { ...properties } : {};
+        if (shape.name === 'trend_line' || toolname === 'LineToolTrendLine' || toolname === 'trend_line') {
+          // Explicitly preserve extend settings for trend lines
+          cleanedOverrides.extendLeft = properties?.extendLeft ?? false;
+          cleanedOverrides.extendRight = properties?.extendRight ?? false;
+        }
         
         const drawing: SavedDrawing = {
           id: shape.id,
           name: shape.name,
           toolname: toolname,
           points: validPoints,
-          overrides: properties || {},
+          overrides: cleanedOverrides,
           lock: false
         };
         
@@ -521,9 +531,18 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
       
       // TradingView's createMultipointShape expects timestamps in SECONDS
       // Same format as getPoints() returns - no conversion needed
+      
+      // Build overrides, ensuring extend properties are explicitly set for trend lines
+      const overrides = { ...(drawing.overrides || {}) };
+      if (toolName === 'trend_line') {
+        // Ensure extend properties are explicitly set (default to false to prevent extension)
+        overrides.extendLeft = overrides.extendLeft ?? false;
+        overrides.extendRight = overrides.extendRight ?? false;
+      }
+      
       const shapeOptions = {
         shape: toolName,
-        overrides: drawing.overrides || {},
+        overrides,
         lock: drawing.lock || false,
         disableSelection: false,
         disableSave: false,
@@ -531,11 +550,30 @@ export function restoreDrawings(chart: any, drawings: SavedDrawing[]): number {
       };
       
       console.log('[DrawingManager] Restoring:', drawing.name, '-> tool:', toolName,
-        'points (seconds):', drawing.points.map(p => ({ time: p.time, price: typeof p.price === 'number' ? p.price.toFixed(5) : p.price }))
+        'points (seconds):', drawing.points.map(p => ({ time: p.time, price: typeof p.price === 'number' ? p.price.toFixed(5) : p.price })),
+        'extendLeft:', overrides.extendLeft, 'extendRight:', overrides.extendRight
       );
       
       // Pass points directly in seconds - TradingView handles the conversion internally
-      chart.createMultipointShape(drawing.points, shapeOptions);
+      const shapeId = chart.createMultipointShape(drawing.points, shapeOptions);
+      
+      // For trend lines, explicitly set properties after creation if needed
+      if (shapeId && toolName === 'trend_line') {
+        try {
+          const createdShape = chart.getShapeById(shapeId);
+          if (createdShape && typeof createdShape.setProperties === 'function') {
+            createdShape.setProperties({
+              extendLeft: overrides.extendLeft,
+              extendRight: overrides.extendRight
+            });
+            console.log('[DrawingManager] Applied extend properties to restored trend line');
+          }
+        } catch (propError) {
+          // setProperties may not be available on all shape types
+          console.log('[DrawingManager] Could not set properties post-creation:', propError);
+        }
+      }
+      
       restoredCount++;
     } catch (e) {
       console.warn('[DrawingManager] Could not restore drawing:', drawing.name, e);
