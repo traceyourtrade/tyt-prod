@@ -3147,17 +3147,10 @@ export default function FullscreenBacktesting({
             console.warn('Failed to capture visible range:', e);
           }
           
-          // CAPTURE DRAWINGS BEFORE SWITCH - setSymbol will clear them
-          let capturedDrawings: any[] = [];
-          try {
-            capturedDrawings = DrawingManager.captureDrawings(chart);
-            if (capturedDrawings.length > 0) {
-              console.log('Native TF: Captured', capturedDrawings.length, 'drawings before switch');
-              pendingDrawingsRef.current = capturedDrawings;
-            }
-          } catch (e) {
-            console.warn('Failed to capture drawings:', e);
-          }
+          // DRAWINGS: Let TradingView handle native persistence across timeframe switches
+          // Manual capture/restore causes race conditions with bar data loading on 1m timeframes
+          // We only use manual save/restore for DB persistence, not for timeframe switches
+          console.log('Native TF: Letting TradingView handle drawing persistence natively');
         }
         
         // Store saved range for use in callback AND in the slow path
@@ -3183,15 +3176,14 @@ export default function FullscreenBacktesting({
         // Update subscribed resolution ref so handleNext uses correct bars
         subscribedResolutionRef.current = newInterval;
         
-        // DRAWING PRESERVATION: Use setSymbol with capture/restore
-        // setSymbol ensures proper time/price sync, drawings are captured/restored manually
+        // DRAWING PRESERVATION: Use setResolution ONLY (no symbol change)
+        // This preserves TradingView's native drawing persistence across timeframe switches
+        // We clear our internal bars cache to force fresh data fetch via getBars
         setTimeout(() => {
           try {
             const innerChart = tvWidgetRef.current?.activeChart();
             if (innerChart) {
-              const baseSymbol = sessionDataRef.current?.symbol || 'EUR/USD';
-              const symbolWithSuffix = `${baseSymbol}#tf_${newInterval}_${Date.now()}`;
-              console.log('Native TF switch: Using setSymbol with dynamic suffix:', symbolWithSuffix);
+              console.log('Native TF switch: Using setResolution only (stable symbol for drawing persistence)');
               
               // Set the anchor AGAIN right before triggering getBars
               const currentAnchor = replayTimestampRef.current;
@@ -3199,57 +3191,52 @@ export default function FullscreenBacktesting({
                 pendingAnchorTimestampRef.current = currentAnchor;
               }
               
-              // Use setSymbol + setResolution to force fresh data fetch
-              innerChart.setSymbol(symbolWithSuffix, () => {
-                innerChart.setResolution(newInterval, () => {
-                  // CRITICAL: Wait for dataReady before restoring drawings
-                  // This ensures bars are loaded so drawings anchor to correct timestamps
-                  innerChart.dataReady(() => {
-                    console.log('Native TF: dataReady fired, restoring drawings');
-                    try {
-                      // RESTORE DRAWINGS after data loaded (only if switch ID matches)
-                      if (pendingDrawingsRef.current.length > 0 && drawingSwitchIdRef.current === nativeSwitchId) {
-                        console.log('Native TF: Restoring', pendingDrawingsRef.current.length, 'drawings (switch', nativeSwitchId, ')');
-                        isRestoringDrawingsRef.current = true;
-                        DrawingManager.clearAllDrawings(innerChart);
-                        DrawingManager.restoreDrawings(innerChart, pendingDrawingsRef.current);
-                        pendingDrawingsRef.current = [];
-                        setTimeout(() => { isRestoringDrawingsRef.current = false; }, 3000);
-                      } else if (drawingSwitchIdRef.current !== nativeSwitchId) {
-                        console.log('Native TF: Skipping restore - newer switch in progress');
-                      }
-                      
-                      // Restore captured visible range or calculate default
-                      const savedRange = pendingVisibleRangeRef.current;
-                      if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
-                        console.log('Native TF: Restoring visible range:', savedRange);
-                        innerChart.setVisibleRange(savedRange);
-                        pendingVisibleRangeAppliedRef.current = true;
-                      } else if (!pendingVisibleRangeAppliedRef.current) {
-                        const replayTs = replayTimestampRef.current;
-                        if (replayTs > 0) {
-                          const resolutionMinutes = intervalToMinutes(newInterval);
-                          const barMs = resolutionMinutes * 60 * 1000;
-                          const visibleFrom = (replayTs - barMs * 60) / 1000;
-                          const visibleTo = (replayTs + barMs * 20) / 1000;
-                          innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                          pendingVisibleRangeAppliedRef.current = true;
-                        }
-                      }
-                      
-                      try {
-                        innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
-                      } catch (e) {}
-                    } catch (e) {}
+              // Clear the bars cache for the NEW resolution to force fresh data fetch
+              // This makes TradingView call getBars fresh without changing the symbol
+              if (barsCacheRef.current[newInterval]) {
+                console.log('Native TF: Clearing bars cache for', newInterval, 'to force fresh fetch');
+                delete barsCacheRef.current[newInterval];
+              }
+              
+              // Use setResolution ONLY - this preserves drawings natively
+              innerChart.setResolution(newInterval, () => {
+                // Wait for dataReady to ensure bars are loaded
+                innerChart.dataReady(() => {
+                  console.log('Native TF: dataReady fired - drawings preserved natively');
+                  try {
+                    // DRAWINGS: TradingView handles native persistence across timeframe switches
+                    // No manual clear/restore needed - drawings stay intact with stable symbol
                     
-                    // Finalize the controller to re-enable replay controls
-                    console.log('Native TF switch: Finalizing controller for', newInterval);
-                    lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
-                    tfController.finalize(newInterval);
-                    isChangingResolutionRef.current = false;
-                  }); // Close dataReady callback
-                }); // Close setResolution callback
-              }); // Close setSymbol callback
+                    // Restore captured visible range or calculate default
+                    const savedRange = pendingVisibleRangeRef.current;
+                    if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
+                      console.log('Native TF: Restoring visible range:', savedRange);
+                      innerChart.setVisibleRange(savedRange);
+                      pendingVisibleRangeAppliedRef.current = true;
+                    } else if (!pendingVisibleRangeAppliedRef.current) {
+                      const replayTs = replayTimestampRef.current;
+                      if (replayTs > 0) {
+                        const resolutionMinutes = intervalToMinutes(newInterval);
+                        const barMs = resolutionMinutes * 60 * 1000;
+                        const visibleFrom = (replayTs - barMs * 60) / 1000;
+                        const visibleTo = (replayTs + barMs * 20) / 1000;
+                        innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
+                        pendingVisibleRangeAppliedRef.current = true;
+                      }
+                    }
+                    
+                    try {
+                      innerChart.getPanes()[0].getMainSourcePriceScale().setAutoScale(true);
+                    } catch (e) {}
+                  } catch (e) {}
+                  
+                  // Finalize the controller to re-enable replay controls
+                  console.log('Native TF switch: Finalizing controller for', newInterval);
+                  lastTfSwitchTimeRef.current = Date.now(); // Mark switch completion time
+                  tfController.finalize(newInterval);
+                  isChangingResolutionRef.current = false;
+                }); // Close dataReady callback
+              }); // Close setResolution callback
             } else {
               lastTfSwitchTimeRef.current = Date.now();
               tfController.finalize(newInterval);
