@@ -3245,12 +3245,11 @@ export default function FullscreenBacktesting({
                 pendingAnchorTimestampRef.current = currentAnchor;
               }
               
-              // Clear the bars cache for the NEW resolution to force fresh data fetch
-              // This makes TradingView call getBars fresh without changing the symbol
-              if (barsCacheRef.current[newInterval]) {
-                console.log('Native TF: Clearing bars cache for', newInterval, 'to force fresh fetch');
-                delete barsCacheRef.current[newInterval];
-              }
+              // NOTE: Do NOT clear cache here! Fast path uses cached data.
+              // Clearing the cache causes getBars to find nothing and queue a fetch,
+              // but dataReady fires immediately before fetch completes → gap in chart.
+              // The cache was already validated in processTimeframeSwitch.
+              console.log('Native TF: Using cached', barsCacheRef.current[newInterval]?.length || 0, 'bars for', newInterval);
               
               // Use setResolution ONLY - this preserves drawings natively
               innerChart.setResolution(newInterval, () => {
