@@ -1097,40 +1097,18 @@ export default function FullscreenBacktesting({
                     // ATOMIC TRANSACTION COMPLETE: Re-enable replay
                     // CRITICAL: Ensure callbacksReady is true - TradingView may not call subscribeBars
                     // on repeated switches to same resolution, so restore from cached callbacks
-                    // But ONLY if the resolution is not stale (TradingView unsubscribed from it)
+                    // HYBRID APPROACH: Use cached callback immediately for instant playback,
+                    // but trigger background resubscription with retries for stale resolutions
                     const normalizedTarget = normalizeCacheKey(targetInterval);
                     const isStale = staleResolutionsRef.current.has(normalizedTarget);
                     if (!callbacksReadyRef.current) {
                       const cachedCb = realtimeCallbacksRef.current.get(normalizedTarget);
-                      if (cachedCb && !isStale) {
-                        console.log('Fast-path: Restoring cached callback for', targetInterval);
+                      if (cachedCb) {
+                        // Use cached callback immediately - it still works for feeding bars
+                        console.log('Fast-path: Restoring cached callback for', targetInterval, isStale ? '(stale - will resubscribe in background)' : '');
                         subscribedResolutionRef.current = targetInterval;
                         onRealtimeCallbackRef.current = cachedCb;
                         callbacksReadyRef.current = true;
-                      } else if (isStale) {
-                        console.log('Fast-path: Resolution', targetInterval, 'was unsubscribed - waiting for fresh subscribeBars + forcing via delayed resetData');
-                        // DON'T clear stale flag here - it will be cleared when subscribeBars is called
-                        // Force TradingView to resubscribe by calling resetData again after a short delay
-                        // Retry up to 3 times with increasing delays
-                        const scheduleRetry = (attempt: number) => {
-                          const delay = 150 * (attempt + 1); // 150ms, 300ms, 450ms
-                          setTimeout(() => {
-                            if (!callbacksReadyRef.current && currentIntervalRef.current === targetInterval && attempt < 3) {
-                              console.log('Fast-path: Retry', attempt + 1, '- forcing resubscription with resetData');
-                              try {
-                                const chart = tvWidgetRef.current?.activeChart();
-                                if (chart) {
-                                  chart.resetData();
-                                  // Schedule next retry if this one doesn't work
-                                  scheduleRetry(attempt + 1);
-                                }
-                              } catch (e) {
-                                console.warn('Fast-path: Delayed resetData failed:', e);
-                              }
-                            }
-                          }, delay);
-                        };
-                        scheduleRetry(0);
                       } else {
                         console.warn('Fast-path: No cached callback for', targetInterval);
                       }
@@ -1224,40 +1202,17 @@ export default function FullscreenBacktesting({
                     }
                     
                     // ATOMIC TRANSACTION COMPLETE: Re-enable replay
-                    // CRITICAL: Ensure callbacksReady is true - TradingView may not call subscribeBars
-                    // on repeated switches to same resolution, so restore from cached callbacks
-                    // But ONLY if the resolution is not stale (TradingView unsubscribed from it)
+                    // Use cached callback immediately - it works for feeding bars to the chart
+                    // The "stale" flag is only relevant for live streaming, not our cached replay
                     const normalizedTarget2 = normalizeCacheKey(targetInterval);
                     const isStale2 = staleResolutionsRef.current.has(normalizedTarget2);
                     if (!callbacksReadyRef.current) {
                       const cachedCb = realtimeCallbacksRef.current.get(normalizedTarget2);
-                      if (cachedCb && !isStale2) {
-                        console.log('Fast-path fallback: Restoring cached callback for', targetInterval);
+                      if (cachedCb) {
+                        console.log('Fast-path fallback: Restoring cached callback for', targetInterval, isStale2 ? '(stale)' : '');
                         subscribedResolutionRef.current = targetInterval;
                         onRealtimeCallbackRef.current = cachedCb;
                         callbacksReadyRef.current = true;
-                      } else if (isStale2) {
-                        console.log('Fast-path fallback: Resolution', targetInterval, 'was unsubscribed - waiting for fresh subscribeBars + forcing via delayed resetData');
-                        // DON'T clear stale flag here - it will be cleared when subscribeBars is called
-                        // Force TradingView to resubscribe by calling resetData again after a short delay
-                        const scheduleRetry2 = (attempt: number) => {
-                          const delay = 150 * (attempt + 1);
-                          setTimeout(() => {
-                            if (!callbacksReadyRef.current && currentIntervalRef.current === targetInterval && attempt < 3) {
-                              console.log('Fast-path fallback: Retry', attempt + 1, '- forcing resubscription with resetData');
-                              try {
-                                const chart = tvWidgetRef.current?.activeChart();
-                                if (chart) {
-                                  chart.resetData();
-                                  scheduleRetry2(attempt + 1);
-                                }
-                              } catch (e) {
-                                console.warn('Fast-path fallback: Delayed resetData failed:', e);
-                              }
-                            }
-                          }, delay);
-                        };
-                        scheduleRetry2(0);
                       } else {
                         console.warn('Fast-path fallback: No cached callback for', targetInterval);
                       }
@@ -2127,13 +2082,13 @@ export default function FullscreenBacktesting({
           }
           
           // Re-enable playback after canonical setter
-          // Check if resolution is stale (TradingView unsubscribed) - if so, wait for fresh subscribeBars
+          // Use cached callback immediately - it works for feeding bars to the chart
           const normalizedInterval = normalizeCacheKey(currentInterval);
           const isStale = staleResolutionsRef.current.has(normalizedInterval);
           const cachedCallback = realtimeCallbacksRef.current.get(normalizedInterval);
-          callbacksReadyRef.current = !!(cachedCallback && !isStale);
-          if (isStale) {
-            console.log('Slow-path cached: Resolution', currentInterval, 'is stale - waiting for fresh subscribeBars');
+          callbacksReadyRef.current = !!cachedCallback;
+          if (isStale && cachedCallback) {
+            console.log('Slow-path cached: Resolution', currentInterval, 'stale - using cached callback');
           }
           
           // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller (only if fast-path isn't handling it)
@@ -2177,13 +2132,13 @@ export default function FullscreenBacktesting({
         console.log('Slow-path no-replay: replayTime set to:', new Date(targetReplayTime).toISOString(), 'derived index:', derivedIndex);
         
         // Re-enable playback after canonical setter
-        // Check if resolution is stale (TradingView unsubscribed) - if so, wait for fresh subscribeBars
+        // Use cached callback immediately - it works for feeding bars to the chart
         const normalizedInterval = normalizeCacheKey(currentInterval);
         const isStale = staleResolutionsRef.current.has(normalizedInterval);
         const cachedCallback = realtimeCallbacksRef.current.get(normalizedInterval);
-        callbacksReadyRef.current = !!(cachedCallback && !isStale);
-        if (isStale) {
-          console.log('Slow-path no-replay: Resolution', currentInterval, 'is stale - waiting for fresh subscribeBars');
+        callbacksReadyRef.current = !!cachedCallback;
+        if (isStale && cachedCallback) {
+          console.log('Slow-path no-replay: Resolution', currentInterval, 'stale - using cached callback');
         }
         
         // ATOMIC TRANSACTION COMPLETE: Re-enable replay via controller (only if fast-path isn't handling it)
@@ -2345,14 +2300,14 @@ export default function FullscreenBacktesting({
             replayIntervalRef.current = currentInterval;
           }
           
-          // Re-enable playback after canonical setter (subscribeBars will set to true if no cached callback)
-          // Check if resolution is stale (TradingView unsubscribed) - if so, wait for fresh subscribeBars
+          // Re-enable playback after canonical setter
+          // Use cached callback immediately - it works for feeding bars to the chart
           const normalizedInterval = normalizeCacheKey(currentInterval);
           const isStale = staleResolutionsRef.current.has(normalizedInterval);
           const cachedCallback = realtimeCallbacksRef.current.get(normalizedInterval);
-          callbacksReadyRef.current = !!(cachedCallback && !isStale);
-          if (isStale) {
-            console.log('Slow-path API: Resolution', currentInterval, 'is stale - waiting for fresh subscribeBars');
+          callbacksReadyRef.current = !!cachedCallback;
+          if (isStale && cachedCallback) {
+            console.log('Slow-path API: Resolution', currentInterval, 'stale - using cached callback');
           }
           setIsPlaying(false);
           
@@ -3465,36 +3420,16 @@ export default function FullscreenBacktesting({
                   } catch (e) {}
                   
                   // CRITICAL: Ensure callbacksReady is true before finalizing
-                  // TradingView may not call subscribeBars on repeated switches to same resolution
-                  // In that case, restore from cached callbacks - but ONLY if not stale
+                  // Use cached callback immediately - it works for feeding bars to the chart
                   const normalizedInterval = normalizeCacheKey(newInterval);
                   const isStale = staleResolutionsRef.current.has(normalizedInterval);
                   if (!callbacksReadyRef.current) {
                     const cachedCallback = realtimeCallbacksRef.current.get(normalizedInterval);
-                    if (cachedCallback && !isStale) {
-                      console.log('Native TF: Restoring cached callback for', newInterval);
+                    if (cachedCallback) {
+                      console.log('Native TF: Restoring cached callback for', newInterval, isStale ? '(stale)' : '');
                       subscribedResolutionRef.current = newInterval;
                       onRealtimeCallbackRef.current = cachedCallback;
                       callbacksReadyRef.current = true;
-                    } else if (isStale) {
-                      console.log('Native TF: Resolution', newInterval, 'was unsubscribed - waiting for fresh subscribeBars + forcing via delayed resetData');
-                      // DON'T clear stale flag here - it will be cleared when subscribeBars is called
-                      // Force TradingView to resubscribe by calling resetData again after a short delay
-                      const scheduleNativeRetry = (attempt: number) => {
-                        const delay = 150 * (attempt + 1);
-                        setTimeout(() => {
-                          if (!callbacksReadyRef.current && currentIntervalRef.current === newInterval && attempt < 3) {
-                            console.log('Native TF: Retry', attempt + 1, '- forcing resubscription with resetData');
-                            try {
-                              innerChart.resetData();
-                              scheduleNativeRetry(attempt + 1);
-                            } catch (e) {
-                              console.warn('Native TF: Delayed resetData failed:', e);
-                            }
-                          }
-                        }, delay);
-                      };
-                      scheduleNativeRetry(0);
                     } else {
                       console.warn('Native TF: No cached callback for', newInterval, '- replay controls may not work');
                     }
