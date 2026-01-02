@@ -2372,24 +2372,34 @@ export default function FullscreenBacktesting({
                     // DRAWINGS: TradingView handles native persistence across timeframe switches
                     // No manual clear/restore needed - drawings stay intact with stable symbol
                     
-                    // Restore the captured visible range to preserve zoom level
+                    // Set visible range: prefer saved range if it contains replay position,
+                    // otherwise center on replay position to ensure it's visible
+                    const replayTs = replayTimestampRef.current;
+                    const replayTsSec = replayTs / 1000;
                     const savedRange = pendingVisibleRangeRef.current;
-                    if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
-                      console.log('Restoring captured visible range (slow path):', savedRange);
-                      innerChart.setVisibleRange(savedRange);
-                      pendingVisibleRangeAppliedRef.current = true;
-                    } else if (!pendingVisibleRangeAppliedRef.current) {
-                      const replayTs = replayTimestampRef.current;
-                      if (replayTs > 0) {
+                    
+                    if (!pendingVisibleRangeAppliedRef.current && replayTs > 0) {
+                      // Check if saved range contains the replay position
+                      const savedRangeContainsReplay = savedRange && 
+                        savedRange.from != null && 
+                        savedRange.to != null &&
+                        savedRange.from <= replayTsSec && 
+                        replayTsSec <= savedRange.to;
+                      
+                      if (savedRangeContainsReplay) {
+                        // Use saved range - it already contains the replay position
+                        console.log('Slow path: Restoring saved range (contains replayTime):', savedRange);
+                        innerChart.setVisibleRange(savedRange);
+                      } else {
+                        // Center on replay position - saved range doesn't contain it
                         const resolutionMinutes = intervalToMinutes(currentInterval);
-                        const barsToShow = 50;
-                        const windowMs = resolutionMinutes * 60 * 1000 * barsToShow;
-                        const visibleFrom = (replayTs - windowMs * 0.3) / 1000;
-                        const visibleTo = (replayTs + windowMs * 0.1) / 1000;
-                        console.log('Setting visible range around replay timestamp (slow path):', new Date(replayTs).toISOString());
+                        const barMs = resolutionMinutes * 60 * 1000;
+                        const visibleFrom = (replayTs - barMs * 60) / 1000;
+                        const visibleTo = (replayTs + barMs * 20) / 1000;
+                        console.log('Slow path: Centering on replayTime (not in saved range):', new Date(replayTs).toISOString());
                         innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                        pendingVisibleRangeAppliedRef.current = true;
                       }
+                      pendingVisibleRangeAppliedRef.current = true;
                     }
                   } catch (e) {
                     console.warn('Error setting visible range:', e);
@@ -3396,22 +3406,34 @@ export default function FullscreenBacktesting({
                     // DRAWINGS: TradingView handles native persistence across timeframe switches
                     // No manual clear/restore needed - drawings stay intact with stable symbol
                     
-                    // Restore captured visible range or calculate default
+                    // Set visible range: prefer saved range if it contains replay position,
+                    // otherwise center on replay position to ensure it's visible
+                    const replayTs = replayTimestampRef.current;
+                    const replayTsSec = replayTs / 1000;
                     const savedRange = pendingVisibleRangeRef.current;
-                    if (savedRange && savedRange.from != null && savedRange.to != null && !pendingVisibleRangeAppliedRef.current) {
-                      console.log('Native TF: Restoring visible range:', savedRange);
-                      innerChart.setVisibleRange(savedRange);
-                      pendingVisibleRangeAppliedRef.current = true;
-                    } else if (!pendingVisibleRangeAppliedRef.current) {
-                      const replayTs = replayTimestampRef.current;
-                      if (replayTs > 0) {
+                    
+                    if (!pendingVisibleRangeAppliedRef.current && replayTs > 0) {
+                      // Check if saved range contains the replay position
+                      const savedRangeContainsReplay = savedRange && 
+                        savedRange.from != null && 
+                        savedRange.to != null &&
+                        savedRange.from <= replayTsSec && 
+                        replayTsSec <= savedRange.to;
+                      
+                      if (savedRangeContainsReplay) {
+                        // Use saved range - it already contains the replay position
+                        console.log('Native TF: Restoring saved range (contains replayTime):', savedRange);
+                        innerChart.setVisibleRange(savedRange);
+                      } else {
+                        // Center on replay position - saved range doesn't contain it
                         const resolutionMinutes = intervalToMinutes(newInterval);
                         const barMs = resolutionMinutes * 60 * 1000;
                         const visibleFrom = (replayTs - barMs * 60) / 1000;
                         const visibleTo = (replayTs + barMs * 20) / 1000;
+                        console.log('Native TF: Centering on replayTime (not in saved range):', new Date(replayTs).toISOString());
                         innerChart.setVisibleRange({ from: visibleFrom, to: visibleTo });
-                        pendingVisibleRangeAppliedRef.current = true;
                       }
+                      pendingVisibleRangeAppliedRef.current = true;
                     }
                     
                     try {
