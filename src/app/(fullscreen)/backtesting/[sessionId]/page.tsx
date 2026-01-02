@@ -1017,10 +1017,10 @@ export default function FullscreenBacktesting({
       const replayTs = replayTimestampRef.current;
       console.log('Fast-path: Using replayTime:', new Date(replayTs).toISOString());
       
-      // CRITICAL: Clear pending switch BEFORE calling setReplayTimeAndDeriveIndex
-      // This ensures no downstream effects read stale pendingAnchorTimestampRef
+      // Clear pending switch - but DO NOT clear pendingAnchorTimestampRef!
+      // The anchor must remain set until getBars consumes it atomically
       pendingTimeframeSwitchRef.current = null;
-      pendingAnchorTimestampRef.current = null;
+      // NOTE: pendingAnchorTimestampRef is consumed by getBars when TradingView calls it
       
       // UPDATE STATE
       setAllBars(cachedBars);
@@ -2066,10 +2066,11 @@ export default function FullscreenBacktesting({
           // Per FX Replay spec: replayTime is absolute, never changes during TF switch
           // ═══════════════════════════════════════════════════════════════════════════
           
-          // Clear pending switch BEFORE calling canonical setter
+          // Clear pending switch - but DO NOT clear pendingAnchorTimestampRef!
+          // The anchor is consumed atomically by getBars when TradingView calls it
           if (pendingSwitch) {
             pendingTimeframeSwitchRef.current = null;
-            pendingAnchorTimestampRef.current = null;
+            // NOTE: pendingAnchorTimestampRef is consumed by getBars
           }
           
           // Use existing replayTime - timeframe switch preserves it
@@ -2285,10 +2286,11 @@ export default function FullscreenBacktesting({
             }
           }
           
-          // Clear pending switch BEFORE calling canonical setter
+          // Clear pending switch - but DO NOT clear pendingAnchorTimestampRef!
+          // The anchor is consumed atomically by getBars when TradingView calls it
           if (pendingSwitch) {
             pendingTimeframeSwitchRef.current = null;
-            pendingAnchorTimestampRef.current = null;
+            // NOTE: pendingAnchorTimestampRef is consumed by getBars
           }
           
           // Use canonical setter to set replayTime and derive index
@@ -2520,14 +2522,21 @@ export default function FullscreenBacktesting({
         // Normalize resolution for cache lookup (1D/D -> D, 1W/W -> W)
         const cacheKey = normalizeCacheKey(resolution);
         
-        // CRITICAL: Use pending anchor if set (during timeframe switch)
-        // This handles the race condition where TradingView calls getBars BEFORE our onIntervalChanged
-        const anchorTs = pendingAnchorTimestampRef.current || replayTimestampRef.current;
-        const usingPendingAnchor = !!pendingAnchorTimestampRef.current;
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CRITICAL FIX: Consume pendingAnchorTimestampRef ATOMICALLY at the START
+        // When we have a pending anchor (set during TF switch), we MUST:
+        // 1. Use it as the filter time for this getBars call
+        // 2. UPDATE replayTimestampRef to match it (so all TFs share same position)
+        // This ensures timeframe sync works correctly across all resolutions.
+        // ═══════════════════════════════════════════════════════════════════════════
+        let anchorTs = replayTimestampRef.current;
         
-        // Clear the pending anchor after use - it's only for the first getBars call after a switch
-        if (pendingAnchorTimestampRef.current) {
-          console.log('getBars: Using pending anchor:', new Date(anchorTs).toISOString());
+        if (pendingAnchorTimestampRef.current && pendingAnchorTimestampRef.current > 0) {
+          anchorTs = pendingAnchorTimestampRef.current;
+          // CRITICAL: Update replayTimestampRef to match the pending anchor
+          // This syncs all timeframes to the same replay position
+          console.log('getBars: Consuming pending anchor and syncing replayTimestampRef:', new Date(anchorTs).toISOString());
+          replayTimestampRef.current = anchorTs;
           pendingAnchorTimestampRef.current = null;
         }
         
