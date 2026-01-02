@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Cookies from "js-cookie";
 import Link from "next/link";
@@ -145,6 +146,8 @@ const getTemplateColor = (color: string) => {
 };
 
 const DailyJournal = () => {
+  const searchParams = useSearchParams();
+  const urlTradeId = searchParams.get("tradeId");
   const { setAccounts, profileData } = useAccountDetails();
   const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
@@ -195,12 +198,32 @@ const DailyJournal = () => {
       });
       setTrades(sorted);
       setIsDemo(false);
-      if (sorted.length > 0 && !selectedTrade) {
+      
+      // Default: select first trade if none selected and no URL param
+      if (sorted.length > 0 && !selectedTrade && !urlTradeId) {
         setSelectedTrade(sorted[0]);
         setSelectedTradeIndex(0);
       }
     }
   }, [selectedAccounts]);
+
+  // Separate useEffect to handle URL-based trade selection after trades are loaded
+  useEffect(() => {
+    if (!urlTradeId || trades.length === 0) return;
+    
+    const tradeFromUrl = trades.find(t => 
+      t._id === urlTradeId || 
+      t.id === urlTradeId || 
+      (t as any).tradeId === urlTradeId || 
+      String((t as any).Ticket) === urlTradeId
+    );
+    
+    if (tradeFromUrl) {
+      const idx = trades.indexOf(tradeFromUrl);
+      setSelectedTrade(tradeFromUrl);
+      setSelectedTradeIndex(idx >= 0 ? idx : 0);
+    }
+  }, [urlTradeId, trades]);
 
   useEffect(() => {
     const fetchTemplates = async () => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import html2canvas from "html2canvas";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Cookies from "js-cookie";
@@ -165,6 +166,7 @@ const formatAvgDuration = (minutes: number): string => {
 };
 
 const CalendarPopup = () => {
+  const router = useRouter();
   const { showTr, setShowTr, dataDate, setDateHard, setAddTrades, setShowEditTradePopUp, setEditTradeData } = calendarPopUp();
   const { setAlertBoxG } = notifications();
   const { selectedAccounts } = useModeFilteredAccounts();
@@ -281,11 +283,9 @@ const CalendarPopup = () => {
   };
 
   const handleJournal = (trade: Trade) => {
-    if (trade.notes) {
-      setAlertBoxG(`Trade Notes: ${trade.notes}`, "info");
-    } else {
-      setAlertBoxG("Journal feature coming soon! Notes will be saved with your trades.", "info");
-    }
+    const tradeId = trade._id || trade.id || trade.tradeId || String(trade.Ticket);
+    setShowTr();
+    router.push(`/daily-journal?tradeId=${encodeURIComponent(tradeId)}`);
   };
 
   const GraphComp = () => {
