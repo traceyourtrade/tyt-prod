@@ -90,6 +90,7 @@ const analysisItems = [
 ];
 
 const toolsItems = [
+  { name: "Economic Calendar", href: "/economic-calendar", icon: Calendar, color: "#3B82F6" },
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy, color: "#F59E0B" },
   { name: "Resources", href: "/resources", icon: GraduationCap, color: "#5EAAA8", tourId: "nav-resources" },
   { name: "Lot Calculator", href: "/lot-calculator", icon: Calculator, color: "#6BB8C4", tourId: "nav-calculator" },
@@ -129,6 +130,7 @@ const pageTitles: Record<string, string> = {
   "/backtesting/reports": "Backtesting Reports",
   "/backtesting/sessions": "Backtesting Sessions",
   "/lot-calculator": "Lot Calculator",
+  "/economic-calendar": "Economic Calendar",
   "/affiliate": "Affiliate Program",
   "/settings": "Settings",
   "/support": "Support",
