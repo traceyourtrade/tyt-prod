@@ -26,6 +26,8 @@ import {
   ArrowDown,
   Minus,
   Info,
+  Sparkles,
+  Gauge,
 } from "lucide-react"
 
 interface Trade {
@@ -59,6 +61,7 @@ const tabs = [
   { id: "benchmarks", name: "Benchmarks", icon: Award },
   { id: "quality", name: "Trade Quality", icon: Target },
   { id: "correlations", name: "Correlations", icon: Activity },
+  { id: "smart", name: "Smart Insights", icon: Sparkles },
 ]
 
 export default function AIAnalysisPage() {
@@ -158,6 +161,9 @@ export default function AIAnalysisPage() {
           )}
           {activeTab === "correlations" && (
             <CorrelationsAnalysis trades={allTrades} formatValue={formatValue} />
+          )}
+          {activeTab === "smart" && (
+            <SmartInsights trades={allTrades} formatValue={formatValue} />
           )}
         </motion.div>
       </AnimatePresence>
@@ -609,6 +615,9 @@ function RiskAnalysis({ trades, formatValue, accountBalance }: { trades: Trade[]
 }
 
 function TimeInsights({ trades, formatValue }: { trades: Trade[], formatValue: (v: number) => string }) {
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  const shortDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  
   const analysis = useMemo(() => {
     if (trades.length === 0) return null
 
@@ -620,9 +629,20 @@ function TimeInsights({ trades, formatValue }: { trades: Trade[], formatValue: (
     }
 
     const holdingTimes: { duration: number, profit: number }[] = []
+    
+    const heatmapData: Record<number, Record<number, { wins: number, losses: number, profit: number, count: number }>> = {}
+    for (let day = 0; day < 7; day++) {
+      heatmapData[day] = {}
+      for (let hour = 0; hour < 24; hour++) {
+        heatmapData[day][hour] = { wins: 0, losses: 0, profit: 0, count: 0 }
+      }
+    }
 
     trades.forEach((trade) => {
       const time = trade.time || (trade.OpenTime ? trade.OpenTime.split(" ")[1] || trade.OpenTime.split("T")[1] : null)
+      const tradeDate = new Date(trade.date)
+      const dayOfWeek = tradeDate.getDay()
+      
       if (time) {
         const hour = parseInt(time.split(":")[0], 10)
         if (!isNaN(hour)) {
@@ -633,6 +653,11 @@ function TimeInsights({ trades, formatValue }: { trades: Trade[], formatValue: (
           hourlyData[hour].profit += trade.Profit
           if (trade.Profit > 0) hourlyData[hour].wins++
           else if (trade.Profit < 0) hourlyData[hour].losses++
+
+          heatmapData[dayOfWeek][hour].count++
+          heatmapData[dayOfWeek][hour].profit += trade.Profit
+          if (trade.Profit > 0) heatmapData[dayOfWeek][hour].wins++
+          else if (trade.Profit < 0) heatmapData[dayOfWeek][hour].losses++
 
           if (hour >= 0 && hour < 8) {
             sessionData["Asian (00:00-08:00)"].count++
@@ -681,6 +706,24 @@ function TimeInsights({ trades, formatValue }: { trades: Trade[], formatValue: (
       return worst
     }, null as { hour: number, winRate: number, profit: number, count: number } | null)
 
+    let bestSlot: { day: number, hour: number, winRate: number, profit: number, count: number } | null = null
+    let worstSlot: { day: number, hour: number, winRate: number, profit: number, count: number } | null = null
+    
+    for (let day = 0; day < 7; day++) {
+      for (let hour = 0; hour < 24; hour++) {
+        const cell = heatmapData[day][hour]
+        if (cell.count >= 3) {
+          const winRate = (cell.wins / cell.count) * 100
+          if (!bestSlot || winRate > bestSlot.winRate) {
+            bestSlot = { day, hour, winRate, profit: cell.profit, count: cell.count }
+          }
+          if (!worstSlot || winRate < worstSlot.winRate) {
+            worstSlot = { day, hour, winRate, profit: cell.profit, count: cell.count }
+          }
+        }
+      }
+    }
+
     const avgHoldingTime = holdingTimes.length > 0
       ? holdingTimes.reduce((sum, t) => sum + t.duration, 0) / holdingTimes.length
       : 0
@@ -699,8 +742,11 @@ function TimeInsights({ trades, formatValue }: { trades: Trade[], formatValue: (
     return {
       hourlyData,
       sessionData,
+      heatmapData,
       bestHour,
       worstHour,
+      bestSlot,
+      worstSlot,
       avgHoldingTime,
       avgWinningHoldTime,
       avgLosingHoldTime,
@@ -796,6 +842,122 @@ function TimeInsights({ trades, formatValue }: { trades: Trade[], formatValue: (
       </div>
 
       <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Performance Heatmap</h3>
+        <p className="text-sm text-muted-foreground">Win rate by hour and day of week (cells with 3+ trades)</p>
+        
+        {(analysis.bestSlot || analysis.worstSlot) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {analysis.bestSlot && (
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-500" />
+                  <span className="font-medium text-foreground">Your Edge</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Best: <span className="text-emerald-500 font-medium">{dayNames[analysis.bestSlot.day]} {analysis.bestSlot.hour}:00</span> ({analysis.bestSlot.winRate.toFixed(0)}% win rate, {analysis.bestSlot.count} trades)
+                </p>
+              </div>
+            )}
+            {analysis.worstSlot && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingDown className="w-5 h-5 text-red-500" />
+                  <span className="font-medium text-foreground">Avoid</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Worst: <span className="text-red-500 font-medium">{dayNames[analysis.worstSlot.day]} {analysis.worstSlot.hour}:00</span> ({analysis.worstSlot.winRate.toFixed(0)}% win rate, {analysis.worstSlot.count} trades)
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        <div className="rounded-xl border border-border bg-card/50 p-4 overflow-x-auto">
+          <div className="min-w-[600px]">
+            <div className="flex">
+              <div className="w-16 flex-shrink-0"></div>
+              <div className="flex-1 grid grid-cols-24 gap-0.5 text-xs text-muted-foreground mb-1">
+                {Array.from({ length: 24 }, (_, i) => (
+                  <div key={i} className="text-center">{i}</div>
+                ))}
+              </div>
+            </div>
+            
+            {[1, 2, 3, 4, 5, 6, 0].map((dayIndex) => (
+              <div key={dayIndex} className="flex items-center">
+                <div className="w-16 flex-shrink-0 text-xs text-muted-foreground pr-2 text-right">
+                  {shortDayNames[dayIndex]}
+                </div>
+                <div className="flex-1 grid grid-cols-24 gap-0.5">
+                  {Array.from({ length: 24 }, (_, hour) => {
+                    const cell = analysis.heatmapData[dayIndex][hour]
+                    const winRate = cell.count > 0 ? (cell.wins / cell.count) * 100 : -1
+                    const hasData = cell.count >= 1
+                    const hasEnoughData = cell.count >= 3
+                    
+                    let bgColor = "bg-muted/30"
+                    if (hasEnoughData) {
+                      if (winRate >= 70) bgColor = "bg-emerald-500"
+                      else if (winRate >= 55) bgColor = "bg-emerald-500/60"
+                      else if (winRate >= 45) bgColor = "bg-amber-500/60"
+                      else if (winRate >= 30) bgColor = "bg-red-500/60"
+                      else bgColor = "bg-red-500"
+                    } else if (hasData) {
+                      bgColor = "bg-muted/50"
+                    }
+                    
+                    return (
+                      <div
+                        key={hour}
+                        className={cn(
+                          "h-6 rounded-sm relative group cursor-default transition-all",
+                          bgColor,
+                          hasEnoughData && "hover:ring-2 hover:ring-violet-500 hover:z-10"
+                        )}
+                        title={hasData ? `${shortDayNames[dayIndex]} ${hour}:00 - ${cell.count} trades, ${winRate.toFixed(0)}% WR, ${formatValue(cell.profit)}` : "No trades"}
+                      >
+                        {hasEnoughData && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover border border-border rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-lg">
+                            <div className="font-medium">{shortDayNames[dayIndex]} {hour}:00</div>
+                            <div className="text-muted-foreground">{cell.count} trades</div>
+                            <div className={winRate >= 50 ? "text-emerald-500" : "text-red-500"}>{winRate.toFixed(0)}% win rate</div>
+                            <div className={cell.profit >= 0 ? "text-emerald-500" : "text-red-500"}>{formatValue(cell.profit)}</div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+            
+            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-sm bg-red-500"></div>
+                <span>&lt;30%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-sm bg-red-500/60"></div>
+                <span>30-45%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-sm bg-amber-500/60"></div>
+                <span>45-55%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-sm bg-emerald-500/60"></div>
+                <span>55-70%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-sm bg-emerald-500"></div>
+                <span>&gt;70%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
         <h3 className="text-lg font-semibold text-foreground">Time Insights</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {analysis.avgLosingHoldTime > analysis.avgWinningHoldTime * 1.5 && (
@@ -830,6 +992,7 @@ function EmotionalPatterns({ trades, formatValue }: { trades: Trade[], formatVal
 
     let revengeTradeCount = 0
     let revengeTradeProfit = 0
+    let revengeWithLargerSize = 0
     let overtradingDays = 0
     let avgTradesPerDay = 0
 
@@ -837,6 +1000,9 @@ function EmotionalPatterns({ trades, formatValue }: { trades: Trade[], formatVal
     avgTradesPerDay = tradesPerDay.length > 0 
       ? tradesPerDay.reduce((a, b) => a + b, 0) / tradesPerDay.length 
       : 0
+
+    const allVolumes = trades.map(t => t.Volume || 0).filter(v => v > 0)
+    const avgVolume = allVolumes.length > 0 ? allVolumes.reduce((a, b) => a + b, 0) / allVolumes.length : 0
 
     Object.values(dailyTrades).forEach((dayTrades) => {
       if (dayTrades.length > avgTradesPerDay * 2) {
@@ -857,6 +1023,9 @@ function EmotionalPatterns({ trades, formatValue }: { trades: Trade[], formatVal
           if (currMinutes - prevMinutes < 15 && currMinutes > prevMinutes) {
             revengeTradeCount++
             revengeTradeProfit += currTrade.Profit
+            if ((currTrade.Volume || 0) > (prevTrade.Volume || 0)) {
+              revengeWithLargerSize++
+            }
           }
         }
       }
@@ -887,14 +1056,45 @@ function EmotionalPatterns({ trades, formatValue }: { trades: Trade[], formatVal
       ? (trades.slice(0, revengeTradeCount).filter(t => t.Profit > 0).length / revengeTradeCount) * 100
       : 0
 
+    const last5Trades = trades.slice(-5)
+    let recentLosingStreak = 0
+    for (let i = last5Trades.length - 1; i >= 0; i--) {
+      if (last5Trades[i].Profit < 0) {
+        recentLosingStreak++
+      } else {
+        break
+      }
+    }
+
+    const last3Losses = trades.slice(-3).every(t => t.Profit < 0)
+    const lastTrade = trades[trades.length - 1]
+    const lastTradeLarger = lastTrade && avgVolume > 0 && (lastTrade.Volume || 0) > avgVolume * 1.2
+    const activeTiltWarning = last3Losses && lastTradeLarger
+
+    const todayDate = new Date().toISOString().split("T")[0]
+    const todayTrades = dailyTrades[todayDate] || []
+    const overtradingToday = todayTrades.length > avgTradesPerDay * 2
+
+    let tiltRiskScore = 0
+    tiltRiskScore += Math.min(recentLosingStreak * 20, 60)
+    if (revengeWithLargerSize > 0) tiltRiskScore += 20
+    if (overtradingToday) tiltRiskScore += 20
+    tiltRiskScore = Math.min(tiltRiskScore, 100)
+
     return {
       revengeTradeCount,
       revengeTradeProfit,
+      revengeWithLargerSize,
       overtradingDays,
       totalDays: Object.keys(dailyTrades).length,
       avgTradesPerDay,
       avgRecoveryTrades,
       revengeTradeWinRate,
+      tiltRiskScore,
+      recentLosingStreak,
+      activeTiltWarning,
+      overtradingToday,
+      todayTradeCount: todayTrades.length,
     }
   }, [trades])
 
@@ -908,8 +1108,113 @@ function EmotionalPatterns({ trades, formatValue }: { trades: Trade[], formatVal
     )
   }
 
+  const getTiltColor = (score: number) => {
+    if (score <= 30) return "emerald"
+    if (score <= 60) return "amber"
+    return "red"
+  }
+  
+  const tiltColor = getTiltColor(analysis.tiltRiskScore)
+  
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-border bg-card/50 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Gauge className={cn(
+              "w-8 h-8",
+              tiltColor === "emerald" ? "text-emerald-500" : tiltColor === "amber" ? "text-amber-500" : "text-red-500"
+            )} />
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">Tilt Risk Score</h3>
+              <p className="text-sm text-muted-foreground">Real-time emotional state assessment</p>
+            </div>
+          </div>
+          <div className={cn(
+            "text-4xl font-bold",
+            tiltColor === "emerald" ? "text-emerald-500" : tiltColor === "amber" ? "text-amber-500" : "text-red-500"
+          )}>
+            {analysis.tiltRiskScore}
+          </div>
+        </div>
+        
+        <div className="relative h-4 bg-muted rounded-full overflow-hidden mb-4">
+          <div className="absolute inset-0 flex">
+            <div className="flex-1 bg-emerald-500/30"></div>
+            <div className="flex-1 bg-amber-500/30"></div>
+            <div className="flex-1 bg-red-500/30"></div>
+          </div>
+          <div 
+            className={cn(
+              "absolute top-0 left-0 h-full transition-all rounded-full",
+              tiltColor === "emerald" ? "bg-emerald-500" : tiltColor === "amber" ? "bg-amber-500" : "bg-red-500"
+            )}
+            style={{ width: `${analysis.tiltRiskScore}%` }}
+          />
+        </div>
+        
+        <div className="flex justify-between text-xs text-muted-foreground mb-4">
+          <span>0 - Calm</span>
+          <span>30 - Caution</span>
+          <span>60 - Warning</span>
+          <span>100 - Tilt</span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <div className={cn(
+            "rounded-lg p-3 border",
+            analysis.recentLosingStreak >= 3 ? "border-red-500/30 bg-red-500/5" : "border-border bg-muted/20"
+          )}>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Losing Streak</span>
+              <span className={cn(
+                "font-bold",
+                analysis.recentLosingStreak >= 3 ? "text-red-500" : "text-foreground"
+              )}>{analysis.recentLosingStreak}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">+20 pts per loss (max 60)</div>
+          </div>
+          <div className={cn(
+            "rounded-lg p-3 border",
+            analysis.revengeWithLargerSize > 0 ? "border-red-500/30 bg-red-500/5" : "border-border bg-muted/20"
+          )}>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Size Increase</span>
+              <span className={cn(
+                "font-bold",
+                analysis.revengeWithLargerSize > 0 ? "text-red-500" : "text-foreground"
+              )}>{analysis.revengeWithLargerSize > 0 ? "Yes" : "No"}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">+20 pts if sizing up after loss</div>
+          </div>
+          <div className={cn(
+            "rounded-lg p-3 border",
+            analysis.overtradingToday ? "border-red-500/30 bg-red-500/5" : "border-border bg-muted/20"
+          )}>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Overtrading</span>
+              <span className={cn(
+                "font-bold",
+                analysis.overtradingToday ? "text-red-500" : "text-foreground"
+              )}>{analysis.overtradingToday ? "Yes" : "No"}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">+20 pts if 2x avg trades today</div>
+          </div>
+        </div>
+        
+        {analysis.activeTiltWarning && (
+          <div className="mt-4 p-4 rounded-lg border border-red-500/30 bg-red-500/10">
+            <div className="flex items-center gap-2 text-red-500 font-medium">
+              <AlertTriangle className="w-5 h-5" />
+              <span>Active Tilt Warning</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              Last 3 trades are losses and your last trade was larger than average. Consider taking a break.
+            </p>
+          </div>
+        )}
+      </div>
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           title="Revenge Trades"
@@ -1173,44 +1478,72 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
   const analysis = useMemo(() => {
     if (trades.length === 0) return null
 
-    const qualityScores: { trade: Trade, score: number, issues: string[] }[] = []
+    const qualityScores: { trade: Trade, score: number, rScore: number, planScore: number, execScore: number, issues: string[] }[] = []
 
     trades.forEach((trade) => {
-      let score = 50
+      let rScore = 0
+      let planScore = 0
+      let execScore = 0
       const issues: string[] = []
 
-      if (trade.strategy && trade.strategy !== "Select" && trade.strategy !== "Unknown") {
-        score += 15
+      if (trade.StopLoss && trade.OpenPrice && trade.StopLoss !== 0) {
+        const risk = Math.abs(trade.OpenPrice - trade.StopLoss)
+        if (risk > 0) {
+          const rMultiple = trade.Profit / risk
+          if (rMultiple >= 2) {
+            rScore = 40
+          } else if (rMultiple >= 1) {
+            rScore = 25
+          } else if (rMultiple >= 0) {
+            rScore = 10
+          }
+        }
       } else {
-        issues.push("No strategy assigned")
+        issues.push("No R-multiple data")
       }
 
+      if (trade.strategy && trade.strategy !== "Select" && trade.strategy !== "Unknown") {
+        planScore += 10
+      } else {
+        issues.push("No strategy")
+      }
       if (trade.StopLoss && trade.StopLoss !== 0) {
-        score += 15
+        planScore += 10
       } else {
         issues.push("No stop loss")
       }
-
       if (trade.TakeProfit && trade.TakeProfit !== 0) {
-        score += 10
+        planScore += 10
       } else {
         issues.push("No take profit")
       }
 
-      if (trade.StopLoss && trade.TakeProfit && trade.OpenPrice) {
-        const risk = Math.abs(trade.OpenPrice - trade.StopLoss)
-        const reward = Math.abs(trade.TakeProfit - trade.OpenPrice)
-        if (risk > 0 && reward / risk >= 1.5) {
-          score += 10
+      if (trade.TakeProfit && trade.ClosePrice && trade.TakeProfit !== 0) {
+        const hitTP = Math.abs(trade.ClosePrice - trade.TakeProfit) < Math.abs(trade.TakeProfit - trade.OpenPrice) * 0.05
+        if (hitTP) {
+          execScore += 20
         }
       }
+      if (trade.Profit > 0) {
+        execScore += 10
+      }
 
-      qualityScores.push({ trade, score: Math.min(100, score), issues })
+      const totalScore = rScore + planScore + execScore
+      qualityScores.push({ trade, score: totalScore, rScore, planScore, execScore, issues })
     })
 
     const avgScore = qualityScores.reduce((sum, t) => sum + t.score, 0) / qualityScores.length
+    
+    const scoreDistribution = {
+      "0-20": qualityScores.filter(t => t.score <= 20).length,
+      "21-40": qualityScores.filter(t => t.score > 20 && t.score <= 40).length,
+      "41-60": qualityScores.filter(t => t.score > 40 && t.score <= 60).length,
+      "61-80": qualityScores.filter(t => t.score > 60 && t.score <= 80).length,
+      "81-100": qualityScores.filter(t => t.score > 80).length,
+    }
+    
     const highQualityTrades = qualityScores.filter(t => t.score >= 80)
-    const lowQualityTrades = qualityScores.filter(t => t.score < 50)
+    const lowQualityTrades = qualityScores.filter(t => t.score < 40)
 
     const highQualityProfit = highQualityTrades.reduce((sum, t) => sum + t.trade.Profit, 0)
     const lowQualityProfit = lowQualityTrades.reduce((sum, t) => sum + t.trade.Profit, 0)
@@ -1246,9 +1579,12 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
       : 0
 
     const improvement = recentAvgScore - olderAvgScore
+    
+    const recentScoredTrades = qualityScores.slice(-10).reverse()
 
     return {
       avgScore,
+      scoreDistribution,
       highQualityCount: highQualityTrades.length,
       lowQualityCount: lowQualityTrades.length,
       highQualityProfit,
@@ -1258,6 +1594,7 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
       topIssues,
       improvement,
       recentAvgScore,
+      recentScoredTrades,
     }
   }, [trades])
 
@@ -1271,16 +1608,27 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
     )
   }
 
+  const maxDistCount = Math.max(...Object.values(analysis.scoreDistribution))
+  
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-violet-600/10 p-6 text-center">
+        <p className="text-sm text-muted-foreground mb-2">Average Quality Score</p>
+        <div className={cn(
+          "text-6xl font-bold",
+          analysis.avgScore >= 70 ? "text-emerald-500" : analysis.avgScore >= 40 ? "text-amber-500" : "text-red-500"
+        )}>
+          {analysis.avgScore.toFixed(0)}
+        </div>
+        <p className="text-sm text-muted-foreground mt-2">out of 100 points</p>
+        <div className="flex justify-center gap-6 mt-4 text-xs text-muted-foreground">
+          <span>R-Multiple: 40pts</span>
+          <span>Plan Adherence: 30pts</span>
+          <span>Execution: 30pts</span>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          title="Avg Quality Score"
-          value={`${analysis.avgScore.toFixed(0)}%`}
-          subtitle="trade setup quality"
-          icon={Target}
-          color={analysis.avgScore >= 70 ? "green" : analysis.avgScore >= 50 ? "amber" : "red"}
-        />
         <StatCard
           title="High Quality Trades"
           value={analysis.highQualityCount}
@@ -1296,17 +1644,6 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
           color="red"
         />
         <StatCard
-          title="Quality Improvement"
-          value={`${analysis.improvement >= 0 ? "+" : ""}${analysis.improvement.toFixed(0)}%`}
-          subtitle="recent vs older trades"
-          icon={TrendingUp}
-          color={analysis.improvement >= 0 ? "green" : "red"}
-          trend={analysis.improvement >= 0 ? "up" : "down"}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard
           title="High Quality P&L"
           value={formatValue(analysis.highQualityProfit)}
           subtitle="from quality setups"
@@ -1314,12 +1651,70 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
           color={analysis.highQualityProfit >= 0 ? "green" : "red"}
         />
         <StatCard
-          title="Low Quality P&L"
-          value={formatValue(analysis.lowQualityProfit)}
-          subtitle="from poor setups"
-          icon={TrendingDown}
-          color={analysis.lowQualityProfit >= 0 ? "green" : "red"}
+          title="Quality Trend"
+          value={`${analysis.improvement >= 0 ? "+" : ""}${analysis.improvement.toFixed(0)}`}
+          subtitle="recent vs older"
+          icon={TrendingUp}
+          color={analysis.improvement >= 0 ? "green" : "red"}
+          trend={analysis.improvement >= 0 ? "up" : "down"}
         />
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Score Distribution</h3>
+        <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="flex items-end justify-between gap-2 h-40">
+            {Object.entries(analysis.scoreDistribution).map(([range, count]) => {
+              const height = maxDistCount > 0 ? (count / maxDistCount) * 100 : 0
+              const colors: Record<string, string> = {
+                "0-20": "bg-red-500",
+                "21-40": "bg-orange-500",
+                "41-60": "bg-amber-500",
+                "61-80": "bg-emerald-400",
+                "81-100": "bg-emerald-500"
+              }
+              return (
+                <div key={range} className="flex-1 flex flex-col items-center gap-2">
+                  <div className="w-full flex flex-col items-center justify-end h-32">
+                    <span className="text-sm font-medium text-foreground mb-1">{count}</span>
+                    <div 
+                      className={cn("w-full rounded-t transition-all", colors[range])}
+                      style={{ height: `${Math.max(height, 4)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">{range}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Recent Trade Scores</h3>
+        <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
+          <div className="grid grid-cols-6 gap-2 p-3 bg-muted/30 text-xs font-medium text-muted-foreground border-b border-border">
+            <span>Date</span>
+            <span>Symbol</span>
+            <span className="text-center">R-Score</span>
+            <span className="text-center">Plan</span>
+            <span className="text-center">Exec</span>
+            <span className="text-center">Total</span>
+          </div>
+          {analysis.recentScoredTrades.map((item, i) => (
+            <div key={i} className="grid grid-cols-6 gap-2 p-3 text-sm border-b border-border/50 last:border-0 hover:bg-muted/20">
+              <span className="text-muted-foreground">{item.trade.date}</span>
+              <span className="font-medium text-foreground truncate">{item.trade.Item || "N/A"}</span>
+              <span className={cn("text-center font-medium", item.rScore >= 25 ? "text-emerald-500" : item.rScore > 0 ? "text-amber-500" : "text-muted-foreground")}>{item.rScore}/40</span>
+              <span className={cn("text-center font-medium", item.planScore >= 20 ? "text-emerald-500" : item.planScore >= 10 ? "text-amber-500" : "text-muted-foreground")}>{item.planScore}/30</span>
+              <span className={cn("text-center font-medium", item.execScore >= 20 ? "text-emerald-500" : item.execScore > 0 ? "text-amber-500" : "text-muted-foreground")}>{item.execScore}/30</span>
+              <span className={cn(
+                "text-center font-bold",
+                item.score >= 70 ? "text-emerald-500" : item.score >= 40 ? "text-amber-500" : "text-red-500"
+              )}>{item.score}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -1620,6 +2015,349 @@ function CorrelationsAnalysis({ trades, formatValue }: { trades: Trade[], format
             />
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function SmartInsights({ trades, formatValue }: { trades: Trade[], formatValue: (v: number) => string }) {
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+  
+  const analysis = useMemo(() => {
+    if (trades.length === 0) return null
+
+    const symbolData: Record<string, { profit: number, count: number, wins: number }> = {}
+    const strategyData: Record<string, { profit: number, count: number, wins: number }> = {}
+    const dayData: Record<number, { profit: number, count: number, wins: number }> = {}
+    const hourData: Record<number, { profit: number, count: number, wins: number }> = {}
+    const dailyTrades: Record<string, Trade[]> = {}
+    
+    for (let i = 0; i < 7; i++) {
+      dayData[i] = { profit: 0, count: 0, wins: 0 }
+    }
+    for (let i = 0; i < 24; i++) {
+      hourData[i] = { profit: 0, count: 0, wins: 0 }
+    }
+
+    let totalWaitTime = 0
+    let waitTimeCount = 0
+    let quickTrades = 0
+    let quickTradeWins = 0
+    let slowTrades = 0
+    let slowTradeWins = 0
+
+    trades.forEach((trade, index) => {
+      const symbol = trade.Item || "Unknown"
+      const strategy = trade.strategy || "Unknown"
+      const tradeDate = new Date(trade.date)
+      const dayOfWeek = tradeDate.getDay()
+      
+      if (!symbolData[symbol]) symbolData[symbol] = { profit: 0, count: 0, wins: 0 }
+      symbolData[symbol].profit += trade.Profit
+      symbolData[symbol].count++
+      if (trade.Profit > 0) symbolData[symbol].wins++
+
+      if (strategy !== "Select" && strategy !== "Unknown") {
+        if (!strategyData[strategy]) strategyData[strategy] = { profit: 0, count: 0, wins: 0 }
+        strategyData[strategy].profit += trade.Profit
+        strategyData[strategy].count++
+        if (trade.Profit > 0) strategyData[strategy].wins++
+      }
+
+      dayData[dayOfWeek].profit += trade.Profit
+      dayData[dayOfWeek].count++
+      if (trade.Profit > 0) dayData[dayOfWeek].wins++
+
+      const time = trade.time || (trade.OpenTime ? trade.OpenTime.split(" ")[1] || trade.OpenTime.split("T")[1] : null)
+      if (time) {
+        const hour = parseInt(time.split(":")[0], 10)
+        if (!isNaN(hour)) {
+          hourData[hour].profit += trade.Profit
+          hourData[hour].count++
+          if (trade.Profit > 0) hourData[hour].wins++
+        }
+      }
+
+      if (!dailyTrades[trade.date]) dailyTrades[trade.date] = []
+      dailyTrades[trade.date].push(trade)
+    })
+
+    Object.values(dailyTrades).forEach((dayTrades) => {
+      for (let i = 1; i < dayTrades.length; i++) {
+        const prevTrade = dayTrades[i - 1]
+        const currTrade = dayTrades[i]
+        const prevTime = prevTrade.CloseTime?.split(" ")[1] || prevTrade.time || "00:00"
+        const currTime = currTrade.OpenTime?.split(" ")[1] || currTrade.time || "00:00"
+        
+        const prevMinutes = parseInt(prevTime.split(":")[0]) * 60 + parseInt(prevTime.split(":")[1] || "0")
+        const currMinutes = parseInt(currTime.split(":")[0]) * 60 + parseInt(currTime.split(":")[1] || "0")
+        const waitTime = currMinutes - prevMinutes
+        
+        if (waitTime > 0 && waitTime < 120) {
+          totalWaitTime += waitTime
+          waitTimeCount++
+          
+          if (waitTime < 5) {
+            quickTrades++
+            if (currTrade.Profit > 0) quickTradeWins++
+          } else {
+            slowTrades++
+            if (currTrade.Profit > 0) slowTradeWins++
+          }
+        }
+      }
+    })
+
+    const topSymbol = Object.entries(symbolData)
+      .filter(([_, d]) => d.count >= 5)
+      .sort((a, b) => b[1].profit - a[1].profit)[0]
+
+    const topStrategy = Object.entries(strategyData)
+      .filter(([_, d]) => d.count >= 3)
+      .sort((a, b) => b[1].profit - a[1].profit)[0]
+
+    const bestDay = Object.entries(dayData)
+      .filter(([_, d]) => d.count >= 3)
+      .sort((a, b) => (b[1].wins / b[1].count) - (a[1].wins / a[1].count))[0]
+
+    const worstDay = Object.entries(dayData)
+      .filter(([_, d]) => d.count >= 3)
+      .sort((a, b) => (a[1].wins / a[1].count) - (b[1].wins / b[1].count))[0]
+
+    const morningTrades = Object.entries(hourData)
+      .filter(([h]) => parseInt(h) >= 6 && parseInt(h) < 12)
+      .reduce((sum, [_, d]) => sum + d.count, 0)
+    const afternoonTrades = Object.entries(hourData)
+      .filter(([h]) => parseInt(h) >= 12 && parseInt(h) < 18)
+      .reduce((sum, [_, d]) => sum + d.count, 0)
+    const eveningTrades = Object.entries(hourData)
+      .filter(([h]) => parseInt(h) >= 18 || parseInt(h) < 6)
+      .reduce((sum, [_, d]) => sum + d.count, 0)
+
+    let tradingStyle = "all-day"
+    if (morningTrades > afternoonTrades * 1.5 && morningTrades > eveningTrades * 1.5) {
+      tradingStyle = "morning"
+    } else if (afternoonTrades > morningTrades * 1.5 && afternoonTrades > eveningTrades * 1.5) {
+      tradingStyle = "afternoon"
+    } else if (eveningTrades > morningTrades * 1.5 && eveningTrades > afternoonTrades * 1.5) {
+      tradingStyle = "evening"
+    }
+
+    const avgWaitTime = waitTimeCount > 0 ? totalWaitTime / waitTimeCount : 0
+    const quickWinRate = quickTrades > 0 ? (quickTradeWins / quickTrades) * 100 : 0
+    const slowWinRate = slowTrades > 0 ? (slowTradeWins / slowTrades) * 100 : 0
+
+    const tips: { text: string, type: "success" | "warning" | "info" }[] = []
+
+    if (slowWinRate > quickWinRate + 15 && slowTrades >= 5 && quickTrades >= 5) {
+      tips.push({
+        text: `You win ${slowWinRate.toFixed(0)}% when waiting 5+ minutes between trades vs ${quickWinRate.toFixed(0)}% for quick entries.`,
+        type: "success"
+      })
+    }
+
+    if (worstDay && bestDay && parseInt(worstDay[0]) !== parseInt(bestDay[0])) {
+      const worstWinRate = (worstDay[1].wins / worstDay[1].count) * 100
+      const bestWinRate = (bestDay[1].wins / bestDay[1].count) * 100
+      if (bestWinRate - worstWinRate >= 20) {
+        tips.push({
+          text: `${dayNames[parseInt(worstDay[0])]}s are your worst day (${worstWinRate.toFixed(0)}% WR) - consider reducing size.`,
+          type: "warning"
+        })
+      }
+    }
+
+    const afternoonHours = Object.entries(hourData).filter(([h]) => parseInt(h) >= 15 && parseInt(h) <= 17)
+    const morningHours = Object.entries(hourData).filter(([h]) => parseInt(h) >= 9 && parseInt(h) <= 11)
+    
+    const afternoonWinRate = afternoonHours.reduce((sum, [_, d]) => sum + d.wins, 0) / 
+      Math.max(1, afternoonHours.reduce((sum, [_, d]) => sum + d.count, 0)) * 100
+    const morningWinRate = morningHours.reduce((sum, [_, d]) => sum + d.wins, 0) / 
+      Math.max(1, morningHours.reduce((sum, [_, d]) => sum + d.count, 0)) * 100
+
+    if (morningWinRate > afternoonWinRate + 25 && morningHours.reduce((s, [_, d]) => s + d.count, 0) >= 5) {
+      tips.push({
+        text: `Your win rate drops ${(morningWinRate - afternoonWinRate).toFixed(0)}% after 3 PM. Consider stopping earlier.`,
+        type: "warning"
+      })
+    }
+
+    if (topSymbol && topSymbol[1].count >= 10) {
+      const winRate = (topSymbol[1].wins / topSymbol[1].count) * 100
+      if (winRate >= 60) {
+        tips.push({
+          text: `${topSymbol[0]} is your edge with ${winRate.toFixed(0)}% win rate. Focus here.`,
+          type: "success"
+        })
+      }
+    }
+
+    if (topStrategy && topStrategy[1].count >= 5) {
+      const winRate = (topStrategy[1].wins / topStrategy[1].count) * 100
+      if (winRate >= 55) {
+        tips.push({
+          text: `Your ${topStrategy[0]} strategy has ${winRate.toFixed(0)}% win rate - stick with it.`,
+          type: "success"
+        })
+      }
+    }
+
+    let tradingDNA = "You're a "
+    if (tradingStyle === "morning") tradingDNA += "morning trader"
+    else if (tradingStyle === "afternoon") tradingDNA += "afternoon trader"
+    else if (tradingStyle === "evening") tradingDNA += "evening/night trader"
+    else tradingDNA += "flexible trader"
+    
+    if (topSymbol) {
+      tradingDNA += ` who excels with ${topSymbol[0]}`
+    }
+    if (topStrategy) {
+      const isScalp = topStrategy[0].toLowerCase().includes("scalp") || avgWaitTime < 15
+      if (isScalp) {
+        tradingDNA += " scalps"
+      } else {
+        tradingDNA += ` using ${topStrategy[0]}`
+      }
+    }
+    tradingDNA += "."
+
+    return {
+      tradingDNA,
+      dayData,
+      tips,
+      topSymbol,
+      topStrategy,
+      bestDay: bestDay ? { day: parseInt(bestDay[0]), ...bestDay[1] } : null,
+      worstDay: worstDay ? { day: parseInt(worstDay[0]), ...worstDay[1] } : null,
+      tradingStyle,
+    }
+  }, [trades])
+
+  if (!analysis || trades.length < 15) {
+    return (
+      <div className="text-center py-12">
+        <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-foreground mb-2">Not Enough Data</h3>
+        <p className="text-muted-foreground">Need at least 15 trades for smart insights</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-violet-600/10 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Sparkles className="w-8 h-8 text-violet-500" />
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">Your Trading DNA</h3>
+            <p className="text-sm text-muted-foreground">Personalized profile based on your trading patterns</p>
+          </div>
+        </div>
+        <p className="text-xl font-medium text-foreground">
+          {analysis.tradingDNA}
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Weekly Performance Pattern</h3>
+        <div className="grid grid-cols-7 gap-2">
+          {[1, 2, 3, 4, 5, 6, 0].map((dayIndex) => {
+            const data = analysis.dayData[dayIndex]
+            const winRate = data.count > 0 ? (data.wins / data.count) * 100 : 0
+            const isBest = analysis.bestDay?.day === dayIndex
+            const isWorst = analysis.worstDay?.day === dayIndex
+            
+            return (
+              <div 
+                key={dayIndex}
+                className={cn(
+                  "rounded-xl border p-4 text-center",
+                  isBest ? "border-emerald-500/30 bg-emerald-500/5" :
+                  isWorst ? "border-red-500/30 bg-red-500/5" :
+                  "border-border bg-card/50"
+                )}
+              >
+                <div className="text-sm font-medium text-foreground mb-1">
+                  {dayNames[dayIndex].slice(0, 3)}
+                </div>
+                <div className={cn(
+                  "text-2xl font-bold",
+                  data.count === 0 ? "text-muted-foreground" :
+                  winRate >= 55 ? "text-emerald-500" :
+                  winRate >= 45 ? "text-amber-500" :
+                  "text-red-500"
+                )}>
+                  {data.count > 0 ? `${winRate.toFixed(0)}%` : "-"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {data.count} trades
+                </div>
+                {isBest && <div className="text-xs text-emerald-500 mt-1">Best</div>}
+                {isWorst && data.count >= 3 && <div className="text-xs text-red-500 mt-1">Worst</div>}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {analysis.tips.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Personalized Tips</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {analysis.tips.map((tip, i) => (
+              <InsightCard
+                key={i}
+                type={tip.type}
+                title={tip.type === "success" ? "Edge Identified" : tip.type === "warning" ? "Area to Improve" : "Insight"}
+                description={tip.text}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {analysis.topSymbol && (
+          <div className="rounded-xl border border-border bg-card/50 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="w-5 h-5 text-violet-500" />
+              <h4 className="font-medium text-foreground">Top Instrument</h4>
+            </div>
+            <div className="text-2xl font-bold text-foreground mb-1">{analysis.topSymbol[0]}</div>
+            <div className="flex gap-4 text-sm">
+              <span className={cn(
+                (analysis.topSymbol[1].wins / analysis.topSymbol[1].count) * 100 >= 50 ? "text-emerald-500" : "text-red-500"
+              )}>
+                {((analysis.topSymbol[1].wins / analysis.topSymbol[1].count) * 100).toFixed(0)}% WR
+              </span>
+              <span className={analysis.topSymbol[1].profit >= 0 ? "text-emerald-500" : "text-red-500"}>
+                {formatValue(analysis.topSymbol[1].profit)}
+              </span>
+              <span className="text-muted-foreground">{analysis.topSymbol[1].count} trades</span>
+            </div>
+          </div>
+        )}
+        
+        {analysis.topStrategy && (
+          <div className="rounded-xl border border-border bg-card/50 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <BrainCircuit className="w-5 h-5 text-violet-500" />
+              <h4 className="font-medium text-foreground">Top Strategy</h4>
+            </div>
+            <div className="text-2xl font-bold text-foreground mb-1">{analysis.topStrategy[0]}</div>
+            <div className="flex gap-4 text-sm">
+              <span className={cn(
+                (analysis.topStrategy[1].wins / analysis.topStrategy[1].count) * 100 >= 50 ? "text-emerald-500" : "text-red-500"
+              )}>
+                {((analysis.topStrategy[1].wins / analysis.topStrategy[1].count) * 100).toFixed(0)}% WR
+              </span>
+              <span className={analysis.topStrategy[1].profit >= 0 ? "text-emerald-500" : "text-red-500"}>
+                {formatValue(analysis.topStrategy[1].profit)}
+              </span>
+              <span className="text-muted-foreground">{analysis.topStrategy[1].count} trades</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
