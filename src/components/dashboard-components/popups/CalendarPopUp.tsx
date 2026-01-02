@@ -941,9 +941,9 @@ const CalendarPopup = () => {
                       <StatCard 
                         icon={faArrowDown} 
                         label="Worst Trade" 
-                        value={`-${dayCurrencySymbol}${formatPnLValue(Math.abs(worstTrade))}`}
-                        valueColor="text-red-400"
-                        iconBg="bg-red-500/10"
+                        value={`${worstTrade >= 0 ? '+' : '-'}${dayCurrencySymbol}${formatPnLValue(Math.abs(worstTrade))}`}
+                        valueColor={worstTrade >= 0 ? "text-emerald-400" : "text-red-400"}
+                        iconBg={worstTrade >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
                         index={7}
                       />
                     </div>
