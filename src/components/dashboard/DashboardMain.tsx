@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { ChevronDown, Calendar, Sparkles, TrendingUp, TrendingDown, Minus, HelpCircle } from "lucide-react";
+import { ChevronDown, Calendar, Sparkles, TrendingUp, TrendingDown, Minus, HelpCircle, AlertTriangle, Clock, Zap, X } from "lucide-react";
 
 import DashboardCustom from "@/components/dashboard-components/dasboard-range/DashboardCustom";
 import DashboardDay from "@/components/dashboard-components/dasboard-range/DashboardDay";
@@ -103,6 +103,101 @@ const DashboardMain = () => {
     return { todayPnL, todayTrades, todayWins };
   }, [selectedAccounts]);
 
+  const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
+  
+  const smartAlerts = useMemo(() => {
+    const alerts: { id: string; type: 'warning' | 'danger' | 'info'; icon: React.ElementType; title: string; message: string }[] = [];
+    
+    if (!selectedAccounts || !Array.isArray(selectedAccounts)) return alerts;
+    
+    const allTrades = selectedAccounts
+      .flatMap((acc: any) => acc.tradeData || [])
+      .filter((t: any) => t?.date)
+      .sort((a: any, b: any) => {
+        const dateA = new Date(`${a.date} ${a.time || a.CloseTime || "00:00:00"}`);
+        const dateB = new Date(`${b.date} ${b.time || b.CloseTime || "00:00:00"}`);
+        return dateB.getTime() - dateA.getTime();
+      });
+    
+    if (allTrades.length < 3) return alerts;
+
+    // Check for tilt (last 3+ trades are losses)
+    let consecutiveLosses = 0;
+    for (const trade of allTrades) {
+      if (trade.Profit < 0) consecutiveLosses++;
+      else break;
+    }
+    
+    if (consecutiveLosses >= 3) {
+      alerts.push({
+        id: 'tilt',
+        type: 'danger',
+        icon: AlertTriangle,
+        title: 'Tilt Warning',
+        message: `You're on a ${consecutiveLosses}-trade losing streak. Consider taking a break.`
+      });
+    }
+
+    // Check for bad trading time
+    const currentHour = new Date().getHours();
+    const hourlyStats: Record<number, { wins: number; losses: number }> = {};
+    
+    allTrades.forEach((trade: any) => {
+      const timeStr = trade.time || trade.OpenTime?.split(' ')[1] || trade.CloseTime?.split(' ')[1];
+      if (!timeStr) return;
+      const hour = parseInt(timeStr.split(':')[0]);
+      if (!hourlyStats[hour]) hourlyStats[hour] = { wins: 0, losses: 0 };
+      if (trade.Profit > 0) hourlyStats[hour].wins++;
+      else if (trade.Profit < 0) hourlyStats[hour].losses++;
+    });
+    
+    const currentHourStats = hourlyStats[currentHour];
+    if (currentHourStats && (currentHourStats.wins + currentHourStats.losses) >= 5) {
+      const winRate = (currentHourStats.wins / (currentHourStats.wins + currentHourStats.losses)) * 100;
+      if (winRate < 35) {
+        alerts.push({
+          id: 'bad-time',
+          type: 'warning',
+          icon: Clock,
+          title: 'Low Performance Hour',
+          message: `You historically win only ${winRate.toFixed(0)}% of trades at ${currentHour}:00. Consider waiting.`
+        });
+      }
+    }
+
+    // Check for overtrading
+    const tradeDays: Record<string, number> = {};
+    allTrades.forEach((trade: any) => {
+      if (!tradeDays[trade.date]) tradeDays[trade.date] = 0;
+      tradeDays[trade.date]++;
+    });
+    
+    const avgTradesPerDay = Object.values(tradeDays).length > 0
+      ? Object.values(tradeDays).reduce((a, b) => a + b, 0) / Object.values(tradeDays).length
+      : 0;
+    
+    // Use local date format (YYYY-MM-DD) to match trade.date format
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayTradeCount = tradeDays[today] || 0;
+    
+    if (avgTradesPerDay > 0 && todayTradeCount > avgTradesPerDay * 2) {
+      alerts.push({
+        id: 'overtrading',
+        type: 'warning',
+        icon: Zap,
+        title: 'Overtrading Alert',
+        message: `You've taken ${todayTradeCount} trades today (avg: ${avgTradesPerDay.toFixed(1)}/day). Quality over quantity!`
+      });
+    }
+
+    return alerts.filter(a => !dismissedAlerts.includes(a.id));
+  }, [selectedAccounts, dismissedAlerts]);
+
+  const dismissAlert = (id: string) => {
+    setDismissedAlerts(prev => [...prev, id]);
+  };
+
   const getAlertStyles = () => {
     switch (hrBarType) {
       case "Alert":
@@ -194,6 +289,72 @@ const DashboardMain = () => {
           </div>
         </div>
       </div>
+
+      {/* Smart Alerts Banner */}
+      {smartAlerts.length > 0 && !isPropFirmMode && (
+        <div className="space-y-2">
+          {smartAlerts.map((alert) => {
+            const Icon = alert.icon;
+            return (
+              <div
+                key={alert.id}
+                className={cn(
+                  "relative rounded-xl border p-4 flex items-start gap-3",
+                  alert.type === 'danger' 
+                    ? "bg-red-500/10 border-red-500/20" 
+                    : alert.type === 'warning'
+                    ? "bg-amber-500/10 border-amber-500/20"
+                    : "bg-blue-500/10 border-blue-500/20"
+                )}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                  alert.type === 'danger' 
+                    ? "bg-red-500/20" 
+                    : alert.type === 'warning'
+                    ? "bg-amber-500/20"
+                    : "bg-blue-500/20"
+                )}>
+                  <Icon className={cn(
+                    "w-4 h-4",
+                    alert.type === 'danger' 
+                      ? "text-red-500" 
+                      : alert.type === 'warning'
+                      ? "text-amber-500"
+                      : "text-blue-500"
+                  )} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn(
+                    "font-medium text-sm",
+                    alert.type === 'danger' 
+                      ? "text-red-600 dark:text-red-400" 
+                      : alert.type === 'warning'
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-blue-600 dark:text-blue-400"
+                  )}>
+                    {alert.title}
+                  </p>
+                  <p className="text-muted-foreground text-sm mt-0.5">{alert.message}</p>
+                </div>
+                <button
+                  onClick={() => dismissAlert(alert.id)}
+                  className={cn(
+                    "p-1 rounded-lg transition-colors shrink-0",
+                    alert.type === 'danger' 
+                      ? "hover:bg-red-500/20 text-red-400" 
+                      : alert.type === 'warning'
+                      ? "hover:bg-amber-500/20 text-amber-400"
+                      : "hover:bg-blue-500/20 text-blue-400"
+                  )}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Controls Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
