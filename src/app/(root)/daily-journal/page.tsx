@@ -123,6 +123,79 @@ interface Account {
 
 const commonTags = ["FOMO", "Perfect Setup", "Revenge Trade", "Followed Plan", "Overtraded", "Early Exit", "Late Entry", "News Play", "Gap Fill", "Trend Follow"];
 
+const journalTemplates = [
+  {
+    id: "quick",
+    name: "Quick Entry",
+    icon: "Zap",
+    color: "amber",
+    description: "Fast journal for simple trades",
+    content: {
+      reasonForEntry: "Setup: \nSignal: \nConfirmation: ",
+      exitRationale: "Exit reason: \nResult: ",
+      lessonsLearned: "",
+      emotionalState: "",
+      dailyNotes: ""
+    }
+  },
+  {
+    id: "full-analysis",
+    name: "Full Analysis",
+    icon: "ClipboardCheck",
+    color: "blue",
+    description: "Comprehensive trade breakdown",
+    content: {
+      reasonForEntry: "Market Context:\n- Trend direction:\n- Key levels:\n- Time of day:\n\nSetup:\n- Pattern identified:\n- Entry trigger:\n- Confirmation signals:\n\nRisk Management:\n- Position size rationale:\n- Stop loss placement:\n- Target levels:",
+      exitRationale: "Exit Execution:\n- How I exited:\n- Slippage/fills:\n\nTrade Management:\n- Did I move stops?\n- Partials taken?\n- Held to plan?",
+      lessonsLearned: "What Worked:\n-\n\nWhat Could Improve:\n-\n\nKey Insight:\n-",
+      emotionalState: "Before trade:\nDuring trade:\nAfter trade:",
+      dailyNotes: ""
+    }
+  },
+  {
+    id: "scalp",
+    name: "Scalp Trade",
+    icon: "Target",
+    color: "green",
+    description: "Quick in-and-out trades",
+    content: {
+      reasonForEntry: "Scalp Setup:\n- Momentum direction:\n- Entry level:\n- Quick target:",
+      exitRationale: "Execution speed:\nFill quality:\nHeld time:",
+      lessonsLearned: "Timing:\nSpeed of decision:",
+      emotionalState: "Focus level:",
+      dailyNotes: ""
+    }
+  },
+  {
+    id: "swing",
+    name: "Swing Trade",
+    icon: "LineChart",
+    color: "purple",
+    description: "Multi-day position analysis",
+    content: {
+      reasonForEntry: "Swing Setup:\n- Higher timeframe trend:\n- Entry zone:\n- Catalyst/reason:\n\nPosition Plan:\n- Expected hold time:\n- Key levels to watch:\n- News/events ahead:",
+      exitRationale: "Holding Period:\n- Days held:\n- Price action during hold:\n- Exit decision:",
+      lessonsLearned: "Patience:\nTrend reading:\nPosition sizing:",
+      emotionalState: "Overnight concerns:\nConfidence in thesis:",
+      dailyNotes: ""
+    }
+  },
+  {
+    id: "loss-review",
+    name: "Loss Review",
+    icon: "AlertTriangle",
+    color: "red",
+    description: "Deep dive into losing trades",
+    content: {
+      reasonForEntry: "Entry Analysis:\n- Was the setup valid?\n- Did I follow my rules?\n- Was timing correct?\n- Red flags I ignored:",
+      exitRationale: "Exit Analysis:\n- Did I honor my stop?\n- Held too long?\n- Cut too early?\n- Emotional decision?",
+      lessonsLearned: "Root Cause:\n-\n\nPrevention Plan:\n-\n\nRule to Add/Modify:\n-",
+      emotionalState: "Pre-trade state:\nDuring loss:\nPost-loss reaction:",
+      dailyNotes: "What I'll do differently next time:"
+    }
+  }
+];
+
 const getTemplateIcon = (iconName: string) => {
   switch (iconName) {
     case "ClipboardCheck": return ClipboardCheck;
@@ -130,7 +203,20 @@ const getTemplateIcon = (iconName: string) => {
     case "Target": return Target;
     case "Heart": return Heart;
     case "Shield": return Shield;
+    case "LineChart": return LineChart;
+    case "AlertTriangle": return AlertTriangle;
     default: return FileText;
+  }
+};
+
+const getJournalTemplateColor = (color: string) => {
+  switch (color) {
+    case "amber": return { text: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/30" };
+    case "blue": return { text: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/30" };
+    case "green": return { text: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/30" };
+    case "purple": return { text: "text-purple-500", bg: "bg-purple-500/10", border: "border-purple-500/30" };
+    case "red": return { text: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/30" };
+    default: return { text: "text-primary", bg: "bg-primary/10", border: "border-primary/30" };
   }
 };
 
@@ -179,6 +265,8 @@ const DailyJournal = () => {
   const [isMobileStatsOpen, setIsMobileStatsOpen] = useState(false);
   const [tradeFilter, setTradeFilter] = useState<"all" | "winners" | "losers">("all");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const templateDropdownRef = useRef<HTMLDivElement>(null);
 
   // Removed tab states - now using single scrollable view for center content and right panel
 
@@ -355,6 +443,32 @@ const DailyJournal = () => {
       setHasUnsavedChanges(hasChanges);
     }
   }, [journalData, selectedTrade]);
+
+  // Close template dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (templateDropdownRef.current && !templateDropdownRef.current.contains(e.target as Node)) {
+        setShowTemplateDropdown(false);
+      }
+    };
+    if (showTemplateDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showTemplateDropdown]);
+
+  const applyJournalTemplate = (template: typeof journalTemplates[0]) => {
+    setJournalData((prev) => ({
+      ...prev,
+      templateId: template.id,
+      reasonForEntry: template.content.reasonForEntry,
+      exitRationale: template.content.exitRationale,
+      lessonsLearned: template.content.lessonsLearned,
+      emotionalState: template.content.emotionalState,
+      dailyNotes: template.content.dailyNotes || prev.dailyNotes || "",
+    }));
+    setShowTemplateDropdown(false);
+  };
 
   const navigateTrade = (direction: "prev" | "next") => {
     const currentIdx = filteredTrades.findIndex(t => (t.id || t._id) === (selectedTrade?.id || selectedTrade?._id));
@@ -1058,9 +1172,60 @@ const DailyJournal = () => {
 
                 {/* Trade Narrative Section */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">Trade Narrative</h3>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">Trade Narrative</h3>
+                    </div>
+                    
+                    {/* Template Selector */}
+                    <div className="relative" ref={templateDropdownRef}>
+                      <button
+                        onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted/30 border border-border hover:bg-muted/50 hover:border-primary/30 transition-all"
+                      >
+                        <Layers className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">Template</span>
+                        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${showTemplateDropdown ? "rotate-180" : ""}`} />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {showTemplateDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-full mt-2 w-64 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+                          >
+                            <div className="p-2 border-b border-border">
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium px-2">Choose a template</p>
+                            </div>
+                            <div className="p-1.5 max-h-72 overflow-y-auto">
+                              {journalTemplates.map((template) => {
+                                const TemplateIcon = getTemplateIcon(template.icon);
+                                const colors = getJournalTemplateColor(template.color);
+                                return (
+                                  <button
+                                    key={template.id}
+                                    onClick={() => applyJournalTemplate(template)}
+                                    className="w-full flex items-start gap-3 p-2.5 rounded-lg hover:bg-muted/40 transition-colors text-left group"
+                                  >
+                                    <div className={`p-1.5 rounded-lg ${colors.bg} ${colors.border} border`}>
+                                      <TemplateIcon className={`w-4 h-4 ${colors.text}`} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{template.name}</p>
+                                      <p className="text-[11px] text-muted-foreground mt-0.5">{template.description}</p>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                   
                   <div className="space-y-3">
@@ -1073,7 +1238,7 @@ const DailyJournal = () => {
                         onChange={(e) => setJournalData((prev) => ({ ...prev, reasonForEntry: e.target.value }))}
                         placeholder="Describe the setup, signals, and your reasoning..."
                         rows={2}
-                        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                       />
                     </div>
 
@@ -1086,7 +1251,7 @@ const DailyJournal = () => {
                         onChange={(e) => setJournalData((prev) => ({ ...prev, exitRationale: e.target.value }))}
                         placeholder="Target hit, stopped out, or manual exit? What did you observe?"
                         rows={2}
-                        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                        className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                       />
                     </div>
                   </div>
@@ -1111,7 +1276,7 @@ const DailyJournal = () => {
                       onChange={(e) => setJournalData((prev) => ({ ...prev, lessonsLearned: e.target.value }))}
                       placeholder="Key takeaways, mistakes to avoid, patterns to remember..."
                       rows={2}
-                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                     />
                   </div>
 
@@ -1124,7 +1289,7 @@ const DailyJournal = () => {
                       onChange={(e) => setJournalData((prev) => ({ ...prev, emotionalState: e.target.value }))}
                       placeholder="Confident, anxious, impulsive, calm..."
                       rows={2}
-                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                     />
                   </div>
                 </div>
@@ -1179,7 +1344,7 @@ const DailyJournal = () => {
                       onChange={(e) => setJournalData((prev) => ({ ...prev, dailyNotes: e.target.value }))}
                       placeholder="General notes about your trading day, market conditions, mindset..."
                       rows={3}
-                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none resize-none"
+                      className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                     />
                   </div>
                 </div>
