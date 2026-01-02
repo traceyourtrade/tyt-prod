@@ -45,7 +45,12 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Lot Size Calculator:** Tool for forex position sizing.
 - **Resource Center:** Educational hub with articles, psychology tips, and customizable trading routines.
 - **Account Type System:** `isPropFirm` field for filtering accounts.
-- **AI Analysis:** Advanced statistical analysis hub (rule-based) including streak, risk, time, emotional patterns, benchmarks, trade quality, and correlations.
+- **AI Analysis:** Advanced statistical analysis hub (rule-based) including streak, risk, time, emotional patterns, benchmarks, trade quality, correlations, and smart insights. Enhanced features include:
+  - **Time Insights Heatmap:** 24-hour × 7-day performance grid with color-coded win rates (green/amber/red) showing "Your Edge" best/worst times.
+  - **Trade Quality Auto-Scorer:** Scores each trade 0-100 based on R-multiple (40pts), plan adherence (30pts), and execution (30pts) with score distribution charts.
+  - **Tilt Risk Gauge:** Real-time 0-100 score detecting losing streaks (+20 per loss, max 60), position size increases (+20), and overtrading (+20). Color-coded: Green (0-30), Yellow (31-60), Red (61-100).
+  - **Smart Insights Tab:** Personalized trading DNA profile, weekly performance patterns, and actionable tips based on historical data analysis.
+- **Dashboard Smart Alerts:** Real-time pattern warning banners showing tilt warnings (3+ consecutive losses), low-performance hour alerts (when trading during historically bad times), and overtrading alerts (2x+ average daily trades). Dismissible per session.
 - **Trade Sharing:** Generate shareable links for individual trades with privacy controls and a comment system.
 - **Leaderboard:** Community rankings based on trading metrics (opt-in).
 - **Broker Auto-Sync:** Feature for automatic trade import from supported brokers.
