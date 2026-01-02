@@ -2355,9 +2355,15 @@ export default function FullscreenBacktesting({
               
               // Use setResolution ONLY - this preserves drawings natively
               chart.setResolution(currentInterval, () => {
-                // CRITICAL: Call resetData() to force TradingView to re-subscribe the datafeed
-                // Without this, subscribeBars is never called and replay guards stay blocked
-                console.log('Slow path: Calling resetData() to re-subscribe datafeed');
+                // CRITICAL: Call resetCache() BEFORE resetData() to force TradingView
+                // to clear its internal bar cache and call getBars again.
+                // Without resetCache(), TradingView may use stale cached bars and skip getBars.
+                console.log('Slow path: Calling resetCache() + resetData() to force getBars');
+                try {
+                  tvWidgetRef.current?.resetCache();
+                } catch (e) {
+                  console.warn('resetCache failed (may not be supported):', e);
+                }
                 chart.resetData();
                 
                 // Wait for dataReady to ensure bars are loaded
@@ -2521,6 +2527,14 @@ export default function FullscreenBacktesting({
         
         // Normalize resolution for cache lookup (1D/D -> D, 1W/W -> W)
         const cacheKey = normalizeCacheKey(resolution);
+        
+        console.log('==== getBars CALLED ====', { 
+          resolution, 
+          cacheKey, 
+          firstDataRequest,
+          pendingAnchor: pendingAnchorTimestampRef.current ? new Date(pendingAnchorTimestampRef.current).toISOString() : null,
+          replayTs: replayTimestampRef.current ? new Date(replayTimestampRef.current).toISOString() : null
+        });
         
         // ═══════════════════════════════════════════════════════════════════════════
         // CRITICAL FIX: Consume pendingAnchorTimestampRef ATOMICALLY at the START
@@ -3403,9 +3417,15 @@ export default function FullscreenBacktesting({
               
               // Use setResolution ONLY - this preserves drawings natively
               innerChart.setResolution(newInterval, () => {
-                // CRITICAL: Call resetData() to force TradingView to re-subscribe the datafeed
-                // Without this, subscribeBars is never called and replay guards stay blocked
-                console.log('Native TF: Calling resetData() to re-subscribe datafeed');
+                // CRITICAL: Call resetCache() BEFORE resetData() to force TradingView
+                // to clear its internal bar cache and call getBars again.
+                // Without resetCache(), TradingView may use stale cached bars and skip getBars.
+                console.log('Native TF: Calling resetCache() + resetData() to force getBars');
+                try {
+                  tvWidgetRef.current?.resetCache();
+                } catch (e) {
+                  console.warn('resetCache failed (may not be supported):', e);
+                }
                 innerChart.resetData();
                 
                 // Wait for dataReady to ensure bars are loaded
