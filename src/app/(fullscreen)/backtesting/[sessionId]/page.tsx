@@ -2528,14 +2528,6 @@ export default function FullscreenBacktesting({
         // Normalize resolution for cache lookup (1D/D -> D, 1W/W -> W)
         const cacheKey = normalizeCacheKey(resolution);
         
-        console.log('==== getBars CALLED ====', { 
-          resolution, 
-          cacheKey, 
-          firstDataRequest,
-          pendingAnchor: pendingAnchorTimestampRef.current ? new Date(pendingAnchorTimestampRef.current).toISOString() : null,
-          replayTs: replayTimestampRef.current ? new Date(replayTimestampRef.current).toISOString() : null
-        });
-        
         // ═══════════════════════════════════════════════════════════════════════════
         // CRITICAL FIX: Consume pendingAnchorTimestampRef ATOMICALLY at the START
         // When we have a pending anchor (set during TF switch), we MUST:
