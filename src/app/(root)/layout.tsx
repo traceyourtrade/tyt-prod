@@ -85,7 +85,7 @@ const tradingItems = [
 const analysisItems = [
   { name: "Reports", href: "/reports", icon: BarChart3, color: "#7CB89E", tourId: "nav-reports" },
   { name: "Strategies", href: "/strategies", icon: Target, color: "#C47A7A", tourId: "nav-strategies" },
-  { name: "Playbook", href: "/playbook", icon: Sparkles, color: "#C47A9B", tourId: "nav-playbook" },
+  { name: "AI Pattern Detection", href: "/playbook", icon: Sparkles, color: "#C47A9B", tourId: "nav-playbook" },
   { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, color: "#8B5CF6", badge: "New", tourId: "nav-ai-analysis" },
 ];
 
@@ -121,7 +121,7 @@ const pageTitles: Record<string, string> = {
   "/strategies/strategies": "All Strategies",
   "/strategies/reports": "Reports",
   "/strategies/compare": "Compare",
-  "/playbook": "Playbook",
+  "/playbook": "AI Pattern Detection",
   "/ai-analysis": "AI Analysis",
   "/leaderboard": "Leaderboard",
   "/backtesting": "Backtesting",
