@@ -61,7 +61,7 @@ const tradingItems = [
 const analysisItems = [
   { name: "Reports", href: "/reports", icon: BarChart3, tourId: "nav-reports" },
   { name: "Strategies", href: "/strategies", icon: Target, tourId: "nav-strategies" },
-  { name: "Playbook", href: "/playbook", icon: Sparkles, tourId: "nav-playbook" },
+  { name: "AI Pattern Detection", href: "/playbook", icon: Sparkles, tourId: "nav-playbook" },
   { name: "AI Analysis", href: "/ai-analysis", icon: BrainCircuit, badge: "New", tourId: "nav-ai-analysis" },
 ]
 
