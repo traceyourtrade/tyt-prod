@@ -51,6 +51,9 @@ import {
   Sparkles,
   PanelRightOpen,
   PanelRightClose,
+  Plus,
+  Trash2,
+  Palette,
 } from "lucide-react";
 import useAccountDetails from "@/store/accountdetails";
 import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
@@ -120,6 +123,46 @@ interface Account {
   [key: string]: any;
 }
 
+interface CustomJournalTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  description: string;
+  content: {
+    reasonForEntry: string;
+    exitRationale: string;
+    lessonsLearned: string;
+    emotionalState: string;
+    dailyNotes: string;
+  };
+  isCustom: true;
+}
+
+type JournalTemplateType = typeof journalTemplates[0] | CustomJournalTemplate;
+
+const TEMPLATE_ICONS = [
+  { id: "Zap", icon: Zap },
+  { id: "Target", icon: Target },
+  { id: "ClipboardCheck", icon: ClipboardCheck },
+  { id: "LineChart", icon: LineChart },
+  { id: "AlertTriangle", icon: AlertTriangle },
+  { id: "Heart", icon: Heart },
+  { id: "Shield", icon: Shield },
+  { id: "FileText", icon: FileText },
+  { id: "Star", icon: Star },
+  { id: "BookOpen", icon: BookOpen },
+];
+
+const TEMPLATE_COLORS = [
+  { id: "amber", label: "Amber", class: "bg-amber-500" },
+  { id: "blue", label: "Blue", class: "bg-blue-500" },
+  { id: "green", label: "Green", class: "bg-emerald-500" },
+  { id: "purple", label: "Purple", class: "bg-purple-500" },
+  { id: "red", label: "Red", class: "bg-red-500" },
+  { id: "pink", label: "Pink", class: "bg-pink-500" },
+  { id: "cyan", label: "Cyan", class: "bg-cyan-500" },
+];
 
 const commonTags = ["FOMO", "Perfect Setup", "Revenge Trade", "Followed Plan", "Overtraded", "Early Exit", "Late Entry", "News Play", "Gap Fill", "Trend Follow"];
 
@@ -268,6 +311,17 @@ const DailyJournal = () => {
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
 
+  const [customTemplates, setCustomTemplates] = useState<CustomJournalTemplate[]>([]);
+  const [favoriteTemplates, setFavoriteTemplates] = useState<string[]>([]);
+  const [pendingTemplate, setPendingTemplate] = useState<JournalTemplateType | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateIcon, setNewTemplateIcon] = useState("Zap");
+  const [newTemplateColor, setNewTemplateColor] = useState("blue");
+  const confirmModalRef = useRef<HTMLDivElement>(null);
+  const saveTemplateModalRef = useRef<HTMLDivElement>(null);
+
   // Removed tab states - now using single scrollable view for center content and right panel
 
   const existingStrategies: string[] = (profileData?.otherData?.strategy || []).filter((s: string) => s && s !== "Select");
@@ -275,6 +329,23 @@ const DailyJournal = () => {
   useEffect(() => {
     setAccounts();
   }, [setAccounts]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedCustomTemplates = localStorage.getItem("projournx_custom_templates");
+        if (savedCustomTemplates) {
+          setCustomTemplates(JSON.parse(savedCustomTemplates));
+        }
+        const savedFavorites = localStorage.getItem("projournx_favorite_templates");
+        if (savedFavorites) {
+          setFavoriteTemplates(JSON.parse(savedFavorites));
+        }
+      } catch (error) {
+        console.error("Error loading templates from localStorage:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const allTrades = (selectedAccounts as Account[]).flatMap((account) => account.tradeData || []);
@@ -457,7 +528,42 @@ const DailyJournal = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showTemplateDropdown]);
 
-  const applyJournalTemplate = (template: typeof journalTemplates[0]) => {
+  const hasExistingContent = () => {
+    return !!(
+      journalData.reasonForEntry ||
+      journalData.exitRationale ||
+      journalData.lessonsLearned ||
+      journalData.emotionalState
+    );
+  };
+
+  const getFieldsToOverwrite = () => {
+    const fields: string[] = [];
+    if (journalData.reasonForEntry) fields.push("Entry Reasoning");
+    if (journalData.exitRationale) fields.push("Exit/Management");
+    if (journalData.lessonsLearned) fields.push("Lessons Learned");
+    if (journalData.emotionalState) fields.push("Emotional State");
+    return fields;
+  };
+
+  const handleTemplateClick = (template: JournalTemplateType) => {
+    if (hasExistingContent()) {
+      setPendingTemplate(template);
+      setShowConfirmModal(true);
+    } else {
+      applyJournalTemplate(template);
+    }
+  };
+
+  const confirmApplyTemplate = () => {
+    if (pendingTemplate) {
+      applyJournalTemplate(pendingTemplate);
+      setPendingTemplate(null);
+      setShowConfirmModal(false);
+    }
+  };
+
+  const applyJournalTemplate = (template: JournalTemplateType) => {
     setJournalData((prev) => ({
       ...prev,
       templateId: template.id,
@@ -468,6 +574,72 @@ const DailyJournal = () => {
       dailyNotes: template.content.dailyNotes || prev.dailyNotes || "",
     }));
     setShowTemplateDropdown(false);
+  };
+
+  const toggleFavorite = (templateId: string) => {
+    setFavoriteTemplates((prev) => {
+      const newFavorites = prev.includes(templateId)
+        ? prev.filter((id) => id !== templateId)
+        : [...prev, templateId];
+      localStorage.setItem("projournx_favorite_templates", JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  };
+
+  const saveCustomTemplate = () => {
+    if (!newTemplateName.trim()) return;
+    
+    const newTemplate: CustomJournalTemplate = {
+      id: `custom-${Date.now()}`,
+      name: newTemplateName.trim(),
+      icon: newTemplateIcon,
+      color: newTemplateColor,
+      description: "Custom template",
+      content: {
+        reasonForEntry: journalData.reasonForEntry || "",
+        exitRationale: journalData.exitRationale || "",
+        lessonsLearned: journalData.lessonsLearned || "",
+        emotionalState: journalData.emotionalState || "",
+        dailyNotes: journalData.dailyNotes || "",
+      },
+      isCustom: true,
+    };
+
+    const updatedTemplates = [...customTemplates, newTemplate];
+    setCustomTemplates(updatedTemplates);
+    localStorage.setItem("projournx_custom_templates", JSON.stringify(updatedTemplates));
+    setShowSaveTemplateModal(false);
+    setNewTemplateName("");
+    setNewTemplateIcon("Zap");
+    setNewTemplateColor("blue");
+  };
+
+  const deleteCustomTemplate = (templateId: string) => {
+    const updatedTemplates = customTemplates.filter((t) => t.id !== templateId);
+    setCustomTemplates(updatedTemplates);
+    localStorage.setItem("projournx_custom_templates", JSON.stringify(updatedTemplates));
+    setFavoriteTemplates((prev) => {
+      const newFavorites = prev.filter((id) => id !== templateId);
+      localStorage.setItem("projournx_favorite_templates", JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  };
+
+  const getAllTemplates = (): JournalTemplateType[] => {
+    const all = [...journalTemplates, ...customTemplates];
+    return all.sort((a, b) => {
+      const aFav = favoriteTemplates.includes(a.id);
+      const bFav = favoriteTemplates.includes(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return 0;
+    });
+  };
+
+  const getActiveTemplate = (): JournalTemplateType | null => {
+    if (!journalData.templateId) return null;
+    const all = [...journalTemplates, ...customTemplates];
+    return all.find((t) => t.id === journalData.templateId) || null;
   };
 
   const navigateTrade = (direction: "prev" | "next") => {
@@ -555,7 +727,6 @@ const DailyJournal = () => {
       const existingRulesCompliance = selectedTrade.jrData?.rulesCompliance;
       const jrDataWithRules = {
         ...journalData,
-        templateId: templates[selectedTemplateIdx]?.name,
         rulesCompliance: strategyRules.length > 0 ? rulesCompliance : existingRulesCompliance
       };
       await fetch("/api/daily-journal/post", {
@@ -1176,55 +1347,96 @@ const DailyJournal = () => {
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-primary" />
                       <h3 className="text-sm font-semibold text-foreground">Trade Narrative</h3>
+                      {(() => {
+                        const activeTemplate = getActiveTemplate();
+                        if (activeTemplate) {
+                          const colors = getJournalTemplateColor(activeTemplate.color);
+                          return (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${colors.bg} ${colors.text} ${colors.border} border`}>
+                              {activeTemplate.name}
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
-                    
-                    {/* Template Selector */}
-                    <div className="relative" ref={templateDropdownRef}>
-                      <button
-                        onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted/30 border border-border hover:bg-muted/50 hover:border-primary/30 transition-all"
-                      >
-                        <Layers className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="text-muted-foreground">Template</span>
-                        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${showTemplateDropdown ? "rotate-180" : ""}`} />
-                      </button>
-                      
-                      <AnimatePresence>
-                        {showTemplateDropdown && (
+                  </div>
+                  
+                  {/* Template Cards - Horizontal Scroll */}
+                  <div className="relative">
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+                      {getAllTemplates().map((template) => {
+                        const TemplateIcon = getTemplateIcon(template.icon);
+                        const colors = getJournalTemplateColor(template.color);
+                        const isActive = journalData.templateId === template.id;
+                        const isFavorite = favoriteTemplates.includes(template.id);
+                        const isCustom = "isCustom" in template && template.isCustom;
+                        
+                        return (
                           <motion.div
-                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 top-full mt-2 w-64 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+                            key={template.id}
+                            className={`relative flex-shrink-0 w-[110px] p-3 rounded-xl border cursor-pointer transition-all duration-200 group ${
+                              isActive
+                                ? `${colors.bg} ${colors.border} border-2 shadow-lg`
+                                : "bg-muted/20 border-border hover:bg-muted/40 hover:border-primary/30"
+                            }`}
+                            onClick={() => handleTemplateClick(template)}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                           >
-                            <div className="p-2 border-b border-border">
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium px-2">Choose a template</p>
+                            {/* Favorite Star */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(template.id);
+                              }}
+                              className="absolute top-1.5 right-1.5 p-1 rounded-full hover:bg-muted/60 transition-colors z-10"
+                            >
+                              <Star className={`w-3 h-3 ${isFavorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40 group-hover:text-muted-foreground"}`} />
+                            </button>
+                            
+                            {/* Delete button for custom templates */}
+                            {isCustom && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteCustomTemplate(template.id);
+                                }}
+                                className="absolute top-1.5 left-1.5 p-1 rounded-full bg-loss/10 hover:bg-loss/20 text-loss opacity-0 group-hover:opacity-100 transition-all z-10"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                            
+                            <div className="flex flex-col items-center text-center gap-1.5 pt-2">
+                              <div className={`p-2 rounded-lg ${colors.bg} ${colors.border} border`}>
+                                <TemplateIcon className={`w-4 h-4 ${colors.text}`} />
+                              </div>
+                              <span className="text-[11px] font-medium text-foreground line-clamp-1">{template.name}</span>
+                              <span className="text-[9px] text-muted-foreground/70 line-clamp-2 leading-tight">{template.description}</span>
                             </div>
-                            <div className="p-1.5 max-h-72 overflow-y-auto">
-                              {journalTemplates.map((template) => {
-                                const TemplateIcon = getTemplateIcon(template.icon);
-                                const colors = getJournalTemplateColor(template.color);
-                                return (
-                                  <button
-                                    key={template.id}
-                                    onClick={() => applyJournalTemplate(template)}
-                                    className="w-full flex items-start gap-3 p-2.5 rounded-lg hover:bg-muted/40 transition-colors text-left group"
-                                  >
-                                    <div className={`p-1.5 rounded-lg ${colors.bg} ${colors.border} border`}>
-                                      <TemplateIcon className={`w-4 h-4 ${colors.text}`} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{template.name}</p>
-                                      <p className="text-[11px] text-muted-foreground mt-0.5">{template.description}</p>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                            
+                            {isActive && (
+                              <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${colors.text.replace("text-", "bg-")} flex items-center justify-center`}>
+                                <Check className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            )}
                           </motion.div>
-                        )}
-                      </AnimatePresence>
+                        );
+                      })}
+                      
+                      {/* Save as Template Button */}
+                      <motion.button
+                        onClick={() => setShowSaveTemplateModal(true)}
+                        className="flex-shrink-0 w-[110px] p-3 rounded-xl border border-dashed border-border hover:border-primary/40 bg-muted/10 hover:bg-muted/30 transition-all group flex flex-col items-center justify-center gap-2"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                          <Plus className="w-4 h-4 text-primary" />
+                        </div>
+                        <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors">Save Template</span>
+                      </motion.button>
                     </div>
                   </div>
                   
@@ -1786,6 +1998,207 @@ const DailyJournal = () => {
                   </div>
                 )}
 
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Template Confirmation Modal */}
+      <AnimatePresence>
+        {showConfirmModal && pendingTemplate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => {
+              setShowConfirmModal(false);
+              setPendingTemplate(null);
+            }}
+          >
+            <motion.div
+              ref={confirmModalRef}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+            >
+              <div className="p-6 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Apply Template?</h3>
+                    <p className="text-sm text-muted-foreground">This will overwrite existing content</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-foreground">
+                  You are about to apply the <span className="font-semibold text-primary">"{pendingTemplate.name}"</span> template. The following fields will be overwritten:
+                </p>
+                
+                <div className="space-y-2">
+                  {getFieldsToOverwrite().map((field) => (
+                    <div key={field} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      <span className="text-sm text-foreground">{field}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="p-4 border-t border-border flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setPendingTemplate(null);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-muted/30 border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmApplyTemplate}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all"
+                >
+                  Apply Template
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Save Template Modal */}
+      <AnimatePresence>
+        {showSaveTemplateModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowSaveTemplateModal(false)}
+          >
+            <motion.div
+              ref={saveTemplateModalRef}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+            >
+              <div className="p-6 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                    <Plus className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Save as Template</h3>
+                    <p className="text-sm text-muted-foreground">Save current content as a custom template</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-5">
+                {/* Template Name */}
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Template Name</label>
+                  <input
+                    type="text"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    placeholder="Enter template name..."
+                    className="w-full px-4 py-2.5 rounded-lg bg-muted/30 border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-all"
+                  />
+                </div>
+                
+                {/* Icon Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Icon</label>
+                  <div className="flex flex-wrap gap-2">
+                    {TEMPLATE_ICONS.map(({ id, icon: Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => setNewTemplateIcon(id)}
+                        className={`p-2.5 rounded-lg border transition-all ${
+                          newTemplateIcon === id
+                            ? "bg-primary/10 border-primary/40 text-primary"
+                            : "bg-muted/20 border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Color Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Color</label>
+                  <div className="flex flex-wrap gap-2">
+                    {TEMPLATE_COLORS.map(({ id, class: colorClass }) => (
+                      <button
+                        key={id}
+                        onClick={() => setNewTemplateColor(id)}
+                        className={`w-8 h-8 rounded-lg ${colorClass} transition-all ${
+                          newTemplateColor === id
+                            ? "ring-2 ring-offset-2 ring-offset-card ring-white/50 scale-110"
+                            : "hover:scale-105 opacity-70 hover:opacity-100"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Preview */}
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Preview</label>
+                  <div className="p-4 rounded-xl bg-muted/20 border border-border">
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const IconComponent = getTemplateIcon(newTemplateIcon);
+                        const colors = getJournalTemplateColor(newTemplateColor);
+                        return (
+                          <>
+                            <div className={`p-2 rounded-lg ${colors.bg} ${colors.border} border`}>
+                              <IconComponent className={`w-5 h-5 ${colors.text}`} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{newTemplateName || "Template Name"}</p>
+                              <p className="text-xs text-muted-foreground">Custom template</p>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 border-t border-border flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowSaveTemplateModal(false);
+                    setNewTemplateName("");
+                    setNewTemplateIcon("Zap");
+                    setNewTemplateColor("blue");
+                  }}
+                  className="px-4 py-2 rounded-lg bg-muted/30 border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveCustomTemplate}
+                  disabled={!newTemplateName.trim()}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Save Template
+                </button>
               </div>
             </motion.div>
           </motion.div>
