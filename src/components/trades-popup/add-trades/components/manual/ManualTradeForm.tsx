@@ -80,6 +80,7 @@ interface ManualTradeFormProps {
   onClose: () => void;
   onSubmitStateChange?: (isSubmitting: boolean, tradesCount: number, canSubmit: boolean) => void;
   submitTrigger?: number;
+  isPropFirmMode?: boolean;
 }
 
 const markets = [
@@ -103,8 +104,12 @@ const formatDateForDisplay = (dateString: string) => {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStateChange, submitTrigger }: ManualTradeFormProps) {
+export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStateChange, submitTrigger, isPropFirmMode = false }: ManualTradeFormProps) {
   const { selectedAccounts, setAccounts } = useAccountDetails();
+  
+  const filteredMarkets = isPropFirmMode 
+    ? markets.filter(m => m.id === "FOREX") 
+    : markets;
   
   const [marketOpen, setMarketOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,6 +172,16 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       handleSubmit();
     }
   }, [submitTrigger]);
+
+  useEffect(() => {
+    if (isPropFirmMode) {
+      setTrades(prev => prev.map(t => 
+        t.market !== "FOREX" 
+          ? { ...t, market: "FOREX", currency: "USD", symbol: "", size: "" }
+          : t
+      ));
+    }
+  }, [isPropFirmMode]);
 
   const activeTrade = trades.find(t => t.id === activeTradeId) || trades[0];
   const market = activeTrade.market;
@@ -529,7 +544,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
 
       {/* Compact Market Pills - Horizontal Scroll */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-        {markets.map((m) => (
+        {filteredMarkets.map((m) => (
           <motion.button
             key={m.id}
             onClick={() => setMarket(m.id)}

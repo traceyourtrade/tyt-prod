@@ -180,6 +180,7 @@ const AddtradesMain = () => {
                     onClose={handleClose}
                     onSubmitStateChange={handleSubmitStateChange}
                     submitTrigger={submitTrigger}
+                    isPropFirmMode={isPropFirmMode}
                   />
                 )}
                 {selectedTab === 2 && <FileUpload />}
