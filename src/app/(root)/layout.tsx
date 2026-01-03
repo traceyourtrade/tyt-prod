@@ -200,9 +200,14 @@ export default function RootLayout({
         if (response.ok) {
           const data = await response.json();
           setSubscriptionStatus(data);
+        } else {
+          // Non-OK response (401, 500, etc.) - treat as no access
+          setSubscriptionStatus({ hasAccess: false, isSubscribed: false, isOnTrial: false, trialDaysLeft: 0, status: 'none' });
         }
       } catch (error) {
         console.error('Failed to fetch subscription status:', error);
+        // Network error - treat as no access for safety
+        setSubscriptionStatus({ hasAccess: false, isSubscribed: false, isOnTrial: false, trialDaysLeft: 0, status: 'none' });
       } finally {
         setSubscriptionLoading(false);
       }
@@ -218,7 +223,8 @@ export default function RootLayout({
     if (isPublicPage) return;
     
     // If user doesn't have access and is not on a public page, redirect to checkout
-    if (subscriptionStatus && !subscriptionStatus.hasAccess) {
+    // Also redirect if subscriptionStatus is null (shouldn't happen but safety fallback)
+    if (!subscriptionStatus || !subscriptionStatus.hasAccess) {
       router.push('/checkout');
     }
   }, [subscriptionStatus, subscriptionLoading, pathname, router]);
@@ -721,6 +727,32 @@ export default function RootLayout({
           <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
           <p className="text-muted-foreground text-sm">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  // For unpaid users, NEVER show sidebar, popups, or app shell
+  // This prevents paywall bypass via modals or sidebar navigation
+  // Only paid users (hasAccess=true) see the full app shell
+  const hasSubscriptionAccess = subscriptionStatus?.hasAccess || false;
+  if (!hasSubscriptionAccess) {
+    // On protected pages: show NOTHING (redirect is happening via useEffect)
+    // On public pages (/checkout, /settings, /support): show bare children only
+    if (!isPublicPage) {
+      // Return a minimal redirect placeholder - no content exposed
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <p className="text-muted-foreground text-sm">Redirecting...</p>
+          </div>
+        </div>
+      );
+    }
+    // Public pages: show bare children (checkout, settings, support) - no sidebar/modals
+    return (
+      <div className="min-h-screen bg-background">
+        {children}
       </div>
     );
   }
