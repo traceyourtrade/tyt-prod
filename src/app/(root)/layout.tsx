@@ -69,6 +69,7 @@ import DjImgPopup from "@/components/dashboard-components/popups/DjImgPopup";
 import AccountsDropdown from "@/components/dashboard-components/AccountsDropdown";
 import CurrencyDropdown from "@/components/dashboard-components/CurrencyDropdown";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import PhaseAdvancementNotification from "@/components/prop-firm/PhaseAdvancementNotification";
 import OnboardingTour, { WelcomeModal } from "@/components/onboarding/OnboardingTour";
 import { platformTourSteps } from "@/hooks/useOnboardingTour";
 import { useTourStore } from "@/stores/useTourStore";
@@ -875,6 +876,9 @@ export default function RootLayout({
       >
         {/* Announcement Banner */}
         <AnnouncementBanner />
+        
+        {/* Prop Firm Phase Advancement Notification */}
+        <PhaseAdvancementNotification />
 
         {/* Top Bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-6">

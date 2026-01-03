@@ -76,11 +76,20 @@ export interface ChallengeAttempt {
   totalPnL: number
 }
 
+export interface PhaseAdvancementNotification {
+  challengeId: string
+  challengeName: string
+  fromPhase: string
+  toPhase: string
+  timestamp: string
+}
+
 export interface PropFirmState {
   isEnabled: boolean
   challenges: Record<string, PropChallenge>
   activeChallengeIds: string[]
   viewingChallengeId: string | null
+  phaseAdvancementNotification: PhaseAdvancementNotification | null
   alertThresholds: {
     warning: number
     critical: number
@@ -122,6 +131,7 @@ export interface PropFirmState {
     valueAtTime: number,
     limitValue: number
   ) => void
+  clearPhaseAdvancementNotification: () => void
   
   // Getters
   getActiveChallenge: () => PropChallenge | null
@@ -179,6 +189,7 @@ const usePropFirmStore = create<PropFirmState>()(
       challenges: {},
       activeChallengeIds: [],
       viewingChallengeId: null,
+      phaseAdvancementNotification: null,
       alertThresholds: {
         warning: 70,
         critical: 85,
@@ -346,23 +357,62 @@ const usePropFirmStore = create<PropFirmState>()(
       },
 
       updateChallengeMetrics: (challengeId: string, metrics: { totalPnL: number; currentEquity: number }) => {
-        set(state => {
-          const challenge = state.challenges[challengeId]
-          if (!challenge) return state
-          
-          const newPeakEquity = Math.max(challenge.peakEquity, metrics.currentEquity)
-          
-          return {
-            challenges: {
-              ...state.challenges,
-              [challengeId]: {
-                ...challenge,
-                totalPnL: metrics.totalPnL,
-                peakEquity: newPeakEquity,
-              }
+        const { challenges, advanceChallengePhase } = get()
+        const challenge = challenges[challengeId]
+        if (!challenge) return
+        
+        const newPeakEquity = Math.max(challenge.peakEquity, metrics.currentEquity)
+        
+        // Get preset to check phase info - use current phase's profit target, not settings
+        const preset = getPresetById(challenge.presetId)
+        const currentPhase = preset?.phases[challenge.currentPhaseIndex]
+        const currentPhaseName = currentPhase?.name || `Phase ${challenge.currentPhaseIndex + 1}`
+        
+        // Use the CURRENT PHASE's profit target, not the static settings
+        const currentProfitTargetPercent = currentPhase?.profitTarget ?? challenge.settings.profitTargetPercent
+        const profitTargetAmount = challenge.settings.startingBalance * (currentProfitTargetPercent / 100)
+        const hasMetProfitTarget = metrics.totalPnL >= profitTargetAmount
+        
+        const nextPhaseIndex = challenge.currentPhaseIndex + 1
+        const isFunded = preset ? nextPhaseIndex >= preset.phases.length : false
+        const nextPhase = preset ? (isFunded ? preset.fundedPhase : preset.phases[nextPhaseIndex]) : null
+        const nextPhaseName = nextPhase?.name || (isFunded ? "Funded" : `Phase ${nextPhaseIndex + 1}`)
+        
+        // Only auto-advance if challenge is active and not already breached/completed
+        const shouldAutoAdvance = hasMetProfitTarget && 
+          challenge.status === "active" && 
+          preset !== null
+        
+        set(state => ({
+          challenges: {
+            ...state.challenges,
+            [challengeId]: {
+              ...challenge,
+              totalPnL: metrics.totalPnL,
+              peakEquity: newPeakEquity,
             }
           }
-        })
+        }))
+        
+        // Auto-advance phase if profit target met
+        if (shouldAutoAdvance) {
+          advanceChallengePhase(challengeId)
+          
+          // Set notification for UI
+          set({
+            phaseAdvancementNotification: {
+              challengeId,
+              challengeName: challenge.name,
+              fromPhase: currentPhaseName,
+              toPhase: nextPhaseName,
+              timestamp: new Date().toISOString(),
+            }
+          })
+        }
+      },
+      
+      clearPhaseAdvancementNotification: () => {
+        set({ phaseAdvancementNotification: null })
       },
 
       setChallengeStatusById: (challengeId: string, status: PropChallenge["status"]) => {
@@ -854,7 +904,7 @@ const usePropFirmStore = create<PropFirmState>()(
           }
         }
         
-        return state as PropFirmState
+        return state as unknown as PropFirmState
       },
     }
   )
