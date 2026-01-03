@@ -269,10 +269,10 @@ const AccountsDropdown = () => {
                       setIsOpen(false);
                       setAddAcc();
                     }}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:text-primary hover:bg-primary/10 transition-colors"
                   >
-                    <Settings className="w-4 h-4" />
-                    Manage Accounts
+                    <Plus className="w-4 h-4" />
+                    Add Account
                   </button>
                 </div>
               </>
