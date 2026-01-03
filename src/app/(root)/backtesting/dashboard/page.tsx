@@ -1021,21 +1021,32 @@ export default function BacktestingDashboard() {
                       Market Type
                     </label>
                     <div className="grid grid-cols-4 gap-2">
-                      {MARKETS.map(m => (
-                        <button
-                          key={m.value}
-                          onClick={() => handleMarketChange(m.value)}
-                          className={cn(
-                            "p-3 rounded-xl border text-sm font-medium transition-all flex flex-col items-center gap-1",
-                            formData.market === m.value
-                              ? "bg-primary/10 border-primary/40 text-primary"
-                              : "bg-background border-border text-muted-foreground hover:border-primary/20 hover:text-foreground"
-                          )}
-                        >
-                          <span className="text-lg">{m.icon}</span>
-                          <span className="text-xs">{m.label}</span>
-                        </button>
-                      ))}
+                      {MARKETS.map(m => {
+                        const isComingSoon = m.value === 'INDIAN_INDICES' || m.value === 'INDIAN_STOCK';
+                        return (
+                          <button
+                            key={m.value}
+                            onClick={() => !isComingSoon && handleMarketChange(m.value)}
+                            disabled={isComingSoon}
+                            className={cn(
+                              "p-3 rounded-xl border text-sm font-medium transition-all flex flex-col items-center gap-1 relative",
+                              isComingSoon
+                                ? "bg-muted/50 border-border/50 text-muted-foreground/50 cursor-not-allowed"
+                                : formData.market === m.value
+                                  ? "bg-primary/10 border-primary/40 text-primary"
+                                  : "bg-background border-border text-muted-foreground hover:border-primary/20 hover:text-foreground"
+                            )}
+                          >
+                            {isComingSoon && (
+                              <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide bg-amber-500 text-white rounded whitespace-nowrap">
+                                Coming Soon
+                              </span>
+                            )}
+                            <span className="text-lg">{m.icon}</span>
+                            <span className="text-xs">{m.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
