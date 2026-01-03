@@ -21,6 +21,8 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Backend:** Next.js API Routes.
 - **State Management:** Zustand for client-side state.
 - **Theming:** Tailwind CSS with CSS variables.
+- **Currency Conversion:** Multi-currency support via `currencyStore.ts`. Trades can be entered in either USD or INR, and the dashboard converts to the user's display currency preference. Uses exchange rate 83.5 INR = 1 USD. Formatters accept `alreadyConverted` flag to prevent double-conversion when values are pre-converted during aggregation. Currently implemented in Calendar and DashboardMonth; other dashboard views may need similar updates.
+- **Market Hours Warning:** ManualTradeForm shows amber warning when adding stock/forex trades on weekends (Sat/Sun) since markets are closed. Crypto is exempt (24/7 trading).
 
 ### Feature Specifications
 - **Dashboard:** Performance overview with charts.
