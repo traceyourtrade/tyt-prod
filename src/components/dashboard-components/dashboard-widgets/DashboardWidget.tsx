@@ -23,6 +23,7 @@ interface DashWidgetsProps {
   accBal: number | string;
   totalProfits: number;
   totalLoses: number;
+  valuesAlreadyConverted?: boolean;
 }
 
 interface StatCardProps {
@@ -121,7 +122,8 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   avgProfits, 
   avgLoses, 
   rrRatio, 
-  accBal, 
+  accBal,
+  valuesAlreadyConverted = false,
 }) => {
   const { currency, exchangeRate } = useCurrencyStore();
   
@@ -130,10 +132,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   const totalTrades = winners + losers;
   const balanceValue = typeof accBal === 'string' ? parseFloat(accBal) : accBal;
   
-  const pnlFormatted = formatCurrencyValue(Math.abs(numericPnl), currency, exchangeRate, balanceValue);
+  const pnlFormatted = formatCurrencyValue(Math.abs(numericPnl), currency, exchangeRate, balanceValue, undefined, valuesAlreadyConverted);
   const balanceFormatted = formatCurrencyValue(balanceValue, currency, exchangeRate);
-  const avgProfitFormatted = formatCompactCurrency(avgProfits || 0, currency, exchangeRate);
-  const avgLossFormatted = formatCompactCurrency(Math.abs(avgLoses || 0), currency, exchangeRate);
+  const avgProfitFormatted = formatCompactCurrency(avgProfits || 0, currency, exchangeRate, undefined, undefined, valuesAlreadyConverted);
+  const avgLossFormatted = formatCompactCurrency(Math.abs(avgLoses || 0), currency, exchangeRate, undefined, undefined, valuesAlreadyConverted);
 
   const dataWinLoss = {
     labels: ["Wins", "Losses"],

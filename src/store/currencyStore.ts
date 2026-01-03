@@ -26,12 +26,49 @@ export const currencyLabels: Record<CurrencyType, string> = {
   R: "R Factor",
 };
 
+export const normalizeTradeCurrency = (tradeCurrency?: string): "USD" | "INR" => {
+  if (!tradeCurrency) return "USD";
+  const lower = tradeCurrency.toLowerCase();
+  if (lower === "inr" || lower === "rupee" || lower === "rupees" || lower === "₹") {
+    return "INR";
+  }
+  return "USD";
+};
+
+export const convertTradeCurrency = (
+  value: number,
+  tradeCurrency: string | undefined,
+  displayCurrency: CurrencyType,
+  exchangeRate: number = 83.5
+): number => {
+  if (displayCurrency === "PERCENT" || displayCurrency === "R") {
+    return value;
+  }
+  
+  const normalizedTradeCurrency = normalizeTradeCurrency(tradeCurrency);
+  
+  if (normalizedTradeCurrency === displayCurrency) {
+    return value;
+  }
+  
+  if (normalizedTradeCurrency === "INR" && displayCurrency === "USD") {
+    return value / exchangeRate;
+  }
+  
+  if (normalizedTradeCurrency === "USD" && displayCurrency === "INR") {
+    return value * exchangeRate;
+  }
+  
+  return value;
+};
+
 export const formatCurrencyValue = (
   value: number, 
   currency: CurrencyType, 
   exchangeRate: number = 83.5,
   accountBalance?: number,
-  riskAmount?: number
+  riskAmount?: number,
+  alreadyConverted: boolean = false
 ): string => {
   if (currency === "PERCENT") {
     if (accountBalance && accountBalance > 0) {
@@ -50,7 +87,7 @@ export const formatCurrencyValue = (
   }
   
   let displayValue = value;
-  if (currency === "INR") {
+  if (currency === "INR" && !alreadyConverted) {
     displayValue = value * exchangeRate;
   }
   
@@ -88,7 +125,8 @@ export const formatCompactCurrency = (
   currency: CurrencyType, 
   exchangeRate: number = 83.5,
   accountBalance?: number,
-  riskAmount?: number
+  riskAmount?: number,
+  alreadyConverted: boolean = false
 ): string => {
   // Handle PERCENT mode - show as percentage of account balance
   if (currency === "PERCENT") {
@@ -116,7 +154,7 @@ export const formatCompactCurrency = (
   }
   
   let displayValue = value;
-  if (currency === "INR") {
+  if (currency === "INR" && !alreadyConverted) {
     displayValue = value * exchangeRate;
   }
   

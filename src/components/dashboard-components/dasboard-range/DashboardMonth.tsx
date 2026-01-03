@@ -12,6 +12,7 @@ import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
+import useCurrencyStore, { convertTradeCurrency } from '@/store/currencyStore';
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
@@ -28,6 +29,7 @@ interface TradeData {
   date: string;
   Profit: number;
   Item: string;
+  Currency?: string;
   [key: string]: unknown;
 }
 
@@ -40,6 +42,7 @@ const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
   const { layout } = useDashboardLayoutStore();
+  const { currency, exchangeRate } = useCurrencyStore();
 
   function isCurrentMonth(dateString: string): boolean {
     const date = new Date(dateString);
@@ -58,9 +61,11 @@ const DashboardMonth: React.FC = () => {
 
   const totalAccountBalance = calculateBalance(selectedAccounts);
 
+  const convertProfit = (trade: TradeData) => convertTradeCurrency(trade.Profit || 0, trade.Currency, currency, exchangeRate);
+
   let data = Object.entries(
     (thisMonthData || []).reduce((acc: { [key: string]: number }, trade) => {
-      acc[trade.date] = (acc[trade.date] || 0) + (trade.Profit || 0);
+      acc[trade.date] = (acc[trade.date] || 0) + convertProfit(trade);
       return acc;
     }, {})
   )
@@ -77,17 +82,18 @@ const DashboardMonth: React.FC = () => {
 
   const dashWidgetProps = {
     data,
-    pnl: thisMonthData.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2),
+    pnl: thisMonthData.reduce((sum, trade) => sum + convertProfit(trade), 0).toFixed(2),
     winrate: ((thisMonthData.filter(trade => trade.Profit > 0).length / thisMonthData.length * 100 || 0).toFixed(2)),
     winners: thisMonthData.filter(t => t.Profit > 0).length,
     losers: thisMonthData.filter(t => t.Profit < 0).length,
     profitF: calculateProfitFactor(thisMonthData),
-    totalProfits: thisMonthData.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0),
-    totalLoses: thisMonthData.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0),
+    totalProfits: thisMonthData.reduce((sum, trade) => trade.Profit > 0 ? sum + convertProfit(trade) : sum, 0),
+    totalLoses: thisMonthData.reduce((sum, trade) => trade.Profit < 0 ? sum + convertProfit(trade) : sum, 0),
     avgProfits: parseFloat(metrics.avgWin),
     avgLoses: parseFloat(metrics.avgLoss),
     rrRatio: metrics.rrRatio,
     accBal: calculateBalance(selectedAccounts).toFixed(2),
+    valuesAlreadyConverted: true,
   };
 
   const isWidgetVisible = (widgetId: string) => {

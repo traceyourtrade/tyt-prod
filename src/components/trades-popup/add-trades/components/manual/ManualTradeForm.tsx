@@ -104,6 +104,30 @@ const formatDateForDisplay = (dateString: string) => {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
+const isWeekend = (dateString: string): boolean => {
+  if (!dateString) return false;
+  const date = new Date(dateString);
+  const day = date.getDay();
+  return day === 0 || day === 6;
+};
+
+const getMarketClosedWarning = (market: string, entryDate: string, exitDate: string): string | null => {
+  if (market === "CRYPTO") return null;
+  
+  const entryWeekend = isWeekend(entryDate);
+  const exitWeekend = isWeekend(exitDate);
+  
+  if (entryWeekend && exitWeekend) {
+    return `${market === "FOREX" ? "Forex" : "Stock"} markets are closed on weekends. Both entry and exit dates are on weekends.`;
+  } else if (entryWeekend) {
+    return `${market === "FOREX" ? "Forex" : "Stock"} markets are closed on weekends. Entry date is on a weekend.`;
+  } else if (exitWeekend) {
+    return `${market === "FOREX" ? "Forex" : "Stock"} markets are closed on weekends. Exit date is on a weekend.`;
+  }
+  
+  return null;
+};
+
 export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStateChange, submitTrigger, isPropFirmMode = false }: ManualTradeFormProps) {
   const { selectedAccounts, setAccounts } = useAccountDetails();
   
@@ -541,6 +565,21 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Market Hours Warning */}
+      {(() => {
+        const warning = getMarketClosedWarning(activeTrade.market, activeTrade.entryDate, activeTrade.exitDate);
+        return warning ? (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 flex items-center gap-2"
+          >
+            <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+            <p className="text-xs text-amber-500 flex-1">{warning}</p>
+          </motion.div>
+        ) : null;
+      })()}
 
       {/* Compact Market Pills - Horizontal Scroll */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">

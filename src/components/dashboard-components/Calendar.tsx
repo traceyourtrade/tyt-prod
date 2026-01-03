@@ -7,11 +7,12 @@ import { cn } from "@/lib/utils";
 import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import calendarPopUp from "@/store/calendarPopUp";
 import datesforcal from "@/store/datesforcal";
-import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
+import useCurrencyStore, { formatCompactCurrency, convertTradeCurrency } from "@/store/currencyStore";
 
 interface Trade {
   date: string;
   Profit: number;
+  Currency?: string;
   [key: string]: unknown;
 }
 
@@ -46,7 +47,8 @@ const Calendar = () => {
         acc[trade.date] = { date: trade.date, trades: [], profit: 0, tradeLength: 0 };
       }
       acc[trade.date].trades.push(trade);
-      acc[trade.date].profit += trade.Profit;
+      const convertedProfit = convertTradeCurrency(trade.Profit, trade.Currency, currency, exchangeRate);
+      acc[trade.date].profit += convertedProfit;
       acc[trade.date].tradeLength += 1;
       return acc;
     }, {});
@@ -81,7 +83,7 @@ const Calendar = () => {
   }, []);
 
   const formatCurrencyDisplay = (num: number) => {
-    return formatCompactCurrency(Math.abs(num), currency, exchangeRate, accountBalance);
+    return formatCompactCurrency(Math.abs(num), currency, exchangeRate, accountBalance, undefined, true);
   };
 
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
