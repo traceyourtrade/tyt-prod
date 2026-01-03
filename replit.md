@@ -41,6 +41,7 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
   - **Smart Alerts:** Automatic violation logging at 70% (warning) and 85% (critical) of drawdown limits with deduplication, now per-challenge.
   - **Scale-Up Calculator:** Projects capital growth based on prop firm scaling plans and monthly returns.
   - **Violations Timeline:** Tracks drawdown warnings, breaches, and other rule violations with journal notes per challenge.
+  - **Auto Phase Advancement:** Automatically detects when P&L meets the current phase's profit target and advances to the next phase. Uses the per-phase profit target from the preset configuration (e.g., Phase 1 = 10%, Phase 2 = 5%). Shows a celebratory notification with animated confetti-style effect when phase is passed or funded status achieved.
   - **Future Enhancement:** Account-to-challenge linking via `linkedAccountIds` for filtering trades per challenge (not yet implemented).
 - **Lot Size Calculator:** Tool for forex position sizing.
 - **Resource Center:** Educational hub with articles, psychology tips, and customizable trading routines.
