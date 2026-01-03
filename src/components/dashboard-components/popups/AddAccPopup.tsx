@@ -390,7 +390,13 @@ const AddAccPopup = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAccDetails({ ...accountDetails, isPropFirm: true })}
+                  onClick={() => {
+                    setAccDetails({ ...accountDetails, isPropFirm: true });
+                    setSelectedMarket("forex");
+                    if (!broker || !marketCategories.find(m => m.id === "forex")?.brokers.some(b => b.id === broker)) {
+                      setBroker("MetaTrader 5");
+                    }
+                  }}
                   className={cn(
                     "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
                     accountDetails.isPropFirm 
@@ -403,7 +409,7 @@ const AddAccPopup = () => {
               </div>
               <p className="text-xs text-muted-foreground">
                 {accountDetails.isPropFirm 
-                  ? "This account will only show in Prop Firm mode" 
+                  ? "Prop firms focus on Forex & CFD instruments only" 
                   : "This account will show in Live Trading mode"
                 }
               </p>
@@ -526,8 +532,8 @@ const AddAccPopup = () => {
               )}
             </AnimatePresence>
 
-            {/* Market Category Selection - Hidden for Broker Sync */}
-            {accountType !== "Broker Sync" && (
+            {/* Market Category Selection - Hidden for Broker Sync and Prop Firm */}
+            {accountType !== "Broker Sync" && !accountDetails.isPropFirm && (
             <div className="space-y-3">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
@@ -574,10 +580,24 @@ const AddAccPopup = () => {
             </div>
             )}
 
-            {/* Broker Selection - Hidden for Broker Sync */}
+            {/* Prop Firm Market Info */}
+            {accountDetails.isPropFirm && accountType !== "Broker Sync" && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br from-blue-500 to-cyan-500">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Forex / CFDs</p>
+                  <p className="text-xs text-muted-foreground">Prop firms only support Forex & CFD trading</p>
+                </div>
+                <CheckCircle2 className="w-5 h-5 text-amber-500" />
+              </div>
+            )}
+
+            {/* Broker Selection - Hidden for Broker Sync only (shown for Prop Firm) */}
             {accountType !== "Broker Sync" && (
             <AnimatePresence>
-              {selectedMarket && (
+              {(selectedMarket || accountDetails.isPropFirm) && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
