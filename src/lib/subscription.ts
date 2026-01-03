@@ -13,6 +13,7 @@ export interface SubscriptionStatus {
 }
 
 export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
+  // Admin bypass - admins always have full access
   if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return {
       hasAccess: true,
@@ -25,6 +26,7 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
 
   const now = new Date();
   
+  // Check for active paid subscription
   if (user.subscription?.isSubscribed && user.subscription?.subscriptionStatus === 'active') {
     const expiry = user.subscription.subscriptionExpiry;
     if (expiry && new Date(expiry) > now) {
@@ -38,29 +40,9 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
     }
   }
   
-  if (user.subscription?.trialEndsAt) {
-    const trialEnd = new Date(user.subscription.trialEndsAt);
-    if (trialEnd > now) {
-      const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      return {
-        hasAccess: true,
-        isSubscribed: false,
-        isOnTrial: true,
-        trialDaysLeft: daysLeft,
-        status: 'trial'
-      };
-    }
-  }
-  
-  if (user.subscription?.trialUsed) {
-    return {
-      hasAccess: false,
-      isSubscribed: false,
-      isOnTrial: false,
-      trialDaysLeft: 0,
-      status: 'expired'
-    };
-  }
+  // NO FREE TRIAL - Blocking pay-to-use model
+  // Users must pay to access premium features
+  // Trial logic removed - hasAccess is false unless subscribed
   
   // Check if subscription status is 'inactive' (new user who hasn't subscribed yet)
   if (user.subscription?.subscriptionStatus === 'inactive') {
@@ -73,6 +55,7 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
     };
   }
   
+  // Default: no access for non-subscribed users
   return {
     hasAccess: false,
     isSubscribed: false,
