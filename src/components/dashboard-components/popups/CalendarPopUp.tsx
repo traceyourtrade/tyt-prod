@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import html2canvas from "html2canvas";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -1053,9 +1053,8 @@ const CalendarPopup = () => {
                             const isExpanded = expandedTrades.has(tradeId);
                             
                             return (
-                              <>
-                                <motion.tr 
-                                  key={tradeId}
+                              <React.Fragment key={tradeId}>
+                                <motion.tr
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: index * 0.03 }}
@@ -1198,7 +1197,7 @@ const CalendarPopup = () => {
                                     </tr>
                                   )}
                                 </AnimatePresence>
-                              </>
+                              </React.Fragment>
                             );
                           })}
                         </tbody>
