@@ -3,6 +3,7 @@ import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
 import { getCommissionModel } from "@/models/main/commission.model";
 import { getAffiliateCouponModel } from "@/models/main/affiliateCoupon.model";
+import { getUserModel } from "@/models/main/user.model";
 
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
@@ -21,6 +22,7 @@ export async function GET(req: Request) {
     const Referral = await getReferralModel();
     const Commission = await getCommissionModel();
     const AffiliateCoupon = await getAffiliateCouponModel();
+    const User = await getUserModel();
 
     const affiliates = await Affiliate.find().sort({ createdAt: -1 });
 
@@ -34,8 +36,12 @@ export async function GET(req: Request) {
         ]).then(res => res[0]?.total || 0);
         const coupons = await AffiliateCoupon.find({ affiliateId: aff.uniqueId });
 
+        const user = await User.findOne({ uniqueId: aff.userId });
+
         return {
           ...aff.toObject(),
+          userName: user?.fullName || null,
+          userEmail: user?.email || null,
           referralCount,
           conversionCount,
           pendingCommissions,
