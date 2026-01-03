@@ -194,7 +194,6 @@ const Notebook = () => {
         setNewFolderName("");
         setShowNewFolderInput(false);
         await setNotes();
-        setExpandedFolders(prev => new Set([...prev, newFolderName]));
         handleFolderSelect(newFolderName);
       } else {
         const data = await response.json();
@@ -208,6 +207,8 @@ const Notebook = () => {
   };
 
   const deleteFolder = async (folderName: string) => {
+    if (!confirm(`Delete folder "${folderName}" and all its notes?`)) return;
+
     try {
       const response = await fetch(`/api/notebook/post`, {
         method: "POST",
@@ -216,15 +217,37 @@ const Notebook = () => {
       });
 
       if (response.ok) {
-        setFolderMenuOpen(null);
         if (selectedFolder === folderName) {
           setFolder("");
           setFile("");
         }
         await setNotes();
+        setFolderMenuOpen(null);
       }
     } catch (error) {
       console.error("Error deleting folder:", error);
+    }
+  };
+
+  const deleteNote = async (folderName: string, fileName: string) => {
+    if (!confirm(`Delete note "${fileName}"?`)) return;
+
+    try {
+      const response = await fetch(`/api/notebook/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderName, fileName, apiName: 'deleteFile' }),
+      });
+
+      if (response.ok) {
+        if (selectedFile === fileName) {
+          setFile("");
+        }
+        await setNotes();
+        setNoteMenuOpen(null);
+      }
+    } catch (error) {
+      console.error("Error deleting note:", error);
     }
   };
 
@@ -238,7 +261,7 @@ const Notebook = () => {
       const response = await fetch(`/api/notebook/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folderName: oldName, newFolderName: newName, apiName: 'renameFolder' }),
+        body: JSON.stringify({ folderName: oldName, renameFolder: newName, apiName: 'renameFolder' }),
       });
 
       if (response.ok) {
@@ -247,28 +270,11 @@ const Notebook = () => {
           setFolder(newName);
         }
         await setNotes();
+      } else {
+        setAlertBoxG("Failed to rename folder", "error");
       }
     } catch (error) {
       console.error("Error renaming folder:", error);
-    }
-  };
-
-  const deleteNote = async (folderName: string, fileName: string) => {
-    try {
-      const response = await fetch(`/api/notebook/post`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folderName, fileName, apiName: 'deleteFile' }),
-      });
-
-      if (response.ok) {
-        if (selectedFile === fileName) {
-          setFile("");
-        }
-        await setNotes();
-      }
-    } catch (error) {
-      console.error("Error deleting note:", error);
     }
   };
 
@@ -311,22 +317,22 @@ const Notebook = () => {
   };
 
   return (
-    <div className="h-screen bg-[#1c1c1e] flex overflow-hidden">
+    <div className="h-screen bg-background flex overflow-hidden">
       {/* Column 1: Folders */}
-      <div className={`${mobileView === "folders" ? "flex" : "hidden"} md:flex flex-col w-full md:w-[240px] bg-[#2c2c2e] border-r border-[#3a3a3c]`}>
-        <div className="h-14 flex items-center justify-between px-4 border-b border-[#3a3a3c]">
-          <h1 className="text-[15px] font-semibold text-white">Folders</h1>
+      <div className={`${mobileView === "folders" ? "flex" : "hidden"} md:flex flex-col w-full md:w-[240px] bg-card border-r border-border`}>
+        <div className="h-14 flex items-center justify-between px-4 border-b border-border">
+          <h1 className="text-[15px] font-semibold text-foreground">Folders</h1>
           <button
             onClick={() => setShowNewFolderInput(true)}
-            className="p-1.5 rounded-md hover:bg-[#3a3a3c] transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted transition-colors"
           >
-            <FolderPlus className="h-4 w-4 text-[#ffd60a]" />
+            <FolderPlus className="h-4 w-4 text-primary" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {showNewFolderInput && (
-            <div className="px-3 py-2 border-b border-[#3a3a3c]">
+            <div className="px-3 py-2 border-b border-border">
               <div className="flex items-center gap-2">
                 <input
                   type="text"
@@ -335,12 +341,12 @@ const Notebook = () => {
                   onChange={(e) => setNewFolderName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && createFolder()}
                   autoFocus
-                  className="flex-1 px-3 py-1.5 bg-[#1c1c1e] border border-[#ffd60a]/50 rounded-md text-sm text-white placeholder:text-[#8e8e93] focus:outline-none focus:border-[#ffd60a]"
+                  className="flex-1 px-3 py-1.5 bg-muted/50 border border-primary/30 rounded-md text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
                 />
-                <button onClick={createFolder} className="p-1.5 rounded-md bg-[#ffd60a]/20 hover:bg-[#ffd60a]/30 text-[#ffd60a]">
+                <button onClick={createFolder} className="p-1.5 rounded-md bg-primary/20 hover:bg-primary/30 text-primary">
                   <Check className="h-4 w-4" />
                 </button>
-                <button onClick={() => { setShowNewFolderInput(false); setNewFolderName(""); }} className="p-1.5 rounded-md hover:bg-[#3a3a3c] text-[#8e8e93]">
+                <button onClick={() => { setShowNewFolderInput(false); setNewFolderName(""); }} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -351,19 +357,21 @@ const Notebook = () => {
           <div
             onClick={() => { setFolder(""); setFile(""); setMobileView("notes"); }}
             className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-              !selectedFolder ? "bg-[#ffd60a]/10" : "hover:bg-[#3a3a3c]/50"
+              !selectedFolder ? "bg-primary/10 border-l-2 border-primary" : "hover:bg-muted/50"
             }`}
           >
-            <div className="w-8 h-8 rounded-lg bg-[#ffd60a]/20 flex items-center justify-center">
-              <FileText className="h-4 w-4 text-[#ffd60a]" />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              !selectedFolder ? "bg-primary/20" : "bg-muted"
+            }`}>
+              <FileText className={`h-4 w-4 ${!selectedFolder ? "text-primary" : "text-muted-foreground"}`} />
             </div>
             <div className="flex-1">
-              <span className="text-[15px] text-white">All Notes</span>
+              <span className={`text-[15px] ${!selectedFolder ? "text-primary font-medium" : "text-foreground"}`}>All Notes</span>
             </div>
-            <span className="text-[13px] text-[#8e8e93]">{totalNotes}</span>
+            <span className="text-[13px] text-muted-foreground">{totalNotes}</span>
           </div>
 
-          <div className="h-px bg-[#3a3a3c] mx-4 my-1" />
+          <div className="h-px bg-border mx-4 my-1" />
 
           {/* Folder list */}
           <div className="py-1">
@@ -376,13 +384,13 @@ const Notebook = () => {
                   <div
                     onClick={() => !isEditing && handleFolderSelect(folder.folderName)}
                     className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${
-                      isSelected ? "bg-[#ffd60a]/10" : "hover:bg-[#3a3a3c]/50"
+                      isSelected ? "bg-primary/10 border-l-2 border-primary" : "hover:bg-muted/50 border-l-2 border-transparent"
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      isSelected ? "bg-[#ffd60a]/20" : "bg-[#48484a]"
+                      isSelected ? "bg-primary/20" : "bg-muted"
                     }`}>
-                      <FolderIcon className={`h-4 w-4 ${isSelected ? "text-[#ffd60a]" : "text-[#8e8e93]"}`} />
+                      <FolderIcon className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                     </div>
                     
                     {isEditing ? (
@@ -397,13 +405,13 @@ const Notebook = () => {
                         onBlur={() => renameFolder(folder.folderName, editFolderName)}
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
-                        className="flex-1 px-2 py-0.5 bg-[#1c1c1e] border border-[#ffd60a]/50 rounded text-sm text-white focus:outline-none"
+                        className="flex-1 px-2 py-0.5 bg-muted/50 border border-primary/30 rounded text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
                       />
                     ) : (
-                      <span className="flex-1 text-[15px] text-white truncate">{folder.folderName}</span>
+                      <span className={`flex-1 text-[15px] truncate ${isSelected ? "text-primary font-medium" : "text-foreground"}`}>{folder.folderName}</span>
                     )}
                     
-                    <span className="text-[13px] text-[#8e8e93]">{folder.files?.length || 0}</span>
+                    <span className="text-[13px] text-muted-foreground">{folder.files?.length || 0}</span>
                     
                     <div className="relative">
                       <button
@@ -412,16 +420,16 @@ const Notebook = () => {
                           e.stopPropagation();
                           setFolderMenuOpen(folderMenuOpen === folder.folderName ? null : folder.folderName);
                         }}
-                        className="p-1 rounded hover:bg-[#48484a] opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <MoreHorizontal className="h-4 w-4 text-[#8e8e93]" />
+                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                       </button>
                       
                       {folderMenuOpen === folder.folderName && (
-                        <div data-context-menu className="absolute right-0 top-full mt-1 w-36 bg-[#2c2c2e] border border-[#3a3a3c] rounded-lg shadow-xl z-50 overflow-hidden">
+                        <div data-context-menu className="absolute right-0 top-full mt-1 w-36 bg-popover border border-border rounded-lg shadow-xl z-50 overflow-hidden">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleNewNoteInFolder(folder.folderName); setFolderMenuOpen(null); }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[#3a3a3c] text-white"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-muted text-foreground"
                           >
                             <Plus className="h-4 w-4" /> New Note
                           </button>
@@ -432,13 +440,13 @@ const Notebook = () => {
                               setEditFolderName(folder.folderName);
                               setFolderMenuOpen(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[#3a3a3c] text-white"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-muted text-foreground"
                           >
                             <Pencil className="h-4 w-4" /> Rename
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); deleteFolder(folder.folderName); }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[#3a3a3c] text-[#ff453a]"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-muted text-destructive"
                           >
                             <Trash2 className="h-4 w-4" /> Delete
                           </button>
@@ -453,13 +461,13 @@ const Notebook = () => {
 
           {filteredNotes.length === 0 && !showNewFolderInput && (
             <div className="text-center py-12 px-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#3a3a3c] flex items-center justify-center">
-                <FolderIcon className="h-8 w-8 text-[#8e8e93]" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
+                <FolderIcon className="h-8 w-8 text-muted-foreground" />
               </div>
-              <p className="text-[15px] text-[#8e8e93] mb-3">No Folders</p>
+              <p className="text-[15px] text-muted-foreground mb-3">No Folders</p>
               <button
                 onClick={() => setShowNewFolderInput(true)}
-                className="text-[13px] text-[#ffd60a] hover:underline"
+                className="text-[13px] text-primary hover:underline"
               >
                 Create your first folder
               </button>
@@ -469,15 +477,15 @@ const Notebook = () => {
       </div>
 
       {/* Column 2: Notes List */}
-      <div className={`${mobileView === "notes" ? "flex" : "hidden"} md:flex flex-col w-full md:w-[320px] bg-[#1c1c1e] border-r border-[#3a3a3c]`}>
-        <div className="h-14 flex items-center gap-3 px-4 border-b border-[#3a3a3c]">
+      <div className={`${mobileView === "notes" ? "flex" : "hidden"} md:flex flex-col w-full md:w-[320px] bg-background border-r border-border`}>
+        <div className="h-14 flex items-center gap-3 px-4 border-b border-border">
           <button
             onClick={() => setMobileView("folders")}
-            className="md:hidden p-1.5 rounded-md hover:bg-[#3a3a3c] transition-colors"
+            className="md:hidden p-1.5 rounded-md hover:bg-muted transition-colors"
           >
-            <ChevronLeft className="h-5 w-5 text-[#ffd60a]" />
+            <ChevronLeft className="h-5 w-5 text-primary" />
           </button>
-          <h2 className="text-[15px] font-semibold text-white flex-1 truncate">
+          <h2 className="text-[15px] font-semibold text-foreground flex-1 truncate">
             {selectedFolder || "All Notes"}
           </h2>
           <button
@@ -492,21 +500,21 @@ const Notebook = () => {
                 setMobileView("folders");
               }
             }}
-            className="p-1.5 rounded-md hover:bg-[#3a3a3c] transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted transition-colors"
           >
-            <Plus className="h-5 w-5 text-[#ffd60a]" />
+            <Plus className="h-5 w-5 text-primary" />
           </button>
         </div>
 
-        <div className="px-3 py-2 border-b border-[#3a3a3c]">
+        <div className="px-3 py-2 border-b border-border">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8e8e93]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search notes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-[#3a3a3c] rounded-lg text-[13px] text-white placeholder:text-[#8e8e93] focus:outline-none focus:ring-1 focus:ring-[#ffd60a]/50"
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50"
             />
           </div>
         </div>
@@ -514,14 +522,14 @@ const Notebook = () => {
         <div className="flex-1 overflow-y-auto">
           {(selectedFolder ? currentFolderNotes : allNotesFlat.map(r => ({ ...r.file, folder: r.folder }))).length === 0 ? (
             <div className="text-center py-16 px-4">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#3a3a3c] flex items-center justify-center">
-                <FileText className="h-8 w-8 text-[#8e8e93]" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
+                <FileText className="h-8 w-8 text-muted-foreground" />
               </div>
-              <p className="text-[15px] text-[#8e8e93] mb-3">No Notes</p>
+              <p className="text-[15px] text-muted-foreground mb-3">No Notes</p>
               {selectedFolder && (
                 <button
                   onClick={() => handleNewNoteInFolder(selectedFolder)}
-                  className="text-[13px] text-[#ffd60a] hover:underline"
+                  className="text-[13px] text-primary hover:underline"
                 >
                   Create a note
                 </button>
@@ -543,8 +551,10 @@ const Notebook = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.15 }}
                     onClick={() => !isEditingThisNote && handleNoteSelect(folder, file.filename)}
-                    className={`group relative px-4 py-3 cursor-pointer border-b border-[#3a3a3c]/50 transition-colors ${
-                      isSelected ? "bg-[#ffd60a]/10" : "hover:bg-[#2c2c2e]"
+                    className={`group relative px-4 py-3 cursor-pointer transition-all border-b border-b-border/50 ${
+                      isSelected 
+                        ? "bg-primary/10 border-l-2 border-l-primary" 
+                        : "hover:bg-muted/50 border-l-2 border-l-transparent"
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -561,25 +571,25 @@ const Notebook = () => {
                             onBlur={() => renameNote(folder, file.filename, editNoteName)}
                             onClick={(e) => e.stopPropagation()}
                             autoFocus
-                            className="w-full px-2 py-1 bg-[#1c1c1e] border border-[#ffd60a]/50 rounded text-[15px] text-white focus:outline-none"
+                            className="w-full px-2 py-1 bg-muted/50 border border-primary/30 rounded text-[15px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
                           />
                         ) : (
                           <>
-                            <h3 className={`text-[15px] font-medium truncate ${isSelected ? "text-white" : "text-white"}`}>
+                            <h3 className={`text-[15px] font-medium truncate ${isSelected ? "text-primary" : "text-foreground"}`}>
                               {file.filename}
                             </h3>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[12px] text-[#8e8e93]">
+                              <span className="text-[12px] text-muted-foreground">
                                 {formatDate(file.lastUpdate || file.created || new Date().toISOString())}
                               </span>
                               {!selectedFolder && (
                                 <>
-                                  <span className="text-[#3a3a3c]">·</span>
-                                  <span className="text-[12px] text-[#8e8e93] truncate">{folder}</span>
+                                  <span className="text-border">·</span>
+                                  <span className="text-[12px] text-muted-foreground truncate">{folder}</span>
                                 </>
                               )}
                             </div>
-                            <p className="text-[13px] text-[#8e8e93] truncate mt-1 line-clamp-2">
+                            <p className="text-[13px] text-muted-foreground truncate mt-1 line-clamp-2">
                               {typeof file.content === 'string' ? file.content.substring(0, 80) : "No additional text"}
                             </p>
                           </>
@@ -594,13 +604,13 @@ const Notebook = () => {
                             setNoteMenuOpen(noteMenuOpen === noteKey ? null : noteKey);
                             setFolderMenuOpen(null);
                           }}
-                          className="p-1 rounded hover:bg-[#48484a] opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1 rounded hover:bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <MoreHorizontal className="h-4 w-4 text-[#8e8e93]" />
+                          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                         </button>
                         
                         {noteMenuOpen === noteKey && (
-                          <div data-context-menu className="absolute right-0 top-full mt-1 w-32 bg-[#2c2c2e] border border-[#3a3a3c] rounded-lg shadow-xl z-50 overflow-hidden">
+                          <div data-context-menu className="absolute right-0 top-full mt-1 w-32 bg-popover border border-border rounded-lg shadow-xl z-50 overflow-hidden">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -608,7 +618,7 @@ const Notebook = () => {
                                 setEditNoteName(file.filename);
                                 setNoteMenuOpen(null);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[#3a3a3c] text-white"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-muted text-foreground"
                             >
                               <Pencil className="h-3.5 w-3.5" /> Rename
                             </button>
@@ -618,7 +628,7 @@ const Notebook = () => {
                                 deleteNote(folder, file.filename);
                                 setNoteMenuOpen(null);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-[#3a3a3c] text-[#ff453a]"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-[13px] hover:bg-muted text-destructive"
                             >
                               <Trash2 className="h-3.5 w-3.5" /> Delete
                             </button>
@@ -635,28 +645,28 @@ const Notebook = () => {
       </div>
 
       {/* Column 3: Editor */}
-      <div className={`${mobileView === "editor" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-[#1c1c1e] overflow-hidden`}>
+      <div className={`${mobileView === "editor" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-background overflow-hidden`}>
         {/* Mobile back button */}
-        <div className="md:hidden h-14 flex items-center gap-3 px-4 border-b border-[#3a3a3c]">
+        <div className="md:hidden h-14 flex items-center gap-3 px-4 border-b border-border">
           <button
             onClick={() => setMobileView("notes")}
-            className="p-1.5 rounded-md hover:bg-[#3a3a3c] transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted transition-colors"
           >
-            <ChevronLeft className="h-5 w-5 text-[#ffd60a]" />
+            <ChevronLeft className="h-5 w-5 text-primary" />
           </button>
-          <span className="text-[15px] font-medium text-white truncate">{selectedFile || "Note"}</span>
+          <span className="text-[15px] font-medium text-foreground truncate">{selectedFile || "Note"}</span>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {!selectedFile ? (
             <div className="h-full flex items-center justify-center p-8">
               <div className="max-w-md text-center">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-[#ffd60a]/20 to-[#ff9500]/20 flex items-center justify-center">
-                  <FileText className="h-12 w-12 text-[#ffd60a]" />
+                <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20">
+                  <FileText className="h-12 w-12 text-primary" />
                 </div>
                 
-                <h2 className="text-2xl font-semibold text-white mb-2">Select a Note</h2>
-                <p className="text-[15px] text-[#8e8e93] mb-8">
+                <h2 className="text-2xl font-semibold text-foreground mb-2">Select a Note</h2>
+                <p className="text-[15px] text-muted-foreground mb-8">
                   Choose a note from the list or create a new one to get started
                 </p>
 
@@ -676,13 +686,13 @@ const Notebook = () => {
                             setMobileView("folders");
                           }
                         }}
-                        className="flex items-center gap-3 p-4 rounded-xl bg-[#2c2c2e] border border-[#3a3a3c] hover:border-[#ffd60a]/40 transition-all text-left group"
+                        className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-left group"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-[#3a3a3c] flex items-center justify-center group-hover:bg-[#ffd60a]/20 transition-colors">
-                          <Icon className="h-5 w-5 text-[#8e8e93] group-hover:text-[#ffd60a] transition-colors" />
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-[13px] font-medium text-white">{template.name}</h4>
+                          <h4 className="text-[13px] font-medium text-foreground">{template.name}</h4>
                         </div>
                       </button>
                     );
@@ -724,21 +734,21 @@ const Notebook = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => { setShowNewNoteInput(false); setSelectedTemplate(null); }}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-[#2c2c2e] border border-[#3a3a3c] rounded-2xl shadow-2xl p-6"
+              className="relative w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl p-6"
             >
-              <h3 className="text-lg font-semibold text-white mb-4">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
                 {selectedTemplate ? `New ${selectedTemplate.name}` : "New Note"}
               </h3>
               
               <div className="mb-4">
-                <label className="text-[13px] text-[#8e8e93] mb-2 block">Note Title</label>
+                <label className="text-[13px] text-muted-foreground mb-2 block">Note Title</label>
                 <input
                   type="text"
                   placeholder="Enter note title..."
@@ -746,27 +756,27 @@ const Notebook = () => {
                   onChange={(e) => setNewNoteName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && createNote()}
                   autoFocus
-                  className="w-full px-4 py-3 bg-[#1c1c1e] border border-[#3a3a3c] rounded-lg text-[15px] text-white placeholder:text-[#8e8e93] focus:outline-none focus:ring-1 focus:ring-[#ffd60a]/50 focus:border-[#ffd60a]/50"
+                  className="w-full px-4 py-3 bg-muted/50 border border-border rounded-lg text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
                 />
               </div>
 
               {targetFolder && (
-                <p className="text-[13px] text-[#8e8e93] mb-4">
-                  Folder: <span className="text-white font-medium">{targetFolder}</span>
+                <p className="text-[13px] text-muted-foreground mb-4">
+                  Folder: <span className="text-foreground font-medium">{targetFolder}</span>
                 </p>
               )}
               
               <div className="flex gap-3">
                 <button
                   onClick={() => { setShowNewNoteInput(false); setSelectedTemplate(null); setNewNoteName(""); }}
-                  className="flex-1 px-4 py-2.5 bg-[#3a3a3c] text-white rounded-lg hover:bg-[#48484a] transition-all text-[15px] font-medium"
+                  className="flex-1 px-4 py-2.5 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-all text-[15px] font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={createNote}
                   disabled={!newNoteName.trim()}
-                  className="flex-1 px-4 py-2.5 bg-[#ffd60a] text-black rounded-lg hover:bg-[#ffd60a]/90 transition-all text-[15px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all text-[15px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create
                 </button>
