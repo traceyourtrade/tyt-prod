@@ -1022,7 +1022,7 @@ export default function BacktestingDashboard() {
                     </label>
                     <div className="grid grid-cols-4 gap-2">
                       {MARKETS.map(m => {
-                        const isComingSoon = m.value === 'INDIAN_INDICES' || m.value === 'INDIAN_STOCK';
+                        const isComingSoon = m.value === 'CRYPTO' || m.value === 'INDIAN_INDICES' || m.value === 'INDIAN_STOCK';
                         return (
                           <button
                             key={m.value}
