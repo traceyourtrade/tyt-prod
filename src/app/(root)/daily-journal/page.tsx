@@ -1449,7 +1449,7 @@ const DailyJournal = () => {
                         value={journalData.reasonForEntry || ""}
                         onChange={(e) => setJournalData((prev) => ({ ...prev, reasonForEntry: e.target.value }))}
                         placeholder="Describe the setup, signals, and your reasoning..."
-                        rows={2}
+                        rows={4}
                         className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                       />
                     </div>
@@ -1462,7 +1462,7 @@ const DailyJournal = () => {
                         value={journalData.exitRationale || ""}
                         onChange={(e) => setJournalData((prev) => ({ ...prev, exitRationale: e.target.value }))}
                         placeholder="Target hit, stopped out, or manual exit? What did you observe?"
-                        rows={2}
+                        rows={4}
                         className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                       />
                     </div>
@@ -1487,7 +1487,7 @@ const DailyJournal = () => {
                       value={journalData.lessonsLearned || ""}
                       onChange={(e) => setJournalData((prev) => ({ ...prev, lessonsLearned: e.target.value }))}
                       placeholder="Key takeaways, mistakes to avoid, patterns to remember..."
-                      rows={2}
+                      rows={4}
                       className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                     />
                   </div>
@@ -1500,7 +1500,7 @@ const DailyJournal = () => {
                       value={journalData.emotionalState || ""}
                       onChange={(e) => setJournalData((prev) => ({ ...prev, emotionalState: e.target.value }))}
                       placeholder="Confident, anxious, impulsive, calm..."
-                      rows={2}
+                      rows={4}
                       className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                     />
                   </div>
