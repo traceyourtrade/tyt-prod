@@ -12,16 +12,18 @@ import {
   Zap,
   Upload,
   PenLine,
-  Server,
-  Key,
-  User,
   AlertCircle,
   CheckCircle2,
   Loader2,
   Plus,
-  HelpCircle,
   Rocket,
-  Calendar
+  Calendar,
+  Globe,
+  TrendingUp,
+  Bitcoin,
+  IndianRupee,
+  DollarSign,
+  MoreHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,19 +45,100 @@ interface DropdownOption {
   icon: React.ReactNode;
 }
 
+interface BrokerOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+interface MarketCategory {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  brokers: BrokerOption[];
+}
+
 const accountTypeOptions: DropdownOption[] = [
   { id: "Broker Sync", label: "Broker Sync", description: "Auto-sync trades via API", icon: <Zap className="w-4 h-4" /> },
   { id: "File Upload", label: "File Upload", description: "Import from MT4/MT5 files", icon: <Upload className="w-4 h-4" /> },
   { id: "Manual", label: "Manual Entry", description: "Add trades manually", icon: <PenLine className="w-4 h-4" /> },
 ];
 
-const brokerOptions = [
-  { id: "MetaTrader 5", label: "MetaTrader 5", icon: "MT5" },
-  { id: "MetaTrader 4", label: "MetaTrader 4", icon: "MT4" },
-  { id: "Zerodha", label: "Zerodha", icon: "ZD" },
-  { id: "Binance", label: "Binance", icon: "BN" },
-  { id: "Upstox", label: "Upstox", icon: "UP" },
-  { id: "Angel One", label: "Angel One", icon: "AO" },
+const marketCategories: MarketCategory[] = [
+  {
+    id: "forex",
+    label: "Forex / CFDs",
+    icon: <Globe className="w-4 h-4" />,
+    color: "from-blue-500 to-cyan-500",
+    brokers: [
+      { id: "MetaTrader 5", label: "MetaTrader 5", icon: "MT5" },
+      { id: "MetaTrader 4", label: "MetaTrader 4", icon: "MT4" },
+      { id: "cTrader", label: "cTrader", icon: "cT" },
+      { id: "TradingView", label: "TradingView", icon: "TV" },
+      { id: "IC Markets", label: "IC Markets", icon: "IC" },
+      { id: "Pepperstone", label: "Pepperstone", icon: "PP" },
+      { id: "OANDA", label: "OANDA", icon: "OA" },
+      { id: "XM", label: "XM", icon: "XM" },
+    ]
+  },
+  {
+    id: "indian",
+    label: "Indian Markets",
+    icon: <IndianRupee className="w-4 h-4" />,
+    color: "from-orange-500 to-amber-500",
+    brokers: [
+      { id: "Zerodha", label: "Zerodha", icon: "ZD" },
+      { id: "Upstox", label: "Upstox", icon: "UP" },
+      { id: "Angel One", label: "Angel One", icon: "AO" },
+      { id: "Groww", label: "Groww", icon: "GW" },
+      { id: "5paisa", label: "5paisa", icon: "5P" },
+      { id: "Dhan", label: "Dhan", icon: "DH" },
+      { id: "ICICI Direct", label: "ICICI Direct", icon: "ID" },
+      { id: "HDFC Securities", label: "HDFC Securities", icon: "HS" },
+    ]
+  },
+  {
+    id: "crypto",
+    label: "Crypto",
+    icon: <Bitcoin className="w-4 h-4" />,
+    color: "from-yellow-500 to-orange-500",
+    brokers: [
+      { id: "Binance", label: "Binance", icon: "BN" },
+      { id: "Bybit", label: "Bybit", icon: "BB" },
+      { id: "OKX", label: "OKX", icon: "OK" },
+      { id: "Coinbase", label: "Coinbase", icon: "CB" },
+      { id: "Kraken", label: "Kraken", icon: "KR" },
+      { id: "KuCoin", label: "KuCoin", icon: "KC" },
+      { id: "Bitget", label: "Bitget", icon: "BG" },
+      { id: "Gate.io", label: "Gate.io", icon: "GT" },
+    ]
+  },
+  {
+    id: "us",
+    label: "US Markets",
+    icon: <DollarSign className="w-4 h-4" />,
+    color: "from-emerald-500 to-teal-500",
+    brokers: [
+      { id: "Interactive Brokers", label: "Interactive Brokers", icon: "IB" },
+      { id: "TD Ameritrade", label: "TD Ameritrade", icon: "TD" },
+      { id: "Robinhood", label: "Robinhood", icon: "RH" },
+      { id: "Charles Schwab", label: "Charles Schwab", icon: "CS" },
+      { id: "Fidelity", label: "Fidelity", icon: "FD" },
+      { id: "E*TRADE", label: "E*TRADE", icon: "ET" },
+      { id: "Webull", label: "Webull", icon: "WB" },
+      { id: "Tastytrade", label: "Tastytrade", icon: "TT" },
+    ]
+  },
+  {
+    id: "other",
+    label: "Other",
+    icon: <MoreHorizontal className="w-4 h-4" />,
+    color: "from-gray-500 to-slate-500",
+    brokers: [
+      { id: "Other", label: "Other / Custom", icon: "?" },
+    ]
+  }
 ];
 
 const AddAccPopup = () => {
@@ -64,6 +147,7 @@ const AddAccPopup = () => {
   const { setAlertBoxG, accStatusPolling } = notifications();
 
   const [accountType, setAccountType] = useState<string>("");
+  const [selectedMarket, setSelectedMarket] = useState<string>("");
   const [broker, setBroker] = useState<string>("");
   const [investorId, setInvestorId] = useState<string>("");
   const [investorPw, setInvestorPw] = useState<string>("");
@@ -206,11 +290,19 @@ const AddAccPopup = () => {
     }
   };
 
+  const handleMarketSelect = (marketId: string) => {
+    setSelectedMarket(marketId);
+    setBroker("");
+  };
+
+  const handleBrokerSelect = (brokerId: string) => {
+    setBroker(brokerId);
+    setShowBrokerDropdown(false);
+  };
+
   const selectedAccountType = accountTypeOptions.find(opt => opt.id === accountType);
-  const selectedBroker = brokerOptions.find(opt => opt.id === broker);
-  const filteredBrokers = accountType === "Broker Sync" 
-    ? brokerOptions.filter(b => b.id === "MetaTrader 5") 
-    : brokerOptions;
+  const selectedMarketCategory = marketCategories.find(m => m.id === selectedMarket);
+  const selectedBrokerObj = selectedMarketCategory?.brokers.find(b => b.id === broker);
 
   if (!showAddAcc) return null;
 
@@ -228,11 +320,11 @@ const AddAccPopup = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+          className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-5 border-b border-border">
+          <div className="p-5 border-b border-border shrink-0">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setAddAcc()}
@@ -242,7 +334,7 @@ const AddAccPopup = () => {
               </button>
               <div className="flex-1">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
                     <Plus className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -254,8 +346,8 @@ const AddAccPopup = () => {
             </div>
           </div>
 
-          {/* Form */}
-          <div className="p-5 space-y-4">
+          {/* Scrollable Form */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-5">
             {/* Account Name */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -277,20 +369,20 @@ const AddAccPopup = () => {
               />
             </div>
 
-            {/* Prop Firm Toggle */}
+            {/* Account Mode Toggle */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Zap className="w-4 h-4" />
                 Account Mode
               </label>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
+              <div className="flex items-center gap-2 p-1.5 rounded-xl bg-muted/30 border border-border/50">
                 <button
                   type="button"
                   onClick={() => setAccDetails({ ...accountDetails, isPropFirm: false })}
                   className={cn(
                     "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
                     !accountDetails.isPropFirm 
-                      ? "bg-primary text-white shadow-sm" 
+                      ? "bg-primary text-white shadow-md" 
                       : "bg-transparent text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -302,7 +394,7 @@ const AddAccPopup = () => {
                   className={cn(
                     "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
                     accountDetails.isPropFirm 
-                      ? "bg-amber-500 text-white shadow-sm" 
+                      ? "bg-amber-500 text-white shadow-md" 
                       : "bg-transparent text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -372,8 +464,9 @@ const AddAccPopup = () => {
                           onClick={() => {
                             setAccountType(option.id);
                             setShowAccountTypeDropdown(false);
-                            if (option.id !== "Broker Sync" && broker === "MetaTrader 5") {
-                              setBroker("");
+                            if (option.id === "Broker Sync") {
+                              setSelectedMarket("forex");
+                              setBroker("MetaTrader 5");
                             }
                           }}
                           className={cn(
@@ -433,79 +526,105 @@ const AddAccPopup = () => {
               )}
             </AnimatePresence>
 
-            {/* Broker Dropdown */}
-            <div className="space-y-2" ref={brokerRef}>
+            {/* Market Category Selection - Hidden for Broker Sync */}
+            {accountType !== "Broker Sync" && (
+            <div className="space-y-3">
               <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Broker
+                <TrendingUp className="w-4 h-4" />
+                What do you trade?
               </label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowBrokerDropdown(!showBrokerDropdown);
-                    setShowAccountTypeDropdown(false);
-                  }}
-                  className={cn(
-                    "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
-                    "flex items-center justify-between gap-2 text-left",
-                    "hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20",
-                    "transition-all duration-200",
-                    showBrokerDropdown && "border-primary/50 ring-2 ring-primary/20"
-                  )}
-                >
-                  {selectedBroker ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                        {selectedBroker.icon}
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{selectedBroker.label}</span>
+              <div className="grid grid-cols-5 gap-2">
+                {marketCategories.map((market) => (
+                  <motion.button
+                    key={market.id}
+                    type="button"
+                    onClick={() => handleMarketSelect(market.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={cn(
+                      "relative flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-200",
+                      selectedMarket === market.id
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-border/50 bg-muted/20 hover:border-primary/30 hover:bg-muted/40"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br",
+                      market.color
+                    )}>
+                      {market.icon}
                     </div>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Select broker</span>
-                  )}
-                  <ChevronDown className={cn(
-                    "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                    showBrokerDropdown && "rotate-180"
-                  )} />
-                </button>
-
-                <AnimatePresence>
-                  {showBrokerDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden max-h-48 overflow-y-auto"
-                    >
-                      {filteredBrokers.map((brokerOpt) => (
-                        <button
-                          key={brokerOpt.id}
-                          type="button"
-                          onClick={() => {
-                            setBroker(brokerOpt.id);
-                            setShowBrokerDropdown(false);
-                          }}
-                          className={cn(
-                            "w-full px-4 py-3 flex items-center gap-3 text-left transition-colors",
-                            "hover:bg-muted/50",
-                            broker === brokerOpt.id && "bg-primary/10"
-                          )}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                            {brokerOpt.icon}
-                          </div>
-                          <span className="text-sm font-medium text-foreground">{brokerOpt.label}</span>
-                          {broker === brokerOpt.id && (
-                            <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />
-                          )}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    <span className={cn(
+                      "text-[10px] font-medium text-center leading-tight",
+                      selectedMarket === market.id ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      {market.label}
+                    </span>
+                    {selectedMarket === market.id && (
+                      <motion.div
+                        layoutId="marketIndicator"
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center"
+                      >
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      </motion.div>
+                    )}
+                  </motion.button>
+                ))}
               </div>
             </div>
+            )}
+
+            {/* Broker Selection - Hidden for Broker Sync */}
+            {accountType !== "Broker Sync" && (
+            <AnimatePresence>
+              {selectedMarket && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-3"
+                  ref={brokerRef}
+                >
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Select Broker
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {selectedMarketCategory?.brokers.map((brokerOpt) => (
+                      <motion.button
+                        key={brokerOpt.id}
+                        type="button"
+                        onClick={() => handleBrokerSelect(brokerOpt.id)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={cn(
+                          "flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-200",
+                          broker === brokerOpt.id
+                            ? "border-primary bg-primary/10 shadow-sm"
+                            : "border-border/50 bg-muted/20 hover:border-primary/30 hover:bg-muted/40"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold",
+                          broker === brokerOpt.id
+                            ? `bg-gradient-to-br ${selectedMarketCategory?.color} text-white`
+                            : "bg-muted text-muted-foreground"
+                        )}>
+                          {brokerOpt.icon}
+                        </div>
+                        <span className={cn(
+                          "text-[10px] font-medium text-center leading-tight line-clamp-1",
+                          broker === brokerOpt.id ? "text-primary" : "text-muted-foreground"
+                        )}>
+                          {brokerOpt.label}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            )}
 
             {/* Broker Sync Coming Soon Notice */}
             <AnimatePresence>
@@ -514,7 +633,6 @@ const AddAccPopup = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="pt-2"
                 >
                   <div className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-yellow-500/5 border border-amber-500/30">
                     <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
@@ -528,11 +646,11 @@ const AddAccPopup = () => {
                             Coming Soon
                           </h4>
                           <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
-                            Feb 1st, 2025
+                            Feb 2025
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Broker auto-sync is launching February 1st. You'll be able to automatically import trades from MT5 and other platforms.
+                          Broker auto-sync is launching soon. You'll be able to automatically import trades from your broker.
                         </p>
                         <div className="flex items-center gap-1.5 mt-2 text-amber-400 text-xs font-medium">
                           <Calendar className="w-3 h-3" />
@@ -557,7 +675,7 @@ const AddAccPopup = () => {
                 value={accountDetails.description}
                 onChange={handleOnChange}
                 placeholder="Notes about this account..."
-                rows={3}
+                rows={2}
                 className={cn(
                   "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
                   "text-foreground placeholder:text-muted-foreground text-sm resize-none",
@@ -567,57 +685,52 @@ const AddAccPopup = () => {
               />
             </div>
 
-            {/* Status Messages */}
-            <AnimatePresence mode="wait">
+            {/* Error/Success Messages */}
+            <AnimatePresence>
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-3 p-3 bg-loss/10 border border-loss/20 rounded-xl"
+                  className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm"
                 >
-                  <AlertCircle className="w-4 h-4 text-loss flex-shrink-0" />
-                  <p className="text-sm text-loss">{error}</p>
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {error}
                 </motion.div>
               )}
-              
               {success && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-3 p-3 bg-profit/10 border border-profit/20 rounded-xl"
+                  className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm"
                 >
-                  <CheckCircle2 className="w-4 h-4 text-profit flex-shrink-0" />
-                  <p className="text-sm text-profit">{success}</p>
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  {success}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
           {/* Footer */}
-          <div className="p-5 border-t border-border space-y-3">
+          <div className="p-5 border-t border-border shrink-0 space-y-3">
             <motion.button
-              whileHover={{ scale: accountType === "Broker Sync" ? 1 : 1.01 }}
-              whileTap={{ scale: accountType === "Broker Sync" ? 1 : 0.99 }}
+              type="button"
               onClick={submitFun}
-              disabled={isSubmitting || accountType === "Broker Sync"}
+              disabled={isSubmitting || !accountDetails.accountName || !broker}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               className={cn(
-                "w-full py-3.5 rounded-xl font-semibold text-white transition-all duration-200",
+                "w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200",
                 "flex items-center justify-center gap-2",
-                "bg-primary hover:bg-primary-dark shadow-lg shadow-primary/20",
-                (isSubmitting || accountType === "Broker Sync") && "opacity-50 cursor-not-allowed hover:bg-primary"
+                "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/25",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               )}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating Account...
-                </>
-              ) : accountType === "Broker Sync" ? (
-                <>
-                  <Rocket className="w-4 h-4" />
-                  Available Feb 1st, 2025
+                  Creating...
                 </>
               ) : (
                 <>
@@ -626,13 +739,9 @@ const AddAccPopup = () => {
                 </>
               )}
             </motion.button>
-
-            <button 
-              className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-2"
-            >
-              <HelpCircle className="w-4 h-4" />
+            <p className="text-center text-xs text-muted-foreground">
               Need Help?
-            </button>
+            </p>
           </div>
         </motion.div>
       </motion.div>
