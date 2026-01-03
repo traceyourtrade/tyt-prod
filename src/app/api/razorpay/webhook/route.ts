@@ -1,6 +1,96 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getUserModel } from "@/models/main/user.model";
+import { getAffiliateModel } from "@/models/main/affiliate.model";
+import { getReferralModel } from "@/models/main/referral.model";
+import { getCommissionModel } from "@/models/main/commission.model";
+
+const generateUniqueId = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+};
+
+async function processAffiliateCommission(userId: string, transactionAmount: number, transactionType: string) {
+  try {
+    const Affiliate = await getAffiliateModel();
+    const Referral = await getReferralModel();
+    const Commission = await getCommissionModel();
+
+    const referral = await Referral.findOne({ 
+      referredUserId: userId, 
+      status: { $in: ['signed_up', 'converted'] }
+    });
+
+    if (!referral) {
+      console.log(`No affiliate referral found for user: ${userId}`);
+      return;
+    }
+
+    const affiliate = await Affiliate.findOne({ 
+      uniqueId: referral.affiliateId,
+      status: 'approved'
+    });
+
+    if (!affiliate) {
+      console.log(`Affiliate not found or not approved: ${referral.affiliateId}`);
+      return;
+    }
+
+    const commissionRate = affiliate.commissionRate || 20;
+    const commissionAmount = (transactionAmount * commissionRate) / 100;
+
+    const existingCommission = await Commission.findOne({
+      affiliateId: affiliate.uniqueId,
+      referredUserId: userId,
+      transactionType,
+      createdAt: { $gte: new Date(Date.now() - 60000) }
+    });
+
+    if (existingCommission) {
+      console.log(`Commission already processed for this transaction`);
+      return;
+    }
+
+    const wasNotConverted = referral.status !== 'converted';
+
+    const commission = new Commission({
+      uniqueId: generateUniqueId(),
+      affiliateId: affiliate.uniqueId,
+      referralId: referral.uniqueId,
+      referredUserId: userId,
+      amount: commissionAmount,
+      currency: 'INR',
+      commissionRate,
+      transactionAmount,
+      transactionType,
+      couponCode: referral.couponCode || '',
+      status: 'pending',
+    });
+    await commission.save();
+
+    if (wasNotConverted) {
+      referral.status = 'converted';
+      referral.conversionDate = new Date();
+      await referral.save();
+    }
+
+    await Affiliate.updateOne(
+      { uniqueId: affiliate.uniqueId },
+      {
+        $inc: {
+          totalEarnings: commissionAmount,
+          pendingEarnings: commissionAmount,
+          activeReferrals: wasNotConverted ? 1 : 0
+        },
+        $set: { updatedAt: new Date() }
+      }
+    );
+
+    console.log(`Affiliate commission created: ${affiliate.referralCode} earned ₹${commissionAmount.toFixed(2)} from user ${userId}`);
+  } catch (error) {
+    console.error("Affiliate commission processing error:", error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -72,6 +162,9 @@ export async function POST(request: NextRequest) {
             };
             await user.save();
             console.log(`Subscription activated for user: ${user.email}, billing: ${billingPeriod}`);
+
+            const planAmount = billingPeriod === 'yearly' ? 8199 : 849;
+            await processAffiliateCommission(user.uniqueId, planAmount, 'subscription_activated');
           }
         }
         break;
@@ -99,6 +192,9 @@ export async function POST(request: NextRequest) {
             user.subscription.subscriptionStatus = 'active';
             await user.save();
             console.log(`Subscription renewed for user: ${user.email}, billing: ${billingPeriod}`);
+
+            const renewalAmount = billingPeriod === 'yearly' ? 8199 : 849;
+            await processAffiliateCommission(user.uniqueId, renewalAmount, 'subscription_renewed');
           }
         }
         break;
