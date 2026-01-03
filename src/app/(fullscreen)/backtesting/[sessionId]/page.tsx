@@ -356,6 +356,7 @@ export default function FullscreenBacktesting({
   const [allBars, setAllBars] = useState<any[]>([]);
   const [currentBarIndex, setCurrentBarIndexState] = useState(5);
   const tradeLinesRef = useRef<Record<string, { entry: any; tp: any; sl: any }>>({});
+  const lastDrawTimeRef = useRef<Record<string, number>>({}); // Debounce: track last draw time per trade
   const openTradesRef = useRef<any[]>([]);
   
   // Options for setCurrentBarIndex
@@ -3833,13 +3834,29 @@ export default function FullscreenBacktesting({
       const chart = tvWidgetRef.current.activeChart();
       if (!chart) return;
       
-      // Remove only THIS trade's existing lines IF they exist (don't call for new trades)
-      if (trade.id && tradeLinesRef.current[trade.id]) {
-        removeTradeLines(trade.id, {
-          entry: trade.entry,
-          tp: trade.target,
-          sl: trade.stopLoss
-        });
+      // Generate stable trade ID if not present
+      const tradeId = trade.id || 'default';
+      
+      // Debounce: skip if we just drew this trade within 100ms
+      const now = Date.now();
+      const lastDraw = lastDrawTimeRef.current[tradeId] || 0;
+      if (now - lastDraw < 100) {
+        console.log("Debouncing rapid draw call for trade:", tradeId);
+        return;
+      }
+      lastDrawTimeRef.current[tradeId] = now;
+      
+      // Remove THIS trade's existing lines if they exist (by stored entity IDs)
+      if (tradeLinesRef.current[tradeId]) {
+        const { entry, tp, sl } = tradeLinesRef.current[tradeId];
+        const safeRemove = (entityId: any) => {
+          if (!entityId) return;
+          try { chart.removeEntity(entityId); } catch (e) { /* already removed */ }
+        };
+        safeRemove(entry);
+        safeRemove(tp);
+        safeRemove(sl);
+        delete tradeLinesRef.current[tradeId];
       }
       
       console.log("Drawing trade lines for:", trade);
@@ -4742,6 +4759,13 @@ export default function FullscreenBacktesting({
         }
         
         if (triggered) {
+          // Remove pending limit order lines first
+          removeTradeLines(`limit_${order.id}`, {
+            entry: order.entryPrice,
+            tp: order.target,
+            sl: order.stopLoss
+          });
+          
           const tradeId = `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           const trade = {
             id: tradeId,
@@ -4785,7 +4809,7 @@ export default function FullscreenBacktesting({
         }
       }
     }
-  }, [currentBarIndex, allBars, tradingState.limitOrders, tradingState.openTrades, drawTradeLines, sessionId, lotSize]);
+  }, [currentBarIndex, allBars, tradingState.limitOrders, tradingState.openTrades, drawTradeLines, removeTradeLines, sessionId, lotSize]);
 
   const handlePlaybackSpeedChange = (speed: number) => {
     setPlaybackSpeed(500 / speed);
@@ -4865,8 +4889,9 @@ export default function FullscreenBacktesting({
 
   const handleLimitOrder = () => {
     if (!tradingState.potentialTrade) return;
+    const orderId = Date.now();
     const limitOrder = {
-      id: Date.now(),
+      id: orderId,
       type: tradingState.potentialTrade.type,
       entryPrice: tradingState.potentialTrade.entry,
       target: tradingState.potentialTrade.target,
@@ -4874,6 +4899,7 @@ export default function FullscreenBacktesting({
       lotSize: lotSize,
     };
     const pendingTrade = {
+      id: `limit_${orderId}`,
       entry: tradingState.potentialTrade.entry,
       target: tradingState.potentialTrade.target,
       stopLoss: tradingState.potentialTrade.stopLoss,
@@ -5037,15 +5063,16 @@ export default function FullscreenBacktesting({
       
       dispatch({ type: "ADD_OPEN_TRADE", payload: { ...trade, dbId } });
     } else {
+      const orderId = Date.now();
       const limitOrder = {
-        id: Date.now(),
+        id: orderId,
         type: tradeType,
         entryPrice: entry,
         target: tp,
         stopLoss: sl,
         lotSize: posSize,
       };
-      const pendingTrade = { entry, target: tp, stopLoss: sl };
+      const pendingTrade = { id: `limit_${orderId}`, entry, target: tp, stopLoss: sl };
       drawTradeLines(pendingTrade);
       setShowOrderDialog(false);
       dispatch({ type: "ADD_LIMIT_ORDER", payload: limitOrder });
