@@ -50,6 +50,8 @@ export interface RrMetrics {
   idealAverageRR: number;
   maxIdealRR: number;
   couldHaveProfitBE: number;
+  rrValues: number[];
+  idealRRValues: number[];
 }
 
 export interface WinLossStats {
@@ -200,7 +202,7 @@ export function useBacktestAnalytics(session: Session | null): BacktestAnalytics
         winRate: 0,
         totalTrades: 0,
         breakEvenTrades: 0,
-        rrMetrics: { averageRR: 0, maxRR: 0, idealAverageRR: 0, maxIdealRR: 0, couldHaveProfitBE: 0 },
+        rrMetrics: { averageRR: 0, maxRR: 0, idealAverageRR: 0, maxIdealRR: 0, couldHaveProfitBE: 0, rrValues: [], idealRRValues: [] },
         winners: { total: 0, bestPercent: 0, worstPercent: 0, averagePercent: 0, averageDuration: 0, maxConsecutive: 0, avgConsecutive: 0 },
         losers: { total: 0, bestPercent: 0, worstPercent: 0, averagePercent: 0, averageDuration: 0, maxConsecutive: 0, avgConsecutive: 0 },
         sidePerformance: [],
@@ -268,7 +270,9 @@ export function useBacktestAnalytics(session: Session | null): BacktestAnalytics
       maxRR: rrs.length > 0 ? Math.max(...rrs) : 0,
       idealAverageRR: idealRRs.length > 0 ? idealRRs.reduce((a, b) => a + b, 0) / idealRRs.length : 0,
       maxIdealRR: idealRRs.length > 0 ? Math.max(...idealRRs) : 0,
-      couldHaveProfitBE
+      couldHaveProfitBE,
+      rrValues: rrs.slice(-10),
+      idealRRValues: idealRRs.slice(-10)
     };
 
     const calcWinLossStats = (trades: Trade[], isWinner: boolean): WinLossStats => {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { RrMetrics } from '@/hooks/backtesting/useBacktestAnalytics';
@@ -9,6 +10,25 @@ interface Props {
 }
 
 export default function RrMetricsCards({ metrics }: Props) {
+  const rrBars = useMemo(() => {
+    const values = metrics.rrValues || [];
+    if (values.length === 0) return [0.3, 0.5, 0.7, 0.4, 0.8, 0.6, 0.9, 0.5];
+    const maxVal = Math.max(...values.map(Math.abs), 1);
+    return values.map(v => Math.min(Math.abs(v) / maxVal, 1));
+  }, [metrics.rrValues]);
+
+  const idealRRBars = useMemo(() => {
+    const values = metrics.idealRRValues || [];
+    if (values.length === 0) return [0.6, 0.8, 0.5, 0.9, 0.7, 0.4, 0.8, 0.6];
+    const maxVal = Math.max(...values, 1);
+    return values.map(v => Math.min(v / maxVal, 1));
+  }, [metrics.idealRRValues]);
+
+  const rrColors = useMemo(() => {
+    const values = metrics.rrValues || [];
+    return values.map(v => v >= 0);
+  }, [metrics.rrValues]);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
       <motion.div
@@ -36,11 +56,14 @@ export default function RrMetricsCards({ metrics }: Props) {
           </div>
         </div>
         <div className="h-12 flex items-end gap-1">
-          {[0.3, 0.5, 0.7, 0.4, 0.8, 0.6, 0.9, 0.5].map((h, i) => (
+          {rrBars.map((h, i) => (
             <div 
               key={i}
-              className="flex-1 rounded-t bg-gradient-to-t from-blue-500 to-teal-500"
-              style={{ height: `${h * 100}%` }}
+              className={cn(
+                "flex-1 rounded-t bg-gradient-to-t",
+                rrColors[i] !== false ? "from-blue-500 to-teal-500" : "from-red-500 to-orange-400"
+              )}
+              style={{ height: `${Math.max(h * 100, 5)}%` }}
             />
           ))}
         </div>
@@ -71,11 +94,11 @@ export default function RrMetricsCards({ metrics }: Props) {
           </div>
         </div>
         <div className="h-12 flex items-end gap-1">
-          {[0.6, 0.8, 0.5, 0.9, 0.7, 0.4, 0.8, 0.6].map((h, i) => (
+          {idealRRBars.map((h, i) => (
             <div 
               key={i}
               className="flex-1 rounded-t bg-gradient-to-t from-teal-500 to-emerald-400"
-              style={{ height: `${h * 100}%` }}
+              style={{ height: `${Math.max(h * 100, 5)}%` }}
             />
           ))}
         </div>
