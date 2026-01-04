@@ -1,0 +1,137 @@
+You are working on an existing referral system in my app, but it is not functioning correctly.
+
+Your task is to fully diagnose the current referral implementation, identify why it is broken, and rebuild/fix it properly while reusing the existing referral dashboard UI.
+
+🎯 GOAL
+
+Create a fully working, production-ready referral system with correct data flow, storage, and display.
+
+🧠 STEP 1: DIAGNOSIS (MANDATORY)
+
+Before coding:
+
+Audit the entire referral flow
+
+Check:
+
+Referral code generation
+
+Signup referral handling
+
+Database storage
+
+Referral dashboard queries
+
+Identify what is broken and why
+
+Fix logic issues instead of patching blindly
+
+🧩 STEP 2: IMPLEMENT EXACT FUNCTIONALITY
+1️⃣ Unique Referral Code
+
+Generate a unique referral code for each user
+
+Assign it once (on user creation or first visit)
+
+Store it in the user schema (e.g. referralCode)
+
+Show it on the Referral Page
+
+2️⃣ Unique Referral Link
+
+Create a referral link format like:
+
+https://myapp.com/signup?ref=REFERRAL_CODE
+
+
+The link must work globally and persist the referral code correctly
+
+3️⃣ Signup Page Behavior
+
+On signup page:
+
+Read ref from URL query params
+
+Autofill referral code into an input field
+
+Input must be:
+
+Disabled
+
+Read-only
+
+Visible only for confirmation
+
+User must not be able to edit the referral code
+
+4️⃣ Secure Backend Storage
+
+On signup submit:
+
+Store referral code in backend only
+
+Save it in user schema (e.g. referredBy)
+
+❌ Do NOT trust frontend values blindly
+
+Validate referral code exists before saving
+
+5️⃣ Referral Dashboard (Already Exists)
+
+DO NOT redesign UI
+
+Fix backend logic so that:
+
+Referrer can see:
+
+List of users who joined using their referral
+
+Names (or email/username)
+
+Join timestamp (if available)
+
+Ensure correct DB relationships & queries
+
+🗄️ DATABASE EXPECTATION
+
+User schema should support something like:
+
+referralCode: string
+referredBy?: string
+
+
+Optional (if exists already):
+
+referrals: ObjectId[] | derived query
+
+🚨 IMPORTANT RULES
+
+No duplicate referral codes
+
+Referral code must be immutable
+
+No referral self-usage
+
+System must survive page refresh & direct link visits
+
+Ensure edge cases (missing/invalid referral code)
+
+✅ FINAL OUTPUT EXPECTED
+
+Working referral link system
+
+Correct DB storage
+
+Referral dashboard showing real data
+
+Clear explanation of:
+
+What was broken
+
+What was fixed
+
+How referral flow works end-to-end
+
+Do not partially fix.
+Do not skip diagnosis.
+Make it production-safe.
