@@ -18,6 +18,19 @@ type SignUpData = {
   cpassword: string;
 };
 
+const recentSignups = [
+  { name: "Raj", city: "Mumbai" },
+  { name: "Priya", city: "Bangalore" },
+  { name: "Amit", city: "Delhi" },
+  { name: "Sneha", city: "Hyderabad" },
+  { name: "Vikram", city: "Chennai" },
+  { name: "Neha", city: "Pune" },
+  { name: "Arjun", city: "Kolkata" },
+  { name: "Kavya", city: "Ahmedabad" },
+  { name: "Rohit", city: "Jaipur" },
+  { name: "Anjali", city: "Lucknow" },
+];
+
 const SignUp: React.FC = () => {
   const countryPhoneCodes: CountryCode[] = [
     { country: "United States", code: "+1" },
@@ -79,6 +92,8 @@ const SignUp: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [currentSignup, setCurrentSignup] = useState(0);
+  const [showSignupNotification, setShowSignupNotification] = useState(true);
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -88,6 +103,17 @@ const SignUp: React.FC = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowSignupNotification(false);
+      setTimeout(() => {
+        setCurrentSignup((prev) => (prev + 1) % recentSignups.length);
+        setShowSignupNotification(true);
+      }, 500);
+    }, 3500);
+    return () => clearInterval(interval);
   }, []);
 
   const filteredOptions = countryPhoneCodes
@@ -228,9 +254,13 @@ const SignUp: React.FC = () => {
   const strengthLabels = ["Weak", "Fair", "Good", "Strong"];
   const strengthColors = ["bg-red-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
 
+  const getTimeAgo = () => {
+    const times = ["1 min ago", "2 min ago", "3 min ago", "5 min ago", "8 min ago"];
+    return times[currentSignup % times.length];
+  };
+
   return (
     <div className="min-h-screen w-full flex bg-[#050508] relative overflow-hidden">
-      {/* Global animated background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#071018] to-[#050508]" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_50%_at_20%_30%,rgba(16,185,129,0.12),transparent)]" />
@@ -238,7 +268,6 @@ const SignUp: React.FC = () => {
         <div className="absolute bottom-0 left-1/2 w-full h-full bg-[radial-gradient(ellipse_50%_30%_at_50%_100%,rgba(6,182,212,0.08),transparent)]" />
       </div>
 
-      {/* Floating orbs */}
       <motion.div
         animate={{ y: [0, -25, 0], x: [0, 12, 0] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
@@ -255,15 +284,10 @@ const SignUp: React.FC = () => {
         className="absolute top-1/2 right-1/2 w-96 h-96 bg-gradient-to-br from-cyan-500/8 to-blue-500/5 rounded-full blur-3xl"
       />
 
-      {/* Left Side - Premium Brand Visual */}
       <div className="hidden lg:flex lg:w-1/2 relative z-10 flex-col justify-between p-8 xl:p-12 overflow-hidden">
-        {/* Animated gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#071420] via-[#0a1830] to-[#050510]" />
-        
-        {/* Animated grid lines */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
         
-        {/* Animated gradient motion */}
         <motion.div
           animate={{ 
             background: [
@@ -276,13 +300,11 @@ const SignUp: React.FC = () => {
           className="absolute inset-0"
         />
 
-        {/* Candlestick Pattern SVG */}
         <svg className="absolute right-8 top-1/4 w-64 h-64 opacity-10" viewBox="0 0 200 200">
           <motion.g
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
-            {/* Green candles (bullish) */}
             <rect x="20" y="80" width="8" height="60" fill="#10b981" rx="1" />
             <line x1="24" y1="70" x2="24" y2="80" stroke="#10b981" strokeWidth="2" />
             <line x1="24" y1="140" x2="24" y2="155" stroke="#10b981" strokeWidth="2" />
@@ -291,7 +313,6 @@ const SignUp: React.FC = () => {
             <line x1="44" y1="50" x2="44" y2="60" stroke="#10b981" strokeWidth="2" />
             <line x1="44" y1="110" x2="44" y2="125" stroke="#10b981" strokeWidth="2" />
             
-            {/* Red candles (bearish) */}
             <rect x="60" y="70" width="8" height="55" fill="#ef4444" rx="1" />
             <line x1="64" y1="55" x2="64" y2="70" stroke="#ef4444" strokeWidth="2" />
             <line x1="64" y1="125" x2="64" y2="140" stroke="#ef4444" strokeWidth="2" />
@@ -300,7 +321,6 @@ const SignUp: React.FC = () => {
             <line x1="84" y1="75" x2="84" y2="90" stroke="#ef4444" strokeWidth="2" />
             <line x1="84" y1="130" x2="84" y2="145" stroke="#ef4444" strokeWidth="2" />
             
-            {/* More green candles */}
             <rect x="100" y="50" width="8" height="70" fill="#10b981" rx="1" />
             <line x1="104" y1="35" x2="104" y2="50" stroke="#10b981" strokeWidth="2" />
             <line x1="104" y1="120" x2="104" y2="135" stroke="#10b981" strokeWidth="2" />
@@ -311,7 +331,6 @@ const SignUp: React.FC = () => {
           </motion.g>
         </svg>
 
-        {/* Floating geometric shapes */}
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
@@ -328,9 +347,7 @@ const SignUp: React.FC = () => {
           className="absolute bottom-32 left-16 w-24 h-24 border border-cyan-500/20 rounded-full"
         />
 
-        {/* Content */}
         <div className="relative z-10">
-          {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -344,7 +361,6 @@ const SignUp: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Main content */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -356,10 +372,10 @@ const SignUp: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 backdrop-blur-sm"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs text-emerald-400 font-medium">Start your journey today</span>
+              <span className="text-sm">🔥</span>
+              <span className="text-xs text-amber-400 font-semibold">47 traders signed up today</span>
             </motion.div>
             
             <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
@@ -373,9 +389,17 @@ const SignUp: React.FC = () => {
             <p className="text-lg text-white/60 max-w-md leading-relaxed">
               Analyze. Improve. Scale with discipline.
             </p>
+
+            <motion.div
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30 max-w-fit"
+            >
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-xs text-orange-400 font-medium">Lock in current pricing before it increases</span>
+            </motion.div>
           </div>
 
-          {/* Benefits list */}
           <div className="space-y-3">
             {[
               "Track every trade with precision analytics",
@@ -396,9 +420,36 @@ const SignUp: React.FC = () => {
               </motion.div>
             ))}
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+            <span className="text-xs text-orange-400 font-medium">Limited spots for beta pricing</span>
+          </motion.div>
+
+          <AnimatePresence mode="wait">
+            {showSignupNotification && (
+              <motion.div
+                key={currentSignup}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 max-w-fit"
+              >
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs text-emerald-400">
+                  {recentSignups[currentSignup].name} from {recentSignups[currentSignup].city} joined {getTimeAgo()}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
-        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -407,8 +458,8 @@ const SignUp: React.FC = () => {
         >
           <div className="flex items-center gap-8 xl:gap-12">
             {[
-              { value: "10K+", label: "Traders" },
-              { value: "2M+", label: "Trades" },
+              { value: "500+", label: "Traders" },
+              { value: "50K+", label: "Trades" },
               { value: "99.9%", label: "Uptime" },
             ].map((stat, i) => (
               <div key={i} className="text-center">
@@ -420,7 +471,6 @@ const SignUp: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Right Side - Glass Card Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative z-10 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -428,17 +478,13 @@ const SignUp: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="w-full max-w-[400px] py-4"
         >
-          {/* Glassmorphic Card */}
           <div className="relative">
-            {/* Glow effect behind card */}
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-violet-500/20 rounded-3xl blur-xl opacity-50" />
             
             <div className="relative bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-6 shadow-2xl shadow-black/20">
-              {/* Inner glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-transparent rounded-2xl pointer-events-none" />
               
               <div className="relative z-10">
-                {/* Logo - visible on mobile only */}
                 <div className="flex justify-center mb-5 lg:hidden">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
@@ -448,7 +494,6 @@ const SignUp: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Header */}
                 <div className="mb-5">
                   <h2 className="text-2xl font-bold text-white mb-1.5">Create your account</h2>
                   <p className="text-sm text-white/50">
@@ -459,7 +504,6 @@ const SignUp: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Google Button */}
                 <motion.button
                   onClick={() => signUpWithGoogle()}
                   whileHover={{ scale: 1.01, y: -1 }}
@@ -475,16 +519,13 @@ const SignUp: React.FC = () => {
                   Continue with Google
                 </motion.button>
 
-                {/* Divider */}
                 <div className="flex items-center gap-3 mb-5">
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                   <span className="text-[10px] text-white/40 uppercase tracking-widest font-medium">or</span>
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                 </div>
 
-                {/* Form */}
                 <form onSubmit={postSignUp} className="space-y-3">
-                  {/* Full Name */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-white/70">Full name</label>
                     <div className="relative group">
@@ -502,7 +543,6 @@ const SignUp: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Email */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-white/70">Email address</label>
                     <div className="relative group">
@@ -520,52 +560,51 @@ const SignUp: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Phone */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-white/70">Phone number</label>
                     <div className="flex gap-2">
-                      {/* Country Code Dropdown */}
                       <div className="relative" ref={dropdownRef}>
                         <button
                           type="button"
                           onClick={() => setIsOpen(!isOpen)}
-                          className="flex items-center gap-1 px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-white text-sm hover:bg-white/[0.08] transition-all min-w-[75px] backdrop-blur-sm"
+                          className="flex items-center gap-1 px-3 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white hover:bg-white/[0.08] transition-all min-w-[85px]"
                         >
-                          <span className="text-xs">{selectedCode.code}</span>
-                          <ChevronDown className={`w-3 h-3 text-white/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                          <span>{selectedCode.code}</span>
+                          <ChevronDown className={`w-3.5 h-3.5 text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                         </button>
-
+                        
                         <AnimatePresence>
                           {isOpen && (
                             <motion.div
-                              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                              initial={{ opacity: 0, y: -8, scale: 0.95 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                              exit={{ opacity: 0, y: -8, scale: 0.95 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute z-50 top-full left-0 mt-1 w-64 bg-[#0a0a12]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+                              className="absolute z-50 left-0 mt-1 w-56 bg-[#1a1a24] border border-white/[0.08] rounded-xl shadow-xl overflow-hidden"
                             >
-                              <div className="p-2">
+                              <div className="p-2 border-b border-white/[0.05]">
                                 <div className="relative">
-                                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+                                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
                                   <input
                                     type="text"
-                                    placeholder="Search country..."
+                                    placeholder="Search..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="w-full pl-8 pr-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs placeholder:text-white/30 outline-none focus:border-emerald-500/50"
+                                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white/[0.05] border border-white/[0.08] text-white placeholder:text-white/30 outline-none focus:border-emerald-500/50"
+                                    autoFocus
                                   />
                                 </div>
                               </div>
                               <div className="max-h-48 overflow-y-auto">
-                                {filteredOptions.map((country) => (
+                                {filteredOptions.map((c) => (
                                   <button
-                                    key={country.country}
+                                    key={c.country}
                                     type="button"
-                                    onClick={() => handleSelect(country)}
-                                    className="w-full px-4 py-2.5 text-left text-xs text-white/80 hover:bg-white/5 flex items-center justify-between transition-colors"
+                                    onClick={() => handleSelect(c)}
+                                    className="w-full flex items-center justify-between px-3 py-2 text-xs text-white/80 hover:bg-white/[0.05] transition-colors"
                                   >
-                                    <span>{country.country}</span>
-                                    <span className="text-white/40">{country.code}</span>
+                                    <span className="truncate">{c.country}</span>
+                                    <span className="text-white/50 ml-2">{c.code}</span>
                                   </button>
                                 ))}
                               </div>
@@ -573,14 +612,13 @@ const SignUp: React.FC = () => {
                           )}
                         </AnimatePresence>
                       </div>
-
-                      {/* Phone Input */}
-                      <div className="relative flex-1 group">
+                      
+                      <div className="relative group flex-1">
                         <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-emerald-400 transition-colors" />
                         <input
                           type="tel"
                           name="phone"
-                          placeholder="Phone number"
+                          placeholder="1234567890"
                           value={signUpData.phone}
                           onChange={setLoginVal}
                           required
@@ -591,7 +629,6 @@ const SignUp: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Password */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-white/70">Password</label>
                     <div className="relative group">
@@ -599,7 +636,7 @@ const SignUp: React.FC = () => {
                       <input
                         type={showPassword ? "text" : "password"}
                         name="password"
-                        placeholder="Create a password"
+                        placeholder="Create a strong password"
                         value={signUpData.password}
                         onChange={setLoginVal}
                         required
@@ -615,27 +652,25 @@ const SignUp: React.FC = () => {
                       </button>
                     </div>
                     
-                    {/* Password Strength */}
                     {signUpData.password && (
-                      <div className="mt-2 space-y-1.5">
+                      <div className="mt-1.5 space-y-1">
                         <div className="flex gap-1">
                           {[0, 1, 2, 3].map((i) => (
                             <div
                               key={i}
-                              className={`h-1 flex-1 rounded-full transition-all ${
-                                i < strength ? strengthColors[strength - 1] : "bg-white/10"
+                              className={`h-1 flex-1 rounded-full transition-colors ${
+                                i < strength ? strengthColors[strength - 1] : 'bg-white/10'
                               }`}
                             />
                           ))}
                         </div>
                         <p className="text-[10px] text-white/40">
-                          Password strength: <span className={`${strength > 2 ? "text-emerald-400" : strength > 1 ? "text-amber-400" : "text-red-400"}`}>{strengthLabels[strength - 1] || "Very Weak"}</span>
+                          {strength > 0 ? strengthLabels[strength - 1] : 'Too weak'} password
                         </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Confirm Password */}
                   <div className="space-y-1">
                     <label className="text-xs font-medium text-white/70">Confirm password</label>
                     <div className="relative group">
@@ -660,7 +695,7 @@ const SignUp: React.FC = () => {
                     </div>
                     
                     {signUpData.cpassword && (
-                      <div className="flex items-center gap-1.5 mt-1.5">
+                      <div className="flex items-center gap-1 mt-1">
                         {passwordsMatch ? (
                           <>
                             <Check className="w-3 h-3 text-emerald-400" />
@@ -669,109 +704,42 @@ const SignUp: React.FC = () => {
                         ) : (
                           <>
                             <X className="w-3 h-3 text-red-400" />
-                            <span className="text-[10px] text-red-400">Passwords don&apos;t match</span>
+                            <span className="text-[10px] text-red-400">Passwords don't match</span>
                           </>
                         )}
                       </div>
                     )}
                   </div>
 
-                  {/* Optional Trading Fields - Expandable */}
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowTradingFields(!showTradingFields)}
-                      className="flex items-center gap-2 text-xs text-white/50 hover:text-white/70 transition-colors"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5" />
-                      <span>Tell us about your trading (optional)</span>
-                      <ChevronDown className={`w-3 h-3 transition-transform ${showTradingFields ? "rotate-180" : ""}`} />
-                    </button>
-                    
-                    <AnimatePresence>
-                      {showTradingFields && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="pt-3 space-y-3">
-                            {/* Trading Experience */}
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-white/70">Trading experience</label>
-                              <select
-                                value={tradingExperience}
-                                onChange={(e) => setTradingExperience(e.target.value)}
-                                className="w-full px-4 py-2.5 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white outline-none focus:border-emerald-500/50 focus:bg-white/[0.08] focus:ring-2 focus:ring-emerald-500/20 transition-all backdrop-blur-sm appearance-none cursor-pointer"
-                              >
-                                <option value="" className="bg-[#0a0a12]">Select experience level</option>
-                                <option value="beginner" className="bg-[#0a0a12]">Beginner</option>
-                                <option value="intermediate" className="bg-[#0a0a12]">Intermediate</option>
-                                <option value="advanced" className="bg-[#0a0a12]">Advanced</option>
-                                <option value="professional" className="bg-[#0a0a12]">Professional</option>
-                              </select>
-                            </div>
+                  {(referralCode || couponCode) && (
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                      <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3 text-amber-400" />
+                      </div>
+                      <span className="text-xs text-amber-400">
+                        {referralCode && `Referral: ${referralCode}`}
+                        {referralCode && couponCode && ' | '}
+                        {couponCode && `Coupon: ${couponCode}`}
+                      </span>
+                    </div>
+                  )}
 
-                            {/* Preferred Market */}
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium text-white/70">Preferred market</label>
-                              <select
-                                value={preferredMarket}
-                                onChange={(e) => setPreferredMarket(e.target.value)}
-                                className="w-full px-4 py-2.5 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white outline-none focus:border-emerald-500/50 focus:bg-white/[0.08] focus:ring-2 focus:ring-emerald-500/20 transition-all backdrop-blur-sm appearance-none cursor-pointer"
-                              >
-                                <option value="" className="bg-[#0a0a12]">Select preferred market</option>
-                                <option value="stocks" className="bg-[#0a0a12]">Stocks</option>
-                                <option value="forex" className="bg-[#0a0a12]">Forex</option>
-                                <option value="crypto" className="bg-[#0a0a12]">Crypto</option>
-                                <option value="futures" className="bg-[#0a0a12]">Futures</option>
-                                <option value="options" className="bg-[#0a0a12]">Options</option>
-                              </select>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Error */}
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs backdrop-blur-sm"
+                      className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs backdrop-blur-sm"
                     >
                       {error}
                     </motion.div>
                   )}
 
-                  {/* Referral/Coupon Badges */}
-                  {(referralCode || couponCode) && (
-                    <div className="flex flex-wrap gap-2">
-                      {referralCode && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-[10px] text-emerald-400">Referral: {referralCode}</span>
-                        </div>
-                      )}
-                      {couponCode && (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/30">
-                          <Check className="w-3 h-3 text-violet-400" />
-                          <span className="text-[10px] text-violet-400">Coupon: {couponCode}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Submit */}
                   <motion.button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || !passwordsMatch}
                     whileHover={{ scale: 1.01, y: -1 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -782,17 +750,11 @@ const SignUp: React.FC = () => {
                       </>
                     )}
                   </motion.button>
-
-                  {/* No credit card required */}
-                  <p className="text-center text-[10px] text-white/40">
-                    No credit card required
-                  </p>
                 </form>
 
-                {/* Footer */}
                 <div className="mt-5 pt-4 border-t border-white/[0.06]">
-                  <p className="text-center text-xs text-white/30">
-                    By creating an account, you agree to our{" "}
+                  <p className="text-center text-[10px] text-white/30">
+                    By signing up, you agree to our{" "}
                     <Link href="/terms" className="text-white/50 hover:text-white/70 transition-colors">
                       Terms
                     </Link>{" "}
@@ -803,8 +765,7 @@ const SignUp: React.FC = () => {
                   </p>
                 </div>
 
-                {/* TradingView Attribution */}
-                <div className="mt-4 text-center">
+                <div className="mt-3 text-center">
                   <a 
                     href="https://www.tradingview.com" 
                     target="_blank" 

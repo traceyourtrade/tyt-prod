@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, TrendingUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, TrendingUp, Check } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
+
+const recentSignups = [
+  { name: "Rahul", city: "Mumbai" },
+  { name: "Priya", city: "Bangalore" },
+  { name: "Amit", city: "Delhi" },
+  { name: "Sneha", city: "Hyderabad" },
+  { name: "Vikram", city: "Chennai" },
+  { name: "Neha", city: "Pune" },
+  { name: "Arjun", city: "Kolkata" },
+  { name: "Kavya", city: "Ahmedabad" },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,6 +29,19 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentSignup, setCurrentSignup] = useState(0);
+  const [showSignupNotification, setShowSignupNotification] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowSignupNotification(false);
+      setTimeout(() => {
+        setCurrentSignup((prev) => (prev + 1) % recentSignups.length);
+        setShowSignupNotification(true);
+      }, 500);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -69,9 +93,13 @@ export default function LoginPage() {
     redirect_uri: "https://app.projournx.com/auth/google/callback",
   });
 
+  const getTimeAgo = () => {
+    const times = ["2 min ago", "3 min ago", "5 min ago", "8 min ago", "12 min ago"];
+    return times[currentSignup % times.length];
+  };
+
   return (
     <div className="min-h-screen w-full flex bg-[#050508] relative overflow-hidden">
-      {/* Global animated background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#0c1222] to-[#050508]" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_50%_at_20%_40%,rgba(56,189,248,0.15),transparent)]" />
@@ -79,7 +107,6 @@ export default function LoginPage() {
         <div className="absolute bottom-0 left-1/2 w-full h-full bg-[radial-gradient(ellipse_50%_30%_at_50%_100%,rgba(139,92,246,0.08),transparent)]" />
       </div>
 
-      {/* Floating orbs */}
       <motion.div
         animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -96,15 +123,10 @@ export default function LoginPage() {
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 rounded-full blur-3xl"
       />
 
-      {/* Left Side - Premium Brand Visual */}
       <div className="hidden lg:flex lg:w-1/2 relative z-10 flex-col justify-between p-8 xl:p-12 overflow-hidden">
-        {/* Animated gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0c1830] to-[#050510]" />
-        
-        {/* Animated grid lines */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
         
-        {/* Animated gradient motion */}
         <motion.div
           animate={{ 
             background: [
@@ -117,13 +139,11 @@ export default function LoginPage() {
           className="absolute inset-0"
         />
 
-        {/* Candlestick Pattern SVG */}
         <svg className="absolute right-8 top-1/4 w-64 h-64 opacity-10" viewBox="0 0 200 200">
           <motion.g
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           >
-            {/* Green candles (bullish) */}
             <rect x="20" y="80" width="8" height="60" fill="#10b981" rx="1" />
             <line x1="24" y1="70" x2="24" y2="80" stroke="#10b981" strokeWidth="2" />
             <line x1="24" y1="140" x2="24" y2="155" stroke="#10b981" strokeWidth="2" />
@@ -132,7 +152,6 @@ export default function LoginPage() {
             <line x1="44" y1="50" x2="44" y2="60" stroke="#10b981" strokeWidth="2" />
             <line x1="44" y1="110" x2="44" y2="125" stroke="#10b981" strokeWidth="2" />
             
-            {/* Red candles (bearish) */}
             <rect x="60" y="70" width="8" height="55" fill="#ef4444" rx="1" />
             <line x1="64" y1="55" x2="64" y2="70" stroke="#ef4444" strokeWidth="2" />
             <line x1="64" y1="125" x2="64" y2="140" stroke="#ef4444" strokeWidth="2" />
@@ -141,7 +160,6 @@ export default function LoginPage() {
             <line x1="84" y1="75" x2="84" y2="90" stroke="#ef4444" strokeWidth="2" />
             <line x1="84" y1="130" x2="84" y2="145" stroke="#ef4444" strokeWidth="2" />
             
-            {/* More green candles */}
             <rect x="100" y="50" width="8" height="70" fill="#10b981" rx="1" />
             <line x1="104" y1="35" x2="104" y2="50" stroke="#10b981" strokeWidth="2" />
             <line x1="104" y1="120" x2="104" y2="135" stroke="#10b981" strokeWidth="2" />
@@ -152,7 +170,6 @@ export default function LoginPage() {
           </motion.g>
         </svg>
 
-        {/* Floating geometric shapes */}
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
@@ -169,9 +186,7 @@ export default function LoginPage() {
           className="absolute bottom-32 left-16 w-20 h-20 border border-violet-500/20 rounded-full"
         />
 
-        {/* Content */}
         <div className="relative z-10">
-          {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -185,7 +200,6 @@ export default function LoginPage() {
           </motion.div>
         </div>
 
-        {/* Main content */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -197,10 +211,10 @@ export default function LoginPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 backdrop-blur-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 backdrop-blur-sm"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="text-xs text-cyan-400 font-medium">Welcome back, trader</span>
+              <span className="text-sm">🔥</span>
+              <span className="text-xs text-amber-400 font-semibold">Join 500+ winning traders</span>
             </motion.div>
             
             <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
@@ -214,10 +228,66 @@ export default function LoginPage() {
             <p className="text-lg text-white/60 max-w-md leading-relaxed">
               Analyze. Improve. Scale with discipline.
             </p>
+
+            <motion.p
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-sm text-amber-400/80 font-medium"
+            >
+              Don't miss out on proven strategies
+            </motion.p>
           </div>
+
+          <div className="space-y-3">
+            {[
+              "Track every trade with precision analytics",
+              "AI-powered pattern recognition",
+              "Detailed performance insights & reports",
+            ].map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + i * 0.1 }}
+                className="flex items-center gap-2.5"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm text-white/70">{feature}</span>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7 }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+            <span className="text-xs text-orange-400 font-medium">Limited spots for beta pricing</span>
+          </motion.div>
+
+          <AnimatePresence mode="wait">
+            {showSignupNotification && (
+              <motion.div
+                key={currentSignup}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 max-w-fit"
+              >
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs text-emerald-400">
+                  {recentSignups[currentSignup].name} from {recentSignups[currentSignup].city} joined {getTimeAgo()}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
-        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -226,8 +296,8 @@ export default function LoginPage() {
         >
           <div className="flex items-center gap-8 xl:gap-12">
             {[
-              { value: "10K+", label: "Traders" },
-              { value: "2M+", label: "Trades" },
+              { value: "500+", label: "Traders" },
+              { value: "50K+", label: "Trades" },
               { value: "99.9%", label: "Uptime" },
             ].map((stat, i) => (
               <div key={i} className="text-center">
@@ -239,7 +309,6 @@ export default function LoginPage() {
         </motion.div>
       </div>
 
-      {/* Right Side - Glass Card Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -247,17 +316,13 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="w-full max-w-[380px]"
         >
-          {/* Glassmorphic Card */}
           <div className="relative">
-            {/* Glow effect behind card */}
             <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-violet-500/20 rounded-3xl blur-xl opacity-50" />
             
             <div className="relative bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-7 shadow-2xl shadow-black/20">
-              {/* Inner glow */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-transparent rounded-2xl pointer-events-none" />
               
               <div className="relative z-10">
-                {/* Logo - visible on mobile only */}
                 <div className="flex justify-center mb-6 lg:hidden">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
@@ -267,7 +332,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Header */}
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold text-white mb-2">Sign in</h2>
                   <p className="text-sm text-white/50">
@@ -278,7 +342,6 @@ export default function LoginPage() {
                   </p>
                 </div>
 
-                {/* Google Button */}
                 <motion.button
                   onClick={logInWithGoogle}
                   whileHover={{ scale: 1.01, y: -1 }}
@@ -294,16 +357,13 @@ export default function LoginPage() {
                   Continue with Google
                 </motion.button>
 
-                {/* Divider */}
                 <div className="flex items-center gap-3 mb-5">
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                   <span className="text-[10px] text-white/40 uppercase tracking-widest font-medium">or</span>
                   <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                 </div>
 
-                {/* Form */}
                 <form onSubmit={postLoginDetails} className="space-y-4">
-                  {/* Email */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-white/70">Email address</label>
                     <div className="relative group">
@@ -320,7 +380,6 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Password */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-medium text-white/70">Password</label>
@@ -349,7 +408,6 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Error */}
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, y: -8 }}
@@ -360,13 +418,12 @@ export default function LoginPage() {
                     </motion.div>
                   )}
 
-                  {/* Submit */}
                   <motion.button
                     type="submit"
                     disabled={isLoading}
                     whileHover={{ scale: 1.01, y: -1 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -379,7 +436,6 @@ export default function LoginPage() {
                   </motion.button>
                 </form>
 
-                {/* Footer */}
                 <div className="mt-6 pt-5 border-t border-white/[0.06]">
                   <p className="text-center text-xs text-white/30">
                     By continuing, you agree to our{" "}
@@ -393,7 +449,6 @@ export default function LoginPage() {
                   </p>
                 </div>
 
-                {/* TradingView Attribution */}
                 <div className="mt-4 text-center">
                   <a 
                     href="https://www.tradingview.com" 
