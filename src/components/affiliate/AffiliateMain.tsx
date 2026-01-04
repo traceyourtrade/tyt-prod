@@ -115,7 +115,7 @@ export default function AffiliateMain() {
 
   const copyReferralLink = () => {
     if (affiliate) {
-      const link = `${window.location.origin}/?ref=${affiliate.referralCode}`;
+      const link = `${window.location.origin}/signup?ref=${affiliate.referralCode}`;
       navigator.clipboard.writeText(link);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

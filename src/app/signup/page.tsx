@@ -641,6 +641,27 @@ const SignUp: React.FC = () => {
                     )}
                   </div>
 
+                  {/* Referral Code (readonly when present) */}
+                  {referralCode && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-emerald-400 flex items-center gap-1.5">
+                        <Gift className="w-3 h-3" />
+                        Referred by
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={referralCode}
+                          disabled
+                          readOnly
+                          className="w-full px-4 py-2.5 text-sm rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono cursor-not-allowed"
+                        />
+                        <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                      </div>
+                      <p className="text-[10px] text-emerald-400/70">Your friend will get credit for referring you!</p>
+                    </div>
+                  )}
+
                   {/* Error */}
                   {error && (
                     <motion.div

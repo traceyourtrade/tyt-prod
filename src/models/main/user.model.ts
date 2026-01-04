@@ -70,6 +70,8 @@ export interface IUser extends Document {
   otherData: IOtherData;
   notifications: IUserNotification[];
   subscription: IUserSubscription;
+  referralCode: string;
+  referredBy?: string;
   
   // Methods
   generateAuthToken(): Promise<string>;
@@ -211,7 +213,9 @@ const userSchema = new Schema<IUser>({
       enum: ['monthly', 'yearly'],
       default: 'monthly'
     }
-  }
+  },
+  referralCode: { type: String, unique: true, sparse: true },
+  referredBy: { type: String, index: true }
 });
 
 // 🔒 Hash passwords before save

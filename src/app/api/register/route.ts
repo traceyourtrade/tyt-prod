@@ -17,6 +17,14 @@ const generateReferralUniqueId = () => {
   ).join("");
 };
 
+const generateUserReferralCode = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from(
+    { length: 8 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
+};
+
 export async function POST(req: Request) {
   try {
     const {
@@ -84,6 +92,26 @@ export async function POST(req: Request) {
       }
     }
 
+    // ✅ Generate unique referral code for this user
+    let userReferralCode;
+    while (true) {
+      const code = generateUserReferralCode();
+      const exists = await User.findOne({ referralCode: code });
+      if (!exists) {
+        userReferralCode = code;
+        break;
+      }
+    }
+
+    // ✅ Validate referral code if provided (user-to-user referrals)
+    let validatedReferredBy: string | undefined;
+    if (referralCode) {
+      const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
+      if (referrer) {
+        validatedReferredBy = referralCode.toUpperCase();
+      }
+    }
+
     // ✅ Generate signup verification token (expires in 15 minutes)
     const signUpVerificationToken = jwt.sign(
       { email },
@@ -110,6 +138,8 @@ export async function POST(req: Request) {
         trialUsed: true,
         subscriptionStatus: "pending",
       },
+      referralCode: userReferralCode,
+      referredBy: validatedReferredBy,
     });
 
     const notes = new Notes({
