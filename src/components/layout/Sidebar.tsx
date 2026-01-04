@@ -490,17 +490,17 @@ export function Sidebar({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-amber-900/30 via-amber-800/20 to-amber-900/30 rounded-xl" />
-                  <div className="absolute inset-0 border border-amber-500/20 rounded-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 dark:from-amber-900/30 dark:via-amber-800/20 dark:to-amber-900/30 rounded-xl" />
+                  <div className="absolute inset-0 border border-amber-500/40 dark:border-amber-500/20 rounded-xl" />
                   <div className={cn(
                     "relative flex items-center gap-2.5",
                     collapsed && "justify-center"
                   )}>
                     <div className="w-5 h-5 rounded-md bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
-                      <Crown className="h-3 w-3 text-amber-950" />
+                      <Crown className="h-3 w-3 text-white" />
                     </div>
                     {!collapsed && (
-                      <span className="text-[11px] font-semibold text-amber-400">
+                      <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
                         Pro Member
                       </span>
                     )}
