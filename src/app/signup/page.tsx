@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Phone, Lock, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X } from "lucide-react";
+import { Mail, Phone, Lock, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X, User, ArrowRight, TrendingUp } from "lucide-react";
 
 type CountryCode = { country: string; code: string };
 
@@ -96,8 +96,7 @@ const SignUp: React.FC = () => {
     setSearch("");
   };
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -144,8 +143,6 @@ const SignUp: React.FC = () => {
   const postSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    const fullName = `${firstName} ${lastName}`.trim();
 
     try {
       const res = await fetch(`/api/register`, {
@@ -208,103 +205,129 @@ const SignUp: React.FC = () => {
   const strengthLabels = ["Weak", "Fair", "Good", "Strong"];
   const strengthColors = ["bg-red-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
 
-  const handleClose = () => {
-    router.push('/login');
-  };
-
   return (
     <div 
-      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden"
+      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden py-8"
       style={{
-        background: '#101010',
+        background: '#0f1218',
         backgroundImage: `
-          radial-gradient(ellipse 80% 80% at 70% 50%, rgba(59, 130, 246, 0.4), transparent),
-          radial-gradient(ellipse 60% 60% at 85% 30%, rgba(139, 92, 246, 0.3), transparent),
-          radial-gradient(ellipse 50% 80% at 80% 80%, rgba(59, 130, 246, 0.35), transparent)
+          radial-gradient(ellipse 60% 60% at 0% 0%, rgba(78, 191, 148, 0.15), transparent),
+          radial-gradient(ellipse 40% 40% at 100% 0%, rgba(34, 211, 238, 0.1), transparent),
+          radial-gradient(ellipse 50% 50% at 50% 100%, rgba(139, 92, 246, 0.08), transparent)
         `
       }}
     >
-      <motion.div
-        animate={{
-          backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        className="absolute inset-0 opacity-50"
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `
-            radial-gradient(ellipse 80% 80% at 70% 50%, rgba(59, 130, 246, 0.3), transparent),
-            radial-gradient(ellipse 60% 60% at 85% 30%, rgba(139, 92, 246, 0.2), transparent)
+            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
           `,
-          backgroundSize: '200% 200%',
+          backgroundSize: '50px 50px'
         }}
       />
 
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="relative w-full max-w-md mx-4 bg-zinc-900/70 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl"
-      >
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors"
-        >
-          <X className="w-4 h-4 text-zinc-400" />
-        </button>
+        className="absolute w-96 h-96 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
+          top: '10%',
+          left: '5%',
+          filter: 'blur(40px)',
+        }}
+        animate={{
+          x: [0, 30, 0],
+          y: [0, -20, 0],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <motion.div
+        className="absolute w-80 h-80 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(34, 211, 238, 0.12) 0%, transparent 70%)',
+          top: '50%',
+          right: '10%',
+          filter: 'blur(50px)',
+        }}
+        animate={{
+          x: [0, -25, 0],
+          y: [0, 30, 0],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <motion.div
+        className="absolute w-72 h-72 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)',
+          bottom: '15%',
+          left: '20%',
+          filter: 'blur(45px)',
+        }}
+        animate={{
+          x: [0, 20, 0],
+          y: [0, 25, 0],
+        }}
+        transition={{
+          duration: 20,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
 
-        <div className="flex justify-center mb-6">
-          <div className="flex p-1 bg-zinc-800/50 rounded-full">
-            <div className="py-2 px-6 bg-zinc-700 rounded-full">
-              <span className="text-sm font-medium text-white">Sign up</span>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative w-full max-w-[420px] mx-4 bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/20"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl scale-150" />
+            <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+              <TrendingUp className="w-7 h-7 text-white" />
             </div>
-            <Link href="/login" className="py-2 px-6 rounded-full hover:bg-zinc-800/50 transition-colors">
-              <span className="text-sm font-medium text-zinc-400">Sign in</span>
-            </Link>
           </div>
+          <h1 className="mt-4 text-xl font-bold text-white tracking-tight">ProJournX</h1>
         </div>
 
-        <h2 className="text-xl font-semibold text-white text-center mt-6 mb-6">Create an account</h2>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white">Create your account</h2>
+          <p className="text-sm text-zinc-400 mt-2">Start your trading journey today</p>
+        </div>
 
         <form onSubmit={postSignUp} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <input
-                type="text"
-                placeholder="First name"
-                value={firstName}
-                onChange={(e) => { setFirstName(e.target.value); if (error) setError(""); }}
-                required
-                autoComplete="given-name"
-                className="w-full py-3 px-4 text-sm rounded-lg bg-zinc-800/50 border border-white/5 text-white placeholder:text-zinc-500 outline-none focus:border-white/20 transition-all"
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                placeholder="Last name"
-                value={lastName}
-                onChange={(e) => { setLastName(e.target.value); if (error) setError(""); }}
-                required
-                autoComplete="family-name"
-                className="w-full py-3 px-4 text-sm rounded-lg bg-zinc-800/50 border border-white/5 text-white placeholder:text-zinc-500 outline-none focus:border-white/20 transition-all"
-              />
-            </div>
+          <div className="relative group">
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 transition-colors group-focus-within:text-emerald-400" />
+            <input
+              type="text"
+              placeholder="Full name"
+              value={fullName}
+              onChange={(e) => { setFullName(e.target.value); if (error) setError(""); }}
+              required
+              autoComplete="name"
+              className="w-full py-3.5 pl-12 pr-4 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder:text-zinc-500 outline-none transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
+            />
           </div>
 
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <div className="relative group">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 transition-colors group-focus-within:text-emerald-400" />
             <input
               type="email"
-              placeholder="Email"
+              placeholder="Email address"
               value={email}
               onChange={(e) => { setEmail(e.target.value); if (error) setError(""); }}
               required
               autoComplete="email"
-              className="w-full py-3 pl-11 pr-4 text-sm rounded-lg bg-zinc-800/50 border border-white/5 text-white placeholder:text-zinc-500 outline-none focus:border-white/20 transition-all"
+              className="w-full py-3.5 pl-12 pr-4 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder:text-zinc-500 outline-none transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
             />
           </div>
 
@@ -313,10 +336,10 @@ const SignUp: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-1 py-3 px-3 rounded-lg bg-zinc-800/50 border border-white/5 text-sm text-white hover:bg-zinc-800 transition-all min-w-[90px]"
+                className="flex items-center gap-1.5 py-3.5 px-4 rounded-xl bg-white/[0.05] border border-white/[0.08] text-sm text-white hover:bg-white/[0.08] transition-all min-w-[100px] focus:ring-2 focus:ring-emerald-500/50"
               >
                 <span>{selectedCode.code}</span>
-                <ChevronDown className={`w-3.5 h-3.5 text-zinc-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
               </button>
               
               <AnimatePresence>
@@ -326,31 +349,31 @@ const SignUp: React.FC = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute z-50 left-0 mt-1 w-56 bg-zinc-900 border border-white/10 rounded-lg shadow-xl overflow-hidden"
+                    className="absolute z-50 left-0 mt-2 w-64 bg-zinc-900/95 backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-2xl overflow-hidden"
                   >
-                    <div className="p-2 border-b border-white/5">
+                    <div className="p-3 border-b border-white/[0.08]">
                       <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                         <input
                           type="text"
-                          placeholder="Search..."
+                          placeholder="Search country..."
                           value={search}
                           onChange={(e) => setSearch(e.target.value)}
-                          className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md bg-zinc-800/50 border border-white/10 text-white placeholder:text-zinc-500 outline-none focus:border-white/20"
+                          className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-white/[0.05] border border-white/[0.08] text-white placeholder:text-zinc-500 outline-none focus:ring-2 focus:ring-emerald-500/50"
                           autoFocus
                         />
                       </div>
                     </div>
-                    <div className="max-h-48 overflow-y-auto">
+                    <div className="max-h-52 overflow-y-auto">
                       {filteredOptions.map((c) => (
                         <button
                           key={c.country}
                           type="button"
                           onClick={() => handleSelect(c)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/[0.05] transition-colors"
                         >
                           <span className="truncate">{c.country}</span>
-                          <span className="text-zinc-500 ml-2">{c.code}</span>
+                          <span className="text-zinc-500 ml-2 font-medium">{c.code}</span>
                         </button>
                       ))}
                     </div>
@@ -359,8 +382,8 @@ const SignUp: React.FC = () => {
               </AnimatePresence>
             </div>
             
-            <div className="relative flex-1">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <div className="relative flex-1 group">
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 transition-colors group-focus-within:text-emerald-400" />
               <input
                 type="tel"
                 placeholder="Phone number"
@@ -368,14 +391,14 @@ const SignUp: React.FC = () => {
                 onChange={(e) => { setPhone(e.target.value); if (error) setError(""); }}
                 required
                 autoComplete="tel"
-                className="w-full py-3 pl-11 pr-4 text-sm rounded-lg bg-zinc-800/50 border border-white/5 text-white placeholder:text-zinc-500 outline-none focus:border-white/20 transition-all"
+                className="w-full py-3.5 pl-12 pr-4 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder:text-zinc-500 outline-none transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
               />
             </div>
           </div>
 
           <div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 transition-colors group-focus-within:text-emerald-400" />
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
@@ -383,19 +406,19 @@ const SignUp: React.FC = () => {
                 onChange={(e) => { setPassword(e.target.value); if (error) setError(""); }}
                 required
                 autoComplete="new-password"
-                className="w-full py-3 pl-11 pr-11 text-sm rounded-lg bg-zinc-800/50 border border-white/5 text-white placeholder:text-zinc-500 outline-none focus:border-white/20 transition-all"
+                className="w-full py-3.5 pl-12 pr-12 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder:text-zinc-500 outline-none transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
             
             {password && (
-              <div className="mt-2 space-y-1">
+              <div className="mt-2.5 space-y-1.5">
                 <div className="flex gap-1">
                   {[0, 1, 2, 3].map((i) => (
                     <div
@@ -406,7 +429,7 @@ const SignUp: React.FC = () => {
                     />
                   ))}
                 </div>
-                <p className="text-[10px] text-zinc-500">
+                <p className="text-xs text-zinc-500">
                   {strength > 0 ? strengthLabels[strength - 1] : 'Too weak'} password
                 </p>
               </div>
@@ -414,8 +437,8 @@ const SignUp: React.FC = () => {
           </div>
 
           <div>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500 transition-colors group-focus-within:text-emerald-400" />
               <input
                 type={showConPassword ? "text" : "password"}
                 placeholder="Confirm password"
@@ -423,28 +446,28 @@ const SignUp: React.FC = () => {
                 onChange={(e) => { setCpassword(e.target.value); if (error) setError(""); }}
                 required
                 autoComplete="new-password"
-                className="w-full py-3 pl-11 pr-11 text-sm rounded-lg bg-zinc-800/50 border border-white/5 text-white placeholder:text-zinc-500 outline-none focus:border-white/20 transition-all"
+                className="w-full py-3.5 pl-12 pr-12 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder:text-zinc-500 outline-none transition-all focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
               />
               <button
                 type="button"
                 onClick={() => setShowConPassword(!showConPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
               >
-                {showConPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
             
             {cpassword && (
-              <div className="flex items-center gap-1 mt-1.5">
+              <div className="flex items-center gap-1.5 mt-2">
                 {passwordsMatch ? (
                   <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-[10px] text-emerald-400">Passwords match</span>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs text-emerald-400">Passwords match</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-3 h-3 text-red-400" />
-                    <span className="text-[10px] text-red-400">Passwords don't match</span>
+                    <X className="w-4 h-4 text-red-400" />
+                    <span className="text-xs text-red-400">Passwords don't match</span>
                   </>
                 )}
               </div>
@@ -452,11 +475,11 @@ const SignUp: React.FC = () => {
           </div>
 
           {(referralCode || couponCode) && (
-            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
-              <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <Check className="w-3 h-3 text-amber-400" />
+            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
               </div>
-              <span className="text-xs text-amber-400">
+              <span className="text-sm text-emerald-400">
                 {referralCode && `Referral: ${referralCode}`}
                 {referralCode && couponCode && ' | '}
                 {couponCode && `Coupon: ${couponCode}`}
@@ -468,7 +491,7 @@ const SignUp: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs"
+              className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
             >
               {error}
             </motion.div>
@@ -477,46 +500,61 @@ const SignUp: React.FC = () => {
           <motion.button
             type="submit"
             disabled={isLoading || !passwordsMatch}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            className="w-full py-3 px-4 rounded-lg bg-white text-zinc-900 text-sm font-medium hover:bg-zinc-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            whileHover={{ scale: 1.02, filter: "brightness(1.1)" }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 mt-6"
           >
             {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              "Create an account"
+              <>
+                Create account
+                <ArrowRight className="w-4 h-4" />
+              </>
             )}
           </motion.button>
         </form>
 
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-zinc-700" />
-          <span className="text-xs text-zinc-500 uppercase tracking-wider">or sign in with</span>
-          <div className="flex-1 h-px bg-zinc-700" />
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 h-px bg-white/[0.08]" />
+          <span className="text-xs text-zinc-500">or</span>
+          <div className="flex-1 h-px bg-white/[0.08]" />
         </div>
 
-        <div className="flex justify-center gap-3">
-          <motion.button
-            onClick={() => signUpWithGoogle()}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex-1 py-3 flex items-center justify-center rounded-lg bg-zinc-800 border border-white/5 hover:bg-zinc-700 transition-all"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-          </motion.button>
-        </div>
+        <motion.button
+          onClick={() => signUpWithGoogle()}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full py-3.5 flex items-center justify-center gap-3 rounded-xl bg-white text-zinc-900 font-medium transition-all shadow-md hover:shadow-lg"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          <span className="text-sm">Continue with Google</span>
+        </motion.button>
 
         <p className="mt-6 text-center text-xs text-zinc-500">
           By creating an account, you agree to our{" "}
-          <Link href="/terms" className="text-cyan-400 hover:text-cyan-300 transition-colors">
-            Terms & Service
+          <Link href="/terms" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+            Terms of Service
+          </Link>
+          {" "}and{" "}
+          <Link href="/privacy" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+            Privacy Policy
           </Link>
         </p>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-zinc-400">
+            Already have an account?{" "}
+            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </motion.div>
     </div>
   );
