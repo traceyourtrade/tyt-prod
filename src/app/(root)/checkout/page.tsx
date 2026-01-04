@@ -69,7 +69,7 @@ export default function CheckoutPage() {
   const [isUpgrade, setIsUpgrade] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
   const [liveViewers, setLiveViewers] = useState(23);
-  const [joinedToday, setJoinedToday] = useState(47);
+  const [joinedToday] = useState(15);
   
   const planParam = searchParams.get('plan');
   const upgradeParam = searchParams.get('upgrade');
@@ -302,7 +302,7 @@ export default function CheckoutPage() {
           >
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 mb-3">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span className="text-xs font-semibold text-amber-400">15,847 traders already profiting</span>
+              <span className="text-xs font-semibold text-amber-400">500+ traders already winning</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">
               Stop Losing Money.{' '}
@@ -415,10 +415,10 @@ export default function CheckoutPage() {
                 <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Everything you need to profit:</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { icon: Infinity, text: "Unlimited trades", value: "₹500/mo value" },
+                    { icon: Rocket, text: "Bar replay backtesting", value: "₹600/mo value" },
                     { icon: Brain, text: "AI win patterns", value: "₹300/mo value" },
                     { icon: Target, text: "Prop firm tracking", value: "₹400/mo value" },
-                    { icon: LineChart, text: "Pro analytics", value: "₹300/mo value" },
+                    { icon: Infinity, text: "Unlimited trades", value: "₹200/mo value" },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-zinc-800/50 border border-zinc-700/30">
                       <div className="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center flex-shrink-0">
