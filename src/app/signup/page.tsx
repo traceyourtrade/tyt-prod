@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Phone, Lock, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X, User, ArrowRight, TrendingUp } from "lucide-react";
+import { Mail, Phone, Lock, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X, User, ArrowRight } from "lucide-react";
 
 type CountryCode = { country: string; code: string };
 
@@ -290,13 +290,11 @@ const SignUp: React.FC = () => {
         className="relative w-full max-w-[420px] mx-4 bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/20"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl scale-150" />
-            <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <TrendingUp className="w-7 h-7 text-white" />
-            </div>
-          </div>
-          <h1 className="mt-4 text-xl font-bold text-white tracking-tight">ProJournX</h1>
+          <img 
+            src="/logo.png" 
+            alt="ProJournX" 
+            className="h-12 w-auto"
+          />
         </div>
 
         <div className="text-center mb-6">

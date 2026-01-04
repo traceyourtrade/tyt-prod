@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, TrendingUp } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
@@ -158,13 +158,11 @@ export default function LoginPage() {
       >
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl scale-150" />
-            <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <TrendingUp className="w-7 h-7 text-white" />
-            </div>
-          </div>
-          <h1 className="mt-4 text-xl font-bold text-white tracking-tight">ProJournX</h1>
+          <img 
+            src="/logo.png" 
+            alt="ProJournX" 
+            className="h-12 w-auto"
+          />
         </div>
 
         {/* Heading */}
