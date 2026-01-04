@@ -258,7 +258,7 @@ export default function CheckoutPage() {
 
   if (checkingStatus) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
+      <div className="min-h-screen flex items-center justify-center bg-[#171717]">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-white" />
@@ -274,7 +274,7 @@ export default function CheckoutPage() {
   const displayPrice = billingPeriod === 'yearly' ? yearlyMonthlyPrice : monthlyPrice;
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-[#171717] text-white flex flex-col overflow-x-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#071018] to-[#050508]" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_50%_at_20%_30%,rgba(251,146,60,0.12),transparent)]" />

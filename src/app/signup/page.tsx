@@ -260,7 +260,7 @@ const SignUp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#050508] relative overflow-hidden">
+    <div className="min-h-screen w-full flex bg-[#171717] relative overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#071018] to-[#050508]" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_50%_at_20%_30%,rgba(16,185,129,0.12),transparent)]" />

@@ -99,7 +99,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#050508] relative overflow-hidden">
+    <div className="min-h-screen w-full flex bg-[#171717] relative overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#0c1222] to-[#050508]" />
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_80%_50%_at_20%_40%,rgba(56,189,248,0.15),transparent)]" />
