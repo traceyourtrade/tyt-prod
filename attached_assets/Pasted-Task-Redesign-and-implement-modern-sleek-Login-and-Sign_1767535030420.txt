@@ -1,0 +1,128 @@
+Task:
+Redesign and implement modern, sleek Login and Signup pages for ProjournX, a professional Trading Performance OS.
+The UI must look institutional, premium, and SaaS-grade, not like a basic trading journal or beginner app.
+
+🧱 Tech Stack Requirements
+
+Frontend: React
+
+Styling: Tailwind CSS
+
+Dark mode: Default
+
+Clean, reusable components
+
+Responsive for desktop, tablet, and mobile
+
+🎨 Design Requirements
+
+Dark background with subtle gradients
+
+Glassmorphism or elevated card for auth container
+
+Professional trading aesthetic (minimal, data-driven)
+
+Premium typography (Inter or system font)
+
+Smooth hover states and micro-interactions
+
+Avoid:
+
+Cartoonish UI
+
+Overuse of bright colors
+
+Notebook / diary visuals
+
+🧩 Page Layout
+
+Full-screen layout with two sections (desktop):
+
+Left Section (Brand / Visual)
+
+Abstract financial visuals (candlesticks, grids, charts)
+
+Headline:
+
+Your Trading Performance OS
+
+Sub-headline:
+
+Analyze. Improve. Scale with discipline.
+
+Subtle animated gradient or motion background
+
+Right Section (Auth Card)
+
+Centered card with glassmorphism effect
+
+Toggle between Login and Signup
+
+Fields:
+
+Email
+
+Password (with show/hide toggle)
+
+Login CTA: Access Dashboard
+
+Signup CTA: Start Trading Like a Pro
+
+Forgot password link
+
+Optional social login buttons (Google / Apple – minimal icons)
+
+📝 Signup Enhancements
+
+Progressive form (step-based or conditional fields)
+
+Optional inputs:
+
+Trading experience level
+
+Preferred market (Stocks / Forex / Crypto)
+
+Display below CTA:
+
+No credit card required
+
+🔗 Footer Requirement (Mandatory)
+
+At the bottom of the page, include a subtle footer text:
+
+Charts by TradingView
+
+Link this text to:
+https://www.tradingview.com
+
+Small font, low contrast, non-distracting
+
+Center or right aligned
+
+📱 Responsiveness
+
+Stack layout vertically on mobile
+
+Auth card stays centered
+
+Left visual section collapses or moves on smaller screens
+
+🧠 UX Expectations
+
+Instant perception of a serious, professional trading platform
+
+Clean spacing, strong hierarchy
+
+Minimal but confident microcopy
+
+🚀 Output Expectation
+
+Fully functional Login & Signup pages
+
+Clean component structure
+
+Production-ready Tailwind styling
+
+No placeholder lorem text
+
+Easy to plug into an existing auth backend
