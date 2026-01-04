@@ -5,19 +5,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import {
   Users,
-  DollarSign,
   Link2,
   Copy,
   Check,
-  TrendingUp,
   Gift,
-  Award,
   ArrowRight,
   Sparkles,
   MousePointerClick,
   UserPlus,
   CreditCard,
   Ticket,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 
 interface AffiliateData {
@@ -128,15 +127,6 @@ export default function AffiliateMain() {
     setTimeout(() => setCopiedCoupon(null), 2000);
   };
 
-  const getTierColor = (tier: string) => {
-    switch (tier) {
-      case 'bronze': return 'from-amber-600 to-amber-800';
-      case 'silver': return 'from-gray-400 to-gray-600';
-      case 'gold': return 'from-yellow-400 to-yellow-600';
-      case 'platinum': return 'from-violet-400 to-violet-600';
-      default: return 'from-gray-400 to-gray-600';
-    }
-  };
 
   if (loading) {
     return (
@@ -187,10 +177,10 @@ export default function AffiliateMain() {
               
               <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                 <div className="w-10 h-10 rounded-lg bg-[#4EBF94]/20 flex items-center justify-center mb-3">
-                  <DollarSign className="w-5 h-5 text-[#4EBF94]" />
+                  <CreditCard className="w-5 h-5 text-[#4EBF94]" />
                 </div>
-                <h3 className="font-semibold text-white mb-1">Earn Commission</h3>
-                <p className="text-sm text-muted-foreground">Earn up to 20% commission on their subscriptions</p>
+                <h3 className="font-semibold text-white mb-1">Track Conversions</h3>
+                <p className="text-sm text-muted-foreground">See who subscribed from your referral links</p>
               </div>
             </div>
 
@@ -202,7 +192,7 @@ export default function AffiliateMain() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-[#4EBF94]" />
-                  20% base commission on all referral subscriptions
+                  Unique referral link to share with traders
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-[#4EBF94]" />
@@ -214,7 +204,7 @@ export default function AffiliateMain() {
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-[#4EBF94]" />
-                  Monthly payouts via your preferred method
+                  Track sign-ups and subscription conversions
                 </li>
               </ul>
             </div>
@@ -246,11 +236,7 @@ export default function AffiliateMain() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Affiliate Dashboard</h1>
-          <p className="text-muted-foreground">Track your referrals and earnings</p>
-        </div>
-        <div className={`px-3 py-1.5 rounded-lg bg-gradient-to-r ${getTierColor(affiliate?.tier || 'bronze')} text-white text-sm font-semibold flex items-center gap-1.5`}>
-          <Award className="w-4 h-4" />
-          {affiliate?.tier?.charAt(0).toUpperCase()}{affiliate?.tier?.slice(1)} Tier
+          <p className="text-muted-foreground">Track your referrals</p>
         </div>
       </div>
 
@@ -259,7 +245,7 @@ export default function AffiliateMain() {
           <div>
             <p className="text-sm text-muted-foreground mb-1">Your Referral Link</p>
             <p className="text-sm font-mono text-foreground break-all">
-              {typeof window !== 'undefined' ? `${window.location.origin}/?ref=${affiliate?.referralCode}` : ''}
+              {typeof window !== 'undefined' ? `${window.location.origin}/signup?ref=${affiliate?.referralCode}` : ''}
             </p>
           </div>
           <motion.button
@@ -276,81 +262,34 @@ export default function AffiliateMain() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
-            <MousePointerClick className="w-4 h-4 text-blue-400" />
-            <span className="text-sm text-muted-foreground">Clicks</span>
-          </div>
-          <p className="text-2xl font-bold">{stats?.totalClicks || 0}</p>
-        </div>
-        
-        <div className="bg-card rounded-xl p-4 border border-border">
-          <div className="flex items-center gap-2 mb-2">
             <UserPlus className="w-4 h-4 text-violet-400" />
-            <span className="text-sm text-muted-foreground">Sign Ups</span>
+            <span className="text-sm text-muted-foreground">Total Sign Ups</span>
           </div>
           <p className="text-2xl font-bold">{stats?.totalSignups || 0}</p>
         </div>
         
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="w-4 h-4 text-[#4EBF94]" />
-            <span className="text-sm text-muted-foreground">Conversions</span>
+            <UserCheck className="w-4 h-4 text-[#4EBF94]" />
+            <span className="text-sm text-muted-foreground">Subscribed</span>
           </div>
-          <p className="text-2xl font-bold">{stats?.totalConversions || 0}</p>
+          <p className="text-2xl font-bold text-[#4EBF94]">{stats?.totalConversions || 0}</p>
         </div>
         
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-amber-400" />
-            <span className="text-sm text-muted-foreground">Pending</span>
+            <UserX className="w-4 h-4 text-amber-400" />
+            <span className="text-sm text-muted-foreground">Not Subscribed</span>
           </div>
-          <p className="text-2xl font-bold text-amber-400">${(stats?.pendingCommissions || 0).toFixed(2)}</p>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="bg-card rounded-xl p-5 border border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-[#4EBF94]/20 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-[#4EBF94]" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Earnings</p>
-              <p className="text-xl font-bold">${(affiliate?.totalEarnings || 0).toFixed(2)}</p>
-            </div>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Commission Rate: <span className="text-[#4EBF94] font-semibold">{affiliate?.commissionRate}%</span>
-          </div>
+          <p className="text-2xl font-bold text-amber-400">{(stats?.totalSignups || 0) - (stats?.totalConversions || 0)}</p>
         </div>
         
-        <div className="bg-card rounded-xl p-5 border border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Pending Payout</p>
-              <p className="text-xl font-bold text-amber-400">${(affiliate?.pendingEarnings || 0).toFixed(2)}</p>
-            </div>
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <MousePointerClick className="w-4 h-4 text-blue-400" />
+            <span className="text-sm text-muted-foreground">Clicks</span>
           </div>
-          <div className="text-sm text-muted-foreground">
-            Paid: <span className="text-foreground font-semibold">${(affiliate?.paidEarnings || 0).toFixed(2)}</span>
-          </div>
-        </div>
-        
-        <div className="bg-card rounded-xl p-5 border border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-              <Users className="w-5 h-5 text-violet-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Referrals</p>
-              <p className="text-xl font-bold">{affiliate?.totalReferrals || 0}</p>
-            </div>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Active: <span className="text-foreground font-semibold">{affiliate?.activeReferrals || 0}</span>
-          </div>
+          <p className="text-2xl font-bold">{stats?.totalClicks || 0}</p>
         </div>
       </div>
 
