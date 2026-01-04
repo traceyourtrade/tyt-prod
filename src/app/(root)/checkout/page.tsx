@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import Cookies from "js-cookie";
 import Link from "next/link";
+import Image from "next/image";
 
 declare global {
   interface Window {
@@ -313,12 +314,13 @@ export default function CheckoutPage() {
               <span>Back</span>
             </Link>
           ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                <TrendingUp className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="font-semibold text-white text-sm">ProJournX</span>
-            </div>
+            <Image
+              src="/images/logoDarkFull.png"
+              alt="ProJournX"
+              width={130}
+              height={33}
+              className="h-8 w-auto"
+            />
           )}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-zinc-500 text-xs">
