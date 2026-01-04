@@ -2,7 +2,6 @@
 
 import React, { useState, ChangeEvent, useRef, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -353,15 +352,12 @@ const SignUp: React.FC = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="flex items-center gap-2"
           >
-            <Image
-              src="/images/logoDarkFull.png"
-              alt="ProJournX"
-              width={180}
-              height={45}
-              className="h-10 w-auto"
-              priority
-            />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-white">ProJournX</span>
           </motion.div>
         </div>
 
@@ -490,13 +486,12 @@ const SignUp: React.FC = () => {
               
               <div className="relative z-10">
                 <div className="flex justify-center mb-5 lg:hidden">
-                  <Image
-                    src="/images/logoDarkFull.png"
-                    alt="ProJournX"
-                    width={150}
-                    height={38}
-                    className="h-9 w-auto"
-                  />
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-lg font-semibold text-white">ProJournX</span>
+                  </div>
                 </div>
 
                 <div className="mb-5">
