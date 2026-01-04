@@ -27,8 +27,10 @@ import {
   Flame,
   Gift,
   Star,
-  Timer
+  Timer,
+  LogOut
 } from "lucide-react";
+import Cookies from "js-cookie";
 import Link from "next/link";
 
 declare global {
@@ -95,6 +97,18 @@ export default function CheckoutPage() {
 
   const getOriginalPrice = () => {
     return billingPeriod === 'yearly' ? yearlyPrice : monthlyPrice;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+      Cookies.remove("ProJournX", { domain: ".projournx.com", path: "/" });
+      Cookies.remove("ProJournX", { path: "/" });
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      router.push("/login");
+    }
   };
 
   useEffect(() => {
@@ -268,9 +282,18 @@ export default function CheckoutPage() {
               <span className="font-semibold text-white text-sm">ProJournX</span>
             </div>
           )}
-          <div className="flex items-center gap-1.5 text-zinc-500 text-xs">
-            <Lock className="w-3 h-3" />
-            <span>Secure</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-zinc-500 text-xs">
+              <Lock className="w-3 h-3" />
+              <span>Secure</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors text-xs"
+            >
+              <LogOut className="w-3 h-3" />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </header>
