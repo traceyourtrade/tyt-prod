@@ -433,19 +433,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Risk Reversal */}
-              <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                    <Shield className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-emerald-400">30-Day Money-Back Guarantee</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">Not seeing results? Full refund, no questions asked.</p>
-                  </div>
-                </div>
-              </div>
-
               {/* Coupon */}
               <div className="mb-4">
                 {appliedCoupon ? (
