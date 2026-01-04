@@ -266,7 +266,7 @@ export default function LoginPage() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30"
           >
             <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-            <span className="text-xs text-orange-400 font-medium">Limited spots for beta pricing</span>
+            <span className="text-xs text-orange-400 font-medium">Limited spots at current pricing</span>
           </motion.div>
 
           <AnimatePresence mode="wait">
