@@ -1,19 +1,50 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mail, CheckCircle2, Loader2, Sparkles, ArrowLeft } from "lucide-react";
+import { Mail, CheckCircle2, Loader2, Sparkles, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 const VerifyEmailScreen = () => {
   const [status, setStatus] = useState<'loading' | 'success'>('loading');
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    const email = localStorage.getItem("pendingVerificationEmail");
+    if (email) {
+      setUserEmail(email);
+    }
+    
     const timer = setTimeout(() => {
       setStatus('success');
     }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
+
+  const handleResend = async () => {
+    if (!userEmail) return;
+    
+    setResending(true);
+    try {
+      const response = await fetch("/api/resend-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      if (response.ok) {
+        setResent(true);
+        setTimeout(() => setResent(false), 5000);
+      }
+    } catch (error) {
+      console.error("Error resending verification:", error);
+    } finally {
+      setResending(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -159,9 +190,18 @@ const VerifyEmailScreen = () => {
                 </div>
                 
                 <div className="flex items-center justify-center gap-4">
-                  <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
-                    Resend Email
-                  </button>
+                  {resent ? (
+                    <span className="text-sm text-emerald-400 font-medium">Email sent!</span>
+                  ) : (
+                    <button 
+                      onClick={handleResend}
+                      disabled={resending || !userEmail}
+                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${resending ? 'animate-spin' : ''}`} />
+                      {resending ? 'Sending...' : 'Resend Email'}
+                    </button>
+                  )}
                   <span className="text-zinc-600">|</span>
                   <Link href="/login" className="text-sm text-zinc-400 hover:text-zinc-300 transition-colors flex items-center gap-1">
                     <ArrowLeft className="w-4 h-4" />

@@ -13,6 +13,11 @@ const generateReferralUniqueId = () => {
   return Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 };
 
+const generateUserReferralCode = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+};
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const User = await getUserModel();
@@ -89,6 +94,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       const uniqueId = await generateUniqueCode();
 
+      // Generate unique referral code for this user
+      let userReferralCode: string;
+      while (true) {
+        const code = generateUserReferralCode();
+        const exists = await User.findOne({ referralCode: code });
+        if (!exists) {
+          userReferralCode = code;
+          break;
+        }
+      }
+
+      // Validate referral code if provided (user-to-user referrals)
+      let validatedReferredBy: string | undefined;
+      if (referralCode) {
+        const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
+        if (referrer) {
+          validatedReferredBy = referralCode.toUpperCase();
+        }
+      }
+
       // No trial - users must subscribe to use the app
       const userData: UserData = {
         isEmailVerified: true,
@@ -100,6 +125,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         cpassword,
         countryCode,
         country,
+        referralCode: userReferralCode,
+        referredBy: validatedReferredBy,
         subscription: {
           isSubscribed: false,
           trialUsed: false,

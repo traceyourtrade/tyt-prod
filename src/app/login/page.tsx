@@ -41,11 +41,16 @@ export default function LoginPage() {
       const data = await res.json();
       if (res.status === 200) {
         router.push(`/dashboard`);
+      } else if (res.status === 403 && data.emailNotVerified) {
+        localStorage.setItem("pendingVerificationEmail", email);
+        router.push(`/verificationmail`);
       } else {
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck your Email & Password");
         } else if (data.error === "Enter all the details") {
           setError("Fill all the entries");
+        } else if (data.error === "User is not registered") {
+          setError("User is not registered. Please sign up first.");
         } else {
           setError("Something went wrong. Please try again.");
         }

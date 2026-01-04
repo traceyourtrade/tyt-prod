@@ -29,6 +29,10 @@ const Verifyemail = () => {
 
       if (res.status === 200) {
         setVerified(true);
+        localStorage.removeItem("pendingVerificationEmail");
+        setTimeout(() => {
+          router.push("/checkout");
+        }, 2000);
       } else {
         if (data.error) {
           setErr(
@@ -47,10 +51,6 @@ const Verifyemail = () => {
     setTimeout(() => setStep(2), 800);
     setTimeout(() => setStep(3), 1600);
   }, []);
-
-  const navigateToLogin = () => {
-    router.push("/login");
-  };
 
   const steps = [
     { id: 1, label: "Verification Initiated" },
@@ -165,17 +165,16 @@ const Verifyemail = () => {
               ))}
             </div>
 
-            {/* Login Button */}
+            {/* Status Button */}
             {verified ? (
-              <motion.button
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                onClick={navigateToLogin}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 flex items-center justify-center gap-2 group"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
               >
-                Continue to Login
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </motion.button>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Redirecting to checkout...
+              </motion.div>
             ) : (
               <button
                 disabled

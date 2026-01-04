@@ -43,6 +43,8 @@ export interface UserData {
   cpassword: string;
   countryCode: string;
   country: string;
+  referralCode?: string;
+  referredBy?: string;
   subscription?: UserSubscriptionData;
 }
 
