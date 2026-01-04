@@ -216,7 +216,7 @@ const SignUp: React.FC = () => {
     <div 
       className="min-h-screen w-full flex items-center justify-center relative overflow-hidden"
       style={{
-        background: '#000000',
+        background: '#101010',
         backgroundImage: `
           radial-gradient(ellipse 80% 80% at 70% 50%, rgba(59, 130, 246, 0.4), transparent),
           radial-gradient(ellipse 60% 60% at 85% 30%, rgba(139, 92, 246, 0.3), transparent),
