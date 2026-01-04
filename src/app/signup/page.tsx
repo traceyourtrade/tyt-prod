@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useGoogleLogin } from "@react-oauth/google";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Phone, Lock, ArrowRight, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X, Sparkles, Shield, TrendingUp, Star, Gift } from "lucide-react";
+import { User, Mail, Phone, Lock, ArrowRight, ChevronDown, Search, Eye, EyeOff, Loader2, Check, X, TrendingUp, BarChart3 } from "lucide-react";
 
 type CountryCode = { country: string; code: string };
 
@@ -119,6 +119,9 @@ const SignUp: React.FC = () => {
   const [showConPassword, setShowConPassword] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [showTradingFields, setShowTradingFields] = useState(false);
+  const [tradingExperience, setTradingExperience] = useState("");
+  const [preferredMarket, setPreferredMarket] = useState("");
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -178,6 +181,8 @@ const SignUp: React.FC = () => {
           country: selectedCode.country,
           referralCode: referralCode || undefined,
           couponCode: couponCode || undefined,
+          tradingExperience: tradingExperience || undefined,
+          preferredMarket: preferredMarket || undefined,
         }),
       });
 
@@ -250,25 +255,81 @@ const SignUp: React.FC = () => {
         className="absolute top-1/2 right-1/2 w-96 h-96 bg-gradient-to-br from-cyan-500/8 to-blue-500/5 rounded-full blur-3xl"
       />
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.015)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      {/* Left Side - Premium Brand Visual */}
+      <div className="hidden lg:flex lg:w-1/2 relative z-10 flex-col justify-between p-8 xl:p-12 overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#071420] via-[#0a1830] to-[#050510]" />
+        
+        {/* Animated grid lines */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        
+        {/* Animated gradient motion */}
+        <motion.div
+          animate={{ 
+            background: [
+              "radial-gradient(ellipse 80% 60% at 20% 40%, rgba(16,185,129,0.12), transparent)",
+              "radial-gradient(ellipse 80% 60% at 30% 50%, rgba(6,182,212,0.12), transparent)",
+              "radial-gradient(ellipse 80% 60% at 20% 40%, rgba(16,185,129,0.12), transparent)"
+            ]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0"
+        />
 
-      {/* Left Side - Conversion-focused Visual (hidden to center the card) */}
-      <div className="hidden relative z-10">
-        {/* Floating geometric elements */}
+        {/* Candlestick Pattern SVG */}
+        <svg className="absolute right-8 top-1/4 w-64 h-64 opacity-10" viewBox="0 0 200 200">
+          <motion.g
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            {/* Green candles (bullish) */}
+            <rect x="20" y="80" width="8" height="60" fill="#10b981" rx="1" />
+            <line x1="24" y1="70" x2="24" y2="80" stroke="#10b981" strokeWidth="2" />
+            <line x1="24" y1="140" x2="24" y2="155" stroke="#10b981" strokeWidth="2" />
+            
+            <rect x="40" y="60" width="8" height="50" fill="#10b981" rx="1" />
+            <line x1="44" y1="50" x2="44" y2="60" stroke="#10b981" strokeWidth="2" />
+            <line x1="44" y1="110" x2="44" y2="125" stroke="#10b981" strokeWidth="2" />
+            
+            {/* Red candles (bearish) */}
+            <rect x="60" y="70" width="8" height="55" fill="#ef4444" rx="1" />
+            <line x1="64" y1="55" x2="64" y2="70" stroke="#ef4444" strokeWidth="2" />
+            <line x1="64" y1="125" x2="64" y2="140" stroke="#ef4444" strokeWidth="2" />
+            
+            <rect x="80" y="90" width="8" height="40" fill="#ef4444" rx="1" />
+            <line x1="84" y1="75" x2="84" y2="90" stroke="#ef4444" strokeWidth="2" />
+            <line x1="84" y1="130" x2="84" y2="145" stroke="#ef4444" strokeWidth="2" />
+            
+            {/* More green candles */}
+            <rect x="100" y="50" width="8" height="70" fill="#10b981" rx="1" />
+            <line x1="104" y1="35" x2="104" y2="50" stroke="#10b981" strokeWidth="2" />
+            <line x1="104" y1="120" x2="104" y2="135" stroke="#10b981" strokeWidth="2" />
+            
+            <rect x="120" y="40" width="8" height="55" fill="#10b981" rx="1" />
+            <line x1="124" y1="25" x2="124" y2="40" stroke="#10b981" strokeWidth="2" />
+            <line x1="124" y1="95" x2="124" y2="110" stroke="#10b981" strokeWidth="2" />
+          </motion.g>
+        </svg>
+
+        {/* Floating geometric shapes */}
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-          className="absolute top-12 right-12 w-28 h-28 border border-emerald-500/30 rounded-full"
+          className="absolute top-12 right-12 w-28 h-28 border border-emerald-500/20 rounded-full"
         />
         <motion.div
           animate={{ rotate: -360 }}
           transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-          className="absolute top-20 right-20 w-40 h-40 border border-violet-500/20 rounded-full"
+          className="absolute top-20 right-20 w-40 h-40 border border-teal-500/15 rounded-full"
+        />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 55, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-32 left-16 w-24 h-24 border border-cyan-500/20 rounded-full"
         />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between h-full p-8 xl:p-12">
+        <div className="relative z-10">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -276,122 +337,96 @@ const SignUp: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="flex items-center gap-2"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <TrendingUp className="w-4.5 h-4.5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-semibold text-white">ProJournX</span>
-          </motion.div>
-
-          {/* Main content */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="space-y-6"
-          >
-            {/* Free trial badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 backdrop-blur-sm"
-            >
-              <Gift className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-xs font-medium text-emerald-400">5-day free trial - No credit card required</span>
-            </motion.div>
-            
-            <div className="space-y-3">
-              <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
-                Transform your
-                <br />
-                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                  trading results
-                </span>
-              </h1>
-            </div>
-            
-            <p className="text-sm text-white/60 max-w-sm leading-relaxed">
-              Join 10,000+ traders who use ProJournX to track, analyze, and improve their performance.
-            </p>
-
-            {/* Benefits list */}
-            <div className="space-y-3">
-              {[
-                "Track every trade with precision analytics",
-                "AI-powered pattern recognition",
-                "Detailed performance insights & reports",
-                "Backtesting with TradingView charts",
-              ].map((feature, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + i * 0.1 }}
-                  className="flex items-center gap-2.5"
-                >
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
-                    <Check className="w-3 h-3 text-white" />
-                  </div>
-                  <span className="text-sm text-white/70">{feature}</span>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Social proof */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="flex items-center gap-4 pt-2"
-            >
-              <div className="flex -space-x-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-to-br from-white/10 to-white/5 border-2 border-[#050508] flex items-center justify-center shadow-lg"
-                  >
-                    <User className="w-3.5 h-3.5 text-white/50" />
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-xs text-white/50">Loved by 10,000+ traders</p>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Trust badges */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.9 }}
-            className="flex items-center gap-6"
-          >
-            {[
-              { icon: Shield, label: "Bank-level security" },
-              { icon: Sparkles, label: "AI-powered insights" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-2 text-white/50">
-                <item.icon className="w-4 h-4" />
-                <span className="text-xs">{item.label}</span>
-              </div>
-            ))}
+            <span className="text-xl font-bold text-white">ProJournX</span>
           </motion.div>
         </div>
+
+        {/* Main content */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="relative z-10 space-y-6"
+        >
+          <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-sm"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs text-emerald-400 font-medium">Start your journey today</span>
+            </motion.div>
+            
+            <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
+              Your Trading
+              <br />
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                Performance OS
+              </span>
+            </h1>
+            
+            <p className="text-lg text-white/60 max-w-md leading-relaxed">
+              Analyze. Improve. Scale with discipline.
+            </p>
+          </div>
+
+          {/* Benefits list */}
+          <div className="space-y-3">
+            {[
+              "Track every trade with precision analytics",
+              "AI-powered pattern recognition",
+              "Detailed performance insights & reports",
+            ].map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + i * 0.1 }}
+                className="flex items-center gap-2.5"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm text-white/70">{feature}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="relative z-10"
+        >
+          <div className="flex items-center gap-8 xl:gap-12">
+            {[
+              { value: "10K+", label: "Traders" },
+              { value: "2M+", label: "Trades" },
+              { value: "99.9%", label: "Uptime" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-2xl xl:text-3xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{stat.value}</div>
+                <div className="text-xs text-white/40 mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
 
-      {/* Center - Glass Card Form */}
-      <div className="w-full flex items-center justify-center p-6 sm:p-8 relative z-10 overflow-y-auto">
+      {/* Right Side - Glass Card Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative z-10 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="w-full max-w-[380px] py-4"
+          className="w-full max-w-[400px] py-4"
         >
           {/* Glassmorphic Card */}
           <div className="relative">
@@ -403,8 +438,8 @@ const SignUp: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-transparent rounded-2xl pointer-events-none" />
               
               <div className="relative z-10">
-                {/* Logo */}
-                <div className="flex justify-center mb-5">
+                {/* Logo - visible on mobile only */}
+                <div className="flex justify-center mb-5 lg:hidden">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
                       <TrendingUp className="w-4 h-4 text-white" />
@@ -521,16 +556,16 @@ const SignUp: React.FC = () => {
                                   />
                                 </div>
                               </div>
-                              <div className="max-h-40 overflow-y-auto">
-                                {filteredOptions.map((country, idx) => (
+                              <div className="max-h-48 overflow-y-auto">
+                                {filteredOptions.map((country) => (
                                   <button
-                                    key={idx}
+                                    key={country.country}
                                     type="button"
                                     onClick={() => handleSelect(country)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-white/60 hover:bg-white/5 transition-colors"
+                                    className="w-full px-4 py-2.5 text-left text-xs text-white/80 hover:bg-white/5 flex items-center justify-between transition-colors"
                                   >
-                                    <span className="font-medium text-white">{country.code}</span>
                                     <span>{country.country}</span>
+                                    <span className="text-white/40">{country.code}</span>
                                   </button>
                                 ))}
                               </div>
@@ -564,7 +599,7 @@ const SignUp: React.FC = () => {
                       <input
                         type={showPassword ? "text" : "password"}
                         name="password"
-                        placeholder="Create a strong password"
+                        placeholder="Create a password"
                         value={signUpData.password}
                         onChange={setLoginVal}
                         required
@@ -582,7 +617,7 @@ const SignUp: React.FC = () => {
                     
                     {/* Password Strength */}
                     {signUpData.password && (
-                      <div className="space-y-1.5 pt-1">
+                      <div className="mt-2 space-y-1.5">
                         <div className="flex gap-1">
                           {[0, 1, 2, 3].map((i) => (
                             <div
@@ -594,7 +629,7 @@ const SignUp: React.FC = () => {
                           ))}
                         </div>
                         <p className="text-[10px] text-white/40">
-                          Strength: <span className={strength >= 3 ? "text-emerald-400" : strength >= 2 ? "text-blue-400" : "text-amber-400"}>{strengthLabels[strength - 1] || "Too weak"}</span>
+                          Password strength: <span className={`${strength > 2 ? "text-emerald-400" : strength > 1 ? "text-amber-400" : "text-red-400"}`}>{strengthLabels[strength - 1] || "Very Weak"}</span>
                         </p>
                       </div>
                     )}
@@ -624,9 +659,8 @@ const SignUp: React.FC = () => {
                       </button>
                     </div>
                     
-                    {/* Password Match Indicator */}
                     {signUpData.cpassword && (
-                      <div className="flex items-center gap-1.5 pt-0.5">
+                      <div className="flex items-center gap-1.5 mt-1.5">
                         {passwordsMatch ? (
                           <>
                             <Check className="w-3 h-3 text-emerald-400" />
@@ -635,43 +669,100 @@ const SignUp: React.FC = () => {
                         ) : (
                           <>
                             <X className="w-3 h-3 text-red-400" />
-                            <span className="text-[10px] text-red-400">Passwords do not match</span>
+                            <span className="text-[10px] text-red-400">Passwords don&apos;t match</span>
                           </>
                         )}
                       </div>
                     )}
                   </div>
 
-                  {/* Referral Code (readonly when present) */}
-                  {referralCode && (
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-emerald-400 flex items-center gap-1.5">
-                        <Gift className="w-3 h-3" />
-                        Referred by
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={referralCode}
-                          disabled
-                          readOnly
-                          className="w-full px-4 py-2.5 text-sm rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono cursor-not-allowed"
-                        />
-                        <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
-                      </div>
-                      <p className="text-[10px] text-emerald-400/70">Your friend will get credit for referring you!</p>
-                    </div>
-                  )}
+                  {/* Optional Trading Fields - Expandable */}
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowTradingFields(!showTradingFields)}
+                      className="flex items-center gap-2 text-xs text-white/50 hover:text-white/70 transition-colors"
+                    >
+                      <BarChart3 className="w-3.5 h-3.5" />
+                      <span>Tell us about your trading (optional)</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform ${showTradingFields ? "rotate-180" : ""}`} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {showTradingFields && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-3 space-y-3">
+                            {/* Trading Experience */}
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-white/70">Trading experience</label>
+                              <select
+                                value={tradingExperience}
+                                onChange={(e) => setTradingExperience(e.target.value)}
+                                className="w-full px-4 py-2.5 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white outline-none focus:border-emerald-500/50 focus:bg-white/[0.08] focus:ring-2 focus:ring-emerald-500/20 transition-all backdrop-blur-sm appearance-none cursor-pointer"
+                              >
+                                <option value="" className="bg-[#0a0a12]">Select experience level</option>
+                                <option value="beginner" className="bg-[#0a0a12]">Beginner</option>
+                                <option value="intermediate" className="bg-[#0a0a12]">Intermediate</option>
+                                <option value="advanced" className="bg-[#0a0a12]">Advanced</option>
+                                <option value="professional" className="bg-[#0a0a12]">Professional</option>
+                              </select>
+                            </div>
+
+                            {/* Preferred Market */}
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-white/70">Preferred market</label>
+                              <select
+                                value={preferredMarket}
+                                onChange={(e) => setPreferredMarket(e.target.value)}
+                                className="w-full px-4 py-2.5 text-sm rounded-xl bg-white/[0.05] border border-white/[0.08] text-white outline-none focus:border-emerald-500/50 focus:bg-white/[0.08] focus:ring-2 focus:ring-emerald-500/20 transition-all backdrop-blur-sm appearance-none cursor-pointer"
+                              >
+                                <option value="" className="bg-[#0a0a12]">Select preferred market</option>
+                                <option value="stocks" className="bg-[#0a0a12]">Stocks</option>
+                                <option value="forex" className="bg-[#0a0a12]">Forex</option>
+                                <option value="crypto" className="bg-[#0a0a12]">Crypto</option>
+                                <option value="futures" className="bg-[#0a0a12]">Futures</option>
+                                <option value="options" className="bg-[#0a0a12]">Options</option>
+                              </select>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
                   {/* Error */}
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs backdrop-blur-sm"
+                      className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs backdrop-blur-sm"
                     >
                       {error}
                     </motion.div>
+                  )}
+
+                  {/* Referral/Coupon Badges */}
+                  {(referralCode || couponCode) && (
+                    <div className="flex flex-wrap gap-2">
+                      {referralCode && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span className="text-[10px] text-emerald-400">Referral: {referralCode}</span>
+                        </div>
+                      )}
+                      {couponCode && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/30">
+                          <Check className="w-3 h-3 text-violet-400" />
+                          <span className="text-[10px] text-violet-400">Coupon: {couponCode}</span>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Submit */}
@@ -680,21 +771,21 @@ const SignUp: React.FC = () => {
                     disabled={isLoading}
                     whileHover={{ scale: 1.01, y: -1 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        Start free trial
+                        Create account
                         <ArrowRight className="w-3.5 h-3.5" />
                       </>
                     )}
                   </motion.button>
 
-                  {/* Trust message */}
-                  <p className="text-center text-[10px] text-white/40 pt-1">
-                    No credit card required. Cancel anytime.
+                  {/* No credit card required */}
+                  <p className="text-center text-[10px] text-white/40">
+                    No credit card required
                   </p>
                 </form>
 
@@ -710,6 +801,18 @@ const SignUp: React.FC = () => {
                       Privacy Policy
                     </Link>
                   </p>
+                </div>
+
+                {/* TradingView Attribution */}
+                <div className="mt-4 text-center">
+                  <a 
+                    href="https://www.tradingview.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-white/20 hover:text-white/40 transition-colors"
+                  >
+                    Charts by TradingView
+                  </a>
                 </div>
               </div>
             </div>

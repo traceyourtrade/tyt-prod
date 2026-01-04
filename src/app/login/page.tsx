@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, Shield, Zap, TrendingUp } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, TrendingUp } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
@@ -96,25 +96,81 @@ export default function LoginPage() {
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 rounded-full blur-3xl"
       />
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      {/* Left Side - Premium Brand Visual */}
+      <div className="hidden lg:flex lg:w-1/2 relative z-10 flex-col justify-between p-8 xl:p-12 overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0c1830] to-[#050510]" />
+        
+        {/* Animated grid lines */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        
+        {/* Animated gradient motion */}
+        <motion.div
+          animate={{ 
+            background: [
+              "radial-gradient(ellipse 80% 60% at 20% 40%, rgba(56,189,248,0.15), transparent)",
+              "radial-gradient(ellipse 80% 60% at 30% 50%, rgba(34,211,238,0.15), transparent)",
+              "radial-gradient(ellipse 80% 60% at 20% 40%, rgba(56,189,248,0.15), transparent)"
+            ]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0"
+        />
 
-      {/* Left Side - Premium Visual (hidden to center the card) */}
-      <div className="hidden relative z-10">
+        {/* Candlestick Pattern SVG */}
+        <svg className="absolute right-8 top-1/4 w-64 h-64 opacity-10" viewBox="0 0 200 200">
+          <motion.g
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            {/* Green candles (bullish) */}
+            <rect x="20" y="80" width="8" height="60" fill="#10b981" rx="1" />
+            <line x1="24" y1="70" x2="24" y2="80" stroke="#10b981" strokeWidth="2" />
+            <line x1="24" y1="140" x2="24" y2="155" stroke="#10b981" strokeWidth="2" />
+            
+            <rect x="40" y="60" width="8" height="50" fill="#10b981" rx="1" />
+            <line x1="44" y1="50" x2="44" y2="60" stroke="#10b981" strokeWidth="2" />
+            <line x1="44" y1="110" x2="44" y2="125" stroke="#10b981" strokeWidth="2" />
+            
+            {/* Red candles (bearish) */}
+            <rect x="60" y="70" width="8" height="55" fill="#ef4444" rx="1" />
+            <line x1="64" y1="55" x2="64" y2="70" stroke="#ef4444" strokeWidth="2" />
+            <line x1="64" y1="125" x2="64" y2="140" stroke="#ef4444" strokeWidth="2" />
+            
+            <rect x="80" y="90" width="8" height="40" fill="#ef4444" rx="1" />
+            <line x1="84" y1="75" x2="84" y2="90" stroke="#ef4444" strokeWidth="2" />
+            <line x1="84" y1="130" x2="84" y2="145" stroke="#ef4444" strokeWidth="2" />
+            
+            {/* More green candles */}
+            <rect x="100" y="50" width="8" height="70" fill="#10b981" rx="1" />
+            <line x1="104" y1="35" x2="104" y2="50" stroke="#10b981" strokeWidth="2" />
+            <line x1="104" y1="120" x2="104" y2="135" stroke="#10b981" strokeWidth="2" />
+            
+            <rect x="120" y="40" width="8" height="55" fill="#10b981" rx="1" />
+            <line x1="124" y1="25" x2="124" y2="40" stroke="#10b981" strokeWidth="2" />
+            <line x1="124" y1="95" x2="124" y2="110" stroke="#10b981" strokeWidth="2" />
+          </motion.g>
+        </svg>
+
         {/* Floating geometric shapes */}
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-          className="absolute top-16 right-16 w-24 h-24 border border-cyan-500/30 rounded-full"
+          className="absolute top-16 right-16 w-24 h-24 border border-cyan-500/20 rounded-full"
         />
         <motion.div
           animate={{ rotate: -360 }}
           transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="absolute top-24 right-24 w-36 h-36 border border-blue-500/20 rounded-full"
+          className="absolute top-24 right-24 w-36 h-36 border border-blue-500/15 rounded-full"
+        />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-32 left-16 w-20 h-20 border border-violet-500/20 rounded-full"
         />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between h-full p-8 xl:p-12">
+        <div className="relative z-10">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -122,87 +178,69 @@ export default function LoginPage() {
             transition={{ duration: 0.6 }}
             className="flex items-center gap-2"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
-              <TrendingUp className="w-4.5 h-4.5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-semibold text-white">ProJournX</span>
-          </motion.div>
-
-          {/* Main content */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="space-y-6"
-          >
-            <div className="space-y-3">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 backdrop-blur-sm"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                <span className="text-xs text-cyan-400 font-medium">Welcome back, trader</span>
-              </motion.div>
-              
-              <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
-                Continue your
-                <br />
-                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  winning streak
-                </span>
-              </h1>
-            </div>
-            
-            <p className="text-sm text-white/60 max-w-sm leading-relaxed">
-              Your trading journal awaits. Pick up where you left off and keep building your edge.
-            </p>
-
-            {/* Feature cards - glassmorphic */}
-            <div className="grid grid-cols-2 gap-3 max-w-md">
-              {[
-                { icon: Shield, label: "Secure & Private", desc: "256-bit encryption" },
-                { icon: Zap, label: "Lightning Fast", desc: "Real-time sync" },
-              ].map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl shadow-lg shadow-black/10"
-                >
-                  <item.icon className="w-4 h-4 text-cyan-400 mb-2" />
-                  <div className="text-xs font-medium text-white">{item.label}</div>
-                  <div className="text-[10px] text-white/40">{item.desc}</div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex items-center gap-8"
-          >
-            {[
-              { value: "10K+", label: "Active Traders" },
-              { value: "2M+", label: "Trades Logged" },
-              { value: "99.9%", label: "Uptime" },
-            ].map((stat, i) => (
-              <div key={i}>
-                <div className="text-xl font-bold text-white">{stat.value}</div>
-                <div className="text-xs text-white/40">{stat.label}</div>
-              </div>
-            ))}
+            <span className="text-xl font-bold text-white">ProJournX</span>
           </motion.div>
         </div>
+
+        {/* Main content */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="relative z-10 space-y-6"
+        >
+          <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 backdrop-blur-sm"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-xs text-cyan-400 font-medium">Welcome back, trader</span>
+            </motion.div>
+            
+            <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
+              Your Trading
+              <br />
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+                Performance OS
+              </span>
+            </h1>
+            
+            <p className="text-lg text-white/60 max-w-md leading-relaxed">
+              Analyze. Improve. Scale with discipline.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="relative z-10"
+        >
+          <div className="flex items-center gap-8 xl:gap-12">
+            {[
+              { value: "10K+", label: "Traders" },
+              { value: "2M+", label: "Trades" },
+              { value: "99.9%", label: "Uptime" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-2xl xl:text-3xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{stat.value}</div>
+                <div className="text-xs text-white/40 mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
 
-      {/* Center - Glass Card Form */}
-      <div className="w-full flex items-center justify-center p-6 sm:p-10 relative z-10">
+      {/* Right Side - Glass Card Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -219,8 +257,8 @@ export default function LoginPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] via-transparent to-transparent rounded-2xl pointer-events-none" />
               
               <div className="relative z-10">
-                {/* Logo */}
-                <div className="flex justify-center mb-6">
+                {/* Logo - visible on mobile only */}
+                <div className="flex justify-center mb-6 lg:hidden">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
                       <TrendingUp className="w-4 h-4 text-white" />
@@ -353,6 +391,18 @@ export default function LoginPage() {
                       Privacy Policy
                     </Link>
                   </p>
+                </div>
+
+                {/* TradingView Attribution */}
+                <div className="mt-4 text-center">
+                  <a 
+                    href="https://www.tradingview.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-white/20 hover:text-white/40 transition-colors"
+                  >
+                    Charts by TradingView
+                  </a>
                 </div>
               </div>
             </div>
