@@ -152,6 +152,7 @@ export default function RootLayout({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState<boolean>(true);
+  const [showDemoAlert, setShowDemoAlert] = useState<boolean>(false);
 
   const { profileData, setAccounts } = useAccountDetails();
   const checkoutUrl = "/checkout";
@@ -468,6 +469,10 @@ export default function RootLayout({
             !isExpanded && "w-8 h-8 mx-auto p-0"
           )}
           onClick={() => {
+            if (subscriptionStatus?.demoMode) {
+              setShowDemoAlert(true);
+              return;
+            }
             setAddTrades();
             setMobileOpen(false);
           }}
@@ -737,6 +742,7 @@ export default function RootLayout({
   // This prevents paywall bypass via modals or sidebar navigation
   // Only paid users (hasAccess=true) see the full app shell
   const hasSubscriptionAccess = subscriptionStatus?.hasAccess || false;
+  const isDemoMode = subscriptionStatus?.demoMode === true;
   if (!hasSubscriptionAccess) {
     // On protected pages: show NOTHING (redirect is happening via useEffect)
     // On public pages (/checkout, /settings, /support): show bare children only
@@ -775,6 +781,55 @@ export default function RootLayout({
       <CalendarPopup />
       <AlertBox />
       <DjImgPopup />
+
+      {/* Demo Mode Alert Modal */}
+      <AnimatePresence>
+        {showDemoAlert && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+              onClick={() => setShowDemoAlert(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-sm px-4"
+            >
+              <div className="bg-background border border-violet-500/30 rounded-2xl shadow-2xl overflow-hidden">
+                <div className="bg-gradient-to-r from-violet-500/20 via-purple-500/15 to-fuchsia-500/20 p-6">
+                  <div className="w-14 h-14 mx-auto rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30 mb-4">
+                    <Crown className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-center text-white mb-2">Demo Mode</h3>
+                  <p className="text-sm text-zinc-300 text-center">
+                    This feature is not available in demo mode. Sign up to start tracking your trades.
+                  </p>
+                </div>
+                <div className="p-4 space-y-3">
+                  <Link
+                    href="/signup"
+                    className="block w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold text-center transition-all hover:shadow-lg hover:shadow-emerald-500/30"
+                    onClick={() => setShowDemoAlert(false)}
+                  >
+                    Sign Up Now
+                  </Link>
+                  <button
+                    onClick={() => setShowDemoAlert(false)}
+                    className="w-full py-2.5 px-4 rounded-xl text-zinc-400 text-sm font-medium text-center hover:text-white hover:bg-white/5 transition-all"
+                  >
+                    Continue Exploring
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Search Modal */}
       <AnimatePresence>
