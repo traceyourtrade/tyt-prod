@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
+import { demoAccounts } from '@/lib/demo-data';
 
 // Import all POST handler functions
 import { 
@@ -13,6 +15,18 @@ import {
   postManualUploadHandler
 } from '../../../../lib/api-handlers/dashboardHandlers';
 
+async function isDemoMode(): Promise<boolean> {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('authToken')?.value;
+        if (!token) return false;
+        const decoded = jwt.verify(token, process.env.SECRET_KEY as string) as any;
+        return decoded.demoMode === true;
+    } catch {
+        return false;
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const cookieStore = await cookies();
@@ -25,6 +39,22 @@ export async function POST(req: NextRequest) {
 
         const body = await req.json();
         const { apiName } = body;
+
+        // Check for demo mode - return demo data for read operations, block write operations
+        if (await isDemoMode()) {
+            switch (apiName) {
+                case "getAccountDetails":
+                    return NextResponse.json({ accounts: demoAccounts });
+                case "createAccount":
+                case "createAutoSyncAccount":
+                case "editAccCheck":
+                case "postFileUpload":
+                case "postManualUpload":
+                    return NextResponse.json({ error: "Demo mode - this feature is not available" }, { status: 403 });
+                default:
+                    return NextResponse.json({ error: "Demo mode - this feature is not available" }, { status: 403 });
+            }
+        }
 
         if (!apiName) {
             return NextResponse.json({ error: "API name is required" }, { status: 400 });

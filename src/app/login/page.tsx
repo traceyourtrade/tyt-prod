@@ -28,14 +28,15 @@ export default function LoginPage() {
         credentials: "include",
       });
       if (res.ok) {
-        router.push("/dashboard");
+        // Use window.location to ensure cookies are properly stored before navigation
+        window.location.href = "/dashboard";
       } else {
         setError("Failed to start demo. Please try again.");
+        setIsDemoLoading(false);
       }
     } catch (err) {
       console.error("Demo login error:", err);
       setError("Failed to start demo. Please try again.");
-    } finally {
       setIsDemoLoading(false);
     }
   };
