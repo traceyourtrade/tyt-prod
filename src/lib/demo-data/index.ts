@@ -420,12 +420,23 @@ export const demoDashboardStats = {
 // Demo account with embedded trade data for dashboard rendering
 export const demoAccountWithTrades = {
   ...demoAccount,
-  tradeData: demoTrades.map(trade => ({
+  tradeData: demoTrades.map((trade, index) => ({
     // Convert ISO date to YYYY-MM-DD format for calendar matching
     date: trade.entryDate.split('T')[0],
     Profit: trade.pnl,
     Item: trade.symbol,
     Currency: 'USD',
+    // Fields required by CalendarPopUp
+    id: trade.id,
+    _id: trade._id,
+    Size: trade.quantity,
+    OpenPrice: trade.entryPrice,
+    ClosePrice: trade.exitPrice,
+    OpenTime: trade.entryDate,
+    CloseTime: trade.exitDate,
+    Type: trade.side === 'long' ? 'buy' : 'sell',
+    Ticket: 1000 + index,
+    // Additional fields
     side: trade.side,
     entryPrice: trade.entryPrice,
     exitPrice: trade.exitPrice,
@@ -433,6 +444,7 @@ export const demoAccountWithTrades = {
     notes: trade.notes,
     riskRewardRatio: trade.riskRewardRatio,
     status: trade.status,
+    marketType: 'forex',
   })),
 };
 
