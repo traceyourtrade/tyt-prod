@@ -11,18 +11,148 @@ export const demoAccount = {
   createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
 };
 
-// Generate demo trades dynamically to ensure they appear in the current month
+// Generate demo trades dynamically to ensure they appear in current and previous month
 function generateDemoTrades() {
   const now = Date.now();
   const day = 24 * 60 * 60 * 1000;
   
-  // Get first day of current month
+  // Get first day of current month and previous month
   const today = new Date();
   const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const daysIntoMonth = today.getDate();
+  const firstOfPrevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
   
-  // Spread trades across current month (days 1-5 of Jan 2026)
+  // Spread trades across both December 2025 and January 2026
   return [
+    // December 2025 trades (previous month)
+    {
+      id: 'demo-trade-dec-1',
+      _id: 'demo-trade-dec-1',
+      accountId: 'demo-account',
+      symbol: 'EURUSD',
+      side: 'long',
+      entryPrice: 1.0820,
+      exitPrice: 1.0865,
+      quantity: 1.5,
+      pnl: 675,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 10 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 10 * day + 5 * 60 * 60 * 1000).toISOString(),
+      riskRewardRatio: 2.3,
+      notes: 'Trend following on EUR strength',
+    },
+    {
+      id: 'demo-trade-dec-2',
+      _id: 'demo-trade-dec-2',
+      accountId: 'demo-account',
+      symbol: 'BTCUSD',
+      side: 'long',
+      entryPrice: 41800,
+      exitPrice: 42600,
+      quantity: 0.4,
+      pnl: 320,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 12 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 12 * day + 8 * 60 * 60 * 1000).toISOString(),
+      riskRewardRatio: 1.9,
+      notes: 'Bitcoin momentum breakout',
+    },
+    {
+      id: 'demo-trade-dec-3',
+      _id: 'demo-trade-dec-3',
+      accountId: 'demo-account',
+      symbol: 'AAPL',
+      side: 'short',
+      entryPrice: 182.50,
+      exitPrice: 184.20,
+      quantity: 40,
+      pnl: -68,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 15 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 15 * day + 3 * 60 * 60 * 1000).toISOString(),
+      riskRewardRatio: 0.5,
+      notes: 'Counter-trend short failed',
+    },
+    {
+      id: 'demo-trade-dec-4',
+      _id: 'demo-trade-dec-4',
+      accountId: 'demo-account',
+      symbol: 'XAUUSD',
+      side: 'long',
+      entryPrice: 2008.00,
+      exitPrice: 2028.50,
+      quantity: 0.6,
+      pnl: 1230,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 18 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 19 * day).toISOString(),
+      riskRewardRatio: 2.8,
+      notes: 'Gold rally on rate cut expectations',
+    },
+    {
+      id: 'demo-trade-dec-5',
+      _id: 'demo-trade-dec-5',
+      accountId: 'demo-account',
+      symbol: 'GBPUSD',
+      side: 'short',
+      entryPrice: 1.2720,
+      exitPrice: 1.2680,
+      quantity: 1.0,
+      pnl: 400,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 20 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 20 * day + 6 * 60 * 60 * 1000).toISOString(),
+      riskRewardRatio: 2.0,
+      notes: 'GBP weakness on BOE comments',
+    },
+    {
+      id: 'demo-trade-dec-6',
+      _id: 'demo-trade-dec-6',
+      accountId: 'demo-account',
+      symbol: 'TSLA',
+      side: 'long',
+      entryPrice: 238.00,
+      exitPrice: 235.50,
+      quantity: 25,
+      pnl: -62.5,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 22 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 22 * day + 2 * 60 * 60 * 1000).toISOString(),
+      riskRewardRatio: 0.4,
+      notes: 'Stopped out on gap down',
+    },
+    {
+      id: 'demo-trade-dec-7',
+      _id: 'demo-trade-dec-7',
+      accountId: 'demo-account',
+      symbol: 'NVDA',
+      side: 'long',
+      entryPrice: 478.00,
+      exitPrice: 495.50,
+      quantity: 15,
+      pnl: 262.5,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 26 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 27 * day).toISOString(),
+      riskRewardRatio: 2.1,
+      notes: 'AI chip demand surge',
+    },
+    {
+      id: 'demo-trade-dec-8',
+      _id: 'demo-trade-dec-8',
+      accountId: 'demo-account',
+      symbol: 'EURUSD',
+      side: 'short',
+      entryPrice: 1.0880,
+      exitPrice: 1.0845,
+      quantity: 2.0,
+      pnl: 700,
+      status: 'closed',
+      entryDate: new Date(firstOfPrevMonth.getTime() + 28 * day).toISOString(),
+      exitDate: new Date(firstOfPrevMonth.getTime() + 28 * day + 4 * 60 * 60 * 1000).toISOString(),
+      riskRewardRatio: 1.8,
+      notes: 'Year-end EUR selling',
+    },
+    // January 2026 trades (current month)
     {
       id: 'demo-trade-1',
       _id: 'demo-trade-1',
