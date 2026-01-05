@@ -172,6 +172,24 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Handle demo mode gracefully - just toggle locally
+        if (response.status === 403 && errorData.error?.includes("Demo mode")) {
+          const { accounts } = get();
+          const updatedAccounts = accounts.map((acc) =>
+            acc.accountName === accountName
+              ? { ...acc, checked: !acc.checked }
+              : acc,
+          );
+          const selectedAccounts = updatedAccounts.filter(
+            (account: Account) => account.checked === true,
+          );
+          set({
+            accounts: updatedAccounts,
+            selectedAccounts: selectedAccounts,
+            loading: false,
+          });
+          return;
+        }
         throw new Error(errorData.error || "Failed to update account view");
       }
 
@@ -233,6 +251,21 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Handle demo mode gracefully - just toggle locally
+        if (response.status === 403 && errorData.error?.includes("Demo mode")) {
+          const { accounts } = get();
+          const updatedAccounts = accounts.map((acc) => ({
+            ...acc,
+            checked: newAllSelected,
+          }));
+          const selectedAccounts = newAllSelected ? updatedAccounts : [];
+          set({
+            accounts: updatedAccounts,
+            selectedAccounts: selectedAccounts,
+            loading: false,
+          });
+          return;
+        }
         throw new Error(errorData.error || "Failed to update all accounts");
       }
 
