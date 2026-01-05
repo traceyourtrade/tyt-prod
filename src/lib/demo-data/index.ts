@@ -417,6 +417,12 @@ export const demoDashboardStats = {
   worstDay: -300,
 };
 
+// Helper to extract time from ISO date string
+function extractTime(isoDate: string): string {
+  const date = new Date(isoDate);
+  return date.toTimeString().split(' ')[0]; // Returns HH:MM:SS
+}
+
 // Demo account with embedded trade data for dashboard rendering
 export const demoAccountWithTrades = {
   ...demoAccount,
@@ -436,6 +442,9 @@ export const demoAccountWithTrades = {
     CloseTime: trade.exitDate,
     Type: trade.side === 'long' ? 'buy' : 'sell',
     Ticket: 1000 + index,
+    // Time field for graph (HH:MM:SS format)
+    time: extractTime(trade.entryDate),
+    Commission: 0,
     // Additional fields
     side: trade.side,
     entryPrice: trade.entryPrice,
