@@ -13,11 +13,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    let decoded: { _id: string };
+    let decoded: { _id: string; demoMode?: boolean };
     try {
-      decoded = jwt.verify(token, process.env.SECRET_KEY as string) as { _id: string };
+      decoded = jwt.verify(token, process.env.SECRET_KEY as string) as { _id: string; demoMode?: boolean };
     } catch (jwtError) {
       return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+    }
+
+    if (decoded.demoMode === true) {
+      return NextResponse.json({
+        hasAccess: true,
+        isSubscribed: false,
+        isOnTrial: false,
+        trialDaysLeft: 0,
+        status: 'demo',
+        demoMode: true,
+        email: 'demo@projournx.com'
+      });
     }
 
     const User = await getUserModel();
