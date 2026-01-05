@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -6,7 +6,19 @@ import Image from "next/image";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { Phone, Lock, ChevronDown, Search, Loader2, Shield, CheckCircle2, Eye, EyeOff, ArrowRight } from "lucide-react";
+import {
+  Phone,
+  Lock,
+  ChevronDown,
+  Search,
+  Loader2,
+  Shield,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  User,
+} from "lucide-react";
 
 interface CountryPhoneCode {
   country: string;
@@ -76,7 +88,10 @@ const countryPhoneCodes: CountryPhoneCode[] = [
 const GoogleSignUp = () => {
   const router = useRouter();
   const [show, setShow] = useState(false);
-  const [selectedCode, setSelectedCode] = useState<CountryPhoneCode>({ code: "+91", country: "India" });
+  const [selectedCode, setSelectedCode] = useState<CountryPhoneCode>({
+    code: "+91",
+    country: "India",
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -87,7 +102,10 @@ const GoogleSignUp = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setSearch("");
       }
@@ -98,9 +116,13 @@ const GoogleSignUp = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  const filteredOptions = countryPhoneCodes.filter(country =>
-    country.country.toLowerCase().includes(search.toLowerCase()) || country.code.includes(search)
-  ).filter(country => country.code !== selectedCode.code);
+  const filteredOptions = countryPhoneCodes
+    .filter(
+      (country) =>
+        country.country.toLowerCase().includes(search.toLowerCase()) ||
+        country.code.includes(search),
+    )
+    .filter((country) => country.code !== selectedCode.code);
 
   const handleSelect = (country: CountryPhoneCode) => {
     setSelectedCode(country);
@@ -122,9 +144,9 @@ const GoogleSignUp = () => {
   const [couponCode, setCouponCode] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedRef = localStorage.getItem('affiliate_ref');
-      const storedCoupon = localStorage.getItem('affiliate_coupon');
+    if (typeof window !== "undefined") {
+      const storedRef = localStorage.getItem("affiliate_ref");
+      const storedCoupon = localStorage.getItem("affiliate_coupon");
       if (storedRef) setReferralCode(storedRef);
       if (storedCoupon) setCouponCode(storedCoupon);
     }
@@ -146,9 +168,16 @@ const GoogleSignUp = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email, fullName: fName, phone, password, cpassword, countryCode: selectedCode.code, country: selectedCode.country,
-          referralCode: referralCode || undefined, couponCode: couponCode || undefined
-        })
+          email,
+          fullName: fName,
+          phone,
+          password,
+          cpassword,
+          countryCode: selectedCode.code,
+          country: selectedCode.country,
+          referralCode: referralCode || undefined,
+          couponCode: couponCode || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -178,27 +207,35 @@ const GoogleSignUp = () => {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    const code = urlParams.get("code");
 
     if (!code) return;
 
     const cleanUrl = window.location.pathname + window.location.hash;
     window.history.replaceState({}, document.title, cleanUrl);
 
-    axios.post(`/api/registerggl-getmail`, { code }, { headers: { 'Content-Type': 'application/json' } })
-      .then(response => {
+    axios
+      .post(
+        `/api/registerggl-getmail`,
+        { code },
+        { headers: { "Content-Type": "application/json" } },
+      )
+      .then((response) => {
         if (response.data.msg === "unregistered user") {
           setEmail(response.data.email);
           setFname(response.data.name);
           setShow(true);
-          Cookies.set('google_token', response.data.access_token, { secure: true, sameSite: 'strict' });
+          Cookies.set("google_token", response.data.access_token, {
+            secure: true,
+            sameSite: "strict",
+          });
         } else if (response.data.msg === "registered user") {
           router.push(`/dashboard`);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         if (!axios.isCancel(err)) {
-          console.error('Authentication failed:', err);
+          console.error("Authentication failed:", err);
         }
       });
   }, [router]);
@@ -209,28 +246,28 @@ const GoogleSignUp = () => {
         <div className="min-h-screen w-full bg-[#060914] flex items-center justify-center p-4 overflow-hidden relative">
           {/* Background Effects */}
           <div className="absolute inset-0 overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5, ease: "easeOut" }}
-              className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-blue-600/25 via-blue-500/15 to-transparent rounded-full blur-[120px]" 
+              className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-blue-600/25 via-blue-500/15 to-transparent rounded-full blur-[120px]"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
-              className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-500/20 via-teal-500/10 to-transparent rounded-full blur-[100px]" 
+              className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-500/20 via-teal-500/10 to-transparent rounded-full blur-[100px]"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 2, delay: 0.4 }}
-              className="absolute top-1/2 right-0 w-[300px] h-[300px] bg-gradient-to-l from-violet-500/15 to-transparent rounded-full blur-[80px]" 
+              className="absolute top-1/2 right-0 w-[300px] h-[300px] bg-gradient-to-l from-violet-500/15 to-transparent rounded-full blur-[80px]"
             />
           </div>
 
           {/* Noise Texture Overlay */}
-          <div 
+          <div
             className="absolute inset-0 opacity-[0.015]"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
@@ -238,7 +275,7 @@ const GoogleSignUp = () => {
           />
 
           {/* Grid Pattern */}
-          <div 
+          <div
             className="absolute inset-0 opacity-[0.02]"
             style={{
               backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
@@ -257,7 +294,7 @@ const GoogleSignUp = () => {
             <div className="relative bg-slate-900/40 backdrop-blur-2xl border border-white/[0.08] rounded-3xl p-8 shadow-2xl">
               {/* Glow effect behind card */}
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-transparent to-emerald-500/20 rounded-3xl blur-xl opacity-50" />
-              
+
               <div className="relative">
                 {/* Logo */}
                 <motion.div
@@ -286,8 +323,12 @@ const GoogleSignUp = () => {
                   transition={{ duration: 0.4, delay: 0.15 }}
                   className="text-center mb-8"
                 >
-                  <h1 className="text-2xl font-bold text-white mb-2">Complete Your Account</h1>
-                  <p className="text-slate-400 text-sm">Just a few more details to get started</p>
+                  <h1 className="text-2xl font-bold text-white mb-2">
+                    Complete Your Account
+                  </h1>
+                  <p className="text-slate-400 text-sm">
+                    Just a few more details to get started
+                  </p>
                   <div className="flex items-center justify-center gap-2 mt-3">
                     <div className="h-1 w-16 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full" />
                   </div>
@@ -304,7 +345,9 @@ const GoogleSignUp = () => {
                     {fName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">{fName}</p>
+                    <p className="text-white font-medium text-sm truncate">
+                      {fName}
+                    </p>
                     <p className="text-slate-400 text-xs truncate">{email}</p>
                   </div>
                   <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
@@ -318,7 +361,9 @@ const GoogleSignUp = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.25 }}
                   >
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Phone Number
+                    </label>
                     <div className="flex gap-2">
                       {/* Country Code Dropdown */}
                       <div className="relative" ref={dropdownRef}>
@@ -326,13 +371,19 @@ const GoogleSignUp = () => {
                           type="button"
                           onClick={() => setIsOpen(!isOpen)}
                           className={`flex items-center gap-2 px-3 py-3.5 bg-slate-800/60 border rounded-xl text-white text-sm transition-all duration-200 min-w-[100px] ${
-                            isOpen ? "border-blue-500/50 ring-2 ring-blue-500/20" : "border-white/10 hover:border-white/20"
+                            isOpen
+                              ? "border-blue-500/50 ring-2 ring-blue-500/20"
+                              : "border-white/10 hover:border-white/20"
                           }`}
                         >
-                          <span className="font-medium">{selectedCode.code}</span>
-                          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                          <span className="font-medium">
+                            {selectedCode.code}
+                          </span>
+                          <ChevronDown
+                            className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          />
                         </button>
-                        
+
                         {isOpen && (
                           <motion.div
                             initial={{ opacity: 0, y: -10 }}
@@ -359,8 +410,12 @@ const GoogleSignUp = () => {
                                   onClick={() => handleSelect(country)}
                                   className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-slate-700/50 transition-colors text-left"
                                 >
-                                  <span className="text-sm text-white">{country.country}</span>
-                                  <span className="text-sm text-slate-400">{country.code}</span>
+                                  <span className="text-sm text-white">
+                                    {country.country}
+                                  </span>
+                                  <span className="text-sm text-slate-400">
+                                    {country.code}
+                                  </span>
                                 </button>
                               ))}
                             </div>
@@ -370,7 +425,9 @@ const GoogleSignUp = () => {
 
                       {/* Phone Input */}
                       <div className="flex-1 relative">
-                        <Phone className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focusedField === "phone" ? "text-blue-400" : "text-slate-500"}`} />
+                        <Phone
+                          className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focusedField === "phone" ? "text-blue-400" : "text-slate-500"}`}
+                        />
                         <input
                           type="tel"
                           name="phone"
@@ -381,7 +438,9 @@ const GoogleSignUp = () => {
                           onFocus={() => setFocusedField("phone")}
                           onBlur={() => setFocusedField(null)}
                           className={`w-full pl-10 pr-4 py-3.5 bg-slate-800/60 border rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none transition-all duration-200 ${
-                            focusedField === "phone" ? "border-blue-500/50 ring-2 ring-blue-500/20" : "border-white/10 hover:border-white/20"
+                            focusedField === "phone"
+                              ? "border-blue-500/50 ring-2 ring-blue-500/20"
+                              : "border-white/10 hover:border-white/20"
                           }`}
                         />
                       </div>
@@ -394,9 +453,13 @@ const GoogleSignUp = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.3 }}
                   >
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Password
+                    </label>
                     <div className="relative">
-                      <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focusedField === "password" ? "text-blue-400" : "text-slate-500"}`} />
+                      <Lock
+                        className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focusedField === "password" ? "text-blue-400" : "text-slate-500"}`}
+                      />
                       <input
                         type={showPassword ? "text" : "password"}
                         name="password"
@@ -407,7 +470,9 @@ const GoogleSignUp = () => {
                         onFocus={() => setFocusedField("password")}
                         onBlur={() => setFocusedField(null)}
                         className={`w-full pl-10 pr-12 py-3.5 bg-slate-800/60 border rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none transition-all duration-200 ${
-                          focusedField === "password" ? "border-blue-500/50 ring-2 ring-blue-500/20" : "border-white/10 hover:border-white/20"
+                          focusedField === "password"
+                            ? "border-blue-500/50 ring-2 ring-blue-500/20"
+                            : "border-white/10 hover:border-white/20"
                         }`}
                       />
                       <button
@@ -415,7 +480,11 @@ const GoogleSignUp = () => {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </motion.div>
@@ -426,9 +495,13 @@ const GoogleSignUp = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.35 }}
                   >
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Confirm Password
+                    </label>
                     <div className="relative">
-                      <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focusedField === "cpassword" ? "text-blue-400" : "text-slate-500"}`} />
+                      <Lock
+                        className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${focusedField === "cpassword" ? "text-blue-400" : "text-slate-500"}`}
+                      />
                       <input
                         type={showConfirmPassword ? "text" : "password"}
                         name="cpassword"
@@ -439,18 +512,49 @@ const GoogleSignUp = () => {
                         onFocus={() => setFocusedField("cpassword")}
                         onBlur={() => setFocusedField(null)}
                         className={`w-full pl-10 pr-12 py-3.5 bg-slate-800/60 border rounded-xl text-white text-sm placeholder:text-slate-500 focus:outline-none transition-all duration-200 ${
-                          focusedField === "cpassword" ? "border-blue-500/50 ring-2 ring-blue-500/20" : "border-white/10 hover:border-white/20"
+                          focusedField === "cpassword"
+                            ? "border-blue-500/50 ring-2 ring-blue-500/20"
+                            : "border-white/10 hover:border-white/20"
                         }`}
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                       >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </motion.div>
+
+                  {/* Referral Code Display */}
+                  {referralCode && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.38 }}
+                    >
+                      <label className="block text-sm font-medium text-emerald-400/80 mb-2">
+                        Referral Code Applied
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400/50" />
+                        <input
+                          type="text"
+                          value={referralCode}
+                          disabled
+                          className="w-full pl-10 pr-10 py-3.5 bg-emerald-500/5 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm cursor-not-allowed"
+                        />
+                        <CheckCircle2 className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* Error Message */}
                   {error && (
@@ -459,7 +563,9 @@ const GoogleSignUp = () => {
                       animate={{ opacity: 1, y: 0 }}
                       className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl"
                     >
-                      <p className="text-red-400 text-sm text-center">{error}</p>
+                      <p className="text-red-400 text-sm text-center">
+                        {error}
+                      </p>
                     </motion.div>
                   )}
 
@@ -517,17 +623,17 @@ const Authenticating = () => {
     <div className="min-h-screen w-full bg-[#060914] flex items-center justify-center relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="absolute top-1/3 left-1/3 w-[400px] h-[400px] bg-gradient-to-br from-blue-600/20 to-transparent rounded-full blur-[100px]" 
+          className="absolute top-1/3 left-1/3 w-[400px] h-[400px] bg-gradient-to-br from-blue-600/20 to-transparent rounded-full blur-[100px]"
         />
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="absolute bottom-1/3 right-1/3 w-[300px] h-[300px] bg-gradient-to-tr from-emerald-500/15 to-transparent rounded-full blur-[80px]" 
+          className="absolute bottom-1/3 right-1/3 w-[300px] h-[300px] bg-gradient-to-tr from-emerald-500/15 to-transparent rounded-full blur-[80px]"
         />
       </div>
 
@@ -558,7 +664,9 @@ const Authenticating = () => {
           </div>
         </div>
         <p className="text-slate-300 font-medium">Authenticating...</p>
-        <p className="text-slate-500 text-sm mt-1">Please wait while we verify your account</p>
+        <p className="text-slate-500 text-sm mt-1">
+          Please wait while we verify your account
+        </p>
       </motion.div>
     </div>
   );

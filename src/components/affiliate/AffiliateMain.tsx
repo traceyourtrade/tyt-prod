@@ -101,7 +101,11 @@ export default function AffiliateMain() {
   const handleJoinProgram = async () => {
     setJoining(true);
     try {
-      const res = await axios.post("/api/affiliate", {}, { withCredentials: true });
+      const res = await axios.post(
+        "/api/affiliate",
+        {},
+        { withCredentials: true },
+      );
       if (res.data.success) {
         await fetchAffiliateData();
       }
@@ -127,7 +131,6 @@ export default function AffiliateMain() {
     setTimeout(() => setCopiedCoupon(null), 2000);
   };
 
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -146,15 +149,19 @@ export default function AffiliateMain() {
         >
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#4EBF94]/10 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-500/10 rounded-full blur-[100px]" />
-          
+
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4EBF94] to-emerald-600 flex items-center justify-center">
                 <Gift className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white">Affiliate Program</h1>
-                <p className="text-muted-foreground">Earn money by referring traders</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
+                  Affiliate Program
+                </h1>
+                <p className="text-muted-foreground">
+                  Earn money by referring traders
+                </p>
               </div>
             </div>
 
@@ -163,24 +170,34 @@ export default function AffiliateMain() {
                 <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-3">
                   <Link2 className="w-5 h-5 text-blue-400" />
                 </div>
-                <h3 className="font-semibold text-white mb-1">Share Your Link</h3>
-                <p className="text-sm text-muted-foreground">Get a unique referral link to share with traders</p>
+                <h3 className="font-semibold text-white mb-1">
+                  Share Your Link
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Get a unique referral link to share with traders
+                </p>
               </div>
-              
+
               <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                 <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center mb-3">
                   <Users className="w-5 h-5 text-violet-400" />
                 </div>
                 <h3 className="font-semibold text-white mb-1">Refer Traders</h3>
-                <p className="text-sm text-muted-foreground">When they sign up using your link, they become your referral</p>
+                <p className="text-sm text-muted-foreground">
+                  When they sign up using your link, they become your referral
+                </p>
               </div>
-              
+
               <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                 <div className="w-10 h-10 rounded-lg bg-[#4EBF94]/20 flex items-center justify-center mb-3">
                   <CreditCard className="w-5 h-5 text-[#4EBF94]" />
                 </div>
-                <h3 className="font-semibold text-white mb-1">Track Conversions</h3>
-                <p className="text-sm text-muted-foreground">See who subscribed from your referral links</p>
+                <h3 className="font-semibold text-white mb-1">
+                  Track Conversions
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  See who subscribed from your referral links
+                </p>
               </div>
             </div>
 
@@ -243,9 +260,13 @@ export default function AffiliateMain() {
       <div className="bg-gradient-to-r from-[#4EBF94]/10 to-emerald-500/5 rounded-xl p-4 border border-[#4EBF94]/20">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Your Referral Link</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              Your Referral Link
+            </p>
             <p className="text-sm font-mono text-foreground break-all">
-              {typeof window !== 'undefined' ? `${window.location.origin}/signup?ref=${affiliate?.referralCode}` : ''}
+              {typeof window !== "undefined"
+                ? `${window.location.origin}/signup?ref=${affiliate?.referralCode}`
+                : ""}
             </p>
           </div>
           <motion.button
@@ -253,7 +274,11 @@ export default function AffiliateMain() {
             className="flex-shrink-0 px-4 py-2 rounded-lg bg-[#4EBF94] text-white font-medium flex items-center gap-2 text-sm"
             whileTap={{ scale: 0.95 }}
           >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
             {copied ? "Copied!" : "Copy Link"}
           </motion.button>
         </div>
@@ -263,27 +288,35 @@ export default function AffiliateMain() {
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
             <UserPlus className="w-4 h-4 text-violet-400" />
-            <span className="text-sm text-muted-foreground">Total Sign Ups</span>
+            <span className="text-sm text-muted-foreground">
+              Total Sign Ups
+            </span>
           </div>
           <p className="text-2xl font-bold">{stats?.totalSignups || 0}</p>
         </div>
-        
+
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
             <UserCheck className="w-4 h-4 text-[#4EBF94]" />
             <span className="text-sm text-muted-foreground">Subscribed</span>
           </div>
-          <p className="text-2xl font-bold text-[#4EBF94]">{stats?.totalConversions || 0}</p>
+          <p className="text-2xl font-bold text-[#4EBF94]">
+            {stats?.totalConversions || 0}
+          </p>
         </div>
-        
+
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
             <UserX className="w-4 h-4 text-amber-400" />
-            <span className="text-sm text-muted-foreground">Not Subscribed</span>
+            <span className="text-sm text-muted-foreground">
+              Not Subscribed
+            </span>
           </div>
-          <p className="text-2xl font-bold text-amber-400">{(stats?.totalSignups || 0) - (stats?.totalConversions || 0)}</p>
+          <p className="text-2xl font-bold text-amber-400">
+            {(stats?.totalSignups || 0) - (stats?.totalConversions || 0)}
+          </p>
         </div>
-        
+
         <div className="bg-card rounded-xl p-4 border border-border">
           <div className="flex items-center gap-2 mb-2">
             <MousePointerClick className="w-4 h-4 text-blue-400" />
@@ -301,9 +334,14 @@ export default function AffiliateMain() {
           </div>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
             {coupons.map((coupon) => (
-              <div key={coupon.uniqueId} className="bg-muted/50 rounded-lg p-3 border border-border">
+              <div
+                key={coupon.uniqueId}
+                className="bg-muted/50 rounded-lg p-3 border border-border"
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono font-bold text-[#4EBF94]">{coupon.code}</span>
+                  <span className="font-mono font-bold text-[#4EBF94]">
+                    {coupon.code}
+                  </span>
                   <motion.button
                     onClick={() => copyCouponCode(coupon.code)}
                     className="p-1.5 rounded-md hover:bg-foreground/10 transition-colors"
@@ -317,8 +355,12 @@ export default function AffiliateMain() {
                   </motion.button>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{coupon.discountPercent}% off</span>
-                  <span className="text-muted-foreground">{coupon.usageCount} uses</span>
+                  <span className="text-muted-foreground">
+                    {coupon.discountPercent}% off
+                  </span>
+                  <span className="text-muted-foreground">
+                    {coupon.usageCount} uses
+                  </span>
                 </div>
               </div>
             ))}
@@ -333,21 +375,30 @@ export default function AffiliateMain() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-muted-foreground border-b border-border">
-                  <th className="pb-3 font-medium">User ID</th>
+                  <th className="pb-3 font-medium">Name</th>
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {referrals.slice(0, 10).map((ref) => (
-                  <tr key={ref.uniqueId} className="border-b border-border/50 last:border-0">
-                    <td className="py-3 font-mono text-xs">{ref.referredUserId?.slice(0, 8) || '---'}...</td>
+                  <tr
+                    key={ref.uniqueId}
+                    className="border-b border-border/50 last:border-0"
+                  >
+                    <td className="py-3 font-medium text-foreground">
+                      {(ref as any).fullName || "---"}
+                    </td>
                     <td className="py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        ref.status === 'converted' ? 'bg-[#4EBF94]/20 text-[#4EBF94]' :
-                        ref.status === 'signed_up' ? 'bg-blue-500/20 text-blue-400' :
-                        'bg-muted text-muted-foreground'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          ref.status === "converted"
+                            ? "bg-[#4EBF94]/20 text-[#4EBF94]"
+                            : ref.status === "signed_up"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
                         {ref.status}
                       </span>
                     </td>

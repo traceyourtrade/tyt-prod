@@ -2,17 +2,25 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
+import { getUserModel } from "@/models/main/user.model";
 import { getCommissionModel } from "@/models/main/commission.model";
 import { getAffiliateCouponModel } from "@/models/main/affiliateCoupon.model";
 
 const generateReferralCode = () => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return Array.from(
+    { length: 8 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
 };
 
 const generateUniqueId = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  return Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from(
+    { length: 16 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
 };
 
 export async function GET(req: Request) {
@@ -22,7 +30,10 @@ export async function GET(req: Request) {
     const userId = cookieStore.get("userId")?.value;
 
     if (!token || !userId) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 },
+      );
     }
 
     const Affiliate = await getAffiliateModel();
@@ -33,57 +44,110 @@ export async function GET(req: Request) {
     const affiliate = await Affiliate.findOne({ userId });
 
     if (!affiliate) {
-      return NextResponse.json({ 
-        isAffiliate: false,
-        message: "Not enrolled in affiliate program" 
-      }, { status: 200 });
+      return NextResponse.json(
+        {
+          isAffiliate: false,
+          message: "Not enrolled in affiliate program",
+        },
+        { status: 200 },
+      );
     }
 
     const referrals = await Referral.find({ affiliateId: affiliate.uniqueId })
       .sort({ createdAt: -1 })
       .limit(50);
 
-    const commissions = await Commission.find({ affiliateId: affiliate.uniqueId })
+    const User = await getUserModel();
+    const referralsWithNames = await Promise.all(
+      referrals.map(async (ref) => {
+        const referredUser = await User.findOne({
+          uniqueId: ref.referredUserId,
+        }).select("fullName subscription");
+        const isSubscribed =
+          referredUser?.subscription?.isSubscribed ||
+          referredUser?.subscription?.subscriptionStatus === "active";
+        return {
+          ...ref.toObject(),
+          fullName: referredUser?.fullName || "Unknown User",
+          status: isSubscribed ? "converted" : ref.status,
+        };
+      }),
+    );
+
+    const commissions = await Commission.find({
+      affiliateId: affiliate.uniqueId,
+    })
       .sort({ createdAt: -1 })
       .limit(50);
 
-    const coupons = await AffiliateCoupon.find({ affiliateId: affiliate.uniqueId });
+    const coupons = await AffiliateCoupon.find({
+      affiliateId: affiliate.uniqueId,
+    });
+
+    const totalConversions = await Referral.aggregate([
+      { $match: { affiliateId: affiliate.uniqueId } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "referredUserId",
+          foreignField: "uniqueId",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $match: {
+          $or: [
+            { "user.subscription.isSubscribed": true },
+            { "user.subscription.subscriptionStatus": "active" },
+          ],
+        },
+      },
+      { $count: "count" },
+    ]).then((res) => res[0]?.count || 0);
 
     const stats = {
-      totalClicks: await Referral.countDocuments({ affiliateId: affiliate.uniqueId }),
-      totalSignups: await Referral.countDocuments({ affiliateId: affiliate.uniqueId, status: { $in: ['signed_up', 'converted'] } }),
-      totalConversions: await Referral.countDocuments({ affiliateId: affiliate.uniqueId, status: 'converted' }),
+      totalClicks: await Referral.countDocuments({
+        affiliateId: affiliate.uniqueId,
+      }),
+      totalSignups: await Referral.countDocuments({
+        affiliateId: affiliate.uniqueId,
+        status: { $in: ["signed_up", "converted"] },
+      }),
+      totalConversions,
       pendingCommissions: await Commission.aggregate([
-        { $match: { affiliateId: affiliate.uniqueId, status: 'pending' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]).then(res => res[0]?.total || 0),
+        { $match: { affiliateId: affiliate.uniqueId, status: "pending" } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]).then((res) => res[0]?.total || 0),
       paidCommissions: await Commission.aggregate([
-        { $match: { affiliateId: affiliate.uniqueId, status: 'paid' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]).then(res => res[0]?.total || 0),
+        { $match: { affiliateId: affiliate.uniqueId, status: "paid" } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]).then((res) => res[0]?.total || 0),
     };
 
-    return NextResponse.json({
-      isAffiliate: true,
-      affiliate: {
-        uniqueId: affiliate.uniqueId,
-        referralCode: affiliate.referralCode,
-        status: affiliate.status,
-        tier: affiliate.tier,
-        commissionRate: affiliate.commissionRate,
-        totalEarnings: affiliate.totalEarnings,
-        pendingEarnings: affiliate.pendingEarnings,
-        paidEarnings: affiliate.paidEarnings,
-        totalReferrals: affiliate.totalReferrals,
-        activeReferrals: affiliate.activeReferrals,
-        createdAt: affiliate.createdAt,
+    return NextResponse.json(
+      {
+        isAffiliate: true,
+        affiliate: {
+          uniqueId: affiliate.uniqueId,
+          referralCode: affiliate.referralCode,
+          status: affiliate.status,
+          tier: affiliate.tier,
+          commissionRate: affiliate.commissionRate,
+          totalEarnings: affiliate.totalEarnings,
+          pendingEarnings: affiliate.pendingEarnings,
+          paidEarnings: affiliate.paidEarnings,
+          totalReferrals: affiliate.totalReferrals,
+          activeReferrals: affiliate.activeReferrals,
+          createdAt: affiliate.createdAt,
+        },
+        referrals: referralsWithNames,
+        commissions,
+        coupons,
+        stats,
       },
-      referrals,
-      commissions,
-      coupons,
-      stats
-    }, { status: 200 });
-
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Affiliate GET error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -97,17 +161,23 @@ export async function POST(req: Request) {
     const userId = cookieStore.get("userId")?.value;
 
     if (!token || !userId) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 },
+      );
     }
 
     const Affiliate = await getAffiliateModel();
 
     const existingAffiliate = await Affiliate.findOne({ userId });
     if (existingAffiliate) {
-      return NextResponse.json({ 
-        error: "Already enrolled in affiliate program",
-        affiliate: existingAffiliate 
-      }, { status: 409 });
+      return NextResponse.json(
+        {
+          error: "Already enrolled in affiliate program",
+          affiliate: existingAffiliate,
+        },
+        { status: 409 },
+      );
     }
 
     let referralCode: string;
@@ -123,8 +193,8 @@ export async function POST(req: Request) {
       uniqueId,
       userId,
       referralCode,
-      status: 'approved',
-      tier: 'bronze',
+      status: "approved",
+      tier: "bronze",
       commissionRate: 20,
       totalEarnings: 0,
       pendingEarnings: 0,
@@ -135,18 +205,20 @@ export async function POST(req: Request) {
 
     await newAffiliate.save();
 
-    return NextResponse.json({
-      success: true,
-      message: "Successfully joined affiliate program",
-      affiliate: {
-        uniqueId: newAffiliate.uniqueId,
-        referralCode: newAffiliate.referralCode,
-        status: newAffiliate.status,
-        tier: newAffiliate.tier,
-        commissionRate: newAffiliate.commissionRate,
-      }
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Successfully joined affiliate program",
+        affiliate: {
+          uniqueId: newAffiliate.uniqueId,
+          referralCode: newAffiliate.referralCode,
+          status: newAffiliate.status,
+          tier: newAffiliate.tier,
+          commissionRate: newAffiliate.commissionRate,
+        },
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Affiliate POST error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

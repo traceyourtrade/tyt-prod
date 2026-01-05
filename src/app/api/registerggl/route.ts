@@ -9,20 +9,30 @@ import { GoogleAuthRequest, UserData, NotesData } from "@/types/auth";
 import { activateTrial } from "@/lib/subscription";
 
 const generateReferralUniqueId = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  return Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  return Array.from(
+    { length: 16 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
 };
 
 const generateUserReferralCode = () => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return Array.from(
+    { length: 8 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const User = await getUserModel();
     const Notes = await getNoteModel();
-    const body: GoogleAuthRequest & { referralCode?: string; couponCode?: string } = await request.json();
+    const body: GoogleAuthRequest & {
+      referralCode?: string;
+      couponCode?: string;
+    } = await request.json();
     const {
       email,
       fullName,
@@ -34,6 +44,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       referralCode,
       couponCode,
     } = body;
+
+    console.log("[GOOGLE SIGNUP] New signup request:", {
+      email,
+      referralCode,
+      couponCode,
+    });
 
     console.log("Registration data:", {
       email,
@@ -105,12 +121,48 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       }
 
-      // Validate referral code if provided (user-to-user referrals)
+      // Validate referral code if provided
       let validatedReferredBy: string | undefined;
+      let referrerUser = null;
+      let affiliateReferrer = null;
+
       if (referralCode) {
-        const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
-        if (referrer) {
-          validatedReferredBy = referralCode.toUpperCase();
+        const normalizedCode = referralCode.toUpperCase();
+        console.log(
+          "[GOOGLE SIGNUP] Validating referral code:",
+          normalizedCode,
+        );
+
+        referrerUser = await User.findOne({ referralCode: normalizedCode });
+        if (referrerUser)
+          console.log(
+            "[GOOGLE SIGNUP] Referrer user found:",
+            referrerUser.uniqueId,
+          );
+
+        const Affiliate = await getAffiliateModel();
+        affiliateReferrer = await Affiliate.findOne({
+          referralCode: normalizedCode,
+        });
+        if (affiliateReferrer)
+          console.log(
+            "[GOOGLE SIGNUP] Affiliate referrer found (status:",
+            affiliateReferrer.status,
+            "):",
+            affiliateReferrer.uniqueId,
+          );
+
+        if (referrerUser || affiliateReferrer) {
+          validatedReferredBy = normalizedCode;
+          console.log(
+            "[GOOGLE SIGNUP] ✅ Referral code validated. Type:",
+            affiliateReferrer ? "Affiliate" : "User",
+          );
+        } else {
+          console.log(
+            "[GOOGLE SIGNUP] ❌ Referral code not found in any collection:",
+            normalizedCode,
+          );
         }
       }
 
@@ -130,9 +182,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         subscription: {
           isSubscribed: false,
           trialUsed: false,
-          subscriptionStatus: 'inactive'
-        }
+          subscriptionStatus: "inactive",
+        },
       };
+
+      console.log(
+        "[GOOGLE SIGNUP] Creating user with referredBy:",
+        validatedReferredBy || "(none)",
+      );
 
       const notesData: NotesData = {
         uniqueId,
@@ -145,48 +202,102 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await user.save();
       await notes.save();
 
-      // ✅ Track affiliate referral if referral code or coupon code is provided
+      // ✅ Track referrals
       if (referralCode || couponCode) {
         try {
           const Affiliate = await getAffiliateModel();
           const Referral = await getReferralModel();
-          
-          let affiliate = null;
-          
-          if (referralCode) {
-            affiliate = await Affiliate.findOne({ referralCode, status: 'approved' });
-          }
-          
+
+          let affiliate = affiliateReferrer;
+          let isAffiliateReferral = !!affiliateReferrer;
+
+          // Check coupon code for affiliate if not already found
           if (!affiliate && couponCode) {
-            const { getAffiliateCouponModel } = await import("@/models/main/affiliateCoupon.model");
+            const { getAffiliateCouponModel } = await import(
+              "@/models/main/affiliateCoupon.model"
+            );
             const AffiliateCoupon = await getAffiliateCouponModel();
-            const coupon = await AffiliateCoupon.findOne({ code: couponCode.toUpperCase(), status: 'active' });
+            const coupon = await AffiliateCoupon.findOne({
+              code: couponCode.toUpperCase(),
+              status: "active",
+            });
             if (coupon) {
-              affiliate = await Affiliate.findOne({ uniqueId: coupon.affiliateId, status: 'approved' });
+              affiliate = await Affiliate.findOne({
+                uniqueId: coupon.affiliateId,
+                status: "approved",
+              });
+              if (affiliate) {
+                isAffiliateReferral = true;
+              }
             }
           }
-          
+
+          // Create referral record for affiliate referrals
           if (affiliate) {
-            const referralEntry = new Referral({
+            console.log(
+              "[GOOGLE SIGNUP] Attempting to store affiliate referral...",
+            );
+            const referralRecord = new Referral({
               uniqueId: generateReferralUniqueId(),
               affiliateId: affiliate.uniqueId,
               referredUserId: uniqueId,
-              referralCode: referralCode || '',
-              couponCode: couponCode || '',
-              status: 'signed_up',
-              source: 'google_registration',
+              referralCode: referralCode || "",
+              couponCode: couponCode || "",
+              status: "signed_up",
+              source: "google_registration",
             });
-            await referralEntry.save();
-            
-            await Affiliate.updateOne(
-              { uniqueId: affiliate.uniqueId },
-              { $inc: { totalReferrals: 1 }, $set: { updatedAt: new Date() } }
+
+            await referralRecord.save();
+            console.log(
+              `[GOOGLE SIGNUP] ✅ Affiliate referral stored in DB: ${referralRecord.uniqueId}`,
             );
-            
-            console.log(`Affiliate referral tracked (Google): ${affiliate.referralCode} -> ${uniqueId}`);
+
+            if (affiliate.status === "approved") {
+              await Affiliate.updateOne(
+                { uniqueId: affiliate.uniqueId },
+                {
+                  $inc: { totalReferrals: 1 },
+                  $set: { updatedAt: new Date() },
+                },
+              );
+              console.log(
+                `[GOOGLE SIGNUP] ✅ Affiliate stats updated: ${affiliate.referralCode}`,
+              );
+            } else {
+              console.log(
+                `[GOOGLE SIGNUP] ℹ️ Affiliate stats NOT updated (status is ${affiliate.status})`,
+              );
+            }
+          }
+          // Create referral record for user-to-user referrals
+          else if (referrerUser && !isAffiliateReferral) {
+            console.log(
+              "[GOOGLE SIGNUP] Attempting to store user-to-user referral...",
+            );
+            const referralRecord = new Referral({
+              uniqueId: generateReferralUniqueId(),
+              affiliateId: referrerUser.uniqueId,
+              referredUserId: uniqueId,
+              referralCode: referralCode || "",
+              couponCode: couponCode || "",
+              status: "signed_up",
+              source: "user_referral",
+            });
+
+            await referralRecord.save();
+            console.log(
+              `[GOOGLE SIGNUP] ✅ User-to-user referral stored in DB: ${referralRecord.uniqueId}`,
+            );
+          } else {
+            console.log(
+              "[GOOGLE SIGNUP] ℹ️ No referral tracking record created",
+            );
           }
         } catch (affiliateError) {
-          console.error("Affiliate tracking error (non-blocking):", affiliateError);
+          console.error(
+            "[GOOGLE SIGNUP] ❌ Referral tracking error:",
+            affiliateError,
+          );
         }
       }
 

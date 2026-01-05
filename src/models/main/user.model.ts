@@ -72,16 +72,16 @@ export interface IUser extends Document {
   subscription: IUserSubscription;
   referralCode: string;
   referredBy?: string;
-  
+
   // Methods
   generateAuthToken(): Promise<string>;
   addNotification(notify: string, date: string): Promise<IUserNotification[]>;
   addAccount(
-    accountName: string, 
-    accountBalance: number, 
-    accountType: string, 
-    broker: string, 
-    description: string, 
+    accountName: string,
+    accountBalance: number,
+    accountType: string,
+    broker: string,
+    description: string,
     accountId: string,
     isPropFirm?: boolean
   ): Promise<IUserAccount[]>;
@@ -199,8 +199,8 @@ const userSchema = new Schema<IUser>({
   subscription: {
     isSubscribed: { type: Boolean, default: false },
     subscriptionId: { type: String },
-    subscriptionStatus: { 
-      type: String, 
+    subscriptionStatus: {
+      type: String,
       enum: ['active', 'cancelled', 'halted', 'pending', 'expired', 'inactive'],
       default: 'inactive'
     },
@@ -208,15 +208,15 @@ const userSchema = new Schema<IUser>({
     trialEndsAt: { type: Date },
     trialUsed: { type: Boolean, default: false },
     razorpayCustomerId: { type: String },
-    billingPeriod: { 
-      type: String, 
+    billingPeriod: {
+      type: String,
       enum: ['monthly', 'yearly'],
       default: 'monthly'
     }
   },
   referralCode: { type: String, unique: true, sparse: true },
   referredBy: { type: String, index: true }
-});
+}, { collection: "users" });
 
 // 🔒 Hash passwords before save
 userSchema.pre("save", async function (next) {
@@ -268,12 +268,12 @@ userSchema.methods.addAccount = async function (
   isPropFirm: boolean = false
 ): Promise<IUserAccount[]> {
   try {
-    this.accounts = this.accounts.concat({ 
-      accountName, 
-      accountBalance, 
-      accountType, 
-      broker, 
-      description, 
+    this.accounts = this.accounts.concat({
+      accountName,
+      accountBalance,
+      accountType,
+      broker,
+      description,
       accountId,
       isPropFirm
     });
@@ -320,7 +320,7 @@ userSchema.methods.addAutoSyncAccount = async function (
 
 // Update account balance
 userSchema.methods.updateAccountBalance = async function (
-  accountId: string, 
+  accountId: string,
   newBalance: number
 ): Promise<IUserAccount | null> {
   try {

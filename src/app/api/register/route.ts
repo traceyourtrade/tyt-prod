@@ -39,6 +39,12 @@ export async function POST(req: Request) {
       couponCode,
     } = await req.json();
 
+    console.log("[REGISTER] New signup request:", {
+      email,
+      referralCode,
+      couponCode,
+    });
+
     // ✅ Validate input
     if (
       !email ||
@@ -103,12 +109,44 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Validate referral code if provided (user-to-user referrals)
+    // ✅ Validate and prepare referral tracking data
     let validatedReferredBy: string | undefined;
+    let referrerUser = null;
+    let affiliateReferrer = null;
+
     if (referralCode) {
-      const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
-      if (referrer) {
-        validatedReferredBy = referralCode.toUpperCase();
+      const normalizedCode = referralCode.toUpperCase();
+      console.log("[REGISTER] Validating referral code:", normalizedCode);
+
+      // Check if it's a regular user code
+      referrerUser = await User.findOne({ referralCode: normalizedCode });
+      if (referrerUser)
+        console.log("[REGISTER] Referrer user found:", referrerUser.uniqueId);
+
+      // Check if it's an affiliate code (relaxing status check for tracking)
+      const Affiliate = await getAffiliateModel();
+      affiliateReferrer = await Affiliate.findOne({
+        referralCode: normalizedCode,
+      });
+      if (affiliateReferrer)
+        console.log(
+          "[REGISTER] Affiliate referrer found (status:",
+          affiliateReferrer.status,
+          "):",
+          affiliateReferrer.uniqueId,
+        );
+
+      if (referrerUser || affiliateReferrer) {
+        validatedReferredBy = normalizedCode;
+        console.log(
+          "[REGISTER] ✅ Referral code validated. Type:",
+          affiliateReferrer ? "Affiliate" : "User",
+        );
+      } else {
+        console.log(
+          "[REGISTER] ❌ Referral code not found in any collection:",
+          normalizedCode,
+        );
       }
     }
 
@@ -142,6 +180,11 @@ export async function POST(req: Request) {
       referredBy: validatedReferredBy,
     });
 
+    console.log(
+      "[REGISTER] Creating user with referredBy:",
+      validatedReferredBy || "(none)",
+    );
+
     const notes = new Notes({
       uniqueId,
       email,
@@ -150,21 +193,16 @@ export async function POST(req: Request) {
     await user.save();
     await notes.save();
 
-    // ✅ Track affiliate referral if referral code or coupon code is provided
+    // ✅ Track referrals
     if (referralCode || couponCode) {
       try {
         const Affiliate = await getAffiliateModel();
         const Referral = await getReferralModel();
 
-        let affiliate = null;
+        let affiliate = affiliateReferrer;
+        let isAffiliateReferral = !!affiliateReferrer;
 
-        if (referralCode) {
-          affiliate = await Affiliate.findOne({
-            referralCode,
-            status: "approved",
-          });
-        }
-
+        // Check coupon code for affiliate if not already found via referralCode
         if (!affiliate && couponCode) {
           const { getAffiliateCouponModel } = await import(
             "@/models/main/affiliateCoupon.model"
@@ -179,11 +217,16 @@ export async function POST(req: Request) {
               uniqueId: coupon.affiliateId,
               status: "approved",
             });
+            if (affiliate) {
+              isAffiliateReferral = true;
+            }
           }
         }
 
+        // Create referral record for affiliate referrals
         if (affiliate) {
-          const referral = new Referral({
+          console.log("[REGISTER] Attempting to store affiliate referral...");
+          const referralRecord = new Referral({
             uniqueId: generateReferralUniqueId(),
             affiliateId: affiliate.uniqueId,
             referredUserId: uniqueId,
@@ -192,20 +235,51 @@ export async function POST(req: Request) {
             status: "signed_up",
             source: "registration",
           });
-          await referral.save();
 
-          await Affiliate.updateOne(
-            { uniqueId: affiliate.uniqueId },
-            { $inc: { totalReferrals: 1 }, $set: { updatedAt: new Date() } },
-          );
-
+          await referralRecord.save();
           console.log(
-            `Affiliate referral tracked: ${affiliate.referralCode} -> ${uniqueId}`,
+            `[REGISTER] ✅ Affiliate referral stored in DB: ${referralRecord.uniqueId}`,
           );
+
+          if (affiliate.status === "approved") {
+            await Affiliate.updateOne(
+              { uniqueId: affiliate.uniqueId },
+              { $inc: { totalReferrals: 1 }, $set: { updatedAt: new Date() } },
+            );
+            console.log(
+              `[REGISTER] ✅ Affiliate stats updated: ${affiliate.referralCode}`,
+            );
+          } else {
+            console.log(
+              `[REGISTER] ℹ️ Affiliate stats NOT updated (status is ${affiliate.status})`,
+            );
+          }
+        }
+        // Create referral record for user-to-user referrals
+        else if (referrerUser && !isAffiliateReferral) {
+          console.log(
+            "[REGISTER] Attempting to store user-to-user referral...",
+          );
+          const referralRecord = new Referral({
+            uniqueId: generateReferralUniqueId(),
+            affiliateId: referrerUser.uniqueId,
+            referredUserId: uniqueId,
+            referralCode: referralCode || "",
+            couponCode: couponCode || "",
+            status: "signed_up",
+            source: "user_referral",
+          });
+
+          await referralRecord.save();
+          console.log(
+            `[REGISTER] ✅ User-to-user referral stored in DB: ${referralRecord.uniqueId}`,
+          );
+        } else {
+          console.log("[REGISTER] ℹ️ No referral tracking record created");
         }
       } catch (affiliateError) {
         console.error(
-          "Affiliate tracking error (non-blocking):",
+          "[REGISTER] ❌ Referral tracking error (non-blocking):",
           affiliateError,
         );
       }
