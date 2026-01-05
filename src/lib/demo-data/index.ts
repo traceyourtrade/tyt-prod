@@ -2,10 +2,12 @@ export const demoAccount = {
   id: 'demo-account',
   _id: 'demo-account',
   name: 'Demo Account',
+  accountName: 'Demo Account',
   balance: 10000,
   broker: 'Paper Trading',
   isPropFirm: false,
   currency: 'USD',
+  checked: true,
   createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
 };
 
@@ -274,7 +276,25 @@ export const demoDashboardStats = {
   worstDay: -300,
 };
 
-export const demoAccounts = [demoAccount];
+// Demo account with embedded trade data for dashboard rendering
+export const demoAccountWithTrades = {
+  ...demoAccount,
+  tradeData: demoTrades.map(trade => ({
+    date: trade.entryDate,
+    Profit: trade.pnl,
+    Item: trade.symbol,
+    Currency: 'USD',
+    side: trade.side,
+    entryPrice: trade.entryPrice,
+    exitPrice: trade.exitPrice,
+    quantity: trade.quantity,
+    notes: trade.notes,
+    riskRewardRatio: trade.riskRewardRatio,
+    status: trade.status,
+  })),
+};
+
+export const demoAccounts = [demoAccountWithTrades];
 
 export function isDemoMode(userId: string | undefined): boolean {
   return userId === 'demo-user';

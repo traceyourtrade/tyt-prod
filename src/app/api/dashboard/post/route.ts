@@ -45,9 +45,12 @@ export async function POST(req: NextRequest) {
             switch (apiName) {
                 case "getAccountDetails":
                     return NextResponse.json({ accounts: demoAccounts });
+                case "editAccCheck":
+                case "checkAll":
+                    // Return current demo accounts so local state can toggle
+                    return NextResponse.json({ data: { accounts: demoAccounts } });
                 case "createAccount":
                 case "createAutoSyncAccount":
-                case "editAccCheck":
                 case "postFileUpload":
                 case "postManualUpload":
                     return NextResponse.json({ error: "Demo mode - this feature is not available" }, { status: 403 });
