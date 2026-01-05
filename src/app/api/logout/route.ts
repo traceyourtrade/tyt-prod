@@ -12,15 +12,22 @@ export async function POST(req: Request) {
     const token=cookiesStore.get("authToken")?.value || "";
     console.log("the secret key is ",process.env.SECRET_KEY);
     cookiesStore.delete("authToken");
-cookiesStore.delete("userId");
-cookiesStore.delete("name");
+    cookiesStore.delete("userId");
+    cookiesStore.delete("name");
 
         if (!token) {
             return NextResponse.json({ success: true ,message:"Logged out successfully"});
         }
 
-        // Remove token from DB
-        const decoded = jwt.verify(token, process.env.SECRET_KEY || "") ;
+        // Decode token to check if demo mode
+        const decoded = jwt.verify(token, process.env.SECRET_KEY || "") as any;
+        
+        // For demo mode, just clear cookies and return success (no DB update needed)
+        if (decoded.demoMode === true) {
+            return NextResponse.json({ success: true, message: "Logged out successfully" });
+        }
+
+        // Remove token from DB for real users
         await User.updateOne(
             { _id: decoded._id },
             { $pull: { tokens: { token } } }
