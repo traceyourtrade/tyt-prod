@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
 import { getUserModel } from '@/models/main/user.model';
+import { demoTrades } from '@/lib/demo-data';
 
 async function getUserFromToken(token: string) {
   const User = await getUserModel();
   return await User.findOne({ "tokens.token": token });
+}
+
+async function isDemoMode(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("authToken")?.value;
+    if (!token) return false;
+    const decoded = jwt.verify(token, process.env.SECRET_KEY as string) as any;
+    return decoded.demoMode === true;
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -131,6 +145,10 @@ export async function PATCH(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    if (await isDemoMode()) {
+      return NextResponse.json({ success: true, trades: demoTrades });
+    }
+
     const cookieStore = await cookies();
     const token = cookieStore.get('authToken')?.value;
     const userId = cookieStore.get('userId')?.value;

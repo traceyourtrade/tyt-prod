@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 import { getBacktestSessionsModel } from '@/models/backtest/backtestSessions.model';
 import { connectAccountsDB } from '@/lib/db/connect';
 import { getUserModel } from '@/models/main/user.model';
+import { demoDashboardStats } from '@/lib/demo-data';
 
 async function getUserFromToken(token: string) {
   const User = await getUserModel();
   return await User.findOne({ "tokens.token": token });
+}
+
+async function isDemoMode(): Promise<boolean> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("authToken")?.value;
+    if (!token) return false;
+    const decoded = jwt.verify(token, process.env.SECRET_KEY as string) as any;
+    return decoded.demoMode === true;
+  } catch {
+    return false;
+  }
 }
 
 const DEFAULT_INITIAL_BALANCE = 100000;
@@ -54,6 +68,10 @@ function parseBalance(balanceStr: string | number | undefined): number | null {
 
 export async function GET(req: NextRequest) {
   try {
+    if (await isDemoMode()) {
+      return NextResponse.json(demoDashboardStats);
+    }
+
     const cookieStore = await cookies();
     const token = cookieStore.get('authToken')?.value;
     const userId = cookieStore.get('userId')?.value;

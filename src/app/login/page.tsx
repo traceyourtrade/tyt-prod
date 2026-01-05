@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, Play } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
@@ -18,6 +18,27 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+
+  const handleDemoLogin = async () => {
+    setIsDemoLoading(true);
+    try {
+      const res = await fetch("/api/demo-login", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        router.push("/dashboard");
+      } else {
+        setError("Failed to start demo. Please try again.");
+      }
+    } catch (err) {
+      console.error("Demo login error:", err);
+      setError("Failed to start demo. Please try again.");
+    } finally {
+      setIsDemoLoading(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -281,6 +302,34 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 h-px bg-white/[0.08]" />
+          <span className="text-xs text-zinc-500">or</span>
+          <div className="flex-1 h-px bg-white/[0.08]" />
+        </div>
+
+        {/* Try Demo Button */}
+        <motion.button
+          onClick={handleDemoLogin}
+          disabled={isDemoLoading}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full py-3 px-4 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-300 text-sm font-medium transition-all hover:bg-violet-500/20 hover:border-violet-500/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {isDemoLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <Play className="w-4 h-4" />
+              Try Demo
+            </>
+          )}
+        </motion.button>
+        <p className="text-xs text-zinc-500 text-center mt-2">
+          Explore the platform with sample data
+        </p>
 
         {/* Footer */}
         <div className="mt-6 text-center">
