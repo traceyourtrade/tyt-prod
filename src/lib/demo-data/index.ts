@@ -291,7 +291,8 @@ export const demoDashboardStats = {
 export const demoAccountWithTrades = {
   ...demoAccount,
   tradeData: demoTrades.map(trade => ({
-    date: trade.entryDate,
+    // Convert ISO date to YYYY-MM-DD format for calendar matching
+    date: trade.entryDate.split('T')[0],
     Profit: trade.pnl,
     Item: trade.symbol,
     Currency: 'USD',
