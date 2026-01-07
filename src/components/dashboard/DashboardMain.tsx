@@ -14,6 +14,7 @@ import useCurrencyStore, { formatCurrencyValue } from "@/store/currencyStore";
 import { PropFirmModeToggle, PropFirmDashboard } from "@/components/prop-firm";
 import { EditModeToolbar } from "@/components/dashboard/DraggableWidgetGrid";
 import { useTourStore } from "@/stores/useTourStore";
+import FreeTrialBanner from "@/components/subscription/FreeTrialBanner";
 
 import { cn } from "@/lib/utils";
 
@@ -224,6 +225,9 @@ const DashboardMain = () => {
 
   return (
     <div className="space-y-6">
+      {/* Free Trial Banner - Only shown for eligible users */}
+      <FreeTrialBanner />
+      
       {/* Personalized Greeting Header */}
       <div className={cn(
         "relative overflow-hidden rounded-2xl border p-6 sm:p-8",

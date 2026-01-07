@@ -36,7 +36,8 @@ interface SubscriptionStatus {
   isSubscribed: boolean
   isOnTrial: boolean
   trialDaysLeft: number
-  status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive'
+  canStartTrial: boolean
+  status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive' | 'demo'
 }
 
 interface SidebarProps {
@@ -114,7 +115,7 @@ export function Sidebar({
     const fetchSubscriptionStatus = async () => {
       console.log('[Sidebar] Fetching subscription status...')
       try {
-        const response = await fetch('/api/subscription/status')
+        const response = await fetch('/api/subscription/status', { cache: 'no-store' })
         console.log('[Sidebar] Subscription status response:', response.status)
         if (response.ok) {
           const data = await response.json()

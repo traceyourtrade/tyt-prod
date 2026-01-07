@@ -166,10 +166,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       }
 
-      // 3-day free trial for new users
-      const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + 3);
-      
+      // New users start without trial (must opt-in from dashboard)
       const userData: UserData = {
         isEmailVerified: true,
         uniqueId,
@@ -184,9 +181,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         referredBy: validatedReferredBy,
         subscription: {
           isSubscribed: false,
-          trialEndsAt,
           trialUsed: false,
-          subscriptionStatus: "pending",
+          hasEverSubscribed: false,
+          subscriptionStatus: "inactive",
         },
       };
 

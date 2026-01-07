@@ -29,7 +29,9 @@ export interface UserSubscriptionData {
   subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired' | 'inactive';
   subscriptionExpiry?: Date;
   trialEndsAt?: Date;
+  trialActivatedAt?: Date;
   trialUsed: boolean;
+  hasEverSubscribed?: boolean;
   razorpayCustomerId?: string;
 }
 

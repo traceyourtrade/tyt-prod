@@ -43,7 +43,9 @@ export interface IUserSubscription {
   subscriptionStatus?: 'active' | 'cancelled' | 'halted' | 'pending' | 'expired' | 'inactive';
   subscriptionExpiry?: Date;
   trialEndsAt?: Date;
+  trialActivatedAt?: Date;
   trialUsed: boolean;
+  hasEverSubscribed?: boolean;
   razorpayCustomerId?: string;
   billingPeriod?: 'monthly' | 'yearly';
 }
@@ -206,7 +208,9 @@ const userSchema = new Schema<IUser>({
     },
     subscriptionExpiry: { type: Date },
     trialEndsAt: { type: Date },
+    trialActivatedAt: { type: Date },
     trialUsed: { type: Boolean, default: false },
+    hasEverSubscribed: { type: Boolean, default: false },
     razorpayCustomerId: { type: String },
     billingPeriod: {
       type: String,

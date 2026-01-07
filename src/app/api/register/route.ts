@@ -157,10 +157,7 @@ export async function POST(req: Request) {
       { expiresIn: "15m" },
     );
 
-    // ✅ Create user and notes documents with 3-day free trial
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 3);
-
+    // ✅ Create user and notes documents (trial not auto-started, user must opt-in)
     const user = new User({
       uniqueId,
       email,
@@ -172,9 +169,9 @@ export async function POST(req: Request) {
       country,
       subscription: {
         isSubscribed: false,
-        trialEndsAt,
         trialUsed: false,
-        subscriptionStatus: "pending",
+        hasEverSubscribed: false,
+        subscriptionStatus: "inactive",
       },
       referralCode: userReferralCode,
       referredBy: validatedReferredBy,

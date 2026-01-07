@@ -9,7 +9,15 @@ export interface SubscriptionStatus {
   isSubscribed: boolean;
   isOnTrial: boolean;
   trialDaysLeft: number;
+  canStartTrial: boolean;
   status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive';
+}
+
+export function isTrialEligible(user: IUser): boolean {
+  // User can start trial if: hasn't used trial yet AND has never subscribed
+  const trialUsed = user.subscription?.trialUsed ?? false;
+  const hasEverSubscribed = user.subscription?.hasEverSubscribed ?? false;
+  return !trialUsed && !hasEverSubscribed;
 }
 
 export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
@@ -20,6 +28,7 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
       isSubscribed: true,
       isOnTrial: false,
       trialDaysLeft: 0,
+      canStartTrial: false,
       status: 'subscribed'
     };
   }
@@ -35,6 +44,7 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
         isSubscribed: true,
         isOnTrial: false,
         trialDaysLeft: 0,
+        canStartTrial: false,
         status: 'subscribed'
       };
     }
@@ -49,23 +59,29 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
         hasAccess: true,
         isSubscribed: false,
         isOnTrial: true,
-        trialDaysLeft: daysLeft,
+        trialDaysLeft: Math.max(0, daysLeft),
+        canStartTrial: false,
         status: 'trial'
       };
     }
   }
   
-  // Trial expired or no subscription
+  // Check if user can start a trial
+  const canStartTrial = isTrialEligible(user);
+  
+  // No active subscription or trial
   return {
     hasAccess: false,
     isSubscribed: false,
     isOnTrial: false,
     trialDaysLeft: 0,
-    status: 'expired'
+    canStartTrial,
+    status: canStartTrial ? 'inactive' : 'expired'
   };
 }
 
 export function activateTrial(user: IUser): Date {
+  const now = new Date();
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + 3);
   
@@ -76,8 +92,10 @@ export function activateTrial(user: IUser): Date {
     };
   }
   
+  user.subscription.trialActivatedAt = now;
   user.subscription.trialEndsAt = trialEndsAt;
   user.subscription.trialUsed = true;
+  user.subscription.subscriptionStatus = 'pending';
   
   return trialEndsAt;
 }
@@ -98,6 +116,7 @@ export function activateSubscription(
   user.subscription.subscriptionId = subscriptionId;
   user.subscription.subscriptionStatus = 'active';
   user.subscription.razorpayCustomerId = customerId;
+  user.subscription.hasEverSubscribed = true;
   
   const expiry = new Date();
   expiry.setMonth(expiry.getMonth() + 1);

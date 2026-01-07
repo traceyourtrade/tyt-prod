@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
         isSubscribed: false,
         isOnTrial: false,
         trialDaysLeft: 0,
+        canStartTrial: false,
         status: 'demo',
         demoMode: true,
         email: 'demo@projournx.com'
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
       email: user.email,
       subscriptionExpiry: user.subscription?.subscriptionExpiry,
       trialEndsAt: user.subscription?.trialEndsAt,
+      trialActivatedAt: user.subscription?.trialActivatedAt,
       billingPeriod: user.subscription?.billingPeriod || 'monthly'
     });
   } catch (error) {
