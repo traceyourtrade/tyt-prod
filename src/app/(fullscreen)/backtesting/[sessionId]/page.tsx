@@ -351,6 +351,7 @@ export default function FullscreenBacktesting({
   const fastPathActiveRef = useRef<boolean>(false); // Prevents effect from enabling replayReady during fast-path TF switch
   const staleResolutionsRef = useRef<Set<string>>(new Set()); // Track resolutions that TradingView has unsubscribed from
   const lastDrawingSavePromiseRef = useRef<Promise<void> | null>(null); // Track last drawing save for flush
+  const saveDrawingsManuallyRef = useRef<(() => Promise<void>) | null>(null); // Ref to manual drawing save function
   const isNavigatingRef = useRef<boolean>(false); // Prevent double navigation
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
@@ -857,37 +858,22 @@ export default function FullscreenBacktesting({
     setIsPlaying(false);
     
     try {
-      // 1. Wait for any pending drawing save to complete
+      // 1. Manually save drawings immediately (don't wait for debounce)
+      if (saveDrawingsManuallyRef.current) {
+        console.log('[handleNavigateToAnalytics] Saving drawings manually...');
+        await saveDrawingsManuallyRef.current();
+      }
+      
+      // 2. Wait for any pending drawing save to complete
       if (lastDrawingSavePromiseRef.current) {
-        console.log('[handleNavigateToAnalytics] Waiting for drawing save...');
+        console.log('[handleNavigateToAnalytics] Waiting for pending drawing save...');
         await Promise.race([
           lastDrawingSavePromiseRef.current,
           new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
         ]);
       }
       
-      // 2. Trigger TradingView's auto-save if widget exists
-      if (tvWidgetRef.current) {
-        try {
-          tvWidgetRef.current.save(() => {
-            console.log('[handleNavigateToAnalytics] TradingView save callback fired');
-          });
-        } catch (e) {
-          console.log('[handleNavigateToAnalytics] TradingView save failed:', e);
-        }
-        // Give TradingView a moment to process the save
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      // 3. Wait for any new drawing save promise created by the save() call
-      if (lastDrawingSavePromiseRef.current) {
-        await Promise.race([
-          lastDrawingSavePromiseRef.current,
-          new Promise(resolve => setTimeout(resolve, 2000)) // 2s timeout
-        ]);
-      }
-      
-      // 4. Save progress (replay position, balance, time)
+      // 3. Save progress (replay position, balance, time)
       await saveProgressNow({ reason: 'navigation' });
       
       console.log('[handleNavigateToAnalytics] Save complete, navigating...');
@@ -3075,7 +3061,7 @@ export default function FullscreenBacktesting({
                 }
               }
               
-              console.log('Chart layout restore complete (drawings handled by TradingView)');
+              console.log('Chart layout restore complete (starting manual drawing restore...)');
               
               // Restore favorite drawing tools if saved
               if (savedData.favoriteDrawingTools && Array.isArray(savedData.favoriteDrawingTools)) {
@@ -3088,28 +3074,55 @@ export default function FullscreenBacktesting({
                 }
               }
               
-              // Initialize lastSavedDrawingsCountRef from stored payload immediately
-              // This provides a fallback if chart.getAllShapes() is slow or returns empty
-              const storedDrawingCount = savedData.drawings?.length || 0;
-              lastSavedDrawingsCountRef.current = storedDrawingCount;
-              console.log('Stored drawing count (from payload):', storedDrawingCount);
-              
-              // Poll for shapes with retries - TradingView may take a moment to render shapes
-              let actualCount = 0;
-              for (let attempt = 0; attempt < 5; attempt++) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                const actualShapes = chart.getAllShapes();
-                actualCount = actualShapes.length;
-                console.log(`Shape check attempt ${attempt + 1}: found ${actualCount} shapes`);
-                if (actualCount >= storedDrawingCount) {
-                  console.log('All shapes restored successfully');
-                  break;
+              // MANUAL DRAWING RESTORATION
+              // Load drawings from our lineTools API and recreate them
+              try {
+                const storageKey = String(sessionId);
+                const storageChartId = 'main';
+                const drawingsResponse = await fetch(
+                  `/api/backtest-sessions/chart-layout?sessionId=${sessionId}&lineToolsLayoutId=${storageKey}&lineToolsChartId=${storageChartId}`
+                );
+                const drawingsResult = await drawingsResponse.json();
+                
+                if (drawingsResult.success && drawingsResult.data && drawingsResult.data.sources) {
+                  const savedShapes = drawingsResult.data.sources;
+                  console.log('[Manual Restore] Found', savedShapes.length, 'saved drawings to restore');
+                  
+                  let restoredCount = 0;
+                  for (const [index, shapeData] of savedShapes) {
+                    try {
+                      const { name, points, properties } = shapeData;
+                      if (name && points && points.length > 0) {
+                        // Create the shape using TradingView's createMultipointShape
+                        const shapeId = chart.createMultipointShape(points, {
+                          shape: name,
+                          overrides: properties || {}
+                        });
+                        if (shapeId) {
+                          restoredCount++;
+                        }
+                      }
+                    } catch (shapeError) {
+                      console.warn('[Manual Restore] Failed to restore shape:', shapeError);
+                    }
+                  }
+                  
+                  console.log('[Manual Restore] Successfully restored', restoredCount, '/', savedShapes.length, 'drawings');
+                  lastSavedDrawingsCountRef.current = restoredCount;
+                } else {
+                  console.log('[Manual Restore] No saved drawings found');
+                  lastSavedDrawingsCountRef.current = 0;
                 }
+              } catch (drawingRestoreError) {
+                console.error('[Manual Restore] Error restoring drawings:', drawingRestoreError);
               }
               
-              // Use the higher of stored vs actual count for safety
-              if (actualCount > lastSavedDrawingsCountRef.current) {
-                lastSavedDrawingsCountRef.current = actualCount;
+              // Verify shapes were restored
+              await new Promise(resolve => setTimeout(resolve, 500));
+              const actualShapes = chart.getAllShapes();
+              console.log('[Manual Restore] Final shape count:', actualShapes.length);
+              if (actualShapes.length > lastSavedDrawingsCountRef.current) {
+                lastSavedDrawingsCountRef.current = actualShapes.length;
               }
               
               // Enable auto-saves now that restore is complete
@@ -3391,7 +3404,90 @@ export default function FullscreenBacktesting({
       };
 
       tvWidget.subscribe('onAutoSaveNeeded', debouncedSave);
+      
+      // Manual drawing save function - captures shapes and saves to our API
+      // This is needed because TradingView's saveLineToolsAndGroups is not triggered automatically
+      let drawingSaveTimeout: NodeJS.Timeout | null = null;
+      const saveDrawingsManually = async () => {
+        try {
+          const allShapes = chart.getAllShapes();
+          console.log('[saveDrawingsManually] Capturing', allShapes.length, 'shapes');
+          
+          if (allShapes.length === 0 && !userDeletedAllDrawingsRef.current) {
+            console.log('[saveDrawingsManually] No shapes and not explicitly deleted - skipping save');
+            return;
+          }
+          
+          // Capture each shape's full properties
+          const shapesData: any[] = [];
+          for (const shape of allShapes) {
+            try {
+              const shapeObj = chart.getShapeById(shape.id);
+              if (shapeObj) {
+                const points = shapeObj.getPoints();
+                const properties = shapeObj.getProperties();
+                shapesData.push({
+                  id: shape.id,
+                  name: shape.name,
+                  points: points,
+                  properties: properties
+                });
+              }
+            } catch (e) {
+              console.warn('[saveDrawingsManually] Failed to capture shape:', shape.id, e);
+            }
+          }
+          
+          // Save to our API using the lineTools endpoint
+          const storageKey = String(sessionId);
+          const storageChartId = 'main';
+          
+          // Create a sources Map-like structure from our shape data
+          const sourcesArray = shapesData.map((s, i) => [String(i), s]);
+          const state = {
+            sources: sourcesArray,
+            groups: []
+          };
+          
+          const response = await fetch('/api/backtest-sessions/chart-layout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId,
+              type: 'lineTools',
+              layoutId: storageKey,
+              chartId: storageChartId,
+              state: state
+            })
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            console.log('[saveDrawingsManually] Saved', shapesData.length, 'shapes successfully');
+            lastSavedDrawingsCountRef.current = shapesData.length;
+          } else {
+            console.error('[saveDrawingsManually] Save failed:', result);
+          }
+        } catch (error) {
+          console.error('[saveDrawingsManually] Error:', error);
+        }
+      };
+      
+      // Debounced drawing save (2 second delay after last change)
+      const debouncedDrawingSave = () => {
+        if (!initialRestoreCompleteRef.current) return;
+        if (isChangingResolutionRef.current) return;
+        
+        if (drawingSaveTimeout) clearTimeout(drawingSaveTimeout);
+        drawingSaveTimeout = setTimeout(saveDrawingsManually, 2000);
+      };
+      
+      // Store the manual save function in ref so it can be called from handleNavigateToAnalytics
+      saveDrawingsManuallyRef.current = saveDrawingsManually;
+      
       tvWidget.subscribe('drawing_event', (id: any, type: string) => {
+        console.log('[drawing_event]', type, 'id:', id);
+        
         // Track explicit delete events to allow intentional zero-length saves
         if (type === 'remove') {
           const remainingShapes = chart.getAllShapes();
@@ -3408,6 +3504,11 @@ export default function FullscreenBacktesting({
             initialRestoreCompleteRef.current = true;
           }
         }
+        
+        // Trigger manual drawing save (since TradingView's saveLineToolsAndGroups isn't called automatically)
+        debouncedDrawingSave();
+        
+        // Also trigger studies save
         debouncedSave();
       });
       tvWidget.subscribe('study_event', () => {
