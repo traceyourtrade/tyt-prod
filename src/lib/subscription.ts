@@ -69,14 +69,27 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
   // Check if user can start a trial
   const canStartTrial = isTrialEligible(user);
   
-  // No active subscription or trial
+  // If user can start a trial, grant access so they can reach the dashboard
+  // and click "Start Free Trial" button
+  if (canStartTrial) {
+    return {
+      hasAccess: true,
+      isSubscribed: false,
+      isOnTrial: false,
+      trialDaysLeft: 0,
+      canStartTrial: true,
+      status: 'inactive'
+    };
+  }
+  
+  // No active subscription, trial expired or used
   return {
     hasAccess: false,
     isSubscribed: false,
     isOnTrial: false,
     trialDaysLeft: 0,
-    canStartTrial,
-    status: canStartTrial ? 'inactive' : 'expired'
+    canStartTrial: false,
+    status: 'expired'
   };
 }
 
