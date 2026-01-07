@@ -53,6 +53,7 @@ interface SubscriptionStatus {
   isSubscribed: boolean;
   isOnTrial: boolean;
   trialDaysLeft: number;
+  canStartTrial?: boolean;
   status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive' | 'demo';
   demoMode?: boolean;
 }
@@ -232,17 +233,28 @@ export default function RootLayout({
     };
   }, [pathname]); // Re-fetch on every navigation to catch trial expiration
 
-  // Redirect unpaid users to checkout (blocking access)
+  // Redirect unpaid users based on their status
   useEffect(() => {
     if (subscriptionLoading) return;
     
     const isPublicPage = publicPages.some(page => pathname.startsWith(page));
     if (isPublicPage) return;
     
-    // If user doesn't have access and is not on a public page, redirect to checkout
-    // Also redirect if subscriptionStatus is null (shouldn't happen but safety fallback)
+    // If user doesn't have access, check if they can start trial
     if (!subscriptionStatus || !subscriptionStatus.hasAccess) {
-      router.push('/checkout');
+      // Pre-trial users can access dashboard, settings, support, and checkout
+      const preTrialAllowedPages = ['/dashboard', '/settings', '/support', '/checkout'];
+      const isPreTrialAllowed = preTrialAllowedPages.some(page => pathname.startsWith(page));
+      
+      if (subscriptionStatus?.canStartTrial) {
+        // Pre-trial user trying to access restricted page -> send to dashboard
+        if (!isPreTrialAllowed) {
+          router.push('/dashboard');
+        }
+      } else {
+        // Expired or no trial available -> send to checkout
+        router.push('/checkout');
+      }
     }
   }, [subscriptionStatus, subscriptionLoading, pathname, router]);
 
