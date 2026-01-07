@@ -55,6 +55,8 @@ export function FreeTrialBanner() {
         setStatus(data);
         // Hide the banner immediately
         setHidden(true);
+        // Dispatch event to notify sidebar to refresh subscription status
+        window.dispatchEvent(new CustomEvent('refresh-subscription'));
         // Refresh the router to update other components
         router.refresh();
       } else {

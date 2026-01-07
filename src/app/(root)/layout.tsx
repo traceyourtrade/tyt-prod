@@ -199,7 +199,7 @@ export default function RootLayout({
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        const response = await fetch('/api/subscription/status');
+        const response = await fetch('/api/subscription/status', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           setSubscriptionStatus(data);
@@ -216,7 +216,18 @@ export default function RootLayout({
       }
     };
     fetchSubscriptionStatus();
-  }, []);
+    
+    // Listen for custom event to re-fetch (triggered after trial activation)
+    const handleRefreshSubscription = () => {
+      console.log('[Layout] Received refresh-subscription event');
+      fetchSubscriptionStatus();
+    };
+    window.addEventListener('refresh-subscription', handleRefreshSubscription);
+    
+    return () => {
+      window.removeEventListener('refresh-subscription', handleRefreshSubscription);
+    };
+  }, [pathname]); // Re-fetch on every navigation to catch trial expiration
 
   // Redirect unpaid users to checkout (blocking access)
   useEffect(() => {

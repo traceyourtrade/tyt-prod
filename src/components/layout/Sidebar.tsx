@@ -111,6 +111,7 @@ export function Sidebar({
     }
   }, [])
 
+  // Re-fetch subscription status on mount and when pathname changes (catches navigation and router.refresh())
   React.useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       console.log('[Sidebar] Fetching subscription status...')
@@ -133,7 +134,18 @@ export function Sidebar({
     }
 
     fetchSubscriptionStatus()
-  }, [])
+    
+    // Also listen for custom event to re-fetch (triggered after trial activation)
+    const handleRefreshSubscription = () => {
+      console.log('[Sidebar] Received refresh-subscription event')
+      fetchSubscriptionStatus()
+    }
+    window.addEventListener('refresh-subscription', handleRefreshSubscription)
+    
+    return () => {
+      window.removeEventListener('refresh-subscription', handleRefreshSubscription)
+    }
+  }, [pathname])
 
   React.useEffect(() => {
     if (pathname.startsWith('/backtesting')) {
