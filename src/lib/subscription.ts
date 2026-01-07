@@ -40,34 +40,34 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
     }
   }
   
-  // NO FREE TRIAL - Blocking pay-to-use model
-  // Users must pay to access premium features
-  // Trial logic removed - hasAccess is false unless subscribed
-  
-  // Check if subscription status is 'inactive' (new user who hasn't subscribed yet)
-  if (user.subscription?.subscriptionStatus === 'inactive') {
-    return {
-      hasAccess: false,
-      isSubscribed: false,
-      isOnTrial: false,
-      trialDaysLeft: 0,
-      status: 'inactive'
-    };
+  // Check for active trial period (3-day free trial)
+  if (user.subscription?.trialEndsAt) {
+    const trialEnd = new Date(user.subscription.trialEndsAt);
+    if (trialEnd > now) {
+      const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        hasAccess: true,
+        isSubscribed: false,
+        isOnTrial: true,
+        trialDaysLeft: daysLeft,
+        status: 'trial'
+      };
+    }
   }
   
-  // Default: no access for non-subscribed users
+  // Trial expired or no subscription
   return {
     hasAccess: false,
     isSubscribed: false,
     isOnTrial: false,
     trialDaysLeft: 0,
-    status: 'none'
+    status: 'expired'
   };
 }
 
 export function activateTrial(user: IUser): Date {
   const trialEndsAt = new Date();
-  trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+  trialEndsAt.setDate(trialEndsAt.getDate() + 3);
   
   if (!user.subscription) {
     user.subscription = {

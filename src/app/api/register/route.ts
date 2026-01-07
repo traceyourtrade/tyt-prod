@@ -157,9 +157,9 @@ export async function POST(req: Request) {
       { expiresIn: "15m" },
     );
 
-    // ✅ Create user and notes documents
+    // ✅ Create user and notes documents with 3-day free trial
     const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 5);
+    trialEndsAt.setDate(trialEndsAt.getDate() + 3);
 
     const user = new User({
       uniqueId,
@@ -173,7 +173,7 @@ export async function POST(req: Request) {
       subscription: {
         isSubscribed: false,
         trialEndsAt,
-        trialUsed: true,
+        trialUsed: false,
         subscriptionStatus: "pending",
       },
       referralCode: userReferralCode,
