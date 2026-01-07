@@ -114,21 +114,28 @@ export function Sidebar({
   // Re-fetch subscription status on mount and when pathname changes (catches navigation and router.refresh())
   React.useEffect(() => {
     const fetchSubscriptionStatus = async () => {
-      console.log('[Sidebar] Fetching subscription status...')
+      console.log('[Sidebar] Fetching subscription status for pathname:', pathname)
       try {
-        const response = await fetch('/api/subscription/status', { cache: 'no-store' })
+        const response = await fetch('/api/subscription/status', { 
+          cache: 'no-store',
+          credentials: 'include'
+        })
         console.log('[Sidebar] Subscription status response:', response.status)
         if (response.ok) {
           const data = await response.json()
-          console.log('[Sidebar] Subscription data:', data)
+          console.log('[Sidebar] Subscription data received:', JSON.stringify({
+            isSubscribed: data.isSubscribed,
+            isOnTrial: data.isOnTrial,
+            trialDaysLeft: data.trialDaysLeft,
+            status: data.status
+          }))
           setSubscriptionStatus(data)
         } else {
-          console.log('[Sidebar] Subscription API error:', response.status)
+          console.log('[Sidebar] Subscription API error:', response.status, '- will retry on next navigation')
         }
       } catch (error) {
         console.error('[Sidebar] Failed to fetch subscription status:', error)
       } finally {
-        console.log('[Sidebar] Setting isLoadingSubscription to false')
         setIsLoadingSubscription(false)
       }
     }
@@ -493,7 +500,9 @@ export function Sidebar({
 
           {/* Go Pro / Subscription Status / Free Trial */}
           <div className="px-2 pb-2 overflow-hidden">
-              {subscriptionStatus?.isSubscribed ? (
+              {isLoadingSubscription ? (
+                <div className="px-3 py-2.5 text-xs text-white/50">Loading...</div>
+              ) : subscriptionStatus?.isSubscribed ? (
                 <motion.div 
                   className={cn(
                     "relative rounded-xl overflow-hidden",

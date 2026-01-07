@@ -199,7 +199,10 @@ export default function RootLayout({
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        const response = await fetch('/api/subscription/status', { cache: 'no-store' });
+        const response = await fetch('/api/subscription/status', { 
+          cache: 'no-store',
+          credentials: 'include'
+        });
         if (response.ok) {
           const data = await response.json();
           setSubscriptionStatus(data);
@@ -603,7 +606,7 @@ export default function RootLayout({
           ))}
         </div>
 
-        {/* Go Pro / Subscription Status */}
+        {/* Go Pro / Subscription Status / Free Trial */}
         <div className={cn("px-2 pb-2", !isExpanded && "px-1")}>
           {subscriptionStatus?.isSubscribed ? (
             <div className={cn(
@@ -626,6 +629,36 @@ export default function RootLayout({
                 )}
               </div>
             </div>
+          ) : subscriptionStatus?.isOnTrial ? (
+            <Link
+              href={checkoutUrl}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "relative block rounded-xl cursor-pointer group overflow-hidden",
+                !isExpanded && "rounded-lg"
+              )}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-emerald-400/15 to-emerald-500/20 dark:from-emerald-900/30 dark:via-emerald-800/20 dark:to-emerald-900/30 rounded-xl" />
+              <div className="absolute inset-0 border border-emerald-500/40 dark:border-emerald-500/20 rounded-xl" />
+              <div className={cn(
+                "relative flex items-center gap-2.5",
+                isExpanded ? "px-3 py-2.5" : "p-2 justify-center"
+              )}>
+                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <Clock className="h-3 w-3 text-white" />
+                </div>
+                {isExpanded && (
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      Free Trial
+                    </span>
+                    <span className="text-[10px] text-emerald-500/70 dark:text-emerald-400/70">
+                      {subscriptionStatus.trialDaysLeft} {subscriptionStatus.trialDaysLeft === 1 ? 'day' : 'days'} left
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Link>
           ) : (
             <Link
               href={checkoutUrl}
