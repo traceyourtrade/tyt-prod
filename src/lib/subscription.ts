@@ -69,11 +69,11 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
   // Check if user can start a trial
   const canStartTrial = isTrialEligible(user);
   
-  // If user can start a trial, grant access so they can reach the dashboard
-  // and click "Start Free Trial" button
+  // Pre-trial users: NO full access, but they can view dashboard and start trial
+  // The Layout will allow /dashboard access when canStartTrial is true
   if (canStartTrial) {
     return {
-      hasAccess: true,
+      hasAccess: false,
       isSubscribed: false,
       isOnTrial: false,
       trialDaysLeft: 0,
