@@ -3084,19 +3084,45 @@ export default function FullscreenBacktesting({
                 );
                 const drawingsResult = await drawingsResponse.json();
                 
-                if (drawingsResult.success && drawingsResult.data && drawingsResult.data.sources) {
-                  const savedShapes = drawingsResult.data.sources;
-                  console.log('[Manual Restore] Found', savedShapes.length, 'saved drawings to restore');
+                if (drawingsResult.success && drawingsResult.data) {
+                  const data = drawingsResult.data;
+                  let shapesToRestore: any[] = [];
+                  
+                  // Handle v2 format (shapes array)
+                  if (data.version === 2 && Array.isArray(data.shapes)) {
+                    shapesToRestore = data.shapes;
+                    console.log('[Manual Restore] Found v2 format with', shapesToRestore.length, 'shapes');
+                  }
+                  // Handle v1 format (sources array of [key, value] tuples)
+                  else if (Array.isArray(data.sources)) {
+                    for (const item of data.sources) {
+                      // Handle [key, value] tuple format
+                      if (Array.isArray(item) && item.length >= 2) {
+                        shapesToRestore.push(item[1]);
+                      }
+                      // Handle direct object format
+                      else if (item && typeof item === 'object' && !Array.isArray(item)) {
+                        shapesToRestore.push(item);
+                      }
+                    }
+                    console.log('[Manual Restore] Found v1 format with', shapesToRestore.length, 'shapes');
+                  }
                   
                   let restoredCount = 0;
-                  for (const [index, shapeData] of savedShapes) {
+                  for (const shapeData of shapesToRestore) {
                     try {
-                      const { name, points, properties } = shapeData;
-                      if (name && points && points.length > 0) {
+                      if (!shapeData || typeof shapeData !== 'object') continue;
+                      
+                      // Support both old and new key names
+                      const shapeName = shapeData.name || shapeData.shape;
+                      const points = shapeData.points;
+                      const overrides = shapeData.overrides || shapeData.properties || {};
+                      
+                      if (shapeName && Array.isArray(points) && points.length > 0) {
                         // Create the shape using TradingView's createMultipointShape
                         const shapeId = chart.createMultipointShape(points, {
-                          shape: name,
-                          overrides: properties || {}
+                          shape: shapeName,
+                          overrides: overrides
                         });
                         if (shapeId) {
                           restoredCount++;
@@ -3107,7 +3133,7 @@ export default function FullscreenBacktesting({
                     }
                   }
                   
-                  console.log('[Manual Restore] Successfully restored', restoredCount, '/', savedShapes.length, 'drawings');
+                  console.log('[Manual Restore] Successfully restored', restoredCount, '/', shapesToRestore.length, 'drawings');
                   lastSavedDrawingsCountRef.current = restoredCount;
                 } else {
                   console.log('[Manual Restore] No saved drawings found');
@@ -3409,68 +3435,85 @@ export default function FullscreenBacktesting({
       // This is needed because TradingView's saveLineToolsAndGroups is not triggered automatically
       let drawingSaveTimeout: NodeJS.Timeout | null = null;
       const saveDrawingsManually = async () => {
-        try {
-          const allShapes = chart.getAllShapes();
-          console.log('[saveDrawingsManually] Capturing', allShapes.length, 'shapes');
-          
-          if (allShapes.length === 0 && !userDeletedAllDrawingsRef.current) {
-            console.log('[saveDrawingsManually] No shapes and not explicitly deleted - skipping save');
-            return;
-          }
-          
-          // Capture each shape's full properties
-          const shapesData: any[] = [];
-          for (const shape of allShapes) {
-            try {
-              const shapeObj = chart.getShapeById(shape.id);
-              if (shapeObj) {
-                const points = shapeObj.getPoints();
-                const properties = shapeObj.getProperties();
-                shapesData.push({
-                  id: shape.id,
-                  name: shape.name,
-                  points: points,
-                  properties: properties
-                });
+        // Create a new promise for this save operation
+        const savePromise = (async () => {
+          try {
+            const allShapes = chart.getAllShapes();
+            console.log('[saveDrawingsManually] Capturing', allShapes.length, 'shapes');
+            
+            if (allShapes.length === 0 && !userDeletedAllDrawingsRef.current) {
+              console.log('[saveDrawingsManually] No shapes and not explicitly deleted - skipping save');
+              return;
+            }
+            
+            // Capture each shape's data - save full properties for accurate restoration
+            const shapesData: any[] = [];
+            for (const shape of allShapes) {
+              try {
+                const shapeObj = chart.getShapeById(shape.id);
+                if (shapeObj) {
+                  const points = shapeObj.getPoints();
+                  const fullProps = shapeObj.getProperties();
+                  
+                  // Save full properties but exclude internal TradingView keys that cause conflicts
+                  const propsToSave = { ...fullProps };
+                  delete propsToSave.id; // Internal ID would conflict
+                  delete propsToSave.ownerSource; // Internal reference
+                  delete propsToSave.zOrderVersion; // Internal state
+                  
+                  shapesData.push({
+                    name: shape.name,
+                    points: points,
+                    overrides: propsToSave
+                  });
+                }
+              } catch (e) {
+                console.warn('[saveDrawingsManually] Failed to capture shape:', shape.id, e);
               }
-            } catch (e) {
-              console.warn('[saveDrawingsManually] Failed to capture shape:', shape.id, e);
+            }
+            
+            // Save to our API using the lineTools endpoint
+            const storageKey = String(sessionId);
+            const storageChartId = 'main';
+            
+            // Store as array of shape objects with version marker
+            const state = {
+              shapes: shapesData,
+              version: 2
+            };
+            
+            const response = await fetch('/api/backtest-sessions/chart-layout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId,
+                type: 'lineTools',
+                layoutId: storageKey,
+                chartId: storageChartId,
+                state: state
+              })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+              console.log('[saveDrawingsManually] Saved', shapesData.length, 'shapes successfully');
+              lastSavedDrawingsCountRef.current = shapesData.length;
+            } else {
+              console.error('[saveDrawingsManually] Save failed:', result);
+            }
+          } catch (error) {
+            console.error('[saveDrawingsManually] Error:', error);
+          } finally {
+            // Clear the promise ref after completion so next save gets fresh tracking
+            if (lastDrawingSavePromiseRef.current === savePromise) {
+              lastDrawingSavePromiseRef.current = null;
             }
           }
-          
-          // Save to our API using the lineTools endpoint
-          const storageKey = String(sessionId);
-          const storageChartId = 'main';
-          
-          // Create a sources Map-like structure from our shape data
-          const sourcesArray = shapesData.map((s, i) => [String(i), s]);
-          const state = {
-            sources: sourcesArray,
-            groups: []
-          };
-          
-          const response = await fetch('/api/backtest-sessions/chart-layout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sessionId,
-              type: 'lineTools',
-              layoutId: storageKey,
-              chartId: storageChartId,
-              state: state
-            })
-          });
-          
-          const result = await response.json();
-          if (result.success) {
-            console.log('[saveDrawingsManually] Saved', shapesData.length, 'shapes successfully');
-            lastSavedDrawingsCountRef.current = shapesData.length;
-          } else {
-            console.error('[saveDrawingsManually] Save failed:', result);
-          }
-        } catch (error) {
-          console.error('[saveDrawingsManually] Error:', error);
-        }
+        })();
+        
+        // Track this save promise BEFORE awaiting so navigation can wait on it
+        lastDrawingSavePromiseRef.current = savePromise;
+        await savePromise;
       };
       
       // Debounced drawing save (2 second delay after last change)
