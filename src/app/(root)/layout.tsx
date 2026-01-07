@@ -814,14 +814,13 @@ export default function RootLayout({
     );
   }
 
-  // Subscription access flags
+  // Subscription access flags (isPreTrial is defined earlier for SidebarContent)
   const hasSubscriptionAccess = subscriptionStatus?.hasAccess || false;
   const isDemoMode = subscriptionStatus?.demoMode === true;
-  const isPreTrial = subscriptionStatus?.canStartTrial === true && !hasSubscriptionAccess;
   
   // Pre-trial users can access specific pages with restricted features
-  const preTrialAllowedPages = ['/dashboard', '/settings', '/support', '/checkout'];
-  const isPreTrialAllowedPage = preTrialAllowedPages.some(page => pathname.startsWith(page));
+  const preTrialAllowedPages2 = ['/dashboard', '/settings', '/support', '/checkout'];
+  const isPreTrialAllowedPage = preTrialAllowedPages2.some(page => pathname.startsWith(page));
   
   // For unpaid users (not pre-trial), NEVER show sidebar, popups, or app shell
   // This prevents paywall bypass via modals or sidebar navigation
