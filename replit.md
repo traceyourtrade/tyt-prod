@@ -1,7 +1,7 @@
 # ProJournX - Trading Journal Application
 
 ## Overview
-This Next.js 16 trading journal application helps users track trades, analyze performance, and maintain a trading notebook. It features a premium dashboard, a "Prop Firm Mode" for challenge tracking, and AI-powered pattern detection to build a "playbook" of profitable setups. The goal is to provide a comprehensive tool for traders to monitor and improve their strategies.
+ProJournX is a Next.js 16 trading journal application designed to help users track trades, analyze performance, and maintain a trading notebook. Its core purpose is to provide a comprehensive tool for traders to monitor and improve their strategies, featuring a premium dashboard, a "Prop Firm Mode" for challenge tracking, and AI-powered pattern detection to build a "playbook" of profitable setups. The project aims to offer a robust and insightful platform for traders.
 
 ## User Preferences
 - I prefer simple, direct language.
@@ -11,66 +11,26 @@ This Next.js 16 trading journal application helps users track trades, analyze pe
 - Do not make changes to the `src/components/prop-firm/` folder without explicit instruction.
 
 ## System Architecture
-The application is built on Next.js 16 with React 19 and Tailwind CSS. It uses Next.js API Routes for the backend.
+The application is built on Next.js 16 with React 19 and Tailwind CSS, utilizing Next.js API Routes for backend functionalities.
 
 ### UI/UX Decisions
-The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, and Stripe, using a primary blue palette, with green/red for P&L, and neutral blacks for dark mode. A custom UI component library is located in `src/components/ui/`. Key pages like Dashboard, Daily Journal, Notebook, and authentication pages have been redesigned for a modern user experience, featuring glassmorphic effects, gradient accents, and micro-animations with Framer Motion. The sidebar is also redesigned with a glassmorphic effect and accent colors.
+The UI features a premium neutral dashboard aesthetic, drawing inspiration from Notion, Linear, and Stripe. It uses a primary blue palette, with green/red for P&L, and neutral blacks for dark mode. A custom UI component library resides in `src/components/ui/`. Key pages, including Dashboard, Daily Journal, Notebook, and authentication, incorporate modern design elements such as glassmorphic effects, gradient accents, and micro-animations with Framer Motion.
 
 ### Technical Implementations
 - **Frontend:** Next.js 16.0.1, React 19, Tailwind CSS v4.
 - **Backend:** Next.js API Routes.
 - **State Management:** Zustand for client-side state.
 - **Theming:** Tailwind CSS with CSS variables.
-- **Currency Conversion:** Multi-currency support via `currencyStore.ts`. Trades can be entered in either USD or INR, and the dashboard converts to the user's display currency preference. Uses exchange rate 83.5 INR = 1 USD. Formatters accept `alreadyConverted` flag to prevent double-conversion when values are pre-converted during aggregation. Currently implemented in Calendar and DashboardMonth; other dashboard views may need similar updates.
-- **Market Hours Warning:** ManualTradeForm shows amber warning when adding stock/forex trades on weekends (Sat/Sun) since markets are closed. Crypto is exempt (24/7 trading).
-
-### Feature Specifications
-- **Dashboard:** Performance overview with charts.
-- **Daily Journal:** Modern glassmorphic three-pane layout with TradingView chart integration, trade notes, and detailed statistics.
-- **Notebook:** Premium three-column layout with a comprehensive template system for various trading analyses and notes.
-- **Reports & Strategies:** Redesigned pages with theme-aware charts for analytics.
-- **Playbook:** AI-powered (rule-based) pattern detection for identifying winning trade setups. Features include:
-  - **Pattern Detection:** Analyzes trades across 4 dimensions (Strategy ≥50% win rate, Symbol/Time/Day ≥55% win rate) with 5+ trades minimum per category.
-  - **Near-Miss Patterns:** Shows patterns close to qualifying (3-4 trades) with progress bars and specific requirements.
-  - **Trade Distribution Diagnostics:** Displays breakdown of trades by symbol, strategy, day, and time to help users understand why patterns aren't detected.
-  - **Intelligent Fallback:** Shows demo data only when <10 total trades; otherwise shows real diagnostics and near-miss patterns.
-- **Prop Firm Mode:** Comprehensive prop firm challenge tracking system with amber/gold accents:
-  - **Multi-Challenge Support:** Track up to 4 simultaneous prop firm challenges with per-challenge isolation of settings, metrics, violations, and phase progression. Uses `challenges: Record<string, PropChallenge>` with `activeChallengeIds` array and `viewingChallengeId` for selection. Persist migration (version 2) handles legacy single-challenge data conversion.
-  - **Portfolio Overview:** Aggregate stats view showing total capital, total P&L, active count, and at-risk challenges count with individual challenge cards.
-  - **Presets Library:** 9+ major prop firm presets (FTMO, The Funded Trader, The5ers, MyForexFunds, E8 Funding, Funded Next, Alpha Capital, True Forex Funds, Custom) with accurate rules, phases, and scaling plans.
-  - **Multi-Phase Tracking:** Visual phase roadmap showing progression through evaluation phases to funded status.
-  - **Challenge History:** Complete history of all challenge attempts with pass/fail status and statistics.
-  - **Smart Alerts:** Automatic violation logging at 70% (warning) and 85% (critical) of drawdown limits with deduplication, now per-challenge.
-  - **Scale-Up Calculator:** Projects capital growth based on prop firm scaling plans and monthly returns.
-  - **Violations Timeline:** Tracks drawdown warnings, breaches, and other rule violations with journal notes per challenge.
-  - **Auto Phase Advancement:** Automatically detects when P&L meets the current phase's profit target and advances to the next phase. Uses the per-phase profit target from the preset configuration (e.g., Phase 1 = 10%, Phase 2 = 5%). Shows a celebratory notification with animated confetti-style effect when phase is passed or funded status achieved.
-  - **Future Enhancement:** Account-to-challenge linking via `linkedAccountIds` for filtering trades per challenge (not yet implemented).
-- **Lot Size Calculator:** Tool for forex position sizing.
-- **Resource Center:** Educational hub with articles, psychology tips, and customizable trading routines.
-- **Account Type System:** `isPropFirm` field for filtering accounts.
-- **AI Analysis:** Advanced statistical analysis hub (rule-based) including streak, risk, time, emotional patterns, benchmarks, trade quality, correlations, and smart insights. Enhanced features include:
-  - **Time Insights Heatmap:** 24-hour × 7-day performance grid with color-coded win rates (green/amber/red) showing "Your Edge" best/worst times.
-  - **Trade Quality Auto-Scorer:** Scores each trade 0-100 based on R-multiple (40pts), plan adherence (30pts), and execution (30pts) with score distribution charts.
-  - **Tilt Risk Gauge:** Real-time 0-100 score detecting losing streaks (+20 per loss, max 60), position size increases (+20), and overtrading (+20). Color-coded: Green (0-30), Yellow (31-60), Red (61-100).
-  - **Smart Insights Tab:** Personalized trading DNA profile, weekly performance patterns, and actionable tips based on historical data analysis.
-- **Dashboard Smart Alerts:** Real-time pattern warning banners showing tilt warnings (3+ consecutive losses), low-performance hour alerts (when trading during historically bad times), and overtrading alerts (2x+ average daily trades). Dismissible per session.
-- **Trade Sharing:** Generate shareable links for individual trades with privacy controls and a comment system.
-- **Leaderboard:** Community rankings based on trading metrics (opt-in).
-- **Broker Auto-Sync:** Feature for automatic trade import from supported brokers.
-- **Support Page:** Comprehensive help center with FAQs and a contact form.
-- **Backtesting Module:** Full-screen TradingView-powered chart for historical market simulation, with replay controls, trade placement, real-time P&L tracking, and session analytics. It includes persistent chart layouts, drawings, indicators, and a favorites toolbar saved per session. **Technical Note:** Timeframe switches use stable symbols with `setResolution()` + `resetData()` to preserve TradingView's native drawing persistence. The slow path (API fetch) checks `currentIntervalRef` vs closure `currentInterval` after fetch to abort stale data that would overwrite the user's current view during rapid switches. **FX Replay Spec Compliance (Time-Driven Architecture):** `replayTimestampRef` is the ABSOLUTE source of truth for replay position - it NEVER changes during timeframe switches (only when user advances replay). All code paths use `setReplayTimeAndDeriveIndex()` as the canonical setter - replayTime is set first, index is always derived using the formula: a candle is "completed" when `(bar.time + intervalMs) <= replayTime`. This ensures the 12×5m→15m test case works correctly (12 candles on 5m = 60min elapsed → shows exactly 4 completed 15m candles). Scrolling is view-only. `callbacksReadyRef` gates playback controls and is set after the canonical setter completes. **TF Switch Detection:** Uses `widgetInitializedRef.current` (stable flag set once widget exists) to detect TF switch vs first load, avoiding race conditions from rapid switch ref overwrites. **TradingView Cache Invalidation:** Timeframe switches call `resetCache()` before `resetData()` to force TradingView to clear its internal bar cache and re-request data from our datafeed via `getBars`. This ensures proper bar filtering based on `replayTimestampRef` when switching between timeframes.
-- **Affiliate Program:** User-facing affiliate dashboard at `/affiliate` where users can join the program, get unique referral links, track referrals, and view commissions. Admin APIs support managing affiliates and creating personalized coupon codes. Uses `ADMIN_API_KEY` for admin endpoint authentication.
-- **Announcement Banner:** Global banner component fetching from admin API to display announcements and maintenance mode overlays.
-- **Subscription System:** Razorpay integration with **manual opt-in 3-day free trial** model. Pricing: ₹849/month or ₹8,199/year (20% off). 
-  - **Pre-Trial Access Gating:** Before clicking "Start Free Trial", users can see all navigation items but clicking restricted pages redirects to `/checkout`. The `isPreTrial` flag in Layout identifies users with `canStartTrial: true` and `hasAccess: false`. Allowed pages: Dashboard, Settings, Support, Checkout. All other pages redirect to checkout when clicked or accessed directly via URL.
-  - **Trial Activation Flow:** New users see a "Start Free Trial" banner on the dashboard. Clicking activates their 3-day trial period (`POST /api/subscription/start-trial`). Trial eligibility requires `trialUsed: false` AND `hasEverSubscribed: false`.
-  - **Trial State Management:** `trialActivatedAt` tracks when trial was started. `isTrialEligible()` helper checks both conditions. Once a user subscribes, `hasEverSubscribed` is set to `true` to prevent re-trial after cancellation.
-  - **UI Components:** FreeTrialBanner shows "Start Free Trial" button for eligible users. Sidebar displays: "Pro Member" (amber) for subscribers, "Free Trial" (emerald) with countdown for active trial users, or "Go Pro" button for expired/non-eligible users.
-  - **Cache Prevention:** All subscription status fetches use `cache: 'no-store'` to prevent stale UI states after trial activation.
-  - During trial, users have full access to all features. After trial expires, users are redirected to `/checkout`. Admin users (in ADMIN_EMAILS array) bypass all subscription checks. In-app checkout page with monthly/yearly toggle, coupon code input, and Razorpay SDK modal. Webhook handles subscription events (activated, charged, cancelled, halted). Uses `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_PLAN_ID` (monthly), `RAZORPAY_PLAN_ID_YEARLY` (yearly), `RAZORPAY_WEBHOOK_SECRET` secrets. Pro-only features: Backtesting, Strategies, Playbook, AI Analysis (gated with SubscriptionGate component). **Plan Upgrade:** Monthly subscribers can upgrade to yearly via Settings > Subscription "Upgrade to Yearly" button, which redirects to `/checkout?plan=yearly&upgrade=true`. The `billingPeriod` field in user.subscription tracks current plan type.
-- **Coupon System:** Checkout supports coupon codes (WELCOME20, YEARLY50, TRADER10). To enable actual Razorpay discounts, create Offers in Razorpay Dashboard (Subscriptions → Offers) and set corresponding secrets: `RAZORPAY_OFFER_WELCOME20`, `RAZORPAY_OFFER_YEARLY50`, `RAZORPAY_OFFER_TRADER10`. Without these, coupons show UI discounts but Razorpay charges full price.
-- **User Referral System:** Universal referral program where every user gets a unique 8-character referral code on signup. Users can share their link (`/signup?ref=CODE`) and track friends who joined via `/referrals` page. Schema fields: `referralCode` (unique, auto-generated), `referredBy` (stores referrer's code). Registration validates codes before saving. Self-referral prevented. Affiliate dashboard uses same `/signup?ref=` format.
-- **Demo Mode:** (Disabled) Demo functionality exists in the codebase but the "Try Demo" button has been removed from the login page. The demo API (`/api/demo-login`) and demo data (`src/lib/demo-data/`) remain available if needed in the future.
+- **Currency Conversion:** Multi-currency support (USD/INR) with a fixed exchange rate (83.5 INR = 1 USD).
+- **Market Hours Warning:** ManualTradeForm provides warnings for stock/forex trades on weekends.
+- **Playbook:** AI-powered, rule-based pattern detection analyzes trades across strategy, symbol, time, and day, providing near-miss patterns and diagnostics.
+- **Prop Firm Mode:** Supports tracking up to 4 simultaneous prop firm challenges with per-challenge isolation, a portfolio overview, 9+ major prop firm presets, multi-phase tracking, smart alerts for drawdown limits, a scale-up calculator, and a violations timeline. It also includes auto-phase advancement with celebratory notifications.
+- **AI Analysis:** Features include a Time Insights Heatmap, Trade Quality Auto-Scorer (based on R-multiple, plan adherence, execution), and a Tilt Risk Gauge to detect losing streaks and overtrading.
+- **Dashboard Smart Alerts:** Provides real-time warnings for tilt, low-performance hours, and overtrading.
+- **Backtesting Module:** A full-screen TradingView-powered chart for historical market simulation, offering replay controls, trade placement, real-time P&L, and session analytics with persistent chart layouts.
+- **Subscription System:** Integrates Razorpay with a manual opt-in 3-day free trial. Access to pro features is gated, and trial status is managed via backend and client-side flags. Admin users bypass all subscription checks.
+- **Coupon System:** Supports coupon codes at checkout, linked to Razorpay Offers for actual discounts.
+- **User Referral System:** Each user receives a unique referral code, enabling tracking of referred sign-ups.
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for routes, components, utilities, database models, state management, and type definitions.
@@ -78,9 +38,10 @@ The UI adopts a premium neutral dashboard aesthetic inspired by Notion, Linear, 
 - **Development & Deployment:** Configured for Replit, running on port 5000, with autoscale deployment.
 
 ## External Dependencies
-- **Database:** MongoDB (main database for user data, accounts database for trading accounts). Backtest session data is now stored in the main database.
+- **Database:** MongoDB (for user data, backtest sessions, and trading accounts).
 - **Authentication:** Google OAuth, JWT-based sessions.
 - **Storage:** AWS S3 for image uploads.
 - **Email:** Nodemailer with Gmail.
 - **UI Libraries:** Material-UI, Framer Motion, Chart.js, Recharts.
-- **Market Data:** Polygon.io API (exclusive source for FOREX chart data). No VPS or caching layer - all chart data fetched directly from Polygon.
+- **Market Data:** Polygon.io API (exclusive for FOREX chart data).
+- **Payment Gateway:** Razorpay.

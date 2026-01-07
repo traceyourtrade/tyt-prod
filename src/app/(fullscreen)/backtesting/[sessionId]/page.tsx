@@ -350,6 +350,8 @@ export default function FullscreenBacktesting({
   const replayReadyRef = useRef<boolean>(false); // TRANSACTIONAL GATE: blocks ALL replay advancement during TF switches
   const fastPathActiveRef = useRef<boolean>(false); // Prevents effect from enabling replayReady during fast-path TF switch
   const staleResolutionsRef = useRef<Set<string>>(new Set()); // Track resolutions that TradingView has unsubscribed from
+  const lastDrawingSavePromiseRef = useRef<Promise<void> | null>(null); // Track last drawing save for flush
+  const isNavigatingRef = useRef<boolean>(false); // Prevent double navigation
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -771,6 +773,131 @@ export default function FullscreenBacktesting({
     if (interval === "1W" || interval === "W") return 10080;
     return parseInt(interval) || 1;
   }, []);
+  
+  // ============================================================================
+  // SAVE PROGRESS NOW - Reusable save function for autosave and navigation
+  // Can be awaited before navigation to ensure progress is persisted
+  // ============================================================================
+  const saveProgressNow = useCallback(async (options?: { reason?: string }) => {
+    const currentSession = sessionDataRef.current;
+    const currentBalance = totalBalanceRef.current;
+    const bars = allBarsRef.current;
+    const idx = currentBarIndexRef.current;
+    
+    if (!currentSession || !bars || bars.length === 0) {
+      console.log('[saveProgressNow] Skipping - no session data or bars');
+      return;
+    }
+    
+    const currentBar = bars[idx];
+    if (!currentBar) {
+      console.log('[saveProgressNow] Skipping - no current bar');
+      return;
+    }
+    
+    // Calculate elapsed time since last save
+    const elapsedMinutes = Math.floor((Date.now() - sessionStartTimeRef.current) / 60000);
+    const newTimeInvested = (currentSession.timeInvested || 0) + elapsedMinutes;
+    sessionStartTimeRef.current = Date.now(); // Reset for next interval
+    
+    console.log('[saveProgressNow] Saving...', { 
+      reason: options?.reason || 'manual',
+      replayTime: replayTimestampRef.current,
+      balance: currentBalance,
+      timeInvested: newTimeInvested
+    });
+    
+    try {
+      const replayTimeToSave = replayTimestampRef.current;
+      const payload: any = {
+        sessionId: parseInt(sessionId),
+        currentBalance: currentBalance,
+        timeInvested: newTimeInvested,
+      };
+      
+      // Only include progressPointer if we have a valid replay position
+      if (replayTimeToSave > 0) {
+        payload.progressPointer = replayTimeToSave;
+      }
+      
+      await fetch('/api/backtest-sessions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      // Update local session data via ref
+      sessionDataRef.current = { 
+        ...currentSession, 
+        timeInvested: newTimeInvested,
+        ...(replayTimeToSave > 0 ? { progressPointer: replayTimeToSave } : {})
+      };
+      
+      console.log('[saveProgressNow] Success');
+    } catch (error) {
+      console.error('[saveProgressNow] Failed:', error);
+    }
+  }, [sessionId]);
+  
+  // ============================================================================
+  // HANDLE NAVIGATE TO ANALYTICS - Save everything before navigating away
+  // Ensures drawings and replay position are persisted
+  // ============================================================================
+  const handleNavigateToAnalytics = useCallback(async () => {
+    // Prevent double navigation
+    if (isNavigatingRef.current) {
+      console.log('[handleNavigateToAnalytics] Already navigating, skipping');
+      return;
+    }
+    isNavigatingRef.current = true;
+    
+    console.log('[handleNavigateToAnalytics] Starting save before navigation...');
+    
+    // Stop playback if running
+    setIsPlaying(false);
+    
+    try {
+      // 1. Wait for any pending drawing save to complete
+      if (lastDrawingSavePromiseRef.current) {
+        console.log('[handleNavigateToAnalytics] Waiting for drawing save...');
+        await Promise.race([
+          lastDrawingSavePromiseRef.current,
+          new Promise(resolve => setTimeout(resolve, 3000)) // 3s timeout
+        ]);
+      }
+      
+      // 2. Trigger TradingView's auto-save if widget exists
+      if (tvWidgetRef.current) {
+        try {
+          tvWidgetRef.current.save(() => {
+            console.log('[handleNavigateToAnalytics] TradingView save callback fired');
+          });
+        } catch (e) {
+          console.log('[handleNavigateToAnalytics] TradingView save failed:', e);
+        }
+        // Give TradingView a moment to process the save
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // 3. Wait for any new drawing save promise created by the save() call
+      if (lastDrawingSavePromiseRef.current) {
+        await Promise.race([
+          lastDrawingSavePromiseRef.current,
+          new Promise(resolve => setTimeout(resolve, 2000)) // 2s timeout
+        ]);
+      }
+      
+      // 4. Save progress (replay position, balance, time)
+      await saveProgressNow({ reason: 'navigation' });
+      
+      console.log('[handleNavigateToAnalytics] Save complete, navigating...');
+    } catch (error) {
+      console.error('[handleNavigateToAnalytics] Save failed:', error);
+    }
+    
+    // Navigate regardless of save success - user wants to leave
+    router.push('/backtesting/sessions');
+  }, [saveProgressNow, router]);
   
   // ============================================================================
   // GET VALID ANCHOR - finds the most reliable timestamp for timeframe switching
@@ -1627,64 +1754,23 @@ export default function FullscreenBacktesting({
     sessionStartTimeRef.current = Date.now();
   }, [sessionId, router]);
 
-  // Auto-save progress every 30 seconds - use refs to avoid restarting interval on state changes
+  // Auto-save progress every 30 seconds - use the shared saveProgressNow callback
   useEffect(() => {
     if (!sessionData || allBars.length === 0) return;
 
-    const saveProgress = async () => {
-      const currentSession = sessionDataRef.current;
-      const currentBalance = totalBalanceRef.current;
-      const currentBar = allBars[currentBarIndexRef.current];
-      if (!currentBar || !currentSession) return;
-      
-      const elapsedMinutes = Math.floor((Date.now() - sessionStartTimeRef.current) / 60000);
-      const newTimeInvested = (currentSession.timeInvested || 0) + elapsedMinutes;
-      sessionStartTimeRef.current = Date.now(); // Reset for next interval
-      
-      try {
-        // CRITICAL: Only save progressPointer when replayTimestampRef is valid (> 0)
-        // This prevents persisting incorrect values before replay has started
-        const replayTimeToSave = replayTimestampRef.current;
-        if (replayTimeToSave > 0) {
-          await fetch('/api/backtest-sessions', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sessionId: parseInt(sessionId),
-              progressPointer: replayTimeToSave,
-              currentBalance: currentBalance,
-              timeInvested: newTimeInvested,
-            }),
-          });
-          // Update local session data via ref (avoid state update that would trigger effect)
-          sessionDataRef.current = { ...currentSession, timeInvested: newTimeInvested, progressPointer: replayTimeToSave };
-        } else {
-          // Only save time invested if no valid replay position yet
-          await fetch('/api/backtest-sessions', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sessionId: parseInt(sessionId),
-              currentBalance: currentBalance,
-              timeInvested: newTimeInvested,
-            }),
-          });
-          sessionDataRef.current = { ...currentSession, timeInvested: newTimeInvested };
-        }
-      } catch (error) {
-        console.error("Failed to save progress:", error);
-      }
-    };
-
-    autoSaveIntervalRef.current = setInterval(saveProgress, 30000);
+    autoSaveIntervalRef.current = setInterval(() => {
+      saveProgressNow({ reason: 'autosave' });
+    }, 30000);
     
     return () => {
       if (autoSaveIntervalRef.current) {
         clearInterval(autoSaveIntervalRef.current);
       }
+      // Save progress on unmount
+      saveProgressNow({ reason: 'unmount' });
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionData?.sessionId, sessionId, allBars.length]);
+  }, [sessionData?.sessionId, allBars.length, saveProgressNow]);
 
   // Helper function to fetch bars for a specific resolution and fulfill pending callbacks
   // This is called from getBars when TradingView requests a resolution we don't have cached
@@ -2744,8 +2830,17 @@ export default function FullscreenBacktesting({
       
       // TradingView native drawing persistence (saveload_separate_drawings_storage featureset)
       // These methods are called automatically by TradingView to save/load drawings
+      // CRITICAL: Always use sessionId as the key to ensure consistency between save and load
       saveLineToolsAndGroups: async (layoutId: string, chartId: string | number, state: any) => {
-        console.log('[save_load_adapter] saveLineToolsAndGroups called:', { layoutId, chartId, sourcesCount: state?.sources?.size || 0 });
+        // ALWAYS use sessionId as the key - TradingView passes inconsistent layoutId values
+        const storageKey = String(sessionId);
+        const storageChartId = 'main'; // Normalize chartId too
+        console.log('[save_load_adapter] saveLineToolsAndGroups called:', { 
+          layoutId, 
+          chartId, 
+          storageKey,
+          sourcesCount: state?.sources?.size || 0 
+        });
         
         // Convert Map to array for JSON serialization
         const serializedState: any = {};
@@ -2760,37 +2855,50 @@ export default function FullscreenBacktesting({
           serializedState.groups = state.groups;
         }
         
-        try {
-          await fetch('/api/backtest-sessions/chart-layout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sessionId,
-              type: 'lineTools',
-              layoutId: layoutId || sessionId,
-              chartId: String(chartId || 'main'),
-              state: serializedState
-            })
-          });
-        } catch (e) {
-          console.error('[save_load_adapter] Failed to save line tools:', e);
-        }
+        // Track the save promise so navigation can await it
+        const savePromise = (async () => {
+          try {
+            const response = await fetch('/api/backtest-sessions/chart-layout', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId,
+                type: 'lineTools',
+                layoutId: storageKey, // Always use sessionId for consistency
+                chartId: storageChartId, // Always use 'main' for consistency
+                state: serializedState
+              })
+            });
+            const result = await response.json();
+            console.log('[save_load_adapter] saveLineToolsAndGroups result:', result.success ? 'SUCCESS' : 'FAILED');
+          } catch (e) {
+            console.error('[save_load_adapter] Failed to save line tools:', e);
+          }
+        })();
+        
+        lastDrawingSavePromiseRef.current = savePromise;
+        await savePromise;
       },
       
       loadLineToolsAndGroups: async (layoutId: string | undefined, chartId: string | number, requestType: string, requestContext: any) => {
-        console.log('[save_load_adapter] loadLineToolsAndGroups called:', { layoutId, chartId, requestType });
+        // ALWAYS use sessionId as the key - matches what we use in saveLineToolsAndGroups
+        const storageKey = String(sessionId);
+        const storageChartId = 'main'; // Normalize chartId too
+        console.log('[save_load_adapter] loadLineToolsAndGroups called:', { 
+          layoutId, 
+          chartId, 
+          storageKey,
+          requestType 
+        });
         
         try {
-          const effectiveLayoutId = layoutId || sessionId;
-          const effectiveChartId = String(chartId || 'main');
-          
           const response = await fetch(
-            `/api/backtest-sessions/chart-layout?sessionId=${sessionId}&lineToolsLayoutId=${effectiveLayoutId}&lineToolsChartId=${effectiveChartId}`
+            `/api/backtest-sessions/chart-layout?sessionId=${sessionId}&lineToolsLayoutId=${storageKey}&lineToolsChartId=${storageChartId}`
           );
           const result = await response.json();
           
           if (!result.success || !result.data) {
-            console.log('[save_load_adapter] No saved line tools found');
+            console.log('[save_load_adapter] No saved line tools found for key:', `${storageKey}_${storageChartId}`);
             return null;
           }
           
@@ -2810,7 +2918,11 @@ export default function FullscreenBacktesting({
             }
           }
           
-          console.log('[save_load_adapter] Loaded line tools:', { sourcesCount: sources.size, groupsCount: groups.size });
+          console.log('[save_load_adapter] Loaded line tools:', { 
+            storageKey: `${storageKey}_${storageChartId}`,
+            sourcesCount: sources.size, 
+            groupsCount: groups.size 
+          });
           return { sources, groups };
         } catch (e) {
           console.error('[save_load_adapter] Failed to load line tools:', e);
@@ -5399,7 +5511,8 @@ export default function FullscreenBacktesting({
           </button>
           <button 
             className="bt-analytics-btn" 
-            onClick={() => router.push('/backtesting/sessions')}
+            onClick={handleNavigateToAnalytics}
+            disabled={isNavigatingRef.current}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 20V10M12 20V4M6 20v-6"/>
