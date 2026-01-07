@@ -3518,9 +3518,17 @@ export default function FullscreenBacktesting({
       
       // Debounced drawing save (2 second delay after last change)
       const debouncedDrawingSave = () => {
-        if (!initialRestoreCompleteRef.current) return;
-        if (isChangingResolutionRef.current) return;
+        console.log('[debouncedDrawingSave] Called, initialRestoreComplete:', initialRestoreCompleteRef.current, 'isChangingResolution:', isChangingResolutionRef.current);
+        if (!initialRestoreCompleteRef.current) {
+          console.log('[debouncedDrawingSave] BLOCKED: restore not complete');
+          return;
+        }
+        if (isChangingResolutionRef.current) {
+          console.log('[debouncedDrawingSave] BLOCKED: resolution changing');
+          return;
+        }
         
+        console.log('[debouncedDrawingSave] Scheduling save in 2 seconds');
         if (drawingSaveTimeout) clearTimeout(drawingSaveTimeout);
         drawingSaveTimeout = setTimeout(saveDrawingsManually, 2000);
       };
@@ -3528,8 +3536,11 @@ export default function FullscreenBacktesting({
       // Store the manual save function in ref so it can be called from handleNavigateToAnalytics
       saveDrawingsManuallyRef.current = saveDrawingsManually;
       
+      // Log subscription for debugging
+      console.log('[TradingView] Subscribing to drawing_event, initialRestoreComplete:', initialRestoreCompleteRef.current);
+      
       tvWidget.subscribe('drawing_event', (id: any, type: string) => {
-        console.log('[drawing_event]', type, 'id:', id);
+        console.log('[drawing_event] FIRED:', type, 'id:', id, 'restoreComplete:', initialRestoreCompleteRef.current);
         
         // Track explicit delete events to allow intentional zero-length saves
         if (type === 'remove') {
