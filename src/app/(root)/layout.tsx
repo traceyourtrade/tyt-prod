@@ -243,16 +243,11 @@ export default function RootLayout({
     // If user doesn't have access, check if they can start trial
     if (!subscriptionStatus || !subscriptionStatus.hasAccess) {
       // Pre-trial users can access dashboard, settings, support, and checkout
-      const preTrialAllowedPages = ['/dashboard', '/settings', '/support', '/checkout'];
-      const isPreTrialAllowed = preTrialAllowedPages.some(page => pathname.startsWith(page));
+      const preTrialAllowedPages2 = ['/dashboard', '/settings', '/support', '/checkout'];
+      const isPreTrialAllowedPage = preTrialAllowedPages2.some(page => pathname.startsWith(page));
       
-      if (subscriptionStatus?.canStartTrial) {
-        // Pre-trial user trying to access restricted page -> send to dashboard
-        if (!isPreTrialAllowed) {
-          router.push('/dashboard');
-        }
-      } else {
-        // Expired or no trial available -> send to checkout
+      // Any restricted page access -> send to checkout
+      if (!isPreTrialAllowedPage) {
         router.push('/checkout');
       }
     }
@@ -294,16 +289,19 @@ export default function RootLayout({
   // Pre-trial flag - users who can start trial but haven't yet
   const isPreTrial = subscriptionStatus?.canStartTrial === true && !subscriptionStatus?.hasAccess;
   
-  // Filter navigation items for pre-trial users (only Dashboard visible)
-  const visibleTradingItems = isPreTrial 
-    ? tradingItems.filter(item => item.href === '/dashboard')
-    : tradingItems;
+  // Pages accessible without trial/subscription
+  const preTrialAllowedPaths = ['/dashboard', '/settings', '/support', '/checkout'];
+  
+  // Check if a path is restricted for pre-trial users
+  const isRestrictedPath = (href: string) => {
+    return !preTrialAllowedPaths.some(allowed => href.startsWith(allowed));
+  };
 
   const allNavItems = [
-    ...visibleTradingItems,
-    ...(isPreTrial ? [] : analysisItems),
-    ...(isPreTrial ? [] : toolsItems),
-    ...(isPreTrial ? [] : backtestingSubItems),
+    ...tradingItems,
+    ...analysisItems,
+    ...toolsItems,
+    ...backtestingSubItems,
     ...bottomNavItems,
   ];
 
@@ -358,11 +356,20 @@ export default function RootLayout({
   const NavItem = ({ item, showLabel = true }: { item: { name: string; href: string; icon: React.ElementType; color: string; badge?: string; tourId?: string }; showLabel?: boolean }) => {
     const Icon = item.icon;
     const active = isActive(item.href);
+    const isRestricted = isPreTrial && isRestrictedPath(item.href);
+    
+    const handleClick = (e: React.MouseEvent) => {
+      setMobileOpen(false);
+      if (isRestricted) {
+        e.preventDefault();
+        router.push('/checkout');
+      }
+    };
     
     return (
       <Link
-        href={item.href}
-        onClick={() => setMobileOpen(false)}
+        href={isRestricted ? '/checkout' : item.href}
+        onClick={handleClick}
         data-tour={item.tourId}
         className={cn(
           "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
