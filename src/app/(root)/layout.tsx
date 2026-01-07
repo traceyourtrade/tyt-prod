@@ -499,32 +499,34 @@ export default function RootLayout({
         </motion.button>
       )}
 
-      {/* Add Trade Button (hidden for pre-trial) */}
-      {!isPreTrial && (
-        <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
-          <motion.button
-            data-tour="add-trade-btn"
-            className={cn(
-              "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
-              "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
-              "text-[#4EBF94]",
-              !isExpanded && "w-8 h-8 mx-auto p-0"
-            )}
-            onClick={() => {
-              if (subscriptionStatus?.demoMode) {
-                setShowDemoAlert(true);
-                return;
-              }
-              setAddTrades();
-              setMobileOpen(false);
-            }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Plus className="h-4 w-4" strokeWidth={2} />
-            {isExpanded && <span>Add Trade</span>}
-          </motion.button>
-        </div>
-      )}
+      {/* Add Trade Button */}
+      <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
+        <motion.button
+          data-tour="add-trade-btn"
+          className={cn(
+            "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
+            "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
+            "text-[#4EBF94]",
+            !isExpanded && "w-8 h-8 mx-auto p-0"
+          )}
+          onClick={() => {
+            if (isPreTrial) {
+              router.push('/checkout');
+              return;
+            }
+            if (subscriptionStatus?.demoMode) {
+              setShowDemoAlert(true);
+              return;
+            }
+            setAddTrades();
+            setMobileOpen(false);
+          }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Plus className="h-4 w-4" strokeWidth={2} />
+          {isExpanded && <span>Add Trade</span>}
+        </motion.button>
+      </div>
 
 
       {/* Main Navigation */}
@@ -533,14 +535,13 @@ export default function RootLayout({
         {/* Trading Section */}
         <SectionLabel label="Trading" />
         <div className="space-y-0.5 mb-1">
-          {visibleTradingItems.map((item) => (
+          {tradingItems.map((item) => (
             <NavItem key={item.name} item={item} showLabel={isExpanded} />
           ))}
         </div>
 
-        {/* Backtesting Section - Premium Feature (hidden for pre-trial) */}
-        {!isPreTrial && (
-          <div className="mb-2 mt-3" data-tour="nav-backtesting">
+        {/* Backtesting Section */}
+        <div className="mb-2 mt-3" data-tour="nav-backtesting">
             {isExpanded && (
               <div className="px-3 mb-1.5">
                 <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
@@ -604,32 +605,23 @@ export default function RootLayout({
                 )}
               </AnimatePresence>
             </div>
-          </div>
-        )}
+        </div>
 
-        {/* Analysis Section (hidden for pre-trial) */}
-        {!isPreTrial && (
-          <>
-            <SectionLabel label="Analysis" />
-            <div className="space-y-0.5 mb-1">
-              {analysisItems.map((item) => (
-                <NavItem key={item.name} item={item} showLabel={isExpanded} />
-              ))}
-            </div>
-          </>
-        )}
+        {/* Analysis Section */}
+        <SectionLabel label="Analysis" />
+        <div className="space-y-0.5 mb-1">
+          {analysisItems.map((item) => (
+            <NavItem key={item.name} item={item} showLabel={isExpanded} />
+          ))}
+        </div>
 
-        {/* Tools Section (hidden for pre-trial) */}
-        {!isPreTrial && (
-          <>
-            <SectionLabel label="Tools" />
-            <div className="space-y-0.5 mb-1">
-              {toolsItems.map((item) => (
-                <NavItem key={item.name} item={item} showLabel={isExpanded} />
-              ))}
-            </div>
-          </>
-        )}
+        {/* Tools Section */}
+        <SectionLabel label="Tools" />
+        <div className="space-y-0.5 mb-1">
+          {toolsItems.map((item) => (
+            <NavItem key={item.name} item={item} showLabel={isExpanded} />
+          ))}
+        </div>
 
       </nav>
 
