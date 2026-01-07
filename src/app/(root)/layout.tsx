@@ -291,11 +291,19 @@ export default function RootLayout({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Pre-trial flag - users who can start trial but haven't yet
+  const isPreTrial = subscriptionStatus?.canStartTrial === true && !subscriptionStatus?.hasAccess;
+  
+  // Filter navigation items for pre-trial users (only Dashboard visible)
+  const visibleTradingItems = isPreTrial 
+    ? tradingItems.filter(item => item.href === '/dashboard')
+    : tradingItems;
+
   const allNavItems = [
-    ...tradingItems,
-    ...analysisItems,
-    ...toolsItems,
-    ...backtestingSubItems,
+    ...visibleTradingItems,
+    ...(isPreTrial ? [] : analysisItems),
+    ...(isPreTrial ? [] : toolsItems),
+    ...(isPreTrial ? [] : backtestingSubItems),
     ...bottomNavItems,
   ];
 
@@ -484,30 +492,32 @@ export default function RootLayout({
         </motion.button>
       )}
 
-      {/* Add Trade Button */}
-      <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
-        <motion.button
-          data-tour="add-trade-btn"
-          className={cn(
-            "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
-            "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
-            "text-[#4EBF94]",
-            !isExpanded && "w-8 h-8 mx-auto p-0"
-          )}
-          onClick={() => {
-            if (subscriptionStatus?.demoMode) {
-              setShowDemoAlert(true);
-              return;
-            }
-            setAddTrades();
-            setMobileOpen(false);
-          }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          {isExpanded && <span>Add Trade</span>}
-        </motion.button>
-      </div>
+      {/* Add Trade Button (hidden for pre-trial) */}
+      {!isPreTrial && (
+        <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
+          <motion.button
+            data-tour="add-trade-btn"
+            className={cn(
+              "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
+              "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
+              "text-[#4EBF94]",
+              !isExpanded && "w-8 h-8 mx-auto p-0"
+            )}
+            onClick={() => {
+              if (subscriptionStatus?.demoMode) {
+                setShowDemoAlert(true);
+                return;
+              }
+              setAddTrades();
+              setMobileOpen(false);
+            }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            {isExpanded && <span>Add Trade</span>}
+          </motion.button>
+        </div>
+      )}
 
 
       {/* Main Navigation */}
@@ -516,93 +526,103 @@ export default function RootLayout({
         {/* Trading Section */}
         <SectionLabel label="Trading" />
         <div className="space-y-0.5 mb-1">
-          {tradingItems.map((item) => (
+          {visibleTradingItems.map((item) => (
             <NavItem key={item.name} item={item} showLabel={isExpanded} />
           ))}
         </div>
 
-        {/* Backtesting Section - Premium Feature */}
-        <div className="mb-2 mt-3" data-tour="nav-backtesting">
-          {isExpanded && (
-            <div className="px-3 mb-1.5">
-              <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
-                Backtesting
-              </span>
-            </div>
-          )}
-          <div className={cn(
-            "relative rounded-lg overflow-hidden",
-            isExpanded && "mx-1 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20"
-          )}>
-            {/* Premium glow effect */}
+        {/* Backtesting Section - Premium Feature (hidden for pre-trial) */}
+        {!isPreTrial && (
+          <div className="mb-2 mt-3" data-tour="nav-backtesting">
             {isExpanded && (
-              <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="px-3 mb-1.5">
+                <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
+                  Backtesting
+                </span>
+              </div>
             )}
-            
-            <button
-              onClick={() => setBacktestingOpen(!backtestingOpen)}
-              aria-expanded={backtestingOpen}
-              className={cn(
-                "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
-                "text-blue-400 hover:text-blue-300",
-                !isExpanded && "justify-center rounded-md hover:bg-blue-500/10"
-              )}
-            >
-              <CandlestickChart 
-                className="h-[17px] w-[17px] flex-shrink-0"
-                style={{ color: '#3B82F6' }}
-              />
+            <div className={cn(
+              "relative rounded-lg overflow-hidden",
+              isExpanded && "mx-1 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20"
+            )}>
+              {/* Premium glow effect */}
               {isExpanded && (
-                <>
-                  <span className="flex-1 text-left">Backtesting</span>
-                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white uppercase tracking-wide">
-                    Pro
-                  </span>
+                <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
+              )}
+              
+              <button
+                onClick={() => setBacktestingOpen(!backtestingOpen)}
+                aria-expanded={backtestingOpen}
+                className={cn(
+                  "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
+                  "text-blue-400 hover:text-blue-300",
+                  !isExpanded && "justify-center rounded-md hover:bg-blue-500/10"
+                )}
+              >
+                <CandlestickChart 
+                  className="h-[17px] w-[17px] flex-shrink-0"
+                  style={{ color: '#3B82F6' }}
+                />
+                {isExpanded && (
+                  <>
+                    <span className="flex-1 text-left">Backtesting</span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white uppercase tracking-wide">
+                      Pro
+                    </span>
+                    <motion.div
+                      animate={{ rotate: backtestingOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="h-4 w-4 text-blue-400/60" />
+                    </motion.div>
+                  </>
+                )}
+              </button>
+              
+              <AnimatePresence>
+                {backtestingOpen && isExpanded && (
                   <motion.div
-                    animate={{ rotate: backtestingOpen ? 180 : 0 }}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
                   >
-                    <ChevronDown className="h-4 w-4 text-blue-400/60" />
+                    <div className="pb-2 px-1 space-y-0.5">
+                      {backtestingSubItems.map((item) => (
+                        <NavItem key={item.name} item={item} showLabel={true} />
+                      ))}
+                    </div>
                   </motion.div>
-                </>
-              )}
-            </button>
-            
-            <AnimatePresence>
-              {backtestingOpen && isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pb-2 px-1 space-y-0.5">
-                    {backtestingSubItems.map((item) => (
-                      <NavItem key={item.name} item={item} showLabel={true} />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Analysis Section */}
-        <SectionLabel label="Analysis" />
-        <div className="space-y-0.5 mb-1">
-          {analysisItems.map((item) => (
-            <NavItem key={item.name} item={item} showLabel={isExpanded} />
-          ))}
-        </div>
+        {/* Analysis Section (hidden for pre-trial) */}
+        {!isPreTrial && (
+          <>
+            <SectionLabel label="Analysis" />
+            <div className="space-y-0.5 mb-1">
+              {analysisItems.map((item) => (
+                <NavItem key={item.name} item={item} showLabel={isExpanded} />
+              ))}
+            </div>
+          </>
+        )}
 
-        {/* Tools Section */}
-        <SectionLabel label="Tools" />
-        <div className="space-y-0.5 mb-1">
-          {toolsItems.map((item) => (
-            <NavItem key={item.name} item={item} showLabel={isExpanded} />
-          ))}
-        </div>
+        {/* Tools Section (hidden for pre-trial) */}
+        {!isPreTrial && (
+          <>
+            <SectionLabel label="Tools" />
+            <div className="space-y-0.5 mb-1">
+              {toolsItems.map((item) => (
+                <NavItem key={item.name} item={item} showLabel={isExpanded} />
+              ))}
+            </div>
+          </>
+        )}
 
       </nav>
 
@@ -794,16 +814,20 @@ export default function RootLayout({
     );
   }
 
-  // For unpaid users, NEVER show sidebar, popups, or app shell
-  // This prevents paywall bypass via modals or sidebar navigation
-  // Only paid users (hasAccess=true) see the full app shell
+  // Subscription access flags
   const hasSubscriptionAccess = subscriptionStatus?.hasAccess || false;
   const isDemoMode = subscriptionStatus?.demoMode === true;
-  if (!hasSubscriptionAccess) {
-    // On protected pages: show NOTHING (redirect is happening via useEffect)
-    // On public pages (/checkout, /settings, /support): show bare children only
+  const isPreTrial = subscriptionStatus?.canStartTrial === true && !hasSubscriptionAccess;
+  
+  // Pre-trial users can access specific pages with restricted features
+  const preTrialAllowedPages = ['/dashboard', '/settings', '/support', '/checkout'];
+  const isPreTrialAllowedPage = preTrialAllowedPages.some(page => pathname.startsWith(page));
+  
+  // For unpaid users (not pre-trial), NEVER show sidebar, popups, or app shell
+  // This prevents paywall bypass via modals or sidebar navigation
+  if (!hasSubscriptionAccess && !isPreTrial) {
+    // Expired users: On protected pages show redirect, on public pages show bare children
     if (!isPublicPage) {
-      // Return a minimal redirect placeholder - no content exposed
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
@@ -813,10 +837,21 @@ export default function RootLayout({
         </div>
       );
     }
-    // Public pages: show bare children (checkout, settings, support) - no sidebar/modals
     return (
       <div className="min-h-screen bg-background">
         {children}
+      </div>
+    );
+  }
+  
+  // Pre-trial users on non-allowed pages: show redirect
+  if (isPreTrial && !isPreTrialAllowedPage && !isPublicPage) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-muted-foreground text-sm">Redirecting...</p>
+        </div>
       </div>
     );
   }
