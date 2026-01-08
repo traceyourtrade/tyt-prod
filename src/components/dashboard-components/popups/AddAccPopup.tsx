@@ -646,38 +646,73 @@ const AddAccPopup = () => {
             </AnimatePresence>
             )}
 
-            {/* Broker Sync Coming Soon Notice */}
+            {/* Broker Sync MT5 Credentials */}
             <AnimatePresence>
               {accountType === "Broker Sync" && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4"
                 >
-                  <div className="relative overflow-hidden p-4 rounded-xl bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-yellow-500/5 border border-amber-500/30">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                    <div className="relative flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/25 flex-shrink-0">
-                        <Rocket className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-foreground text-sm">
-                            Coming Soon
-                          </h4>
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
-                            Feb 2025
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          Broker auto-sync is launching soon. You'll be able to automatically import trades from your broker.
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-2 text-amber-400 text-xs font-medium">
-                          <Calendar className="w-3 h-3" />
-                          <span>Stay tuned!</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      Investor ID (Login)
+                    </label>
+                    <input
+                      type="text"
+                      value={investorId}
+                      onChange={(e) => setInvestorId(e.target.value)}
+                      placeholder="e.g. 270738780"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                        "text-foreground placeholder:text-muted-foreground text-sm",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50",
+                        "transition-all duration-200"
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      Investor Password
+                    </label>
+                    <input
+                      type="password"
+                      value={investorPw}
+                      onChange={(e) => setInvestorPw(e.target.value)}
+                      placeholder="Your investor password"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                        "text-foreground placeholder:text-muted-foreground text-sm",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50",
+                        "transition-all duration-200"
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Globe className="w-4 h-4" />
+                      Server Name
+                    </label>
+                    <input
+                      type="text"
+                      value={server}
+                      onChange={(e) => setServer(e.target.value)}
+                      placeholder="e.g. Exness-MT5Trial17"
+                      className={cn(
+                        "w-full px-4 py-3 rounded-xl bg-muted/30 border border-border/50",
+                        "text-foreground placeholder:text-muted-foreground text-sm",
+                        "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50",
+                        "transition-all duration-200"
+                      )}
+                    />
+                  </div>
+                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Use your <span className="text-primary font-medium">investor/read-only password</span> for secure auto-sync. Your trades will be automatically imported.
+                    </p>
                   </div>
                 </motion.div>
               )}
@@ -737,7 +772,7 @@ const AddAccPopup = () => {
             <motion.button
               type="button"
               onClick={submitFun}
-              disabled={isSubmitting || !accountDetails.accountName || !broker}
+              disabled={isSubmitting || !accountDetails.accountName || !broker || (accountType === "Broker Sync" && (!investorId || !investorPw || !server))}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               className={cn(
