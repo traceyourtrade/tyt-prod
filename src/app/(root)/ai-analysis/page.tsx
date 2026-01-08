@@ -66,24 +66,24 @@ const tabs = [
 
 export default function AIAnalysisPage() {
   const [activeTab, setActiveTab] = useState("streaks")
-  const { selectedAccounts } = useModeFilteredAccounts()
+  const { accounts } = useModeFilteredAccounts()
   const { currency, exchangeRate } = useCurrencyStore()
 
   const allTrades = useMemo(() => {
-    return (selectedAccounts as Account[])
+    return (accounts as Account[])
       .flatMap((acc) => acc.tradeData || [])
       .sort((a, b) => {
         const dateA = new Date(`${a.date} ${a.time || "00:00:00"}`)
         const dateB = new Date(`${b.date} ${b.time || "00:00:00"}`)
         return dateA.getTime() - dateB.getTime()
       })
-  }, [selectedAccounts])
+  }, [accounts])
 
   const accountBalance = useMemo(() => {
-    return (selectedAccounts as Account[]).reduce((sum, acc) => {
+    return (accounts as Account[]).reduce((sum, acc) => {
       return sum + (Number(acc.accountBalance) || 0)
     }, 0)
-  }, [selectedAccounts])
+  }, [accounts])
 
   const formatValue = (value: number) => {
     return formatCurrencyValue(value, currency, exchangeRate)
@@ -1499,12 +1499,14 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
           }
         }
       } else {
+        rScore = trade.Profit > 0 ? 15 : 5
         issues.push("No R-multiple data")
       }
 
       if (trade.strategy && trade.strategy !== "Select" && trade.strategy !== "Unknown") {
         planScore += 10
       } else {
+        planScore += 8
         issues.push("No strategy")
       }
       if (trade.StopLoss && trade.StopLoss !== 0) {
@@ -1523,6 +1525,8 @@ function TradeQuality({ trades, formatValue }: { trades: Trade[], formatValue: (
         if (hitTP) {
           execScore += 20
         }
+      } else if (!trade.TakeProfit || trade.TakeProfit === 0) {
+        execScore += trade.Profit > 0 ? 15 : 8
       }
       if (trade.Profit > 0) {
         execScore += 10
