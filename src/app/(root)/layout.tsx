@@ -1180,7 +1180,11 @@ export default function RootLayout({
         </header>
 
         {/* Page Content */}
-        <main className={pathname === "/daily-journal" || pathname === "/notebook" ? "p-0" : "p-4 lg:p-6"}>{children}</main>
+        <main className={pathname === "/daily-journal" || pathname === "/notebook" ? "p-0" : "p-4 lg:p-6"}>
+          <div className="max-w-[1440px] mx-auto w-full">
+            {children}
+          </div>
+        </main>
       </div>
 
       {/* Onboarding Tour */}
