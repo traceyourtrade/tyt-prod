@@ -1,8 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCrown, faCheck, faStar, faArrowUp, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { motion } from "framer-motion";
+import { 
+  Crown, Check, Sparkles, ArrowUp, Loader2, Calendar, CreditCard, Star
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SubscriptionStatus {
   hasAccess: boolean;
@@ -24,20 +27,13 @@ const Subscription = () => {
   const yearlyPrice = 8199;
   const yearlyMonthlyPrice = Math.round(yearlyPrice / 12);
   
-  const plans = [
-    { 
-      name: "Pro", 
-      price: billing === "monthly" ? monthlyPrice : yearlyMonthlyPrice, 
-      features: [
-        "Unlimited trades", 
-        "Advanced analytics", 
-        "AI-powered insights", 
-        "Playbook builder", 
-        "Prop firm mode", 
-        "Priority support"
-      ], 
-      popular: true 
-    }
+  const features = [
+    "Unlimited trades",
+    "Advanced analytics", 
+    "AI-powered insights",
+    "Playbook builder",
+    "Prop firm mode",
+    "Priority support"
   ];
 
   useEffect(() => {
@@ -65,18 +61,18 @@ const Subscription = () => {
     router.push('/checkout?plan=yearly&upgrade=true');
   };
 
-  const getStatusBadge = () => {
-    if (!subscriptionStatus) return null;
+  const getStatusInfo = () => {
+    if (!subscriptionStatus) return { label: 'Free', color: 'gray', bg: 'bg-muted' };
     
     switch (subscriptionStatus.status) {
       case 'subscribed':
-        return <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 rounded">Active</span>;
+        return { label: 'Active', color: 'emerald', bg: 'bg-emerald-500/10 text-emerald-500' };
       case 'trial':
-        return <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-blue-500/10 text-blue-500 rounded">{subscriptionStatus.trialDaysLeft} days left</span>;
+        return { label: `${subscriptionStatus.trialDaysLeft} days left`, color: 'blue', bg: 'bg-blue-500/10 text-blue-500' };
       case 'expired':
-        return <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-500 rounded">Expired</span>;
+        return { label: 'Expired', color: 'red', bg: 'bg-red-500/10 text-red-500' };
       default:
-        return <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-gray-500/10 text-gray-500 rounded">Free</span>;
+        return { label: 'Free', color: 'gray', bg: 'bg-muted text-muted-foreground' };
     }
   };
 
@@ -97,147 +93,237 @@ const Subscription = () => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
-      month: '2-digit',
+      month: 'short',
       year: 'numeric'
     });
   };
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Subscription</h2>
-        <div className="flex items-center justify-center py-12">
-          <FontAwesomeIcon icon={faSpinner} className="animate-spin text-gray-400 text-xl" />
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-muted animate-pulse" />
+          <div className="space-y-2">
+            <div className="w-24 h-5 bg-muted rounded animate-pulse" />
+            <div className="w-48 h-4 bg-muted rounded animate-pulse" />
+          </div>
         </div>
+        <div className="h-48 bg-muted rounded-2xl animate-pulse" />
       </div>
     );
   }
 
   const isSubscribed = subscriptionStatus?.isSubscribed;
   const isMonthlySubscriber = isSubscribed && subscriptionStatus?.billingPeriod !== 'yearly';
+  const statusInfo = getStatusInfo();
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Subscription</h2>
-
-      <div className="bg-white dark:bg-[#141414] rounded-xl border border-gray-200 dark:border-[#262626] p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-            subscriptionStatus?.hasAccess ? 'bg-emerald-500/10' : 'bg-gray-500/10'
-          }`}>
-            <FontAwesomeIcon 
-              icon={faCrown} 
-              className={`text-sm ${subscriptionStatus?.hasAccess ? 'text-emerald-500' : 'text-gray-500'}`} 
-            />
-          </div>
-          <div>
-            <p className="font-medium text-gray-900 dark:text-white">Current Plan</p>
-            <p className="text-xs text-gray-500">{getPlanName()}</p>
-          </div>
-          {getStatusBadge()}
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center",
+          "bg-gradient-to-br from-amber-500/20 to-amber-500/5"
+        )}>
+          <Crown className="w-5 h-5 text-amber-500" />
         </div>
-        {subscriptionStatus?.subscriptionExpiry && (
-          <div className="flex items-center justify-between text-sm py-2 border-t border-gray-100 dark:border-[#262626]">
-            <span className="text-gray-500">
-              {subscriptionStatus.status === 'subscribed' ? 'Renews' : 'Expires'}
-            </span>
-            <span className="text-gray-900 dark:text-white">
-              {formatDate(subscriptionStatus.subscriptionExpiry)}
-            </span>
-          </div>
-        )}
-        
-        {isMonthlySubscriber && (
-          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#262626]">
-            <button
-              onClick={handleUpgradeToYearly}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white transition-all"
-            >
-              <FontAwesomeIcon icon={faArrowUp} className="text-xs" />
-              Upgrade to Yearly & Save 20%
-            </button>
-            <p className="text-xs text-center text-gray-500 mt-2">
-              Pay ₹8,199/year instead of ₹10,188/year
-            </p>
-          </div>
-        )}
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Subscription</h2>
+          <p className="text-sm text-muted-foreground">Manage your plan and billing</p>
+        </div>
       </div>
 
-      {!isSubscribed && (
-        <>
-          <div className="flex items-center justify-center gap-2 p-1 bg-gray-100 dark:bg-[#1a1a1a] rounded-lg w-fit mx-auto">
-            <button
-              onClick={() => setBilling("monthly")}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                billing === "monthly" ? "bg-white dark:bg-[#262626] text-gray-900 dark:text-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBilling("yearly")}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                billing === "yearly" ? "bg-white dark:bg-[#262626] text-gray-900 dark:text-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              Yearly <span className="text-emerald-500 text-xs">-20%</span>
-            </button>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className={cn(
+          "rounded-2xl border overflow-hidden",
+          "bg-card dark:bg-zinc-900/50",
+          "border-border dark:border-white/[0.08]"
+        )}
+      >
+        <div className={cn(
+          "h-1.5",
+          subscriptionStatus?.hasAccess 
+            ? "bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500" 
+            : "bg-muted"
+        )} />
+        
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center",
+                subscriptionStatus?.hasAccess 
+                  ? "bg-gradient-to-br from-amber-500/20 to-amber-500/5" 
+                  : "bg-muted"
+              )}>
+                <Crown className={cn(
+                  "w-6 h-6",
+                  subscriptionStatus?.hasAccess ? "text-amber-500" : "text-muted-foreground"
+                )} />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground text-lg">{getPlanName()}</p>
+                <p className="text-sm text-muted-foreground">Current Plan</p>
+              </div>
+            </div>
+            <span className={cn(
+              "px-3 py-1 rounded-full text-sm font-medium",
+              statusInfo.bg
+            )}>
+              {statusInfo.label}
+            </span>
           </div>
 
-          <div className="grid gap-3">
-            {plans.map((plan) => (
-              <div 
-                key={plan.name}
-                className={`relative bg-white dark:bg-[#141414] rounded-xl border p-4 ${
-                  plan.popular ? "border-emerald-500" : "border-gray-200 dark:border-[#262626]"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-2.5 left-4 px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded flex items-center gap-1">
-                    <FontAwesomeIcon icon={faStar} className="text-[10px]" /> Popular
-                  </div>
-                )}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className={`font-semibold ${plan.popular ? "text-emerald-500" : "text-gray-900 dark:text-white"}`}>
-                      {plan.name}
-                    </p>
-                    <p className="mt-1">
-                      <span className="text-2xl font-bold text-gray-900 dark:text-white">₹{plan.price}</span>
-                      <span className="text-gray-500 text-sm">/mo</span>
-                      {billing === "yearly" && (
-                        <span className="ml-2 text-xs text-gray-400 line-through">₹{monthlyPrice}/mo</span>
-                      )}
-                    </p>
-                    {billing === "yearly" && (
-                      <p className="text-xs text-emerald-500 mt-1">Billed ₹{yearlyPrice}/year</p>
-                    )}
-                  </div>
-                </div>
-                <ul className="mt-4 grid grid-cols-2 gap-2">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <FontAwesomeIcon icon={faCheck} className={`text-xs ${plan.popular ? "text-emerald-500" : "text-gray-400"}`} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button 
-                  onClick={handleSubscribe}
-                  className={`w-full mt-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    plan.popular 
-                      ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
-                      : "bg-gray-100 dark:bg-[#1a1a1a] hover:bg-gray-200 dark:hover:bg-[#252525] text-gray-900 dark:text-white"
-                  }`}
-                >
-                  {subscriptionStatus?.status === 'trial' ? 'Upgrade Now' : 'Get Started'}
-                </button>
+          {subscriptionStatus?.subscriptionExpiry && (
+            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-xl">
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  {subscriptionStatus.status === 'subscribed' ? 'Renews on' : 'Expires on'}
+                </span>
+                <span className="font-medium text-foreground">
+                  {formatDate(subscriptionStatus.subscriptionExpiry)}
+                </span>
               </div>
-            ))}
+            </div>
+          )}
+
+          {isMonthlySubscriber && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium text-emerald-500">Save 20% with Yearly</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Upgrade to yearly billing and pay ₹8,199/year instead of ₹10,188/year
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleUpgradeToYearly}
+                className={cn(
+                  "w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2",
+                  "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+                )}
+              >
+                <ArrowUp className="w-4 h-4" />
+                Upgrade to Yearly
+              </motion.button>
+            </motion.div>
+          )}
+        </div>
+      </motion.div>
+
+      {!isSubscribed && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center justify-center">
+            <div className="flex items-center p-1 bg-muted rounded-xl">
+              <button
+                onClick={() => setBilling("monthly")}
+                className={cn(
+                  "px-6 py-2 text-sm font-medium rounded-lg transition-all",
+                  billing === "monthly" 
+                    ? "bg-card text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBilling("yearly")}
+                className={cn(
+                  "px-6 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2",
+                  billing === "yearly" 
+                    ? "bg-card text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Yearly
+                <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 text-xs font-semibold rounded">
+                  -20%
+                </span>
+              </button>
+            </div>
           </div>
-        </>
+
+          <motion.div 
+            className={cn(
+              "relative rounded-2xl border overflow-hidden",
+              "bg-card dark:bg-zinc-900/50",
+              "border-primary/50"
+            )}
+          >
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/80 to-emerald-500" />
+            
+            <div className="absolute -top-px left-6 px-3 py-1 bg-primary text-white text-xs font-semibold rounded-b-lg flex items-center gap-1">
+              <Star className="w-3 h-3" /> Most Popular
+            </div>
+
+            <div className="p-6 pt-8">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-primary">Pro Plan</h3>
+                  <p className="text-muted-foreground text-sm mt-1">Everything you need to trade better</p>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-foreground">
+                      ₹{billing === "monthly" ? monthlyPrice : yearlyMonthlyPrice}
+                    </span>
+                    <span className="text-muted-foreground">/mo</span>
+                  </div>
+                  {billing === "yearly" && (
+                    <>
+                      <p className="text-sm text-muted-foreground line-through">₹{monthlyPrice}/mo</p>
+                      <p className="text-xs text-emerald-500 font-medium">Billed ₹{yearlyPrice}/year</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                {features.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-primary" />
+                    </div>
+                    <span className="text-sm text-foreground">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <motion.button 
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleSubscribe}
+                className={cn(
+                  "w-full py-3.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                  "bg-primary text-white hover:bg-primary/90"
+                )}
+              >
+                <CreditCard className="w-4 h-4" />
+                {subscriptionStatus?.status === 'trial' ? 'Upgrade Now' : 'Get Started'}
+              </motion.button>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

@@ -14,7 +14,15 @@ ProJournX is a Next.js 16 trading journal application designed to help users tra
 The application is built on Next.js 16 with React 19 and Tailwind CSS, utilizing Next.js API Routes for backend functionalities.
 
 ### UI/UX Decisions
-The UI features a premium neutral dashboard aesthetic, drawing inspiration from Notion, Linear, and Stripe. It uses a primary blue palette, with green/red for P&L, and neutral blacks for dark mode. A custom UI component library resides in `src/components/ui/`. Key pages, including Dashboard, Daily Journal, Notebook, and authentication, incorporate modern design elements such as glassmorphic effects, gradient accents, and micro-animations with Framer Motion.
+The UI features a premium neutral dashboard aesthetic, drawing inspiration from Notion, Linear, and Stripe. It uses a primary blue palette, with green/red for P&L, and neutral blacks for dark mode. A custom UI component library resides in `src/components/ui/`. Key pages, including Dashboard, Daily Journal, Notebook, Settings, and authentication, incorporate modern design elements such as glassmorphic effects, gradient accents, and micro-animations with Framer Motion.
+
+**Settings Page (Redesigned Jan 2026):**
+- Two-panel layout with sticky sidebar navigation on desktop, horizontal pills on mobile
+- Lucide icons throughout (migrated from FontAwesome)
+- All sections use `cn()` utility and color tokens (text-foreground, bg-card, border-border)
+- Sections: Profile (gradient avatar with hover overlay), Security (password strength meter), Preferences (visual theme cards), Accounts (status badges and type indicators), Subscription (pricing card style), Danger Zone (animated warning card)
+- Theme persistence with useLayoutEffect to eliminate hydration flash
+- Custom 'theme-change' event for cross-component synchronization
 
 ### Technical Implementations
 - **Frontend:** Next.js 16.0.1, React 19, Tailwind CSS v4.
