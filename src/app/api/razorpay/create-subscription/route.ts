@@ -57,6 +57,10 @@ export async function POST(request: NextRequest) {
       total_count: billingPeriod === 'yearly' ? 10 : 120,
       quantity: 1,
       customer_notify: 1,
+      notify_info: {
+        notify_phone: user.phone ? String(user.phone) : undefined,
+        notify_email: user.email
+      },
       notes: {
         email: user.email,
         userId: user.uniqueId,
@@ -84,11 +88,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: subscription.error?.description || "Failed to create subscription" }, { status: 400 });
     }
 
-    if (user.subscription) {
-      user.subscription.razorpayCustomerId = subscription.customer_id;
-      user.subscription.billingPeriod = billingPeriod;
+    if (!user.subscription) {
+      user.subscription = { isSubscribed: false, trialUsed: false };
     }
+    user.subscription.razorpayCustomerId = subscription.customer_id;
+    user.subscription.subscriptionId = subscription.id;
+    user.subscription.billingPeriod = billingPeriod;
+    user.subscription.subscriptionStatus = 'pending';
     await user.save();
+    
+    console.log(`Subscription created for user: ${user.email}, subscriptionId: ${subscription.id}`);
 
     return NextResponse.json({
       subscriptionId: subscription.id,

@@ -125,24 +125,54 @@ export async function POST(request: NextRequest) {
 
     const User = await getUserModel();
 
+    const findUserBySubscription = async (subscription: any) => {
+      const subscriptionId = subscription?.id;
+      const customerId = subscription?.customer_id;
+      const email = subscription?.notes?.email;
+      const userId = subscription?.notes?.userId;
+
+      let user = null;
+      if (subscriptionId) {
+        user = await User.findOne({ "subscription.subscriptionId": subscriptionId });
+      }
+      if (!user && userId) {
+        user = await User.findOne({ uniqueId: userId });
+      }
+      if (!user && email) {
+        user = await User.findOne({ email });
+      }
+      if (!user && customerId) {
+        user = await User.findOne({ "subscription.razorpayCustomerId": customerId });
+      }
+      return user;
+    };
+
     switch (eventType) {
+      case "subscription.authenticated": {
+        const subscription = payload.subscription?.entity;
+        if (subscription) {
+          const user = await findUserBySubscription(subscription);
+          if (user) {
+            if (!user.subscription) {
+              user.subscription = { isSubscribed: false, trialUsed: false };
+            }
+            user.subscription.subscriptionId = subscription.id;
+            user.subscription.razorpayCustomerId = subscription.customer_id;
+            user.subscription.subscriptionStatus = 'pending';
+            await user.save();
+            console.log(`Subscription authenticated for user: ${user.email}`);
+          }
+        }
+        break;
+      }
+
       case "subscription.activated": {
         const subscription = payload.subscription?.entity;
         if (subscription) {
-          const customerId = subscription.customer_id;
-          const subscriptionId = subscription.id;
-          const email = payload.subscription?.entity?.notes?.email;
-
-          let user = null;
-          if (email) {
-            user = await User.findOne({ email });
-          }
-          if (!user && customerId) {
-            user = await User.findOne({ "subscription.razorpayCustomerId": customerId });
-          }
+          const user = await findUserBySubscription(subscription);
 
           if (user) {
-            const billingPeriod = payload.subscription?.entity?.notes?.billingPeriod || 'monthly';
+            const billingPeriod = subscription?.notes?.billingPeriod || user.subscription?.billingPeriod || 'monthly';
             const expiry = new Date();
             if (billingPeriod === 'yearly') {
               expiry.setFullYear(expiry.getFullYear() + 1);
@@ -153,11 +183,12 @@ export async function POST(request: NextRequest) {
             user.subscription = {
               ...(user.subscription ?? { isSubscribed: false, trialUsed: false }),
               isSubscribed: true,
-              subscriptionId,
+              subscriptionId: subscription.id,
               subscriptionStatus: 'active',
               subscriptionExpiry: expiry,
-              razorpayCustomerId: customerId,
+              razorpayCustomerId: subscription.customer_id,
               trialUsed: true,
+              hasEverSubscribed: true,
               billingPeriod: billingPeriod
             };
             await user.save();
@@ -165,6 +196,8 @@ export async function POST(request: NextRequest) {
 
             const planAmount = billingPeriod === 'yearly' ? 8199 : 849;
             await processAffiliateCommission(user.uniqueId, planAmount, 'subscription_activated');
+          } else {
+            console.error(`User not found for subscription.activated: ${subscription.id}`);
           }
         }
         break;
@@ -173,8 +206,7 @@ export async function POST(request: NextRequest) {
       case "subscription.charged": {
         const subscription = payload.subscription?.entity;
         if (subscription) {
-          const subscriptionId = subscription.id;
-          const user = await User.findOne({ "subscription.subscriptionId": subscriptionId });
+          const user = await findUserBySubscription(subscription);
 
           if (user) {
             const billingPeriod = user.subscription?.billingPeriod || 'monthly';
@@ -188,13 +220,71 @@ export async function POST(request: NextRequest) {
             if (!user.subscription) {
               user.subscription = { isSubscribed: true, trialUsed: true };
             }
+            user.subscription.isSubscribed = true;
             user.subscription.subscriptionExpiry = expiry;
             user.subscription.subscriptionStatus = 'active';
+            user.subscription.hasEverSubscribed = true;
             await user.save();
-            console.log(`Subscription renewed for user: ${user.email}, billing: ${billingPeriod}`);
+            console.log(`Subscription charged/renewed for user: ${user.email}, billing: ${billingPeriod}`);
 
             const renewalAmount = billingPeriod === 'yearly' ? 8199 : 849;
             await processAffiliateCommission(user.uniqueId, renewalAmount, 'subscription_renewed');
+          } else {
+            console.error(`User not found for subscription.charged: ${subscription.id}`);
+          }
+        }
+        break;
+      }
+
+      case "subscription.pending": {
+        const subscription = payload.subscription?.entity;
+        if (subscription) {
+          const user = await findUserBySubscription(subscription);
+          if (user) {
+            if (!user.subscription) {
+              user.subscription = { isSubscribed: false, trialUsed: false };
+            }
+            user.subscription.subscriptionId = subscription.id;
+            user.subscription.subscriptionStatus = 'pending';
+            await user.save();
+            console.log(`Subscription pending for user: ${user.email}`);
+          }
+        }
+        break;
+      }
+
+      case "payment.captured": {
+        const payment = payload.payment?.entity;
+        if (payment) {
+          const subscriptionId = payment.subscription_id;
+          const email = payment.email || payment.notes?.email;
+          
+          let user = null;
+          if (subscriptionId) {
+            user = await User.findOne({ "subscription.subscriptionId": subscriptionId });
+          }
+          if (!user && email) {
+            user = await User.findOne({ email });
+          }
+
+          if (user && subscriptionId) {
+            const billingPeriod = user.subscription?.billingPeriod || 'monthly';
+            const expiry = new Date();
+            if (billingPeriod === 'yearly') {
+              expiry.setFullYear(expiry.getFullYear() + 1);
+            } else {
+              expiry.setMonth(expiry.getMonth() + 1);
+            }
+
+            if (!user.subscription) {
+              user.subscription = { isSubscribed: true, trialUsed: true };
+            }
+            user.subscription.isSubscribed = true;
+            user.subscription.subscriptionStatus = 'active';
+            user.subscription.subscriptionExpiry = expiry;
+            user.subscription.hasEverSubscribed = true;
+            await user.save();
+            console.log(`Payment captured, subscription activated for user: ${user.email}`);
           }
         }
         break;
@@ -204,10 +294,14 @@ export async function POST(request: NextRequest) {
       case "subscription.halted": {
         const subscription = payload.subscription?.entity;
         if (subscription) {
-          const subscriptionId = subscription.id;
-          const user = await User.findOne({ "subscription.subscriptionId": subscriptionId });
+          const user = await findUserBySubscription(subscription);
 
           if (user) {
+            if (user.subscription?.subscriptionStatus === 'active' && user.subscription?.isSubscribed) {
+              console.log(`Ignoring ${eventType} for active subscription: ${user.email}`);
+              break;
+            }
+            
             if (!user.subscription) {
               user.subscription = { isSubscribed: false, trialUsed: true };
             }
