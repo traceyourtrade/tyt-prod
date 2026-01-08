@@ -8,6 +8,7 @@ import {
   createAccountHandler,
   createAutoSyncAccountHandler,
   pollAutoSyncAccountHandler,
+  getRedStatusAccountsHandler,
   getAccountDetailsHandler,
   editAccCheckHandler,
   checkAllHandler,
@@ -73,6 +74,9 @@ export async function POST(req: NextRequest) {
             
             case "pollAutoSyncAccount":
                 return await pollAutoSyncAccountHandler(body, userId, token);
+            
+            case "getRedStatusAccounts":
+                return await getRedStatusAccountsHandler(body, userId, token);
             
             case "getAccountDetails":
                 return await getAccountDetailsHandler(body, userId, token);

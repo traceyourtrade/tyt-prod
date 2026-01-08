@@ -160,6 +160,28 @@ export async function pollAutoSyncAccountHandler(req: any, userId: string, token
     }
 }
 
+export async function getRedStatusAccountsHandler(req: any, userId: string, token: string) {
+    try {
+        const rootUser = await getUserFromToken(token);
+        if (!rootUser) {
+            return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
+        }
+
+        const redAccounts = await ASacc.find({ 
+            uniqueId: rootUser.uniqueId, 
+            status: "red" 
+        });
+
+        const redAccountNames = redAccounts.map((acc: any) => acc.accountName);
+
+        return NextResponse.json({ redAccounts: redAccountNames });
+
+    } catch (error) {
+        console.error("Error fetching red status accounts:", error);
+        return NextResponse.json({ error: "Server error" }, { status: 500 });
+    }
+}
+
 export async function getAccountDetailsHandler(req: NextRequest, userId: string, token: string) {
     try {
         const rootUser = await getUserFromToken(token);
