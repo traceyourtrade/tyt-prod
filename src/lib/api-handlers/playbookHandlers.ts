@@ -1,10 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlaybookModel, IPlaybookEntry, IPlaybookRule, IPlaybookStats } from '@/models/main/playbook.model';
 import { getUserModel } from '@/models/main/user.model';
+import { getAutoSyncModel } from '@/models/accounts/autoSync.model';
+import { getFileUploadModel } from '@/models/accounts/fileUploadSchema.model';
+import { getManualModel } from '@/models/accounts/manual.model';
+import { getOpenTradeModel } from '@/models/accounts/openTrades.model';
 
 async function getUserFromToken(token: string) {
   const User = await getUserModel();
   return await User.findOne({ "tokens.token": token });
+}
+
+async function getAllTradesForUser(uniqueId: string, accountIds: string[]): Promise<any[]> {
+  const [FileUpload, Manual, AutoSync, OpenTrades] = await Promise.all([
+    getFileUploadModel(),
+    getManualModel(),
+    getAutoSyncModel(),
+    getOpenTradeModel()
+  ]);
+
+  const [fileUploadTrades, manualTrades, autoSyncTrades, openTrades] = await Promise.all([
+    FileUpload.find({ uniqueId, accountId: { $in: accountIds } }),
+    Manual.find({ uniqueId, accountId: { $in: accountIds } }),
+    AutoSync.find({ uniqueId, accountId: { $in: accountIds } }),
+    OpenTrades.find({ uniqueId, accountId: { $in: accountIds } })
+  ]);
+
+  const allTrades: any[] = [];
+  
+  fileUploadTrades.forEach((doc: any) => {
+    if (doc.tradeData && Array.isArray(doc.tradeData)) {
+      allTrades.push(...doc.tradeData);
+    }
+  });
+  
+  manualTrades.forEach((doc: any) => {
+    if (doc.tradeData && Array.isArray(doc.tradeData)) {
+      allTrades.push(...doc.tradeData);
+    }
+  });
+  
+  autoSyncTrades.forEach((doc: any) => {
+    if (doc.tradeData && Array.isArray(doc.tradeData)) {
+      allTrades.push(...doc.tradeData);
+    }
+  });
+  
+  openTrades.forEach((doc: any) => {
+    if (doc.tradeData && Array.isArray(doc.tradeData)) {
+      allTrades.push(...doc.tradeData);
+    }
+  });
+
+  return allTrades;
 }
 
 export async function getPlaybooksHandler(req: NextRequest, userId: string, token: string) {
@@ -254,12 +302,10 @@ export async function detectPatternsHandler(req: any, userId: string, token: str
       return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
 
-    const allTrades: Trade[] = [];
-    rootUser.accounts.forEach((account: any) => {
-      if (account.tradeData && Array.isArray(account.tradeData)) {
-        allTrades.push(...account.tradeData);
-      }
-    });
+    const accountIds = rootUser.accounts.map((acc: any) => acc.accountId);
+    const allTrades: Trade[] = await getAllTradesForUser(rootUser.uniqueId, accountIds);
+    
+    console.log(`[Playbook] User: ${rootUser.email}, Accounts: ${rootUser.accounts?.length || 0}, Trades: ${allTrades.length}`);
 
     const diagnostics: DiagnosticInfo = {
       totalTrades: allTrades.length,
