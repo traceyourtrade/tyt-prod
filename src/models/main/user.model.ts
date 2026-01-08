@@ -74,6 +74,8 @@ export interface IUser extends Document {
   subscription: IUserSubscription;
   referralCode: string;
   referredBy?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: number;
 
   // Methods
   generateAuthToken(): Promise<string>;
@@ -219,7 +221,9 @@ const userSchema = new Schema<IUser>({
     }
   },
   referralCode: { type: String, unique: true, sparse: true },
-  referredBy: { type: String, index: true }
+  referredBy: { type: String, index: true },
+  resetPasswordToken: String,
+  resetPasswordExpires: Number
 }, { collection: "users" });
 
 // 🔒 Hash passwords before save
