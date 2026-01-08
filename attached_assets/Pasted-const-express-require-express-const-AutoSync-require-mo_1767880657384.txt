@@ -1,0 +1,453 @@
+const express = require('express');
+const AutoSync = require('../models/trade.model');
+const AutoSyncOpenTrade = require("../models/openTrade.model")
+const AsUser = require("../models/SyncAcc.model");
+const { agenda, isAgendaReady, waitForAgendaReady } = require('../scheduler/scheduler');
+const router = express.Router();
+const axios = require("axios")
+const User = require("../models/userSchema");
+const mongoose = require('mongoose');
+
+const quality = {
+  select: true,
+  high: false,
+  medium: false,
+  low: false,
+};
+
+const jrData = {
+  rfe: '',
+  widw: '',
+  wni: '',
+  lfnt: '',
+};
+
+router.post('/tytusersasqwzxerdfcv/post/autosyncUpload', async (req, res) => {
+  const { accountName, accountId, accountType, uniqueId, email, lastFetch, balance } = req.body;
+
+  let { tradeData } = req.body;
+
+  console.log(
+    'in the post call to save for',
+    accountName,
+    accountId,
+    uniqueId,
+    email,
+    'and trades of length',
+    tradeData.length,
+    "balance is0,", balance
+  );
+
+  try {
+    // const rootUser = await ASacc.findOne({ "tokens.token": tokenn });
+    // if (!rootUser) {
+    //     return res.status(401).json({ error: "User not found" });
+    // }
+
+    if (!accountName || !accountId || !tradeData) {
+      console.log(
+        'in the post call to save for error',
+        accountName,
+        accountId,
+        uniqueId,
+        email
+      );
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    await AsUser.findOneAndUpdate(
+      {
+        uniqueId: uniqueId,
+        accountId: accountId,
+      },
+      {
+        lastFetch: lastFetch
+      }
+    );
+    await User.updateOne(
+      { uniqueId, "accounts.accountId": accountId },
+      { $set: { "accounts.$.accountBalance": balance } }
+    );
+
+
+    // Get existing manual trades for this account
+    const existingTrades = await AutoSync.find({
+      uniqueId: uniqueId,
+      accountId: accountId,
+    });
+
+    // Generate unique trade ID function
+    const generateUniqueTradeId = async () => {
+      let isUnique = false;
+      let tradeId;
+
+      while (!isUnique) {
+        tradeId =
+          Math.random().toString(36).substring(2, 15) +
+          Math.random().toString(36).substring(2, 15);
+
+        const existingTrade = await AutoSync.findOne({ tradeId });
+        if (!existingTrade) {
+          isUnique = true;
+        }
+      }
+      return tradeId;
+    };
+
+    // Add required fields to each trade
+    const enhancedTradeData = tradeData.map((trade) => ({
+      ...trade,
+      strategy: 'Select',
+      RiskR: '',
+      Quality: quality,
+      beforeURL: '',
+      afterURL: '',
+      rfe: 'Select',
+      btm: 'Select',
+      dtm: 'Select',
+      atm: 'Select',
+      jrData: jrData,
+      accountType: 'Auto Sync',
+    }));
+
+    // Flatten all existing trade data for comparison
+    const allExistingTradeDetails = existingTrades.flatMap((doc) =>
+      doc.tradeData.map((trade) => {
+        return {
+          OpenTime: trade.OpenTime,
+          Ticket: trade.Ticket,
+          Item: trade.Item,
+          Type: trade.Type,
+          Size: trade.Size,
+          OpenPrice: trade.OpenPrice,
+          Profit: trade.Profit,
+          TakeProfit: trade.TakeProfit,
+          StopLoss: trade.StopLoss,
+          CloseTime: trade.CloseTime,
+          ClosePrice: trade.ClosePrice,
+        };
+      })
+    );
+
+    // Filter out duplicates from incoming trades
+    const uniqueTrades = enhancedTradeData.filter((newTrade) => {
+      const isDuplicate = allExistingTradeDetails.some(
+        (existingTrade) =>
+          existingTrade.OpenTime === newTrade.OpenTime &&
+          existingTrade.Ticket === newTrade.Ticket &&
+          existingTrade.Item === newTrade.Item &&
+          existingTrade.Type === newTrade.Type &&
+          existingTrade.Size === newTrade.Size &&
+          existingTrade.OpenPrice === newTrade.OpenPrice &&
+          existingTrade.Profit === newTrade.Profit &&
+          existingTrade.TakeProfit === newTrade.TakeProfit &&
+          existingTrade.StopLoss === newTrade.StopLoss &&
+          existingTrade.CloseTime === newTrade.CloseTime &&
+          existingTrade.ClosePrice === newTrade.ClosePrice
+      );
+
+      return !isDuplicate;
+    });
+
+    if (uniqueTrades.length === 0) {
+      return res.status(200).json({
+        message: 'No new trades to add - all trades already exist',
+        added: 0,
+        skipped: tradeData.length,
+      });
+    }
+
+    // Save only unique trades
+    const savePromises = uniqueTrades.map(async (trade) => {
+      const tradeId = await generateUniqueTradeId();
+
+      const enhancedTrade = {
+        ...trade,
+        id: tradeId,
+      };
+
+      const newTradeDoc = new AutoSync({
+        uniqueId: uniqueId,
+        email: email,
+        accountName: accountName,
+        accountId: accountId,
+        tradeId: tradeId,
+        tradeData: [enhancedTrade],
+      });
+
+      return newTradeDoc.save();
+    });
+
+    await Promise.all(savePromises);
+
+    return res.status(200).json({
+      message: 'AUtosync trades uploaded successfully',
+      added: uniqueTrades.length,
+      skipped: tradeData.length - uniqueTrades.length,
+    });
+
+  } catch (error) {
+    console.log(
+      'in the post call to save for got error',
+      accountName,
+      accountId,
+      uniqueId,
+      email
+    );
+    console.error('Autosync upload error:', error);
+    return res
+      .status(500)
+      .json({ error: 'Server error processing manual trades' });
+  }
+});
+
+router.post('/tytusersasqwzxerdfcv/post/openTradesUpload', async (req, res) => {
+  const {
+    accountName,
+    accountId,
+    uniqueId,
+    email,
+    tradeData
+  } = req.body;
+
+  console.log(
+    'in the post call to save for open trades',
+    accountName,
+    accountId,
+    uniqueId,
+    email,
+    'and trades of length',
+    tradeData?.length
+  );
+
+  try {
+    if (!accountName || !accountId || !uniqueId || !email || !tradeData) {
+      console.log('Missing required fields');
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // // Step 1: Update user fetch info (optional)
+    // await AsUser.findOneAndUpdate(
+    //   { uniqueId: uniqueId, accountId: accountId },
+    //   {
+    //     lastFetch: lastFetch || new Date(),
+    //     accountInfo: account || {},
+    //   },
+    //   { new: true }
+    // );
+
+    // Step 2: Remove all existing open trades for this account
+    const docCount = await AutoSyncOpenTrade.countDocuments({
+      uniqueId: uniqueId,
+      // accountId: accountId 
+    });
+    console.log(`📊 Number of existing documents for ${accountId}:`, docCount);
+    const ot = await AutoSyncOpenTrade.deleteMany({ uniqueId: uniqueId, accountId: accountId });
+    console.log(ot)
+
+    const getOrderType = (type) => {
+      const types = ['Buy', 'Sell', 'Buy Limit', 'Sell Limit', 'Buy Stop', 'Sell Stop', 'Buy Stop Limit', 'Sell Stop Limit'];
+      return types[type] || 'Unknown';
+    };
+    // Step 3: Enhance and format each trade
+    const enhancedTradeData = tradeData.map((trade) => ({
+      OpenTime: trade.OpenTime,              // Ensure it's a string or Date format
+      Ticket: trade.ticket?.toString(),
+      Item: trade.Item || trade.symbol || '',
+      Type: getOrderType(trade.type) || '',
+      Size: trade.Size || trade.volume || 0,
+      OpenPrice: trade.OpenPrice || trade.price_open || 0,
+      StopLoss: trade.StopLoss || trade.sl || 0,
+      TakeProfit: trade.TakeProfit || trade.tp || 0,
+      CloseTime: trade.CloseTime || '',
+      ClosePrice: trade.ClosePrice || 0,
+      Commission: trade.Commission || 0,
+      Swap: trade.Swap || trade.swap || 0,
+      Profit: trade.Profit || trade.profit || 0,
+
+      // Additional metadata (keep same as AutoSync)
+      strategy: 'Select',
+      RiskR: '',
+      Quality: '',
+      beforeURL: '',
+      afterURL: '',
+      rfe: 'Select',
+      btm: 'Select',
+      dtm: 'Select',
+      atm: 'Select',
+      jrData: {},
+      accountType: 'Auto Sync',
+    }));
+
+    // Step 4: Save each enhanced trade into AutoSyncOpenTrade collection
+    const savePromises = enhancedTradeData.map(async (trade) => {
+      const tradeId =
+        Math.random().toString(36).substring(2, 15) +
+        Math.random().toString(36).substring(2, 15);
+
+      const newTradeDoc = new AutoSyncOpenTrade({
+        uniqueId: uniqueId,
+        email: email,
+        accountName: accountName,
+        accountId: accountId,
+        tradeId: tradeId,
+        tradeData: [trade],
+      });
+
+      return newTradeDoc.save();
+    });
+
+    await Promise.all(savePromises);
+
+    return res.status(200).json({
+      message: 'Open trades replaced successfully',
+      added: enhancedTradeData.length,
+    });
+  } catch (error) {
+    console.error('Error in openTradesUpload:', "with the connection status ", mongoose.connection.readyState, error);
+    return res.status(500).json({ error: 'Server error processing open trades' });
+  }
+});
+
+router.get('/tytusersasqwzxerdfcv/get/trades/:uniqueId', async (req, res) => {
+  const { uniqueId } = req.params;
+
+  console.log(`in the get call to retrieve trades for uniqueId: ${uniqueId}`);
+
+  try {
+    if (!uniqueId) {
+      return res.status(400).json({ error: 'Missing uniqueId parameter' });
+    }
+
+    // Find all documents for the given uniqueId
+    const allTrades = await AutoSync.find({ uniqueId: uniqueId }).sort({
+      OpenTime: -1,
+    });
+
+    if (allTrades.length === 0) {
+      return res
+        .status(404)
+        .json({ error: 'No trades found for this uniqueId' });
+    }
+
+    // Since your POST route saves each trade as a separate document,
+    // we need to flatten the tradeData array from all found documents
+    const flattenedTrades = allTrades.flatMap((doc) => doc.tradeData);
+
+    return res.status(200).json(flattenedTrades);
+  } catch (error) {
+    console.error('Error retrieving trades:', error);
+    return res.status(500).json({ error: 'Server error retrieving trades' });
+  }
+});
+
+// Fallback function for immediate processing if Agenda fails
+async function processInvestorImmediately(data) {
+  console.log('Processing investor immediately (fallback mode)', data.investorId);
+
+  try {
+    const res = await axios.post("http://69.62.85.64:5001/data", {
+      login: data.investorId,
+      password: data.password,
+      server: data.server
+    }, {
+      timeout: 30000,
+    });
+
+    if (!res.data.status && res.data.status !== 200) {
+      throw new Error(`VPS failed: ${res.data.status}`);
+    }
+
+    console.log(`Immediate processing completed for investor ${data.investorId}`);
+    return { success: true, message: 'Processed immediately' };
+  } catch (error) {
+    console.error('Immediate processing failed:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Helper function to create agenda job with readiness check
+async function createAgendaJob(jobData) {
+  // Wait for agenda to be ready if it's not yet
+  if (!isAgendaReady()) {
+    console.log('Agenda not ready yet, waiting...');
+    await waitForAgendaReady();
+  }
+
+  return await agenda.now("processInvestor", jobData);
+}
+
+router.post('/tytusersasqwzxerdfcv/verify/syncAcc', async (req, res) => {
+  const {
+    accountName,
+    accountId,
+    accountType,
+    uniqueId,
+    email,
+    investorId,
+    password,
+    server,
+  } = req.body;
+
+  console.log('Received request for investor:', investorId);
+
+  try {
+    if (!accountName || !accountId || !accountType || !uniqueId ||
+      !email || !investorId || !password || !server) {
+      return res.status(400).json({ message: 'Enter all details' });
+    }
+
+    const jobData = {
+      accountName,
+      accountId,
+      accountType,
+      uniqueId,
+      email,
+      investorId,
+      password,
+      server,
+      createdAt: new Date(),
+      requestId: Math.random().toString(36).substring(7)
+    };
+
+    let job;
+    try {
+      // Try to create Agenda job with readiness check
+      job = await createAgendaJob(jobData);
+
+      res.status(202).json({
+        message: 'Request Accepted',
+        jobId: job.attrs._id,
+        status: 'queued'
+      });
+
+    } catch (agendaError) {
+      console.error('Agenda job creation failed:', agendaError);
+
+      // Fallback to immediate processing
+      const fallbackResult = await processInvestorImmediately(jobData);
+
+      if (fallbackResult.success) {
+        res.status(202).json({
+          message: 'Request Accepted (processed immediately - fallback mode)',
+          jobId: 'immediate-' + Math.random().toString(36).substring(7),
+          status: 'completed'
+        });
+      } else {
+        res.status(500).json({
+          error: `Failed to process request: ${fallbackResult.error}`,
+          message: 'Both Agenda and fallback processing failed'
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('Error in syncAcc endpoint:', error);
+    return res.status(500).json({
+      error: `Server error: ${error.message}`,
+      details: 'Check server logs for more information'
+    });
+  }
+});
+
+module.exports = router;
