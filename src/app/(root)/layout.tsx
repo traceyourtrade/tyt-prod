@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback, memo } from "react";
+import React, { useState, useEffect, useLayoutEffect, Suspense, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
@@ -751,13 +751,40 @@ export default function RootLayout({
     }
   }, [subscriptionStatus, subscriptionLoading, pathname, router]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    const stored = localStorage.getItem('projournx_settings');
+    if (stored) {
+      try {
+        const settings = JSON.parse(stored);
+        const storedIsDark = settings.theme !== 'light';
+        setIsDarkMode(storedIsDark);
+        if (storedIsDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      } catch {}
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  useLayoutEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    const handleThemeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ theme: 'dark' | 'light' }>;
+      setIsDarkMode(customEvent.detail.theme === 'dark');
+    };
+    window.addEventListener('theme-change', handleThemeChange);
+    return () => window.removeEventListener('theme-change', handleThemeChange);
+  }, []);
 
   useEffect(() => {
     setMobileOpen(false);
