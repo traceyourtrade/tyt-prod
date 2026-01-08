@@ -231,7 +231,7 @@ export default function RootLayout({
     return () => {
       window.removeEventListener('refresh-subscription', handleRefreshSubscription);
     };
-  }, [pathname]); // Re-fetch on every navigation to catch trial expiration
+  }, [pathname]); // Re-fetch on navigation to catch trial expiration
 
   // Redirect unpaid users based on their status
   useEffect(() => {
@@ -380,14 +380,12 @@ export default function RootLayout({
         )}
       >
         {active && (
-          <motion.div 
+          <div 
             className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
             style={{ 
               backgroundColor: item.color,
               boxShadow: `0 0 12px 2px ${item.color}60, 0 0 20px 4px ${item.color}30`
             }}
-            layoutId="sidebarActiveIndicator"
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
         

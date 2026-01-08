@@ -111,27 +111,17 @@ export function Sidebar({
     }
   }, [])
 
-  // Re-fetch subscription status on mount and when pathname changes (catches navigation and router.refresh())
+  // Fetch subscription status on mount and pathname changes to catch trial expiration
   React.useEffect(() => {
     const fetchSubscriptionStatus = async () => {
-      console.log('[Sidebar] Fetching subscription status for pathname:', pathname)
       try {
         const response = await fetch('/api/subscription/status', { 
           cache: 'no-store',
           credentials: 'include'
         })
-        console.log('[Sidebar] Subscription status response:', response.status)
         if (response.ok) {
           const data = await response.json()
-          console.log('[Sidebar] Subscription data received:', JSON.stringify({
-            isSubscribed: data.isSubscribed,
-            isOnTrial: data.isOnTrial,
-            trialDaysLeft: data.trialDaysLeft,
-            status: data.status
-          }))
           setSubscriptionStatus(data)
-        } else {
-          console.log('[Sidebar] Subscription API error:', response.status, '- will retry on next navigation')
         }
       } catch (error) {
         console.error('[Sidebar] Failed to fetch subscription status:', error)
@@ -142,9 +132,8 @@ export function Sidebar({
 
     fetchSubscriptionStatus()
     
-    // Also listen for custom event to re-fetch (triggered after trial activation)
+    // Listen for custom event to re-fetch (triggered after trial activation)
     const handleRefreshSubscription = () => {
-      console.log('[Sidebar] Received refresh-subscription event')
       fetchSubscriptionStatus()
     }
     window.addEventListener('refresh-subscription', handleRefreshSubscription)
@@ -187,13 +176,11 @@ export function Sidebar({
         )}
       >
         {active && (
-          <motion.div 
+          <div 
             className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#4EBF94]"
-            layoutId="activeIndicator"
             style={{
               boxShadow: "0 0 12px 2px rgba(78,191,148,0.6), 0 0 24px 4px rgba(78,191,148,0.3)"
             }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
         
