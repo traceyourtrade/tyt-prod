@@ -144,7 +144,7 @@ const marketCategories: MarketCategory[] = [
 const AddAccPopup = () => {
   const { showAddAcc, setAddAcc } = calendarPopUp();
   const { setAccounts } = useAccountDetails();
-  const { setAlertBoxG, accStatusPolling } = notifications();
+  const { setAlertBoxG } = notifications();
 
   const [accountType, setAccountType] = useState<string>("");
   const [selectedMarket, setSelectedMarket] = useState<string>("");
@@ -231,8 +231,7 @@ const AddAccPopup = () => {
           setSuccess("Account created successfully!");
           setTimeout(() => {
             setAddAcc();
-            setAlertBoxG("Your account details are being fetched, this may take few seconds", "async-alert");
-            accStatusPolling(accountName);
+            setAlertBoxG("Account created successfully! Trades will sync automatically.", "success");
             setAccounts();
           }, 1500);
         } else {
