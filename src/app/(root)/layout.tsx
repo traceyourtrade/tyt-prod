@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import axios from "axios";
@@ -110,6 +110,8 @@ const bottomNavItems = [
   { name: "Settings", href: "/settings", icon: Settings, color: "#8B8B8B" },
 ];
 
+const preTrialAllowedPaths = ['/dashboard', '/settings', '/support', '/checkout'];
+
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/daily-journal": "Daily Journal",
@@ -137,6 +139,502 @@ const pageTitles: Record<string, string> = {
   "/settings": "Settings",
   "/support": "Support",
 };
+
+interface NavItemProps {
+  item: { name: string; href: string; icon: React.ElementType; color: string; badge?: string; tourId?: string };
+  showLabel?: boolean;
+  active: boolean;
+  isRestricted: boolean;
+  onNavigate: () => void;
+  onRestrictedClick: () => void;
+}
+
+const NavItem = memo(function NavItem({ item, showLabel = true, active, isRestricted, onNavigate, onRestrictedClick }: NavItemProps) {
+  const Icon = item.icon;
+  
+  const handleClick = (e: React.MouseEvent) => {
+    onNavigate();
+    if (isRestricted) {
+      e.preventDefault();
+      onRestrictedClick();
+    }
+  };
+  
+  return (
+    <Link
+      href={isRestricted ? '/checkout' : item.href}
+      onClick={handleClick}
+      data-tour={item.tourId}
+      className={cn(
+        "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
+        active 
+          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+          : "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
+        !showLabel && "justify-center px-1.5"
+      )}
+    >
+      {active && (
+        <div 
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+          style={{ 
+            backgroundColor: item.color,
+            boxShadow: `0 0 12px 2px ${item.color}60, 0 0 20px 4px ${item.color}30`
+          }}
+        />
+      )}
+      
+      <div className="relative flex-shrink-0 transition-all duration-200">
+        <Icon 
+          className={cn(
+            "h-4 w-4 transition-all duration-200",
+            !active && "group-hover:scale-110"
+          )}
+          style={{ color: active ? item.color : undefined }}
+        />
+      </div>
+      
+      {showLabel && (
+        <span className="flex-1 truncate">{item.name}</span>
+      )}
+
+      {item.badge && showLabel && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/20">
+          {item.badge}
+        </span>
+      )}
+    </Link>
+  );
+});
+
+const SectionLabel = memo(function SectionLabel({ label, isExpanded }: { label: string; isExpanded: boolean }) {
+  if (!isExpanded) return null;
+  return (
+    <div className="px-3 mb-1.5 mt-4 first:mt-0">
+      <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
+        {label}
+      </span>
+    </div>
+  );
+});
+
+interface SidebarContentProps {
+  isExpanded: boolean;
+  collapsed: boolean;
+  mobileOpen: boolean;
+  setCollapsed: (val: boolean) => void;
+  setMobileOpen: (val: boolean) => void;
+  backtestingOpen: boolean;
+  setBacktestingOpen: (val: boolean) => void;
+  subscriptionStatus: SubscriptionStatus | null;
+  isPreTrial: boolean;
+  showDemoAlert: boolean;
+  setShowDemoAlert: (val: boolean) => void;
+  setAddTrades: () => void;
+  checkoutUrl: string;
+  profileData: any;
+  handleLogout: () => void;
+  router: any;
+  pathname: string;
+}
+
+const SidebarContent = memo(function SidebarContent({
+  isExpanded,
+  collapsed,
+  mobileOpen,
+  setCollapsed,
+  setMobileOpen,
+  backtestingOpen,
+  setBacktestingOpen,
+  subscriptionStatus,
+  isPreTrial,
+  showDemoAlert,
+  setShowDemoAlert,
+  setAddTrades,
+  checkoutUrl,
+  profileData,
+  handleLogout,
+  router,
+  pathname,
+}: SidebarContentProps) {
+  const userInitials = profileData.fullName
+    ? `${profileData.fullName.charAt(0)}${profileData.fullName.split(" ")[1]?.charAt(0) || ""}`
+    : "U";
+
+  const maskedEmail = profileData.email
+    ? profileData.email.replace(/^(.{4}).*(@.*)$/, (_, a: string, b: string) => `${a}*****${b}`)
+    : "";
+
+  const handleMobileClose = useCallback(() => setMobileOpen(false), [setMobileOpen]);
+  const handleRestrictedClick = useCallback(() => router.push('/checkout'), [router]);
+
+  const renderNavItem = (item: typeof tradingItems[0], showLabel: boolean) => {
+    const active = item.href === "/dashboard" 
+      ? pathname === "/dashboard" || pathname === "/" 
+      : pathname.startsWith(item.href);
+    const restricted = isPreTrial && !preTrialAllowedPaths.some(allowed => item.href.startsWith(allowed));
+    
+    return (
+      <NavItem
+        key={item.name}
+        item={item}
+        showLabel={showLabel}
+        active={active}
+        isRestricted={restricted}
+        onNavigate={handleMobileClose}
+        onRestrictedClick={handleRestrictedClick}
+      />
+    );
+  };
+
+  return (
+    <div className="h-full flex flex-col relative">
+      <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#4EBF94]/10 dark:bg-[#4EBF94]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-4 left-12 w-20 h-20 bg-violet-500/5 dark:bg-violet-500/10 rounded-full blur-2xl pointer-events-none" style={{ animationDelay: '1s' }} />
+      <div className="absolute bottom-20 -right-8 w-24 h-24 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      
+      <div className={cn(
+        "relative flex items-center h-14 z-10",
+        !isExpanded ? "justify-center px-2" : "justify-between px-3"
+      )}>
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-3 overflow-hidden group"
+          onClick={() => setMobileOpen(false)}
+        >
+          <motion.div 
+            className="relative flex-shrink-0"
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Image
+              src="/images/logo-icon.png"
+              width={28}
+              height={28}
+              alt="ProJournX"
+              className="w-7 h-7 object-contain"
+              unoptimized
+            />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </motion.div>
+          
+          {isExpanded && (
+            <motion.div 
+              className="flex flex-col"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="font-bold text-foreground tracking-tight text-[15px]">
+                ProJournX
+              </span>
+              <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
+                Trading Journal
+              </span>
+            </motion.div>
+          )}
+        </Link>
+        
+        {isExpanded && (
+          <motion.button
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+            onClick={() => mobileOpen ? setMobileOpen(false) : setCollapsed(true)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {mobileOpen ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </motion.button>
+        )}
+      </div>
+
+      {!isExpanded && (
+        <motion.button
+          className="mx-auto mt-1 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
+          onClick={() => setCollapsed(false)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <ChevronLeft className="h-4 w-4 rotate-180" />
+        </motion.button>
+      )}
+
+      <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
+        <motion.button
+          data-tour="add-trade-btn"
+          className={cn(
+            "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
+            "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
+            "text-[#4EBF94]",
+            !isExpanded && "w-8 h-8 mx-auto p-0"
+          )}
+          onClick={() => {
+            if (isPreTrial) {
+              router.push('/checkout');
+              return;
+            }
+            if (subscriptionStatus?.demoMode) {
+              setShowDemoAlert(true);
+              return;
+            }
+            setAddTrades();
+            setMobileOpen(false);
+          }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Plus className="h-4 w-4" strokeWidth={2} />
+          {isExpanded && <span>Add Trade</span>}
+        </motion.button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide relative" data-tour-scroll="sidebar">
+        
+        <SectionLabel label="Trading" isExpanded={isExpanded} />
+        <div className="space-y-0.5 mb-1">
+          {tradingItems.map((item) => renderNavItem(item, isExpanded))}
+        </div>
+
+        <div className="mb-2 mt-3" data-tour="nav-backtesting">
+            {isExpanded && (
+              <div className="px-3 mb-1.5">
+                <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
+                  Backtesting
+                </span>
+              </div>
+            )}
+            <div className={cn(
+              "relative rounded-lg overflow-hidden",
+              isExpanded && "mx-1 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20"
+            )}>
+              {isExpanded && (
+                <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
+              )}
+              
+              <button
+                onClick={() => setBacktestingOpen(!backtestingOpen)}
+                aria-expanded={backtestingOpen}
+                className={cn(
+                  "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
+                  "text-blue-400 hover:text-blue-300",
+                  !isExpanded && "justify-center rounded-md hover:bg-blue-500/10"
+                )}
+              >
+                <CandlestickChart 
+                  className="h-[17px] w-[17px] flex-shrink-0"
+                  style={{ color: '#3B82F6' }}
+                />
+                {isExpanded && (
+                  <>
+                    <span className="flex-1 text-left">Backtesting</span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white uppercase tracking-wide">
+                      Pro
+                    </span>
+                    <motion.div
+                      animate={{ rotate: backtestingOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown className="h-4 w-4 text-blue-400/60" />
+                    </motion.div>
+                  </>
+                )}
+              </button>
+              
+              <AnimatePresence>
+                {backtestingOpen && isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pb-2 px-1 space-y-0.5">
+                      {backtestingSubItems.map((item) => renderNavItem(item, true))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+        </div>
+
+        <SectionLabel label="Analysis" isExpanded={isExpanded} />
+        <div className="space-y-0.5 mb-1">
+          {analysisItems.map((item) => renderNavItem(item, isExpanded))}
+        </div>
+
+        <SectionLabel label="Tools" isExpanded={isExpanded} />
+        <div className="space-y-0.5 mb-1">
+          {toolsItems.map((item) => renderNavItem(item, isExpanded))}
+        </div>
+
+      </nav>
+
+      <div className="mt-auto relative z-10">
+        <div className="px-4 mb-2">
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        </div>
+        
+        <div className="py-2 px-2 space-y-0.5">
+          {bottomNavItems.map((item) => renderNavItem(item, isExpanded))}
+        </div>
+
+        <div className={cn("px-2 pb-2", !isExpanded && "px-1")}>
+          {subscriptionStatus?.isSubscribed ? (
+            <div className={cn(
+              "relative rounded-xl overflow-hidden",
+              isExpanded ? "px-3 py-2.5" : "p-2"
+            )}>
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 dark:from-amber-900/30 dark:via-amber-800/20 dark:to-amber-900/30 rounded-xl" />
+              <div className="absolute inset-0 border border-amber-500/40 dark:border-amber-500/20 rounded-xl" />
+              <div className={cn(
+                "relative flex items-center gap-2.5",
+                !isExpanded && "justify-center"
+              )}>
+                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
+                  <Crown className="h-3 w-3 text-white" />
+                </div>
+                {isExpanded && (
+                  <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                    Pro Member
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : subscriptionStatus?.isOnTrial ? (
+            <Link
+              href={checkoutUrl}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "relative block rounded-xl cursor-pointer group overflow-hidden",
+                !isExpanded && "rounded-lg"
+              )}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-emerald-400/15 to-emerald-500/20 dark:from-emerald-900/30 dark:via-emerald-800/20 dark:to-emerald-900/30 rounded-xl" />
+              <div className="absolute inset-0 border border-emerald-500/40 dark:border-emerald-500/20 rounded-xl" />
+              <div className={cn(
+                "relative flex items-center gap-2.5",
+                isExpanded ? "px-3 py-2.5" : "p-2 justify-center"
+              )}>
+                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <Clock className="h-3 w-3 text-white" />
+                </div>
+                {isExpanded && (
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      Free Trial
+                    </span>
+                    <span className="text-[10px] text-emerald-500/70 dark:text-emerald-400/70">
+                      {subscriptionStatus.trialDaysLeft} {subscriptionStatus.trialDaysLeft === 1 ? 'day' : 'days'} left
+                    </span>
+                  </div>
+                )}
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href={checkoutUrl}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "relative block rounded-xl cursor-pointer group overflow-hidden",
+                !isExpanded && "rounded-lg"
+              )}
+            >
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#1a1f2e] to-[#0f1218]" />
+              <div className="absolute inset-0 rounded-xl border border-[#4EBF94]/40 group-hover:border-[#4EBF94]/60 transition-colors" />
+              <div className="absolute top-0 right-0 w-20 h-20 bg-[#4EBF94]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#4EBF94]/20 transition-colors" />
+              <div className={cn(
+                "relative flex items-center gap-3 p-3",
+                !isExpanded && "justify-center p-2"
+              )}>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4EBF94]/20 to-[#4EBF94]/5 flex items-center justify-center flex-shrink-0 border border-[#4EBF94]/30">
+                  <Crown className="h-4 w-4 text-[#4EBF94]" />
+                </div>
+                {isExpanded && (
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[12px] font-semibold text-white">Go Pro</p>
+                      <span className="px-1.5 py-0.5 rounded-full bg-[#4EBF94]/20 text-[8px] font-medium text-[#4EBF94] border border-[#4EBF94]/30">
+                        20% OFF
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-white/50 mt-0.5">Unlock all features</p>
+                  </div>
+                )}
+              </div>
+            </Link>
+          )}
+        </div>
+
+        <div className={cn("p-2 pt-0", !isExpanded && "px-1")}>
+          {profileData.fullName && (
+            <motion.div 
+              className={cn(
+                "relative rounded-lg overflow-hidden transition-all duration-200 cursor-pointer",
+                isExpanded && "rounded-xl"
+              )}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isExpanded && (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-muted/50 via-muted/20 to-transparent" />
+                  <div className="absolute inset-0 border border-border rounded-xl" />
+                </>
+              )}
+              
+              <Link
+                href="/settings"
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "relative flex items-center gap-3 p-2.5",
+                  !isExpanded && "justify-center p-1.5"
+                )}
+              >
+                <div className="relative flex-shrink-0">
+                  <div className={cn(
+                    "relative rounded-lg bg-gradient-to-br from-[#4EBF94]/40 to-[#4EBF94]/10 flex items-center justify-center ring-1 ring-[#4EBF94]/30",
+                    isExpanded ? "w-8 h-8" : "w-7 h-7"
+                  )}>
+                    <span className={cn(
+                      "font-bold text-[#4EBF94]",
+                      isExpanded ? "text-xs" : "text-[10px]"
+                    )}>
+                      {userInitials}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4EBF94] rounded-full border-2 border-sidebar" />
+                </div>
+                
+                {isExpanded && (
+                  <div className="overflow-hidden flex-1 min-w-0">
+                    <p className="text-[12px] font-semibold text-foreground truncate">
+                      {profileData.fullName}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {maskedEmail}
+                    </p>
+                  </div>
+                )}
+              </Link>
+            </motion.div>
+          )}
+          
+          <motion.button
+            className={cn(
+              "group w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 mt-1 text-[12px] font-medium transition-all duration-200",
+              "text-muted-foreground hover:text-red-500 hover:bg-red-500/10",
+              !isExpanded && "justify-center px-1.5"
+            )}
+            onClick={handleLogout}
+            whileHover={{ x: isExpanded ? 2 : 0 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <LogOut className="h-4 w-4 flex-shrink-0 transition-transform group-hover:scale-110" />
+            {isExpanded && <span>Log out</span>}
+          </motion.button>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export default function RootLayout({
   children,
@@ -289,9 +787,6 @@ export default function RootLayout({
   // Pre-trial flag - users who can start trial but haven't yet
   const isPreTrial = subscriptionStatus?.canStartTrial === true && !subscriptionStatus?.hasAccess;
   
-  // Pages accessible without trial/subscription
-  const preTrialAllowedPaths = ['/dashboard', '/settings', '/support', '/checkout'];
-  
   // Check if a path is restricted for pre-trial users
   const isRestrictedPath = (href: string) => {
     return !preTrialAllowedPaths.some(allowed => href.startsWith(allowed));
@@ -327,7 +822,14 @@ export default function RootLayout({
     return matchingKey ? pageTitles[matchingKey] : "Dashboard";
   };
 
-  const handleLogout = async () => {
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle("dark");
+  };
+
+  const isExpanded = !collapsed || mobileOpen;
+
+  const handleLogout = useCallback(async () => {
     try {
       const response = await axios.post("/api/logout");
       if (response.data.success) {
@@ -336,467 +838,28 @@ export default function RootLayout({
     } catch (error) {
       console.error("Logout error:", error);
     }
+  }, []);
+
+  // Memoized sidebar props to prevent unnecessary re-renders
+  const sidebarProps: SidebarContentProps = {
+    isExpanded,
+    collapsed,
+    mobileOpen,
+    setCollapsed,
+    setMobileOpen,
+    backtestingOpen,
+    setBacktestingOpen,
+    subscriptionStatus,
+    isPreTrial,
+    showDemoAlert,
+    setShowDemoAlert,
+    setAddTrades,
+    checkoutUrl,
+    profileData,
+    handleLogout,
+    router,
+    pathname,
   };
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle("dark");
-  };
-
-  const userInitials = profileData.fullName
-    ? `${profileData.fullName.charAt(0)}${profileData.fullName.split(" ")[1]?.charAt(0) || ""}`
-    : "U";
-
-  const maskedEmail = profileData.email
-    ? profileData.email.replace(/^(.{4}).*(@.*)$/, (_, a, b) => `${a}*****${b}`)
-    : "";
-
-  const isExpanded = !collapsed || mobileOpen;
-
-  const NavItem = ({ item, showLabel = true }: { item: { name: string; href: string; icon: React.ElementType; color: string; badge?: string; tourId?: string }; showLabel?: boolean }) => {
-    const Icon = item.icon;
-    const active = isActive(item.href);
-    const isRestricted = isPreTrial && isRestrictedPath(item.href);
-    
-    const handleClick = (e: React.MouseEvent) => {
-      setMobileOpen(false);
-      if (isRestricted) {
-        e.preventDefault();
-        router.push('/checkout');
-      }
-    };
-    
-    return (
-      <Link
-        href={isRestricted ? '/checkout' : item.href}
-        onClick={handleClick}
-        data-tour={item.tourId}
-        className={cn(
-          "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
-          active 
-            ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-            : "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
-          !showLabel && "justify-center px-1.5"
-        )}
-      >
-        {active && (
-          <div 
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-            style={{ 
-              backgroundColor: item.color,
-              boxShadow: `0 0 12px 2px ${item.color}60, 0 0 20px 4px ${item.color}30`
-            }}
-          />
-        )}
-        
-        <div className="relative flex-shrink-0 transition-all duration-200">
-          <Icon 
-            className={cn(
-              "h-4 w-4 transition-all duration-200",
-              !active && "group-hover:scale-110"
-            )}
-            style={{ color: active ? item.color : undefined }}
-          />
-        </div>
-        
-        {showLabel && (
-          <span className="flex-1 truncate">{item.name}</span>
-        )}
-
-        {item.badge && showLabel && (
-          <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-500/20">
-            {item.badge}
-          </span>
-        )}
-      </Link>
-    );
-  };
-
-  const SectionLabel = ({ label }: { label: string }) => (
-    <>
-      {isExpanded && (
-        <div className="px-3 mb-1.5 mt-4 first:mt-0">
-          <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
-            {label}
-          </span>
-        </div>
-      )}
-    </>
-  );
-
-  const SidebarContent = () => (
-    <div className="h-full flex flex-col relative">
-      {/* Animated gradient orbs - subtle in both themes */}
-      <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#4EBF94]/10 dark:bg-[#4EBF94]/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -top-4 left-12 w-20 h-20 bg-violet-500/5 dark:bg-violet-500/10 rounded-full blur-2xl pointer-events-none" style={{ animationDelay: '1s' }} />
-      <div className="absolute bottom-20 -right-8 w-24 h-24 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      
-      {/* Logo Section */}
-      <div className={cn(
-        "relative flex items-center h-14 z-10",
-        !isExpanded ? "justify-center px-2" : "justify-between px-3"
-      )}>
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-3 overflow-hidden group"
-          onClick={() => setMobileOpen(false)}
-        >
-          <motion.div 
-            className="relative flex-shrink-0"
-            whileHover={{ scale: 1.05, rotate: 2 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Image
-              src="/images/logo-icon.png"
-              width={28}
-              height={28}
-              alt="ProJournX"
-              className="w-7 h-7 object-contain"
-              unoptimized
-            />
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </motion.div>
-          
-          {isExpanded && (
-            <motion.div 
-              className="flex flex-col"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <span className="font-bold text-foreground tracking-tight text-[15px]">
-                ProJournX
-              </span>
-              <span className="text-[10px] text-muted-foreground font-medium tracking-wide">
-                Trading Journal
-              </span>
-            </motion.div>
-          )}
-        </Link>
-        
-        {isExpanded && (
-          <motion.button
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
-            onClick={() => mobileOpen ? setMobileOpen(false) : setCollapsed(true)}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {mobileOpen ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </motion.button>
-        )}
-      </div>
-
-      {!isExpanded && (
-        <motion.button
-          className="mx-auto mt-1 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
-          onClick={() => setCollapsed(false)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <ChevronLeft className="h-4 w-4 rotate-180" />
-        </motion.button>
-      )}
-
-      {/* Add Trade Button */}
-      <div className={cn("px-3 mt-3", !isExpanded && "mt-2 px-2")}>
-        <motion.button
-          data-tour="add-trade-btn"
-          className={cn(
-            "w-full flex items-center justify-center gap-2 py-2 rounded-md font-medium text-[13px] transition-all duration-200",
-            "border border-[#4EBF94]/50 bg-[#4EBF94]/10 hover:bg-[#4EBF94]/20",
-            "text-[#4EBF94]",
-            !isExpanded && "w-8 h-8 mx-auto p-0"
-          )}
-          onClick={() => {
-            if (isPreTrial) {
-              router.push('/checkout');
-              return;
-            }
-            if (subscriptionStatus?.demoMode) {
-              setShowDemoAlert(true);
-              return;
-            }
-            setAddTrades();
-            setMobileOpen(false);
-          }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} />
-          {isExpanded && <span>Add Trade</span>}
-        </motion.button>
-      </div>
-
-
-      {/* Main Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide relative" data-tour-scroll="sidebar">
-        
-        {/* Trading Section */}
-        <SectionLabel label="Trading" />
-        <div className="space-y-0.5 mb-1">
-          {tradingItems.map((item) => (
-            <NavItem key={item.name} item={item} showLabel={isExpanded} />
-          ))}
-        </div>
-
-        {/* Backtesting Section */}
-        <div className="mb-2 mt-3" data-tour="nav-backtesting">
-            {isExpanded && (
-              <div className="px-3 mb-1.5">
-                <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
-                  Backtesting
-                </span>
-              </div>
-            )}
-            <div className={cn(
-              "relative rounded-lg overflow-hidden",
-              isExpanded && "mx-1 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20"
-            )}>
-              {/* Premium glow effect */}
-              {isExpanded && (
-                <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
-              )}
-              
-              <button
-                onClick={() => setBacktestingOpen(!backtestingOpen)}
-                aria-expanded={backtestingOpen}
-                className={cn(
-                  "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
-                  "text-blue-400 hover:text-blue-300",
-                  !isExpanded && "justify-center rounded-md hover:bg-blue-500/10"
-                )}
-              >
-                <CandlestickChart 
-                  className="h-[17px] w-[17px] flex-shrink-0"
-                  style={{ color: '#3B82F6' }}
-                />
-                {isExpanded && (
-                  <>
-                    <span className="flex-1 text-left">Backtesting</span>
-                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white uppercase tracking-wide">
-                      Pro
-                    </span>
-                    <motion.div
-                      animate={{ rotate: backtestingOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="h-4 w-4 text-blue-400/60" />
-                    </motion.div>
-                  </>
-                )}
-              </button>
-              
-              <AnimatePresence>
-                {backtestingOpen && isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pb-2 px-1 space-y-0.5">
-                      {backtestingSubItems.map((item) => (
-                        <NavItem key={item.name} item={item} showLabel={true} />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-        </div>
-
-        {/* Analysis Section */}
-        <SectionLabel label="Analysis" />
-        <div className="space-y-0.5 mb-1">
-          {analysisItems.map((item) => (
-            <NavItem key={item.name} item={item} showLabel={isExpanded} />
-          ))}
-        </div>
-
-        {/* Tools Section */}
-        <SectionLabel label="Tools" />
-        <div className="space-y-0.5 mb-1">
-          {toolsItems.map((item) => (
-            <NavItem key={item.name} item={item} showLabel={isExpanded} />
-          ))}
-        </div>
-
-      </nav>
-
-      {/* Bottom Section */}
-      <div className="mt-auto relative z-10">
-        <div className="px-4 mb-2">
-          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        </div>
-        
-        <div className="py-2 px-2 space-y-0.5">
-          {bottomNavItems.map((item) => (
-            <NavItem key={item.name} item={item} showLabel={isExpanded} />
-          ))}
-        </div>
-
-        {/* Go Pro / Subscription Status / Free Trial */}
-        <div className={cn("px-2 pb-2", !isExpanded && "px-1")}>
-          {subscriptionStatus?.isSubscribed ? (
-            <div className={cn(
-              "relative rounded-xl overflow-hidden",
-              isExpanded ? "px-3 py-2.5" : "p-2"
-            )}>
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 dark:from-amber-900/30 dark:via-amber-800/20 dark:to-amber-900/30 rounded-xl" />
-              <div className="absolute inset-0 border border-amber-500/40 dark:border-amber-500/20 rounded-xl" />
-              <div className={cn(
-                "relative flex items-center gap-2.5",
-                !isExpanded && "justify-center"
-              )}>
-                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0">
-                  <Crown className="h-3 w-3 text-white" />
-                </div>
-                {isExpanded && (
-                  <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                    Pro Member
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : subscriptionStatus?.isOnTrial ? (
-            <Link
-              href={checkoutUrl}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "relative block rounded-xl cursor-pointer group overflow-hidden",
-                !isExpanded && "rounded-lg"
-              )}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-emerald-400/15 to-emerald-500/20 dark:from-emerald-900/30 dark:via-emerald-800/20 dark:to-emerald-900/30 rounded-xl" />
-              <div className="absolute inset-0 border border-emerald-500/40 dark:border-emerald-500/20 rounded-xl" />
-              <div className={cn(
-                "relative flex items-center gap-2.5",
-                isExpanded ? "px-3 py-2.5" : "p-2 justify-center"
-              )}>
-                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
-                  <Clock className="h-3 w-3 text-white" />
-                </div>
-                {isExpanded && (
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      Free Trial
-                    </span>
-                    <span className="text-[10px] text-emerald-500/70 dark:text-emerald-400/70">
-                      {subscriptionStatus.trialDaysLeft} {subscriptionStatus.trialDaysLeft === 1 ? 'day' : 'days'} left
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Link>
-          ) : (
-            <Link
-              href={checkoutUrl}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "relative block rounded-xl cursor-pointer group overflow-hidden",
-                !isExpanded && "rounded-lg"
-              )}
-            >
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#1a1f2e] to-[#0f1218]" />
-              <div className="absolute inset-0 rounded-xl border border-[#4EBF94]/40 group-hover:border-[#4EBF94]/60 transition-colors" />
-              <div className="absolute top-0 right-0 w-20 h-20 bg-[#4EBF94]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#4EBF94]/20 transition-colors" />
-              <div className={cn(
-                "relative flex items-center gap-3 p-3",
-                !isExpanded && "justify-center p-2"
-              )}>
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#4EBF94]/20 to-[#4EBF94]/5 flex items-center justify-center flex-shrink-0 border border-[#4EBF94]/30">
-                  <Crown className="h-4 w-4 text-[#4EBF94]" />
-                </div>
-                {isExpanded && (
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[12px] font-semibold text-white">Go Pro</p>
-                      <span className="px-1.5 py-0.5 rounded-full bg-[#4EBF94]/20 text-[8px] font-medium text-[#4EBF94] border border-[#4EBF94]/30">
-                        20% OFF
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-white/50 mt-0.5">Unlock all features</p>
-                  </div>
-                )}
-              </div>
-            </Link>
-          )}
-        </div>
-
-        {/* Premium User Card */}
-        <div className={cn("p-2 pt-0", !isExpanded && "px-1")}>
-          {profileData.fullName && (
-            <motion.div 
-              className={cn(
-                "relative rounded-lg overflow-hidden transition-all duration-200 cursor-pointer",
-                isExpanded && "rounded-xl"
-              )}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isExpanded && (
-                <>
-                  <div className="absolute inset-0 bg-gradient-to-br from-muted/50 via-muted/20 to-transparent" />
-                  <div className="absolute inset-0 border border-border rounded-xl" />
-                </>
-              )}
-              
-              <Link
-                href="/settings"
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "relative flex items-center gap-3 p-2.5",
-                  !isExpanded && "justify-center p-1.5"
-                )}
-              >
-                {/* Avatar */}
-                <div className="relative flex-shrink-0">
-                  <div className={cn(
-                    "relative rounded-lg bg-gradient-to-br from-[#4EBF94]/40 to-[#4EBF94]/10 flex items-center justify-center ring-1 ring-[#4EBF94]/30",
-                    isExpanded ? "w-8 h-8" : "w-7 h-7"
-                  )}>
-                    <span className={cn(
-                      "font-bold text-[#4EBF94]",
-                      isExpanded ? "text-xs" : "text-[10px]"
-                    )}>
-                      {userInitials}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4EBF94] rounded-full border-2 border-sidebar" />
-                </div>
-                
-                {isExpanded && (
-                  <div className="overflow-hidden flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-foreground truncate">
-                      {profileData.fullName}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {maskedEmail}
-                    </p>
-                  </div>
-                )}
-              </Link>
-            </motion.div>
-          )}
-          
-          {/* Logout button */}
-          <motion.button
-            className={cn(
-              "group w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 mt-1 text-[12px] font-medium transition-all duration-200",
-              "text-muted-foreground hover:text-red-500 hover:bg-red-500/10",
-              !isExpanded && "justify-center px-1.5"
-            )}
-            onClick={handleLogout}
-            whileHover={{ x: isExpanded ? 2 : 0 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <LogOut className="h-4 w-4 flex-shrink-0 transition-transform group-hover:scale-110" />
-            {isExpanded && <span>Log out</span>}
-          </motion.button>
-        </div>
-      </div>
-    </div>
-  );
 
   // Show loading while checking subscription (only for protected pages)
   const isPublicPage = publicPages.some(page => pathname.startsWith(page));
@@ -1017,7 +1080,7 @@ export default function RootLayout({
           {/* Inner glow */}
           <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
           
-          <SidebarContent />
+          <SidebarContent {...sidebarProps} />
         </div>
       </aside>
 
@@ -1038,7 +1101,7 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.01] via-transparent to-violet-500/[0.01] dark:from-[#4EBF94]/[0.02] dark:to-violet-500/[0.02] pointer-events-none" />
           <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
           
-          <SidebarContent />
+          <SidebarContent {...sidebarProps} />
         </div>
       </aside>
 
