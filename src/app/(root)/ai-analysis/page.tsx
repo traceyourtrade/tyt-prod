@@ -714,10 +714,10 @@ function TimeInsights({ trades, formatValue }: { trades: Trade[], formatValue: (
         const cell = heatmapData[day][hour]
         if (cell.count >= 3) {
           const winRate = (cell.wins / cell.count) * 100
-          if (!bestSlot || winRate > bestSlot.winRate) {
+          if (winRate >= 45 && (!bestSlot || winRate > bestSlot.winRate)) {
             bestSlot = { day, hour, winRate, profit: cell.profit, count: cell.count }
           }
-          if (!worstSlot || winRate < worstSlot.winRate) {
+          if (winRate < 55 && (!worstSlot || winRate < worstSlot.winRate)) {
             worstSlot = { day, hour, winRate, profit: cell.profit, count: cell.count }
           }
         }
