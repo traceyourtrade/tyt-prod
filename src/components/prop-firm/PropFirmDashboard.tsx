@@ -9,7 +9,6 @@ import PropFirmQuickStats from "./PropFirmQuickStats"
 import PropFirmCompactSettings from "./PropFirmCompactSettings"
 import PropFirmAnalytics from "./PropFirmAnalytics"
 import PropFirmBreachBanner from "./PropFirmBreachBanner"
-import PropFirmSuggestions from "./PropFirmSuggestions"
 import PropFirmPhaseRoadmap from "./PropFirmPhaseRoadmap"
 import PropFirmPresetSelector from "./PropFirmPresetSelector"
 import PropFirmChallengeHistory from "./PropFirmChallengeHistory"
@@ -49,7 +48,6 @@ export default function PropFirmDashboard() {
   } = usePropFirmStore()
   const { selectedAccounts } = useModeFilteredAccounts()
   const [dailyBreached, setDailyBreached] = useState(false)
-  const [suggestionsCollapsed, setSuggestionsCollapsed] = useState(false)
   const [showPresetModal, setShowPresetModal] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>("portfolio")
 
@@ -447,19 +445,6 @@ export default function PropFirmDashboard() {
           )}
         </div>
 
-        {(activeTab === "details" || activeTab === "portfolio") && (
-          <div className={cn(
-            "hidden xl:block flex-shrink-0 transition-all duration-300 overflow-hidden",
-            suggestionsCollapsed ? "w-14" : "w-80"
-          )}>
-            <div className="sticky top-6">
-              <PropFirmSuggestions 
-                isCollapsed={suggestionsCollapsed}
-                onToggleCollapse={() => setSuggestionsCollapsed(!suggestionsCollapsed)}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Preset Selection Modal */}
