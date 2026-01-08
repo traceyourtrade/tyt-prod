@@ -112,12 +112,6 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
 
             await newAsAc.save();
 
-            const sendReq = await fetch("http://auto-sync-backend-env.ap-south-1.elasticbeanstalk.com/tytusersasqwzxerdfcv/verify/syncAcc", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accountName, accountId, accountType, uniqueId: rootUser.uniqueId, email, investorId, password, server: serverName })
-            });
-
             return NextResponse.json({ message: "Account added successfully!" });
         } else {
             return NextResponse.json({ error: "Account already exists" }, { status: 400 });
