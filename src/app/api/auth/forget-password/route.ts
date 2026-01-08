@@ -39,15 +39,16 @@ export async function POST(req: NextRequest) {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
+        user: process.env.GMAIL || process.env.MAIL,
+        pass: process.env.GMAILPOS,
       },
     });
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5000'}/change-password?token=${resetToken}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    const resetUrl = `${appUrl}/change-password?token=${resetToken}`;
 
     await transporter.sendMail({
-      from: `"ProJournX Support" <${process.env.GMAIL_USER}>`,
+      from: `"ProJournX Support" <${process.env.GMAIL || process.env.MAIL}>`,
       to: user.email,
       subject: "Password Reset Request",
       html: `
