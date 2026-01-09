@@ -60,7 +60,7 @@ interface MarketCategory {
 }
 
 const accountTypeOptions: DropdownOption[] = [
-  { id: "Broker Sync", label: "Broker Sync", description: "Auto-sync trades via API", icon: <Zap className="w-4 h-4" /> },
+  { id: "Broker Sync", label: "MT5 Auto-Sync", description: "Connect & auto-import trades", icon: <Zap className="w-4 h-4" /> },
   { id: "File Upload", label: "File Upload", description: "Import from MT4/MT5 files", icon: <Upload className="w-4 h-4" /> },
   { id: "Manual", label: "Manual Entry", description: "Add trades manually", icon: <PenLine className="w-4 h-4" /> },
 ];
@@ -161,11 +161,38 @@ const AddAccPopup = () => {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [syncStatus, setSyncStatus] = useState<string>("");
   const [showAccountTypeDropdown, setShowAccountTypeDropdown] = useState(false);
   const [showBrokerDropdown, setShowBrokerDropdown] = useState(false);
 
   const accountTypeRef = useRef<HTMLDivElement>(null);
   const brokerRef = useRef<HTMLDivElement>(null);
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup sync interval on unmount or modal close
+  useEffect(() => {
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
+    };
+  }, []);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!showAddAcc) {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
+      setIsSyncing(false);
+      setSyncProgress(0);
+      setSyncStatus("");
+    }
+  }, [showAddAcc]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -207,8 +234,32 @@ const AddAccPopup = () => {
 
     if (accountType === "Broker Sync") {
       const { accountName, description, isPropFirm } = accountDetails;
+      
+      setIsSyncing(true);
+      setSyncProgress(0);
+      setSyncStatus("Connecting to MT5 server...");
+
+      // Clear any existing interval
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
 
       try {
+        // Simulate progress updates during sync
+        syncIntervalRef.current = setInterval(() => {
+          setSyncProgress(prev => {
+            if (prev >= 90) return prev;
+            const increment = Math.random() * 15;
+            return Math.min(prev + increment, 90);
+          });
+          setSyncStatus(prev => {
+            if (prev.includes("Connecting")) return "Authenticating credentials...";
+            if (prev.includes("Authenticating")) return "Fetching trade history...";
+            if (prev.includes("Fetching")) return "Processing trades...";
+            return "Syncing trades...";
+          });
+        }, 2000);
+
         const res = await fetch(`/api/dashboard/post`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -225,20 +276,36 @@ const AddAccPopup = () => {
           })
         });
 
+        // Clear interval after fetch completes
+        if (syncIntervalRef.current) {
+          clearInterval(syncIntervalRef.current);
+          syncIntervalRef.current = null;
+        }
+        
         const data = await res.json();
 
         if (res.status === 200) {
-          setSuccess("Account created successfully!");
+          setSyncProgress(100);
+          setSyncStatus("Sync complete!");
+          setSuccess("MT5 account connected successfully!");
           setTimeout(() => {
             setAddAcc();
-            setAlertBoxG("Account created successfully! Trades will sync automatically.", "success");
+            setAlertBoxG("MT5 account connected! Your trades will sync automatically.", "success");
             setAccounts();
+            setIsSyncing(false);
           }, 1500);
         } else {
+          setIsSyncing(false);
           handleApiError(data.error);
         }
       } catch (error) {
-        setError("Something went wrong. Please try again.");
+        // Clear interval on error
+        if (syncIntervalRef.current) {
+          clearInterval(syncIntervalRef.current);
+          syncIntervalRef.current = null;
+        }
+        setIsSyncing(false);
+        setError("Connection failed. Please check your credentials and try again.");
       }
     } else {
       const { accountName, accountBalance, description, isPropFirm } = accountDetails;
@@ -708,10 +775,61 @@ const AddAccPopup = () => {
                       )}
                     />
                   </div>
-                  <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Use your <span className="text-primary font-medium">investor/read-only password</span> for secure auto-sync. Your trades will be automatically imported.
-                    </p>
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Use your <span className="text-primary font-medium">investor/read-only password</span> for secure auto-sync. Your trades will be automatically imported.
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-medium text-amber-500">First sync takes ~5 minutes</p>
+                        <p className="text-xs text-muted-foreground">We'll import your complete trade history. Future syncs are instant.</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Sync Progress UI */}
+            <AnimatePresence>
+              {isSyncing && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="p-5 rounded-xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20">
+                    <div className="flex items-center gap-3 mb-4">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center"
+                      >
+                        <Zap className="w-5 h-5 text-white" />
+                      </motion.div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">{syncStatus}</p>
+                        <p className="text-xs text-muted-foreground">Please keep this window open</p>
+                      </div>
+                      <span className="text-lg font-bold text-emerald-500">{Math.round(syncProgress)}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${syncProgress}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
+                    </div>
+                    {syncProgress < 100 && (
+                      <p className="text-xs text-muted-foreground mt-3 text-center">
+                        First-time sync may take up to 5 minutes depending on your trade history
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -771,20 +889,32 @@ const AddAccPopup = () => {
             <motion.button
               type="button"
               onClick={submitFun}
-              disabled={isSubmitting || !accountDetails.accountName || !broker || (accountType === "Broker Sync" && (!investorId || !investorPw || !server))}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+              disabled={isSubmitting || isSyncing || !accountDetails.accountName || !broker || (accountType === "Broker Sync" && (!investorId || !investorPw || !server))}
+              whileHover={{ scale: isSyncing ? 1 : 1.01 }}
+              whileTap={{ scale: isSyncing ? 1 : 0.99 }}
               className={cn(
                 "w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200",
                 "flex items-center justify-center gap-2",
-                "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/25",
+                accountType === "Broker Sync" && !isSyncing
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25"
+                  : "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/25",
                 "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               )}
             >
-              {isSubmitting ? (
+              {isSyncing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Syncing trades...
+                </>
+              ) : isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Creating...
+                </>
+              ) : accountType === "Broker Sync" ? (
+                <>
+                  <Zap className="w-4 h-4" />
+                  Connect & Sync
                 </>
               ) : (
                 <>
