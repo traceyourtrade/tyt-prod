@@ -120,7 +120,8 @@ export async function addContactToAudience({
     return null;
   }
   
-  const { client } = await getResendClient();
+  const { client, } = await getResendClient();
+  const { apiKey } = await getCredentials();
   
   try {
     const { data, error } = await client.contacts.create({
@@ -141,6 +142,36 @@ export async function addContactToAudience({
     }
     
     console.log(`[Resend] Contact added: ${email}`);
+    
+    // Apply subscription data properties if provided
+    if (subscriptionData && data?.id) {
+      try {
+        const updatePayload: any = {
+          properties: {
+            subscription_status: subscriptionData.subscription_status || 'none',
+            is_subscribed: String(subscriptionData.is_subscribed || false),
+            trial_ends_at: subscriptionData.trial_ends_at || '',
+            registered_at: subscriptionData.registered_at || ''
+          }
+        };
+        
+        await fetch(
+          `https://api.resend.com/audiences/${AUDIENCE_ID}/contacts/${data.id}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatePayload)
+          }
+        );
+        console.log(`[Resend] Subscription data applied: ${email} (${subscriptionData.subscription_status})`);
+      } catch (updateError) {
+        console.error(`[Resend] Failed to apply subscription data for ${email}:`, updateError);
+      }
+    }
+    
     return { data, error: null };
   } catch (error: any) {
     if (error?.message?.includes('already exists')) {
@@ -157,13 +188,15 @@ export async function updateContactInAudience({
   firstName,
   lastName,
   unsubscribed,
-  subscriptionData
+  subscriptionData,
+  retryCount = 0
 }: {
   email: string;
   firstName?: string;
   lastName?: string;
   unsubscribed?: boolean;
   subscriptionData?: ContactSubscriptionData;
+  retryCount?: number;
 }) {
   if (!AUDIENCE_ID) {
     console.warn('[Resend] RESEND_AUDIENCE_ID not configured, skipping contact update');
@@ -171,6 +204,7 @@ export async function updateContactInAudience({
   }
   
   const { apiKey } = await getCredentials();
+  const MAX_RETRIES = 3;
   
   try {
     // Update contact by email using the new API endpoint
@@ -205,6 +239,15 @@ export async function updateContactInAudience({
     
     if (!updateResponse.ok) {
       const errorData = await updateResponse.json();
+      
+      // Handle rate limiting with exponential backoff
+      if (updateResponse.status === 429 && retryCount < MAX_RETRIES) {
+        const waitTime = Math.pow(2, retryCount) * 1000;
+        console.log(`[Resend] Rate limited, retrying ${email} in ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        return updateContactInAudience({ email, firstName, lastName, unsubscribed, subscriptionData, retryCount: retryCount + 1 });
+      }
+      
       // If contact not found, create it
       if (updateResponse.status === 404) {
         console.log(`[Resend] Contact not found, creating: ${email}`);
