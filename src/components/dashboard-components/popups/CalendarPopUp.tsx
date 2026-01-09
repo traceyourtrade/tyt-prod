@@ -629,7 +629,7 @@ const CalendarPopup = () => {
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="text-gray-500">Lot Size</span>
-                    <p className="text-white font-medium">{trade.Size.toFixed(2)}</p>
+                    <p className="text-white font-medium">{(Number(trade.Size) || 0).toFixed(2)}</p>
                   </div>
                   <div>
                     <span className="text-gray-500">Duration</span>
@@ -649,12 +649,12 @@ const CalendarPopup = () => {
                   </div>
                   <div>
                     <span className="text-gray-500">Commission</span>
-                    <p className="text-amber-400 font-medium">{getCurrencySymbol(trade.Currency, trade.marketType)}{Math.abs(trade.Commission).toFixed(2)}</p>
+                    <p className="text-amber-400 font-medium">{getCurrencySymbol(trade.Currency, trade.marketType)}{Math.abs(Number(trade.Commission) || 0).toFixed(2)}</p>
                   </div>
                   {trade.Swap !== 0 && (
                     <div>
                       <span className="text-gray-500">Swap</span>
-                      <p className="text-white font-medium">{getCurrencySymbol(trade.Currency, trade.marketType)}{trade.Swap.toFixed(2)}</p>
+                      <p className="text-white font-medium">{getCurrencySymbol(trade.Currency, trade.marketType)}{(Number(trade.Swap) || 0).toFixed(2)}</p>
                     </div>
                   )}
                   {trade.accountName && (
@@ -1078,7 +1078,7 @@ const CalendarPopup = () => {
                                     </span>
                                   </td>
                                   <td className="px-3 md:px-4 py-3 md:py-4">
-                                    <span className="text-gray-300 text-xs md:text-sm font-medium">{data.Size.toFixed(2)}</span>
+                                    <span className="text-gray-300 text-xs md:text-sm font-medium">{(Number(data.Size) || 0).toFixed(2)}</span>
                                   </td>
                                   <td className="px-3 md:px-4 py-3 md:py-4">
                                     <span className="text-gray-300 text-xs md:text-sm font-medium">{formatPrice(data.OpenPrice)}</span>
@@ -1158,11 +1158,11 @@ const CalendarPopup = () => {
                                               )}
                                               <div>
                                                 <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Commission</span>
-                                                <span className="text-sm text-amber-400 font-medium">{getCurrencySymbol(data.Currency, data.marketType)}{Math.abs(data.Commission).toFixed(2)}</span>
+                                                <span className="text-sm text-amber-400 font-medium">{getCurrencySymbol(data.Currency, data.marketType)}{Math.abs(Number(data.Commission) || 0).toFixed(2)}</span>
                                               </div>
                                               <div>
                                                 <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Swap</span>
-                                                <span className="text-sm text-white font-medium">{getCurrencySymbol(data.Currency, data.marketType)}{data.Swap.toFixed(2)}</span>
+                                                <span className="text-sm text-white font-medium">{getCurrencySymbol(data.Currency, data.marketType)}{(Number(data.Swap) || 0).toFixed(2)}</span>
                                               </div>
                                               <div>
                                                 <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Entry Time</span>
@@ -1175,13 +1175,13 @@ const CalendarPopup = () => {
                                               <div>
                                                 <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Gross P&L</span>
                                                 <span className={`text-sm font-medium ${data.Profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                  {data.Profit >= 0 ? '+' : ''}{getCurrencySymbol(data.Currency, data.marketType)}{data.Profit.toFixed(2)}
+                                                  {data.Profit >= 0 ? '+' : ''}{getCurrencySymbol(data.Currency, data.marketType)}{(Number(data.Profit) || 0).toFixed(2)}
                                                 </span>
                                               </div>
                                               <div>
                                                 <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Net P&L</span>
                                                 <span className={`text-sm font-medium ${(data.Profit - Math.abs(data.Commission)) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                  {(data.Profit - Math.abs(data.Commission)) >= 0 ? '+' : ''}{getCurrencySymbol(data.Currency, data.marketType)}{(data.Profit - Math.abs(data.Commission)).toFixed(2)}
+                                                  {(data.Profit - Math.abs(data.Commission)) >= 0 ? '+' : ''}{getCurrencySymbol(data.Currency, data.marketType)}{((Number(data.Profit) || 0) - Math.abs(Number(data.Commission) || 0)).toFixed(2)}
                                                 </span>
                                               </div>
                                             </div>
