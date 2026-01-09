@@ -2,10 +2,10 @@ import { syncContactWithSubscription } from '../src/lib/resend';
 
 async function connectDB() {
   const mongoose = await import('mongoose');
-  const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
+  const MONGO_URI = process.env.DATABASE || process.env.MONGODB_URI;
   
   if (!MONGO_URI) {
-    throw new Error('MongoDB URI not found in environment');
+    throw new Error('DATABASE environment variable not found');
   }
   
   await mongoose.connect(MONGO_URI);
@@ -30,6 +30,8 @@ async function main() {
   let failed = 0;
   let skipped = 0;
   
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
   for (const user of users) {
     try {
       if (!user.email) {
@@ -46,9 +48,14 @@ async function main() {
       });
       
       success++;
+      
+      // Rate limit: 2 requests per second max, so wait 600ms between requests
+      await delay(600);
     } catch (error: any) {
       console.error(`Failed to sync ${user.email}:`, error.message);
       failed++;
+      // Still wait on error to avoid hammering the API
+      await delay(600);
     }
   }
   
