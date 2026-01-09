@@ -99,7 +99,7 @@ export async function addContactToAudience({
   const { client } = await getResendClient();
   
   try {
-    const result = await client.contacts.create({
+    const { data, error } = await client.contacts.create({
       email,
       firstName: firstName || '',
       lastName: lastName || '',
@@ -107,8 +107,17 @@ export async function addContactToAudience({
       audienceId: AUDIENCE_ID
     });
     
+    if (error) {
+      if (error.message?.includes('already exists')) {
+        console.log(`[Resend] Contact already exists: ${email}`);
+        return { data: null, error: null };
+      }
+      console.error(`[Resend] API error for ${email}:`, error);
+      throw new Error(error.message || 'Failed to create contact');
+    }
+    
     console.log(`[Resend] Contact added: ${email}`);
-    return result;
+    return { data, error: null };
   } catch (error: any) {
     if (error?.message?.includes('already exists')) {
       console.log(`[Resend] Contact already exists: ${email}`);
