@@ -95,16 +95,25 @@ export async function sendEmail({
 
 const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID;
 
+export interface ContactSubscriptionData {
+  subscription_status?: 'trial' | 'active' | 'expired' | 'cancelled' | 'none';
+  is_subscribed?: boolean;
+  trial_ends_at?: string;
+  registered_at?: string;
+}
+
 export async function addContactToAudience({
   email,
   firstName,
   lastName,
-  unsubscribed = false
+  unsubscribed = false,
+  subscriptionData
 }: {
   email: string;
   firstName?: string;
   lastName?: string;
   unsubscribed?: boolean;
+  subscriptionData?: ContactSubscriptionData;
 }) {
   if (!AUDIENCE_ID) {
     console.warn('[Resend] RESEND_AUDIENCE_ID not configured, skipping contact sync');
@@ -141,6 +150,131 @@ export async function addContactToAudience({
     console.error(`[Resend] Failed to add contact ${email}:`, error);
     throw error;
   }
+}
+
+export async function updateContactInAudience({
+  email,
+  firstName,
+  lastName,
+  unsubscribed,
+  subscriptionData
+}: {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  unsubscribed?: boolean;
+  subscriptionData?: ContactSubscriptionData;
+}) {
+  if (!AUDIENCE_ID) {
+    console.warn('[Resend] RESEND_AUDIENCE_ID not configured, skipping contact update');
+    return null;
+  }
+  
+  const { apiKey } = await getCredentials();
+  
+  try {
+    // Update contact by email using the new API endpoint
+    const updatePayload: any = {
+      audience_id: AUDIENCE_ID
+    };
+    if (firstName !== undefined) updatePayload.first_name = firstName;
+    if (lastName !== undefined) updatePayload.last_name = lastName;
+    if (unsubscribed !== undefined) updatePayload.unsubscribed = unsubscribed;
+    
+    // Add custom properties for subscription data
+    if (subscriptionData) {
+      updatePayload.properties = {
+        subscription_status: subscriptionData.subscription_status || 'none',
+        is_subscribed: String(subscriptionData.is_subscribed || false),
+        trial_ends_at: subscriptionData.trial_ends_at || '',
+        registered_at: subscriptionData.registered_at || ''
+      };
+    }
+    
+    const updateResponse = await fetch(
+      `https://api.resend.com/audiences/${AUDIENCE_ID}/contacts/${encodeURIComponent(email)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatePayload)
+      }
+    );
+    
+    if (!updateResponse.ok) {
+      const errorData = await updateResponse.json();
+      // If contact not found, create it
+      if (updateResponse.status === 404) {
+        console.log(`[Resend] Contact not found, creating: ${email}`);
+        return addContactToAudience({ email, firstName, lastName, unsubscribed, subscriptionData });
+      }
+      console.error(`[Resend] Failed to update contact ${email}:`, errorData);
+      throw new Error(errorData.message || 'Failed to update contact');
+    }
+    
+    console.log(`[Resend] Contact updated: ${email}`, subscriptionData ? `(${subscriptionData.subscription_status})` : '');
+    return { data: await updateResponse.json(), error: null };
+  } catch (error: any) {
+    console.error(`[Resend] Failed to update contact ${email}:`, error);
+    throw error;
+  }
+}
+
+export async function syncContactWithSubscription(user: {
+  email: string;
+  fullName?: string;
+  subscription?: {
+    isSubscribed?: boolean;
+    subscriptionStatus?: string;
+    trialEndsAt?: Date | string;
+    trialUsed?: boolean;
+  };
+  date?: Date | string;
+}) {
+  const nameParts = (user.fullName || '').split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+  
+  // Determine subscription status for Resend
+  let subscriptionStatus: ContactSubscriptionData['subscription_status'] = 'none';
+  const isSubscribed = user.subscription?.isSubscribed || false;
+  const subStatus = user.subscription?.subscriptionStatus;
+  const trialEndsAt = user.subscription?.trialEndsAt;
+  const trialUsed = user.subscription?.trialUsed;
+  
+  if (isSubscribed && subStatus === 'active') {
+    subscriptionStatus = 'active';
+  } else if (subStatus === 'cancelled') {
+    subscriptionStatus = 'cancelled';
+  } else if (subStatus === 'expired') {
+    subscriptionStatus = 'expired';
+  } else if (trialEndsAt && !trialUsed) {
+    // Active trial
+    const trialEnd = new Date(trialEndsAt);
+    if (trialEnd > new Date()) {
+      subscriptionStatus = 'trial';
+    } else {
+      subscriptionStatus = 'expired';
+    }
+  } else if (trialUsed && !isSubscribed) {
+    subscriptionStatus = 'expired';
+  }
+  
+  const subscriptionData: ContactSubscriptionData = {
+    subscription_status: subscriptionStatus,
+    is_subscribed: isSubscribed,
+    trial_ends_at: trialEndsAt ? new Date(trialEndsAt).toISOString() : undefined,
+    registered_at: user.date ? new Date(user.date).toISOString() : undefined
+  };
+  
+  return updateContactInAudience({
+    email: user.email,
+    firstName,
+    lastName,
+    subscriptionData
+  });
 }
 
 export async function removeContactFromAudience(email: string) {

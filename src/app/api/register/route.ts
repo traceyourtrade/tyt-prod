@@ -6,7 +6,7 @@ import { getNoteModel } from "@/models/main/notes.model";
 import { activateTrial } from "@/lib/subscription";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
-import { sendEmail, addContactToAudience } from "@/lib/resend";
+import { sendEmail, addContactToAudience, syncContactWithSubscription } from "@/lib/resend";
 
 const generateReferralUniqueId = () => {
   const chars =
@@ -196,13 +196,19 @@ export async function POST(req: Request) {
     const lastName = nameParts.slice(1).join(' ') || '';
     
     try {
-      await addContactToAudience({
+      await syncContactWithSubscription({
         email,
-        firstName,
-        lastName
+        fullName,
+        subscription: {
+          isSubscribed: false,
+          subscriptionStatus: 'pending',
+          trialEndsAt: undefined,
+          trialUsed: false
+        },
+        date: new Date()
       });
     } catch (contactError) {
-      console.error('[REGISTER] Non-blocking: Failed to add contact to Resend:', contactError);
+      console.error('[REGISTER] Non-blocking: Failed to sync contact to Resend:', contactError);
     }
 
     // ✅ Track referrals
