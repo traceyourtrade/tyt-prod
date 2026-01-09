@@ -7,7 +7,6 @@ import { activateTrial } from "@/lib/subscription";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
 import { sendEmail, addContactToAudience } from "@/lib/resend";
-import VerificationEmail from "@/emails/VerificationEmail";
 
 const generateReferralUniqueId = () => {
   const chars =
@@ -298,12 +297,76 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Send verification email using Resend with React Email template
-    const verificationUrl = `https://app.projournx.com/verify?t=${signUpVerificationToken}`;
+    // ✅ Send verification email using Resend
     await sendEmail({
       to: email,
       subject: "Email Verification: ProJournX",
-      react: VerificationEmail({ verificationUrl }),
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Verify your email</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #040404; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #040404;">
+            <tr>
+              <td align="center" style="padding: 60px 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 440px; background-color: #0c0c0c; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);">
+                  <!-- Top Gradient Bar -->
+                  <tr>
+                    <td height="4" style="background: linear-gradient(90deg, #3b82f6, #10b981, #3b82f6); background-color: #3b82f6;"></td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding: 40px 32px; text-align: center;">
+                      <!-- Logo Section -->
+                      <div style="margin-bottom: 32px;">
+                        <img src="https://www.projournx.com/images/logo-dark.png" alt="ProJournX Logo" style="height: 40px; display: block; margin: 0 auto;">
+                      </div>
+
+                      <!-- Content Section -->
+                      <h1 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 0 0 16px 0; letter-spacing: -0.5px;">Click to verify your email</h1>
+                      <p style="color: #a1a1aa; font-size: 15px; line-height: 1.6; margin: 0 0 32px 0;">
+                        Welcome to ProJournX. Click the button below to confirm your email and unlock your full potential.
+                      </p>
+
+                      <!-- Action Button -->
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="https://app.projournx.com/verify?t=${signUpVerificationToken}" 
+                               style="display: inline-block; width: 100%; max-width: 280px; background: linear-gradient(135deg, #3b82f6, #2563eb); background-color: #3b82f6; color: #ffffff; padding: 16px 0; border-radius: 14px; font-weight: 600; text-decoration: none; font-size: 16px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">
+                              Verify Account
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Footer Info -->
+                      <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+                        <p style="color: #52525b; font-size: 13px; line-height: 1.5; margin: 0;">
+                          Didn't request this? No worries, you can safely ignore this email.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Compliance & Support -->
+                <p style="margin: 24px 0 0 0; color: #52525b; font-size: 12px;">
+                  Need help? Contact <a href="mailto:support@projournx.com" style="color: #3b82f6; text-decoration: none;">support@projournx.com</a>
+                </p>
+                <p style="margin: 8px 0 0 0; color: #3f3f46; font-size: 11px;">
+                  © 2026 ProJournX. All rights reserved.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
     });
 
     return NextResponse.json(

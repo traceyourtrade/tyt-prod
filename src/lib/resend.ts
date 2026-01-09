@@ -1,5 +1,4 @@
 import { Resend } from 'resend';
-import * as React from 'react';
 
 let connectionSettings: any;
 
@@ -55,14 +54,12 @@ export async function sendEmail({
   to,
   subject,
   html,
-  react,
   from,
   replyTo
 }: {
   to: string;
   subject: string;
-  html?: string;
-  react?: React.ReactElement;
+  html: string;
   from?: string;
   replyTo?: string;
 }) {
@@ -72,26 +69,20 @@ export async function sendEmail({
     from: string;
     to: string;
     subject: string;
-    html?: string;
-    react?: React.ReactElement;
+    html: string;
     reply_to?: string;
   } = {
     from: from || fromEmail || 'ProJournX <noreply@projournx.com>',
     to,
-    subject
+    subject,
+    html
   };
-  
-  if (react) {
-    emailPayload.react = react;
-  } else if (html) {
-    emailPayload.html = html;
-  }
   
   if (replyTo) {
     emailPayload.reply_to = replyTo;
   }
   
-  const result = await client.emails.send(emailPayload as any);
+  const result = await client.emails.send(emailPayload);
   
   return result;
 }
