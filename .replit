@@ -43,3 +43,4 @@ build = ["npm", "run", "build"]
 
 [userenv.shared]
 NEXT_PUBLIC_ADMIN_API_URL = "https://d79a07a8-1f6d-4b5f-a951-6202487ee4ab-00-bdq72o4dzmbp.sisko.replit.dev"
+RESEND_AUDIENCE_ID = "70ce6a3d-0da2-4d41-ace1-faec089a95dd"
