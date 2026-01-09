@@ -77,3 +77,66 @@ export async function sendEmail({
   
   return result;
 }
+
+const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID;
+
+export async function addContactToAudience({
+  email,
+  firstName,
+  lastName,
+  unsubscribed = false
+}: {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  unsubscribed?: boolean;
+}) {
+  if (!AUDIENCE_ID) {
+    console.warn('[Resend] RESEND_AUDIENCE_ID not configured, skipping contact sync');
+    return null;
+  }
+  
+  const { client } = await getResendClient();
+  
+  try {
+    const result = await client.contacts.create({
+      email,
+      firstName: firstName || '',
+      lastName: lastName || '',
+      unsubscribed,
+      audienceId: AUDIENCE_ID
+    });
+    
+    console.log(`[Resend] Contact added: ${email}`);
+    return result;
+  } catch (error: any) {
+    if (error?.message?.includes('already exists')) {
+      console.log(`[Resend] Contact already exists: ${email}`);
+      return { data: null, error: null };
+    }
+    console.error(`[Resend] Failed to add contact ${email}:`, error);
+    throw error;
+  }
+}
+
+export async function removeContactFromAudience(email: string) {
+  if (!AUDIENCE_ID) {
+    console.warn('[Resend] RESEND_AUDIENCE_ID not configured, skipping contact removal');
+    return null;
+  }
+  
+  const { client } = await getResendClient();
+  
+  try {
+    const result = await client.contacts.remove({
+      email,
+      audienceId: AUDIENCE_ID
+    });
+    
+    console.log(`[Resend] Contact removed: ${email}`);
+    return result;
+  } catch (error) {
+    console.error(`[Resend] Failed to remove contact ${email}:`, error);
+    throw error;
+  }
+}

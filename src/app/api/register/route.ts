@@ -6,7 +6,7 @@ import { getNoteModel } from "@/models/main/notes.model";
 import { activateTrial } from "@/lib/subscription";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
-import { sendEmail } from "@/lib/resend";
+import { sendEmail, addContactToAudience } from "@/lib/resend";
 
 const generateReferralUniqueId = () => {
   const chars =
@@ -189,6 +189,21 @@ export async function POST(req: Request) {
 
     await user.save();
     await notes.save();
+
+    // ✅ Sync user to Resend contacts for bulk emails
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    
+    try {
+      await addContactToAudience({
+        email,
+        firstName,
+        lastName
+      });
+    } catch (contactError) {
+      console.error('[REGISTER] Non-blocking: Failed to add contact to Resend:', contactError);
+    }
 
     // ✅ Track referrals
     if (referralCode || couponCode) {
