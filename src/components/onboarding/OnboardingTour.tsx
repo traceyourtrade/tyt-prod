@@ -321,6 +321,22 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
   };
 
   const getTooltipPosition = useCallback(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const padding = 16;
+    const tooltipWidth = isMobile ? Math.min(320, window.innerWidth - 32) : 320;
+    const tooltipHeight = 180;
+
+    // On mobile, always position tooltip at bottom center of screen
+    if (isMobile) {
+      return { 
+        bottom: `${padding}px`,
+        left: '50%',
+        top: 'auto',
+        transform: 'translateX(-50%)',
+        width: `${tooltipWidth}px`
+      };
+    }
+
     if (!targetRect) {
       return { 
         top: '50%', 
@@ -330,9 +346,6 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
     }
     
     const position = currentStepData?.position || 'right';
-    const padding = 16;
-    const tooltipWidth = 320;
-    const tooltipHeight = 180;
 
     let top: number;
     let left: number;
@@ -371,7 +384,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9998] pointer-events-none">
+      <div className="fixed inset-0 z-[10000] pointer-events-none">
         <svg className="absolute inset-0 w-full h-full pointer-events-auto" style={{ zIndex: 1 }}>
           <defs>
             <mask id="spotlight-mask">
