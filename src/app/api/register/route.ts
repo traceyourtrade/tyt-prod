@@ -6,7 +6,7 @@ import { getNoteModel } from "@/models/main/notes.model";
 import { activateTrial } from "@/lib/subscription";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
-import nodemailer from "nodemailer";
+import { sendEmail } from "@/lib/resend";
 
 const generateReferralUniqueId = () => {
   const chars =
@@ -282,17 +282,8 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Send verification email
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.GMAIL,
-        pass: process.env.GMAILPOS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.MAIL,
+    // ✅ Send verification email using Resend
+    await sendEmail({
       to: email,
       subject: "Email Verification: ProJournX",
       html: `
@@ -353,7 +344,7 @@ export async function POST(req: Request) {
                   Need help? Contact <a href="mailto:support@projournx.com" style="color: #3b82f6; text-decoration: none;">support@projournx.com</a>
                 </p>
                 <p style="margin: 8px 0 0 0; color: #3f3f46; font-size: 11px;">
-                  © 2025 ProJournX. All rights reserved.
+                  © 2026 ProJournX. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -361,9 +352,7 @@ export async function POST(req: Request) {
         </body>
         </html>
       `,
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
 
     return NextResponse.json(
       { message: "Registration successful. Verification email sent." },

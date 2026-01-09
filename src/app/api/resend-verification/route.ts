@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { getUserModel } from "@/models/main/user.model";
 import { cookies } from "next/headers";
-import nodemailer from "nodemailer";
+import { sendEmail } from "@/lib/resend";
 
 export async function POST(req: Request) {
   try {
@@ -47,16 +47,7 @@ export async function POST(req: Request) {
       { $set: { signUpVerificationToken } }
     );
 
-    const transporter = nodemailer.createTransport({
-      service: "Gmail",
-      auth: {
-        user: process.env.GMAIL,
-        pass: process.env.GMAILPOS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.MAIL,
+    await sendEmail({
       to: user.email,
       subject: "Email Verification: ProJournX",
       html: `
@@ -106,7 +97,7 @@ export async function POST(req: Request) {
                   Need help? Contact <a href="mailto:support@projournx.com" style="color: #3b82f6; text-decoration: none;">support@projournx.com</a>
                 </p>
                 <p style="margin: 8px 0 0 0; color: #3f3f46; font-size: 11px;">
-                  © 2025 ProJournX. All rights reserved.
+                  © 2026 ProJournX. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -114,9 +105,7 @@ export async function POST(req: Request) {
         </body>
         </html>
       `,
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
 
     return NextResponse.json({ message: "Verification email sent" }, { status: 200 });
   } catch (error) {
