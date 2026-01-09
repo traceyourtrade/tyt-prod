@@ -82,9 +82,15 @@ export async function sendEmail({
     emailPayload.reply_to = replyTo;
   }
   
-  const result = await client.emails.send(emailPayload);
+  const { data, error } = await client.emails.send(emailPayload);
   
-  return result;
+  if (error) {
+    console.error('[Resend] Email send failed:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
+  }
+  
+  console.log(`[Resend] Email sent successfully to ${to}`);
+  return { data, error: null };
 }
 
 const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID;

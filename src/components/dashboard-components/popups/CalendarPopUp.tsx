@@ -917,7 +917,7 @@ const CalendarPopup = () => {
                       <StatCard 
                         icon={faLayerGroup} 
                         label="Total Lots" 
-                        value={totalLots.toFixed(2)}
+                        value={(Number(totalLots) || 0).toFixed(2)}
                         valueColor="text-blue-400"
                         iconBg="bg-blue-500/10"
                         index={4}
