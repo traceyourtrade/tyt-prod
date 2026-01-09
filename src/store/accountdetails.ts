@@ -41,6 +41,7 @@ interface AccountDetailsState {
   strategies: Strategy[];
   loading: boolean;
   error: string | null;
+  syncingAccounts: Set<string>;
 
   // Actions
   setAccounts: () => Promise<void>;
@@ -69,6 +70,8 @@ interface AccountDetailsState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  setSyncingAccount: (accountName: string, isSyncing: boolean) => void;
+  isAccountSyncing: (accountName: string) => boolean;
 }
 
 // 🔹 API URLs - Updated for Next.js endpoints
@@ -81,12 +84,28 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   strategies: [],
   loading: false,
   error: null,
+  syncingAccounts: new Set<string>(),
 
   setLoading: (loading: boolean) => set({ loading }),
 
   setError: (error: string | null) => set({ error }),
 
   clearError: () => set({ error: null }),
+
+  setSyncingAccount: (accountName: string, isSyncing: boolean) => {
+    const { syncingAccounts } = get();
+    const newSet = new Set(syncingAccounts);
+    if (isSyncing) {
+      newSet.add(accountName);
+    } else {
+      newSet.delete(accountName);
+    }
+    set({ syncingAccounts: newSet });
+  },
+
+  isAccountSyncing: (accountName: string) => {
+    return get().syncingAccounts.has(accountName);
+  },
 
   setAccounts: async () => {
     try {

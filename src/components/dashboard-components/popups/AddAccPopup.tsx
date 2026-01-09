@@ -143,7 +143,7 @@ const marketCategories: MarketCategory[] = [
 
 const AddAccPopup = () => {
   const { showAddAcc, setAddAcc } = calendarPopUp();
-  const { setAccounts } = useAccountDetails();
+  const { setAccounts, setSyncingAccount } = useAccountDetails();
   const { setAlertBoxG } = notifications();
 
   const [accountType, setAccountType] = useState<string>("");
@@ -238,6 +238,9 @@ const AddAccPopup = () => {
       setIsSyncing(true);
       setSyncProgress(0);
       setSyncStatus("Connecting to MT5 server...");
+      
+      // Set global syncing state for dashboard indicator
+      setSyncingAccount(accountName, true);
 
       // Clear any existing interval
       if (syncIntervalRef.current) {
@@ -289,12 +292,14 @@ const AddAccPopup = () => {
           setSyncStatus("Sync complete!");
           setSuccess("MT5 account connected successfully!");
           setTimeout(() => {
+            setSyncingAccount(accountName, false);
             setAddAcc();
             setAlertBoxG("MT5 account connected! Your trades will sync automatically.", "success");
             setAccounts();
             setIsSyncing(false);
           }, 1500);
         } else {
+          setSyncingAccount(accountName, false);
           setIsSyncing(false);
           handleApiError(data.error);
         }
@@ -304,6 +309,7 @@ const AddAccPopup = () => {
           clearInterval(syncIntervalRef.current);
           syncIntervalRef.current = null;
         }
+        setSyncingAccount(accountName, false);
         setIsSyncing(false);
         setError("Connection failed. Please check your credentials and try again.");
       }

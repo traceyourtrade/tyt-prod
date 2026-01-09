@@ -13,7 +13,9 @@ import {
   Wallet,
   Settings,
   Zap,
-  Trash2
+  Trash2,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
@@ -33,7 +35,7 @@ const AccountsDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const { accounts, updateAccView, checkAll } = useAccountDetails();
+  const { accounts, updateAccView, checkAll, syncingAccounts } = useAccountDetails();
   const { setAddAcc, setDeleteAccData, setDeleteAcc } = calendarPopUp();
   const { isEnabled: isPropFirmMode } = usePropFirmStore();
 
@@ -235,13 +237,27 @@ const AccountsDropdown = () => {
                         <p className="text-sm font-medium text-foreground truncate">
                           {account.accountName}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {account.broker || account.accountType || "Trading Account"}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          {syncingAccounts.has(account.accountName) ? (
+                            <span className="flex items-center gap-1 text-xs text-amber-500">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Syncing...
+                            </span>
+                          ) : account.accountType === 'Broker Sync' ? (
+                            <span className="flex items-center gap-1 text-xs text-emerald-500">
+                              <RefreshCw className="w-3 h-3" />
+                              Auto-sync
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground truncate">
+                              {account.broker || account.accountType || "Trading Account"}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Balance */}
-                      {account.accountBalance && (
+                      {account.accountBalance && !syncingAccounts.has(account.accountName) && (
                         <span 
                           onClick={() => handleToggleAccount(account.accountName)}
                           className="text-xs font-medium text-profit flex-shrink-0 cursor-pointer"
