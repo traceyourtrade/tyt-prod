@@ -49,7 +49,7 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
 - **Database:** MongoDB (for user data, backtest sessions, and trading accounts).
 - **Authentication:** Google OAuth, JWT-based sessions.
 - **Storage:** AWS S3 for image uploads.
-- **Email:** Nodemailer with Gmail.
+- **Email:** Resend (professional email delivery with automatic contact syncing to Resend Audiences for bulk campaigns).
 - **UI Libraries:** Material-UI, Framer Motion, Chart.js, Recharts.
 - **Market Data:** Polygon.io API (exclusive for FOREX chart data).
 - **Payment Gateway:** Razorpay.
