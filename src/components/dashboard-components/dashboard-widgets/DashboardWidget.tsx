@@ -198,8 +198,8 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
           <span className="text-xs font-medium text-muted-foreground">Win Rate</span>
         </div>
         
-        <div className="flex items-end justify-between gap-2">
-          <div className="flex-shrink-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-shrink-0 mt-1">
             <p className="text-lg font-bold text-foreground">{winrate}%</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{totalTrades} trades</p>
           </div>
