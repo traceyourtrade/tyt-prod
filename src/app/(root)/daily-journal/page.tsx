@@ -322,6 +322,17 @@ const DailyJournal = () => {
   const confirmModalRef = useRef<HTMLDivElement>(null);
   const saveTemplateModalRef = useRef<HTMLDivElement>(null);
 
+  // Draft buffer to preserve unsaved journal content across account refreshes
+  const draftJournalRef = useRef<Record<string, JournalData>>({});
+
+  // Helper to get stable trade ID (normalized to string for consistent lookups)
+  const getTradeId = (trade: Trade | null): string => {
+    if (!trade) return "";
+    // Normalize all ID types to string for consistent draft buffer keys
+    const id = trade._id || trade.id || (trade as any).Ticket;
+    return id !== undefined && id !== null ? String(id) : "";
+  };
+
   // Removed tab states - now using single scrollable view for center content and right panel
 
   const existingStrategies: string[] = (profileData?.otherData?.strategy || []).filter((s: string) => s && s !== "Select");
@@ -454,7 +465,18 @@ const DailyJournal = () => {
   }, [selectedTrade?.strategy, selectedTrade?.id]);
 
   useEffect(() => {
-    if (selectedTrade?.jrData) {
+    const tradeId = getTradeId(selectedTrade);
+    
+    // Check if we have a draft for this trade (unsaved content)
+    const draftData = tradeId ? draftJournalRef.current[tradeId] : null;
+    
+    if (draftData) {
+      // Restore draft data
+      setJournalData(draftData);
+      const templateName = draftData.templateId;
+      const idx = templates.findIndex((t) => t.name === templateName);
+      if (idx >= 0) setSelectedTemplateIdx(idx);
+    } else if (selectedTrade?.jrData) {
       setJournalData(selectedTrade.jrData);
       const templateName = selectedTrade.jrData.templateId;
       const idx = templates.findIndex((t) => t.name === templateName);
@@ -511,12 +533,21 @@ const DailyJournal = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [filteredTrades, tradeFilter, selectedTrade, isDemo, isSaving]);
 
-  // Track unsaved changes
+  // Track unsaved changes and save to draft buffer
   useEffect(() => {
     if (selectedTrade) {
+      const tradeId = getTradeId(selectedTrade);
       const originalData = selectedTrade.jrData || {};
       const hasChanges = JSON.stringify(journalData) !== JSON.stringify(originalData);
       setHasUnsavedChanges(hasChanges);
+      
+      // Save to draft if there are unsaved changes
+      if (hasChanges && tradeId) {
+        draftJournalRef.current[tradeId] = journalData;
+      } else if (!hasChanges && tradeId) {
+        // Clear draft if no changes
+        delete draftJournalRef.current[tradeId];
+      }
     }
   }, [journalData, selectedTrade]);
 
@@ -752,8 +783,9 @@ const DailyJournal = () => {
         (t.id || t._id) === tradeId ? { ...t, jrData: jrDataWithRules } : t
       ));
       
-      // Reset unsaved changes indicator
+      // Reset unsaved changes indicator and clear draft
       setHasUnsavedChanges(false);
+      delete draftJournalRef.current[tradeId];
       
       setAccounts();
     } catch (error) {
