@@ -109,23 +109,23 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
   return (
     <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-muted/50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-muted/50">
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </div>
           <h3 className="text-sm font-semibold text-foreground">
             Net Cumulative P&L
           </h3>
         </div>
-        <button className="p-2 rounded-lg hover:bg-muted/50 transition-colors">
+        <button className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors">
           <Info className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
 
       {/* Chart */}
-      <div className="p-3">
-        <ResponsiveContainer width="100%" height={200}>
+      <div className="p-2">
+        <ResponsiveContainer width="100%" height={160}>
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               {getGradientConfig()}
