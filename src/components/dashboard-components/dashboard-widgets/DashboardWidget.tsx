@@ -205,10 +205,10 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
           </div>
           
           <div className="flex flex-col items-center flex-shrink-0">
-            <div className="relative w-[100px] h-[55px]">
+            <div className="relative w-[100px] h-[50px]">
               <Doughnut data={dataWinLoss} options={optionsWinLoss} />
             </div>
-            <div className="flex items-center justify-between w-[100px] -mt-2">
+            <div className="flex items-center justify-between w-[100px] mt-0.5">
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-profit/20 text-profit">{winners}</span>
               <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-muted/50 text-muted-foreground">0</span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-loss/20 text-loss">{losers}</span>
