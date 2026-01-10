@@ -160,7 +160,7 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
             <Tooltip content={<CustomTooltip />} />
 
             <Area
-              type="monotone"
+              type="linear"
               dataKey="value"
               stroke={strokeColor}
               strokeWidth={2}
