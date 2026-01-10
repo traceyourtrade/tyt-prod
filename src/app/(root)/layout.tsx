@@ -74,7 +74,6 @@ import AnnouncementBanner from "@/components/AnnouncementBanner";
 import DemoModeBanner from "@/components/DemoModeBanner";
 import PhaseAdvancementNotification from "@/components/prop-firm/PhaseAdvancementNotification";
 import OnboardingTour, { WelcomeModal } from "@/components/onboarding/OnboardingTour";
-import WhatsAppSupport from "@/components/shared/WhatsAppSupport";
 import { platformTourSteps } from "@/hooks/useOnboardingTour";
 import { useTourStore } from "@/stores/useTourStore";
 
@@ -1225,9 +1224,6 @@ export default function RootLayout({
         onComplete={completeTour}
         onSkip={skipTour}
       />
-
-      {/* WhatsApp Support Button */}
-      <WhatsAppSupport />
     </div>
   );
 }

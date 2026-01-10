@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
-import WhatsAppSupport from "@/components/shared/WhatsAppSupport";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -288,8 +287,6 @@ export default function LoginPage() {
           <p className="text-xs text-zinc-600">Charts by TradingView</p>
         </div>
       </motion.div>
-
-      <WhatsAppSupport />
     </div>
   );
 }
