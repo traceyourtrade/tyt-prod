@@ -121,40 +121,46 @@ const DashboardMonth: React.FC = () => {
         <DashWidgets {...dashWidgetProps} />
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {isWidgetVisible('calendar') && (
-          <div className="xl:col-span-2">
-            <Calendar />
-          </div>
-        )}
-
-        <div className="xl:col-span-1 flex flex-col gap-4">
-          {isWidgetVisible('cumulative-pnl') && (
-            <PnLDailyChart data={data} />
+      {(isWidgetVisible('calendar') || isWidgetVisible('cumulative-pnl') || isWidgetVisible('trades-table')) && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {isWidgetVisible('calendar') && (
+            <div className="xl:col-span-2">
+              <Calendar />
+            </div>
           )}
-          {isWidgetVisible('trades-table') && (
-            <TradesWidget data={thisMonthData} />
+
+          {(isWidgetVisible('cumulative-pnl') || isWidgetVisible('trades-table')) && (
+            <div className="xl:col-span-1 flex flex-col gap-4">
+              {isWidgetVisible('cumulative-pnl') && (
+                <PnLDailyChart data={data} />
+              )}
+              {isWidgetVisible('trades-table') && (
+                <TradesWidget data={thisMonthData} />
+              )}
+            </div>
           )}
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {isWidgetVisible('daily-pnl-bar') && (
-          <DailyPnLBarChart data={thisMonthData} />
-        )}
-        {isWidgetVisible('day-of-week') && (
-          <DayOfWeekChart data={thisMonthData} />
-        )}
-        {isWidgetVisible('symbol-pnl') && (
-          <SymbolPnLChart data={thisMonthData} />
-        )}
-        {isWidgetVisible('hourly-pnl') && (
-          <HourlyPnLChart data={thisMonthData} />
-        )}
-        {isWidgetVisible('radar') && (
-          <Radar />
-        )}
-      </div>
+      {(isWidgetVisible('daily-pnl-bar') || isWidgetVisible('day-of-week') || isWidgetVisible('symbol-pnl') || isWidgetVisible('hourly-pnl') || isWidgetVisible('radar')) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {isWidgetVisible('daily-pnl-bar') && (
+            <DailyPnLBarChart data={thisMonthData} />
+          )}
+          {isWidgetVisible('day-of-week') && (
+            <DayOfWeekChart data={thisMonthData} />
+          )}
+          {isWidgetVisible('symbol-pnl') && (
+            <SymbolPnLChart data={thisMonthData} />
+          )}
+          {isWidgetVisible('hourly-pnl') && (
+            <HourlyPnLChart data={thisMonthData} />
+          )}
+          {isWidgetVisible('radar') && (
+            <Radar />
+          )}
+        </div>
+      )}
 
       {isWidgetVisible('daily-cumulative-pnl') && (
         <div className="grid grid-cols-1">
@@ -162,22 +168,24 @@ const DashboardMonth: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {isWidgetVisible('trade-duration') && (
-          <TradeDurationChart trades={allTradeData} />
-        )}
-        {isWidgetVisible('win-rate-metrics') && (
-          <WinRateMetricsChart trades={allTradeData} />
-        )}
-        {isWidgetVisible('drawdown') && (
-          <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
-        )}
-        {isWidgetVisible('progress-tracker') && (
-          <div className="md:col-span-2">
-            <ProgressTracker trades={allTradeData} />
-          </div>
-        )}
-      </div>
+      {(isWidgetVisible('trade-duration') || isWidgetVisible('win-rate-metrics') || isWidgetVisible('drawdown') || isWidgetVisible('progress-tracker')) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {isWidgetVisible('trade-duration') && (
+            <TradeDurationChart trades={allTradeData} />
+          )}
+          {isWidgetVisible('win-rate-metrics') && (
+            <WinRateMetricsChart trades={allTradeData} />
+          )}
+          {isWidgetVisible('drawdown') && (
+            <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
+          )}
+          {isWidgetVisible('progress-tracker') && (
+            <div className="md:col-span-2">
+              <ProgressTracker trades={allTradeData} />
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 
@@ -187,63 +195,71 @@ const DashboardMonth: React.FC = () => {
         <DashWidgets {...dashWidgetProps} />
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
-        {isWidgetVisible('radar') && (
-          <Radar />
-        )}
-        {isWidgetVisible('cumulative-pnl') && (
-          <PnLDailyChart data={data} />
-        )}
-        {isWidgetVisible('daily-cumulative-pnl') && (
-          <DailyCumulativePnLChart trades={allTradeData} />
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {isWidgetVisible('calendar') && (
-          <div className="xl:col-span-2">
-            <Calendar />
-          </div>
-        )}
-
-        <div className="xl:col-span-1 flex flex-col gap-4">
-          {isWidgetVisible('trades-table') && (
-            <TradesWidget data={thisMonthData} />
+      {(isWidgetVisible('radar') || isWidgetVisible('cumulative-pnl') || isWidgetVisible('daily-cumulative-pnl')) && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+          {isWidgetVisible('radar') && (
+            <Radar />
+          )}
+          {isWidgetVisible('cumulative-pnl') && (
+            <PnLDailyChart data={data} />
+          )}
+          {isWidgetVisible('daily-cumulative-pnl') && (
+            <DailyCumulativePnLChart trades={allTradeData} />
           )}
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {isWidgetVisible('daily-pnl-bar') && (
-          <DailyPnLBarChart data={thisMonthData} />
-        )}
-        {isWidgetVisible('day-of-week') && (
-          <DayOfWeekChart data={thisMonthData} />
-        )}
-        {isWidgetVisible('symbol-pnl') && (
-          <SymbolPnLChart data={thisMonthData} />
-        )}
-        {isWidgetVisible('hourly-pnl') && (
-          <HourlyPnLChart data={thisMonthData} />
-        )}
-      </div>
+      {(isWidgetVisible('calendar') || isWidgetVisible('trades-table')) && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {isWidgetVisible('calendar') && (
+            <div className="xl:col-span-2">
+              <Calendar />
+            </div>
+          )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {isWidgetVisible('trade-duration') && (
-          <TradeDurationChart trades={allTradeData} />
-        )}
-        {isWidgetVisible('win-rate-metrics') && (
-          <WinRateMetricsChart trades={allTradeData} />
-        )}
-        {isWidgetVisible('drawdown') && (
-          <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
-        )}
-        {isWidgetVisible('progress-tracker') && (
-          <div className="md:col-span-2">
-            <ProgressTracker trades={allTradeData} />
-          </div>
-        )}
-      </div>
+          {isWidgetVisible('trades-table') && (
+            <div className="xl:col-span-1 flex flex-col gap-4">
+              <TradesWidget data={thisMonthData} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {(isWidgetVisible('daily-pnl-bar') || isWidgetVisible('day-of-week') || isWidgetVisible('symbol-pnl') || isWidgetVisible('hourly-pnl')) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {isWidgetVisible('daily-pnl-bar') && (
+            <DailyPnLBarChart data={thisMonthData} />
+          )}
+          {isWidgetVisible('day-of-week') && (
+            <DayOfWeekChart data={thisMonthData} />
+          )}
+          {isWidgetVisible('symbol-pnl') && (
+            <SymbolPnLChart data={thisMonthData} />
+          )}
+          {isWidgetVisible('hourly-pnl') && (
+            <HourlyPnLChart data={thisMonthData} />
+          )}
+        </div>
+      )}
+
+      {(isWidgetVisible('trade-duration') || isWidgetVisible('win-rate-metrics') || isWidgetVisible('drawdown') || isWidgetVisible('progress-tracker')) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {isWidgetVisible('trade-duration') && (
+            <TradeDurationChart trades={allTradeData} />
+          )}
+          {isWidgetVisible('win-rate-metrics') && (
+            <WinRateMetricsChart trades={allTradeData} />
+          )}
+          {isWidgetVisible('drawdown') && (
+            <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
+          )}
+          {isWidgetVisible('progress-tracker') && (
+            <div className="md:col-span-2">
+              <ProgressTracker trades={allTradeData} />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
