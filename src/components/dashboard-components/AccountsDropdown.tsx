@@ -42,7 +42,9 @@ const AccountsDropdown = () => {
   const filteredAccounts = useMemo(() => {
     return accounts.filter(acc => {
       const isAccountPropFirm = acc.isPropFirm === true;
-      return isPropFirmMode ? isAccountPropFirm : !isAccountPropFirm;
+      // In Prop Firm mode: only show prop firm accounts
+      // In Live Trading mode: show ALL accounts (including prop firm)
+      return isPropFirmMode ? isAccountPropFirm : true;
     });
   }, [accounts, isPropFirmMode]);
 
