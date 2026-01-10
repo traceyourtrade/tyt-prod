@@ -115,15 +115,21 @@ export async function addContactToAudience({
   unsubscribed?: boolean;
   subscriptionData?: ContactSubscriptionData;
 }) {
+  console.log('[Resend] addContactToAudience called for:', email);
+  console.log('[Resend] AUDIENCE_ID:', AUDIENCE_ID ? 'configured' : 'NOT configured');
+  
   if (!AUDIENCE_ID) {
     console.warn('[Resend] RESEND_AUDIENCE_ID not configured, skipping contact sync');
     return null;
   }
   
-  const { client, } = await getResendClient();
+  const { client } = await getResendClient();
   const { apiKey } = await getCredentials();
+  console.log('[Resend] Got credentials, API key present:', !!apiKey);
   
   try {
+    console.log('[Resend] Creating contact with params:', { email, firstName: firstName || '', lastName: lastName || '', audienceId: AUDIENCE_ID });
+    
     const { data, error } = await client.contacts.create({
       email,
       firstName: firstName || '',
@@ -131,6 +137,8 @@ export async function addContactToAudience({
       unsubscribed,
       audienceId: AUDIENCE_ID
     });
+    
+    console.log('[Resend] Contact create response - data:', data, 'error:', error);
     
     if (error) {
       if (error.message?.includes('already exists')) {
@@ -141,7 +149,7 @@ export async function addContactToAudience({
       throw new Error(error.message || 'Failed to create contact');
     }
     
-    console.log(`[Resend] Contact added: ${email}`);
+    console.log(`[Resend] Contact added successfully: ${email}`);
     
     // Apply subscription data properties if provided
     if (subscriptionData && data?.id) {
@@ -198,12 +206,15 @@ export async function updateContactInAudience({
   subscriptionData?: ContactSubscriptionData;
   retryCount?: number;
 }) {
+  console.log('[Resend] updateContactInAudience called for:', email);
+  
   if (!AUDIENCE_ID) {
     console.warn('[Resend] RESEND_AUDIENCE_ID not configured, skipping contact update');
     return null;
   }
   
   const { apiKey } = await getCredentials();
+  console.log('[Resend] Got credentials for update, API key present:', !!apiKey);
   const MAX_RETRIES = 3;
   
   try {
@@ -276,6 +287,7 @@ export async function syncContactWithSubscription(user: {
   };
   date?: Date | string;
 }) {
+  console.log('[Resend] syncContactWithSubscription called for:', user.email);
   const nameParts = (user.fullName || '').split(' ');
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';

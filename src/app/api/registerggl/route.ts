@@ -7,6 +7,7 @@ import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
 import { GoogleAuthRequest, UserData, NotesData } from "@/types/auth";
 import { activateTrial } from "@/lib/subscription";
+import { syncContactWithSubscription } from "@/lib/resend";
 
 const generateReferralUniqueId = () => {
   const chars =
@@ -202,6 +203,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       await user.save();
       await notes.save();
+
+      // ✅ Sync user to Resend contacts for bulk emails
+      try {
+        await syncContactWithSubscription({
+          email,
+          fullName,
+          subscription: {
+            isSubscribed: false,
+            subscriptionStatus: 'pending',
+            trialEndsAt: undefined,
+            trialUsed: false
+          },
+          date: new Date()
+        });
+        console.log('[GOOGLE SIGNUP] ✅ Contact synced to Resend');
+      } catch (contactError) {
+        console.error('[GOOGLE SIGNUP] Non-blocking: Failed to sync contact to Resend:', contactError);
+      }
 
       // ✅ Track referrals
       if (referralCode || couponCode) {
