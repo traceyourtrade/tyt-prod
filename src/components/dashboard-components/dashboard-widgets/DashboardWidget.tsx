@@ -255,7 +255,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         iconColor="rose"
         dataTour="risk-reward"
       >
-        <div className="w-28 mt-1">
+        <div className="w-28">
           <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden flex">
             <div 
               className="h-full bg-profit rounded-l-full transition-all"
