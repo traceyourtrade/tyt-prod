@@ -79,7 +79,7 @@ const DailyCumulativePnLChart: React.FC<DailyCumulativePnLChartProps> = ({ trade
 
       <div className="p-2">
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid 
                 stroke="var(--border)" 
