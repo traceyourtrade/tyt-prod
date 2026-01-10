@@ -31,6 +31,7 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
 - **Theming:** Tailwind CSS with CSS variables.
 - **Currency Conversion:** Multi-currency support (USD/INR) with a fixed exchange rate (83.5 INR = 1 USD).
 - **Market Hours Warning:** ManualTradeForm provides warnings for stock/forex trades on weekends.
+- **Default Strategy:** Users can set a default strategy from the /strategies page. New manual trades automatically inherit this default strategy. Strategies marked as default display a "Default" badge on their card.
 - **Playbook:** AI-powered, rule-based pattern detection analyzes trades across strategy, symbol, time, and day, providing near-miss patterns and diagnostics.
 - **Prop Firm Mode:** Supports tracking up to 4 simultaneous prop firm challenges with per-challenge isolation, a portfolio overview, 9+ major prop firm presets, multi-phase tracking, smart alerts for drawdown limits, a scale-up calculator, and a violations timeline. It also includes auto-phase advancement with celebratory notifications.
 - **AI Analysis:** Features include a Time Insights Heatmap, Trade Quality Auto-Scorer (based on R-multiple, plan adherence, execution), and a Tilt Risk Gauge to detect losing streaks and overtrading.

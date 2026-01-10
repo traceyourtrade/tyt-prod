@@ -1641,19 +1641,42 @@ const DailyJournal = () => {
                     </div>
                     <select
                       value={selectedTrade.strategy || ""}
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const newStrategy = e.target.value;
+                        const tradeId = selectedTrade._id || selectedTrade.id || "";
+                        
                         setSelectedTrade(prev => prev ? { ...prev, strategy: newStrategy } : null);
                         setTrades(prev => prev.map(t => 
                           (t.id || t._id) === (selectedTrade.id || selectedTrade._id) 
                             ? { ...t, strategy: newStrategy } 
                             : t
                         ));
+                        
                         if (newStrategy && newStrategy !== "Select") {
                           fetchStrategyRules(newStrategy);
                         } else {
                           setStrategyRules([]);
                           setRulesCompliance({});
+                        }
+                        
+                        if (!isDemo) {
+                          try {
+                            await fetch("/api/daily-journal/post", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                apiName: "editDropdowns",
+                                id: tradeId,
+                                type: "strategy",
+                                value: newStrategy,
+                                tokenn,
+                                accountType: selectedTrade.accountType || "",
+                              }),
+                            });
+                            setAccounts();
+                          } catch (error) {
+                            console.error("Error saving strategy:", error);
+                          }
                         }
                       }}
                       className="w-full px-2.5 py-2 bg-muted/30 border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-primary/40 transition-all cursor-pointer"

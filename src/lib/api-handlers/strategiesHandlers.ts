@@ -499,3 +499,28 @@ export async function setDefaultStrategyHandler(req:any, userId: string, token: 
         return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
     }
 }
+
+// GET DEFAULT STRATEGY
+export async function getDefaultStrategyHandler(req: NextRequest, userId: string, token: string) {
+    try {
+        const rootUser = await getUserFromToken(token);
+        if (!rootUser) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
+        const Strategy = await getStrategyModel();
+        const defaultStrategy = await Strategy.findOne({ 
+            uniqueId: rootUser.uniqueId, 
+            isDefault: true 
+        });
+
+        return NextResponse.json({ 
+            defaultStrategy: defaultStrategy ? defaultStrategy.strategy : null,
+            strategyId: defaultStrategy ? defaultStrategy._id : null
+        });
+
+    } catch (error) {
+        console.error("Error fetching default strategy:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}

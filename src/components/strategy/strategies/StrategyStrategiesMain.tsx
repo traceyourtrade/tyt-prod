@@ -32,6 +32,7 @@ interface CombinedData {
   authorImg: string;
   totalWins: number;
   totalLoses: number;
+  isDefault?: boolean;
 }
 
 interface StrategiesProps {
@@ -172,6 +173,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
 
       if (res.status === 200) {
         setOpenMenu(null);
+        window.location.reload();
       } else {
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck the Email & Password")
@@ -279,7 +281,8 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         meta.strategy || name
       )}`,
       totalWins: wins,
-      totalLoses: losses
+      totalLoses: losses,
+      isDefault: meta.isDefault || false
     };
   });
 
@@ -383,7 +386,14 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                       </div>
                     ) : (
                       <>
-                        <h3 className="text-base font-semibold text-foreground">{name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-semibold text-foreground">{name}</h3>
+                          {s.isDefault && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary rounded">
+                              Default
+                            </span>
+                          )}
+                        </div>
                         <button
                           className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                           onClick={(e) => {
@@ -415,12 +425,14 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                         >
                           Delete
                         </button>
-                        <button 
-                          className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
-                          onClick={(e) => { e.stopPropagation(); handleMakeDefault(e, s.id); }}
-                        >
-                          Make Default
-                        </button>
+                        {!s.isDefault && (
+                          <button 
+                            className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                            onClick={(e) => { e.stopPropagation(); handleMakeDefault(e, s.id); }}
+                          >
+                            Make Default
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

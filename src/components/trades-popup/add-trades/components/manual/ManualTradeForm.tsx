@@ -140,6 +140,22 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
+  const [defaultStrategy, setDefaultStrategy] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchDefaultStrategy = async () => {
+      try {
+        const res = await fetch('/api/strategy/get?apiName=getDefaultStrategy');
+        if (res.ok) {
+          const data = await res.json();
+          setDefaultStrategy(data.defaultStrategy);
+        }
+      } catch (error) {
+        console.error("Error fetching default strategy:", error);
+      }
+    };
+    fetchDefaultStrategy();
+  }, []);
   
   const [trades, setTrades] = useState<TradeEntry[]>([{
     id: generateId(),
@@ -461,7 +477,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
           Commission: commission,
           Swap: 0,
           Profit: profit,
-          Strategy: "",
+          strategy: defaultStrategy || "",
           RiskR: "",
           Quality: { select: false, high: false, medium: false, low: false },
         };

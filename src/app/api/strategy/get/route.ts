@@ -4,7 +4,8 @@ import { verifyProAccess } from '@/lib/subscription';
 
 import { 
     getStrategiesHandler,
-    getStrategyRulesHandler
+    getStrategyRulesHandler,
+    getDefaultStrategyHandler
 } from '../../../../lib/api-handlers/strategiesHandlers';
 
 export async function GET(req: NextRequest) {
@@ -35,6 +36,9 @@ export async function GET(req: NextRequest) {
             
             case "getStrategyRules":
                 return await getStrategyRulesHandler(req, userId, token);
+            
+            case "getDefaultStrategy":
+                return await getDefaultStrategyHandler(req, userId, token);
             
             default:
                 return NextResponse.json({ error: "API endpoint not found" }, { status: 404 });
