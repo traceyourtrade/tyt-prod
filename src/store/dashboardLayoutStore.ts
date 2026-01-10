@@ -24,12 +24,16 @@ const DEFAULT_GRID_POSITIONS: GridPosition[] = [
   { i: 'radar', x: 4, y: 11, w: 4, h: 3, minW: 3, minH: 2 },
 ];
 
+export type LayoutMode = 'view1' | 'view2';
+
 interface DashboardLayoutState {
   layout: WidgetLayoutItem[];
   gridPositions: GridPosition[];
   isEditMode: boolean;
+  layoutMode: LayoutMode;
   setEditMode: (enabled: boolean) => void;
   toggleEditMode: () => void;
+  setLayoutMode: (mode: LayoutMode) => void;
   updateLayout: (newLayout: WidgetLayoutItem[]) => void;
   updateGridPositions: (positions: GridPosition[]) => void;
   moveWidget: (widgetId: string, newOrder: number) => void;
@@ -46,10 +50,13 @@ const useDashboardLayoutStore = create<DashboardLayoutState>()(
       layout: DEFAULT_DASHBOARD_LAYOUT,
       gridPositions: DEFAULT_GRID_POSITIONS,
       isEditMode: false,
+      layoutMode: 'view1' as LayoutMode,
       
       setEditMode: (enabled: boolean) => set({ isEditMode: enabled }),
       
       toggleEditMode: () => set(state => ({ isEditMode: !state.isEditMode })),
+      
+      setLayoutMode: (mode: LayoutMode) => set({ layoutMode: mode }),
       
       updateLayout: (newLayout: WidgetLayoutItem[]) => set({ layout: newLayout }),
       

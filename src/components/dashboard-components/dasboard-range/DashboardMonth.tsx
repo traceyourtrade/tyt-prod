@@ -10,6 +10,7 @@ import DailyPnLBarChart from "./Graphs/DailyPnLBarChart";
 import DayOfWeekChart from "./Graphs/DayOfWeekChart";
 import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
+import LayoutSwitcher from "../LayoutSwitcher";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import useCurrencyStore, { convertTradeCurrency } from '@/store/currencyStore';
@@ -41,7 +42,7 @@ interface Account {
 const DashboardMonth: React.FC = () => {
   const { selectedAccounts } = useModeFilteredAccounts();
   const { calMonth, calYear } = datesforcal();
-  const { layout } = useDashboardLayoutStore();
+  const { layout, layoutMode } = useDashboardLayoutStore();
   const { currency, exchangeRate } = useCurrencyStore();
 
   function isCurrentMonth(dateString: string): boolean {
@@ -114,13 +115,78 @@ const DashboardMonth: React.FC = () => {
     return item?.visible ?? true;
   };
 
-  return (
-    <div className="space-y-4">
+  const renderView1 = () => (
+    <>
       {isWidgetVisible('stats-overview') && (
         <DashWidgets {...dashWidgetProps} />
       )}
 
-      {/* Performance Score - Upper Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('calendar') && (
+          <div className="xl:col-span-2">
+            <Calendar />
+          </div>
+        )}
+
+        <div className="xl:col-span-1 flex flex-col gap-4">
+          {isWidgetVisible('cumulative-pnl') && (
+            <PnLDailyChart data={data} />
+          )}
+          {isWidgetVisible('trades-table') && (
+            <TradesWidget data={thisMonthData} />
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('daily-pnl-bar') && (
+          <DailyPnLBarChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('day-of-week') && (
+          <DayOfWeekChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('symbol-pnl') && (
+          <SymbolPnLChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('hourly-pnl') && (
+          <HourlyPnLChart data={thisMonthData} />
+        )}
+        {isWidgetVisible('radar') && (
+          <Radar />
+        )}
+      </div>
+
+      {isWidgetVisible('daily-cumulative-pnl') && (
+        <div className="grid grid-cols-1">
+          <DailyCumulativePnLChart trades={allTradeData} />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('trade-duration') && (
+          <TradeDurationChart trades={allTradeData} />
+        )}
+        {isWidgetVisible('win-rate-metrics') && (
+          <WinRateMetricsChart trades={allTradeData} />
+        )}
+        {isWidgetVisible('drawdown') && (
+          <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
+        )}
+        {isWidgetVisible('progress-tracker') && (
+          <div className="md:col-span-2">
+            <ProgressTracker trades={allTradeData} />
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  const renderView2 = () => (
+    <>
+      {isWidgetVisible('stats-overview') && (
+        <DashWidgets {...dashWidgetProps} />
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {isWidgetVisible('radar') && (
           <Radar />
@@ -162,7 +228,6 @@ const DashboardMonth: React.FC = () => {
         )}
       </div>
 
-      {/* Advanced Analytics Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {isWidgetVisible('trade-duration') && (
           <TradeDurationChart trades={allTradeData} />
@@ -179,6 +244,15 @@ const DashboardMonth: React.FC = () => {
           </div>
         )}
       </div>
+    </>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <LayoutSwitcher />
+      </div>
+      {layoutMode === 'view1' ? renderView1() : renderView2()}
     </div>
   );
 };
