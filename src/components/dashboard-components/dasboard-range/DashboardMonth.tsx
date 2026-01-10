@@ -120,6 +120,19 @@ const DashboardMonth: React.FC = () => {
         <DashWidgets {...dashWidgetProps} />
       )}
 
+      {/* Performance Score - Upper Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {isWidgetVisible('radar') && (
+          <Radar />
+        )}
+        {isWidgetVisible('cumulative-pnl') && (
+          <PnLDailyChart data={data} />
+        )}
+        {isWidgetVisible('daily-cumulative-pnl') && (
+          <DailyCumulativePnLChart trades={allTradeData} />
+        )}
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {isWidgetVisible('calendar') && (
           <div className="xl:col-span-2">
@@ -128,9 +141,6 @@ const DashboardMonth: React.FC = () => {
         )}
 
         <div className="xl:col-span-1 flex flex-col gap-4">
-          {isWidgetVisible('cumulative-pnl') && (
-            <PnLDailyChart data={data} />
-          )}
           {isWidgetVisible('trades-table') && (
             <TradesWidget data={thisMonthData} />
           )}
@@ -150,11 +160,6 @@ const DashboardMonth: React.FC = () => {
         {isWidgetVisible('hourly-pnl') && (
           <HourlyPnLChart data={thisMonthData} />
         )}
-        {isWidgetVisible('radar') && (
-          <div className="md:col-span-2">
-            <Radar />
-          </div>
-        )}
       </div>
 
       {/* Advanced Analytics Section */}
@@ -164,9 +169,6 @@ const DashboardMonth: React.FC = () => {
         )}
         {isWidgetVisible('win-rate-metrics') && (
           <WinRateMetricsChart trades={allTradeData} />
-        )}
-        {isWidgetVisible('daily-cumulative-pnl') && (
-          <DailyCumulativePnLChart trades={allTradeData} />
         )}
         {isWidgetVisible('drawdown') && (
           <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
