@@ -248,13 +248,13 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         dataTour="risk-reward"
       >
         <div className="w-full">
-          <div className="w-full h-1.5 bg-muted/30 rounded-full overflow-hidden flex">
+          <div className="w-full h-2.5 bg-muted/30 rounded-full overflow-hidden flex">
             <div 
-              className="h-full bg-foreground/40 rounded-l-full transition-all"
+              className="h-full bg-profit rounded-l-full transition-all"
               style={{ width: `${avgProfitPercentage}%` }}
             />
             <div 
-              className="h-full bg-foreground/15 rounded-r-full transition-all"
+              className="h-full bg-loss rounded-r-full transition-all"
               style={{ width: `${100 - avgProfitPercentage}%` }}
             />
           </div>
