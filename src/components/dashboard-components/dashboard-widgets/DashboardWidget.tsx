@@ -248,7 +248,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         dataTour="risk-reward"
       >
         <div className="w-28">
-          <div className="w-full h-4 bg-muted/30 rounded-full overflow-hidden flex">
+          <div className="w-full h-2 bg-muted/30 rounded-full overflow-hidden flex">
             <div 
               className="h-full bg-profit rounded-l-full transition-all"
               style={{ width: `${avgProfitPercentage}%` }}
