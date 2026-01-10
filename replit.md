@@ -54,3 +54,4 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
 - **UI Libraries:** Material-UI, Framer Motion, Chart.js, Recharts.
 - **Market Data:** Polygon.io API (exclusive for FOREX chart data).
 - **Payment Gateway:** Razorpay.
+- **WhatsApp Support:** Click-to-chat floating button on all pages (login, signup, dashboard) linking to support number +919000248120.

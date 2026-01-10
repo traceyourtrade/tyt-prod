@@ -20,6 +20,7 @@ import {
   User,
   ArrowRight,
 } from "lucide-react";
+import WhatsAppSupport from "@/components/shared/WhatsAppSupport";
 
 type CountryCode = { country: string; code: string };
 
@@ -649,6 +650,8 @@ const SignUp: React.FC = () => {
           </p>
         </div>
       </motion.div>
+
+      <WhatsAppSupport />
     </div>
   );
 };
