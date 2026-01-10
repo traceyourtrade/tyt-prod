@@ -159,7 +159,7 @@ export default function PerformanceRadar() {
       </div>
       
       <div className="w-full p-2 flex flex-col items-center justify-center">
-        <ResponsiveContainer width="100%" height={265}>
+        <ResponsiveContainer width="100%" height={190}>
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
             <defs>
               <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
@@ -202,18 +202,18 @@ export default function PerformanceRadar() {
           </RadarChart>
         </ResponsiveContainer>
 
-        <div className="w-full mt-4 px-2">
-          <div className="flex items-center justify-between mb-2">
+        <div className="w-full mt-2 px-2">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-muted-foreground font-medium">Your Score</span>
             <span 
-              className="text-2xl font-bold"
+              className="text-xl font-bold"
               style={{ color: getScoreColor(metrics.overallScore) }}
             >
               {metrics.overallScore.toFixed(2)}
             </span>
           </div>
           
-          <div className="relative w-full h-3 rounded-full overflow-hidden bg-muted/30">
+          <div className="relative w-full h-2.5 rounded-full overflow-hidden bg-muted/30">
             <div 
               className="absolute inset-0 rounded-full"
               style={{

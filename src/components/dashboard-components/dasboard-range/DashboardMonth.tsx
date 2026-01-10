@@ -187,7 +187,7 @@ const DashboardMonth: React.FC = () => {
         <DashWidgets {...dashWidgetProps} />
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
         {isWidgetVisible('radar') && (
           <Radar />
         )}
