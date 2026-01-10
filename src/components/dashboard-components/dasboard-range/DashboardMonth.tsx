@@ -182,7 +182,7 @@ const DashboardMonth: React.FC = () => {
   );
 
   const renderView2 = () => (
-    <>
+    <div className="space-y-2">
       {isWidgetVisible('stats-overview') && (
         <DashWidgets {...dashWidgetProps} />
       )}
@@ -244,11 +244,11 @@ const DashboardMonth: React.FC = () => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <div className="flex justify-end">
         <LayoutSwitcher />
       </div>
