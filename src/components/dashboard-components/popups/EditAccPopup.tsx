@@ -202,14 +202,14 @@ const EditAccPopup = () => {
   const brokers = ["MetaTrader 5", "MetaTrader 4", "Zerodha", "Binance", "Upstox", "Angel One"];
 
   return (
-    <div className={`fixed inset-0 flex justify-start pt-12 min-h-screen 
-  bg-black/40 backdrop-blur-md ${showEditAcc ? "block" : "hidden"}`}>
-      <div className="w-11/12 max-w-[500px] h-fit bg-[#22212161]  backdrop-blur-[30px] border border-gray-600 rounded-[25px] shadow-2xl scale-90 mx-auto">
+    <div className={`fixed inset-0 flex items-center justify-center p-4 
+  bg-black/60 backdrop-blur-sm z-50 ${showEditAcc ? "block" : "hidden"}`}>
+      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="relative p-6">
           <div className="absolute top-5 left-5">
             <button 
               onClick={() => setEditAcc()} 
-              className="text-xs text-gray-400 font-semibold cursor-pointer flex items-center gap-2 hover:text-gray-300 transition-colors"
+              className="text-xs text-muted-foreground font-medium cursor-pointer flex items-center gap-2 hover:text-foreground transition-colors"
             >
               <FontAwesomeIcon icon={faCircleLeft} />
               Back
@@ -223,8 +223,8 @@ const EditAccPopup = () => {
             </div>
           </div>
 
-          <h2 className="text-center text-2xl font-semibold text-white">Edit Your Account</h2>
-          <p className="text-center text-xs text-gray-400 font-medium mt-1">
+          <h2 className="text-center text-2xl font-semibold text-foreground">Edit Your Account</h2>
+          <p className="text-center text-xs text-muted-foreground font-medium mt-1">
             Your trades, your data, your edge - fully automated and optimised
           </p>
 
@@ -237,28 +237,28 @@ const EditAccPopup = () => {
               name="accountName"
               value={accountDetails.accountName}
               onChange={handleOnChange}
-              className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mb-4 text-black"
+              className="w-4/5 px-4 py-3 rounded-xl text-sm font-medium bg-muted text-foreground border border-border outline-none mb-4 placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
             />
 
             {/* Account Type Dropdown */}
-            <div className="w-[calc(80%+30px)] min-h-[44px] rounded-[25px] bg-purple-600 mt-2 overflow-hidden">
+            <div className="w-4/5 min-h-[44px] rounded-xl bg-card border border-border mt-2 overflow-hidden">
               <div 
-                className="w-full h-[44px] flex items-center justify-between text-white cursor-pointer px-4"
+                className="w-full h-[44px] flex items-center justify-between text-foreground cursor-pointer px-4 bg-primary/10 hover:bg-primary/20 transition-colors"
                 onClick={() => { setForAcc(!forAccType); setForBroker(false); }}
               >
-                <span className="font-semibold text-sm">{accountType}</span>
+                <span className="font-medium text-sm text-primary">{accountType}</span>
                 <FontAwesomeIcon 
                   icon={faChevronDown} 
-                  className={`text-white transition-transform duration-300 ${forAccType ? "rotate-180" : ""}`}
+                  className={`text-primary transition-transform duration-300 ${forAccType ? "rotate-180" : ""}`}
                 />
               </div>
-              <div className={`bg-gray-100 transition-all duration-300 ease-in-out overflow-hidden ${
-                forAccType ? "max-h-[120px] py-2" : "max-h-0"
+              <div className={`bg-card transition-all duration-300 ease-in-out overflow-hidden ${
+                forAccType ? "max-h-[120px] py-1" : "max-h-0"
               }`}>
                 {["Broker Sync", "File Upload", "Manual"].map((type) => (
                   <div
                     key={type}
-                    className="w-full px-4 py-2 cursor-pointer text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors"
+                    className="w-full px-4 py-2.5 cursor-pointer text-foreground text-sm font-medium hover:bg-muted transition-colors"
                     onClick={() => { setAccountType(type); setForAcc(false); }}
                   >
                     {type}
@@ -277,29 +277,29 @@ const EditAccPopup = () => {
                 name="accountBalance"
                 value={accountDetails.accountBalance}
                 onChange={handleOnChange}
-                className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
+                className="w-4/5 px-4 py-3 rounded-xl text-sm font-medium bg-muted text-foreground border border-border outline-none mt-4 placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
               />
             )}
 
             {/* Broker Dropdown */}
-            <div className="w-[calc(80%+30px)] min-h-[44px] rounded-[25px] bg-gray-100 mt-4 overflow-hidden">
+            <div className="w-4/5 min-h-[44px] rounded-xl bg-card border border-border mt-4 overflow-hidden">
               <div 
-                className="w-full h-[44px] flex items-center justify-between text-gray-600 cursor-pointer px-4 font-semibold"
+                className="w-full h-[44px] flex items-center justify-between text-foreground cursor-pointer px-4 hover:bg-muted/50 transition-colors"
                 onClick={() => { setForBroker(!forBroker); setForAcc(false); }}
               >
-                <span className="text-sm">{broker}</span>
+                <span className="text-sm font-medium">{broker}</span>
                 <FontAwesomeIcon 
                   icon={faChevronDown} 
-                  className={`text-gray-600 transition-transform duration-300 ${forBroker ? "rotate-180" : ""}`}
+                  className={`text-muted-foreground transition-transform duration-300 ${forBroker ? "rotate-180" : ""}`}
                 />
               </div>
-              <div className={`bg-gray-100 transition-all duration-300 ease-in-out overflow-hidden ${
-                forBroker ? "max-h-[200px] py-2" : "max-h-0"
+              <div className={`bg-card transition-all duration-300 ease-in-out overflow-hidden ${
+                forBroker ? "max-h-[200px] py-1" : "max-h-0"
               }`}>
                 {(accountType === "Broker Sync" ? ["MetaTrader 5"] : brokers).map((brokerItem) => (
                   <div
                     key={brokerItem}
-                    className="w-full px-4 py-2 cursor-pointer text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors"
+                    className="w-full px-4 py-2.5 cursor-pointer text-foreground text-sm font-medium hover:bg-muted transition-colors"
                     onClick={() => { setBroker(brokerItem); setForBroker(false); }}
                   >
                     {brokerItem}
@@ -319,7 +319,7 @@ const EditAccPopup = () => {
                   name="investorId"
                   value={investorId}
                   onChange={(e) => setInvestorId(e.target.value)}
-                  className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
+                  className="w-4/5 px-4 py-3 rounded-xl text-sm font-medium bg-muted text-foreground border border-border outline-none mt-4 placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                 />
                 <input
                   placeholder="Investor Password"
@@ -329,7 +329,7 @@ const EditAccPopup = () => {
                   name="investorPw"
                   value={investorPw}
                   onChange={(e) => setInvestorPw(e.target.value)}
-                  className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
+                  className="w-4/5 px-4 py-3 rounded-xl text-sm font-medium bg-muted text-foreground border border-border outline-none mt-4 placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                 />
                 <input
                   placeholder="Server Name"
@@ -339,7 +339,7 @@ const EditAccPopup = () => {
                   name="server"
                   value={server}
                   onChange={(e) => setServer(e.target.value)}
-                  className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 text-black"
+                  className="w-4/5 px-4 py-3 rounded-xl text-sm font-medium bg-muted text-foreground border border-border outline-none mt-4 placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
                 />
               </>
             )}
@@ -350,12 +350,12 @@ const EditAccPopup = () => {
               value={accountDetails.description}
               onChange={handleOnChange}
               placeholder="Description (Optional)"
-              className="w-4/5 px-4 py-3 rounded-[25px] text-sm font-semibold bg-gray-100 border-none outline-none mt-4 h-20 resize-none text-black"
+              className="w-4/5 px-4 py-3 rounded-xl text-sm font-medium bg-muted text-foreground border border-border outline-none mt-4 h-20 resize-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
             />
           </div>
 
           <div className="w-full flex justify-center my-6">
-            <div className="w-1/2 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-70 rounded"></div>
+            <div className="w-1/2 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded"></div>
           </div>
 
           {error && (
@@ -366,13 +366,13 @@ const EditAccPopup = () => {
           )}
 
           <button 
-            className="w-36 mx-auto block py-3 rounded-[25px] text-sm text-white font-semibold border-none outline-none bg-purple-600 hover:bg-purple-700 cursor-pointer transition-all duration-200 transform hover:scale-105"
+            className="w-40 mx-auto block py-3 rounded-xl text-sm text-white font-medium border-none outline-none bg-primary hover:bg-primary/80 cursor-pointer transition-all duration-200"
             onClick={submitFun}
           >
             Update Account
           </button>
 
-          <button className="w-full text-center text-purple-400 text-xs font-semibold mt-4 mb-2 cursor-pointer hover:text-purple-300 transition-colors">
+          <button className="w-full text-center text-primary text-xs font-medium mt-4 mb-2 cursor-pointer hover:text-primary/80 transition-colors">
             Need Help ?
           </button>
         </div>
