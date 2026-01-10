@@ -204,7 +204,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
             <p className="text-[10px] text-muted-foreground mt-0.5">{totalTrades} trades</p>
           </div>
           
-          <div className="flex flex-col items-center flex-shrink-0">
+          <div className="flex flex-col items-center flex-shrink-0 -mt-1">
             <div className="relative w-[100px] h-[50px]">
               <Doughnut data={dataWinLoss} options={optionsWinLoss} />
             </div>
