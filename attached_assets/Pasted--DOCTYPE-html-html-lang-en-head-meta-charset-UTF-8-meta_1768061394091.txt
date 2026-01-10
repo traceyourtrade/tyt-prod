@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProJournX Live Demo</title>
+</head>
+
+<body style="margin:0; padding:0; background:#020617; font-family:Inter, Arial, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- Card -->
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#020617; border-radius:16px; overflow:hidden;
+          box-shadow:0 20px 60px rgba(0,0,0,0.6); border:1px solid #111827;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding:36px; text-align:center;
+              background:linear-gradient(135deg,#8B5CF6,#60A5FA,#22D3EE);">
+
+              <!-- Replace src with hosted logo URL -->
+              <img src="LOGO_URL_HERE" alt="ProJournX"
+                width="60"
+                style="display:block; margin:0 auto 16px;">
+
+              <h1 style="margin:0; color:#ffffff; font-size:26px; font-weight:700;">
+                ProJournX Live Demo
+              </h1>
+
+              <p style="margin:10px 0 0; color:#e0f2fe; font-size:14px;">
+                Journal smarter • Backtest better • Trade with discipline
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding:34px; color:#e5e7eb;">
+
+              <p style="font-size:16px; margin:0 0 16px;">
+                Hey Trader 👋
+              </p>
+
+              <p style="font-size:15px; line-height:1.7; margin:0 0 18px;">
+                Join our <strong>live Zoom demo</strong> where we’ll walk you through
+                how professional traders use <strong>ProJournX</strong> to stay consistent
+                and improve performance.
+              </p>
+
+              <ul style="padding-left:20px; margin:0 0 22px; font-size:15px; line-height:1.7;">
+                <li>Smart trade journaling 📊</li>
+                <li>Auto performance insights</li>
+                <li>Backtesting strategies with confidence</li>
+                <li>Build discipline & emotional control</li>
+              </ul>
+
+              <p style="font-size:15px; line-height:1.7; margin-bottom:28px;">
+                If you want clarity, structure, and confidence in your trading,
+                don’t miss this session.
+              </p>
+
+              <!-- CTA -->
+              <div style="text-align:center;">
+                <a href="https://us04web.zoom.us/j/78261584131?pwd=ANP5x8BXvA1AcfBuKyIwVX0GG3Ouza.1"
+                  target="_blank"
+                  style="
+                  display:inline-block;
+                  padding:14px 34px;
+                  font-size:16px;
+                  font-weight:600;
+                  color:#020617;
+                  text-decoration:none;
+                  border-radius:12px;
+                  background:linear-gradient(135deg,#8B5CF6,#60A5FA,#22D3EE);
+                  box-shadow:0 10px 30px rgba(99,102,241,0.4);
+                  ">
+                  🎥 Join Live Zoom Demo
+                </a>
+              </div>
+
+              <p style="margin-top:22px; font-size:13px; color:#9ca3af; text-align:center;">
+                Live walkthrough • Q&A included • Limited seats
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:18px; text-align:center; border-top:1px solid #111827;">
+              <p style="margin:0; font-size:12px; color:#6b7280;">
+                © 2026 ProJournX — Built for serious traders
+              </p>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
