@@ -348,7 +348,12 @@ const DailyJournal = () => {
   }, []);
 
   useEffect(() => {
-    const allTrades = (selectedAccounts as Account[]).flatMap((account) => account.tradeData || []);
+    const allTrades = (selectedAccounts as Account[]).flatMap((account) => 
+      (account.tradeData || []).map(trade => ({
+        ...trade,
+        accountType: trade.accountType || account.accountType || ""
+      }))
+    );
     if (allTrades.length > 0) {
       const sorted = allTrades.sort((a, b) => {
         const dateA = new Date(`${a.date}T${a.EntryTime || a.time || "00:00:00"}`);
@@ -723,7 +728,7 @@ const DailyJournal = () => {
     setIsSaving(true);
 
     try {
-      const tradeId = selectedTrade._id || selectedTrade.id;
+      const tradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
       const existingRulesCompliance = selectedTrade.jrData?.rulesCompliance;
       const jrDataWithRules = {
         ...journalData,
@@ -762,7 +767,7 @@ const DailyJournal = () => {
     if (!selectedTrade || isDemo) return;
     
     try {
-      const tradeId = selectedTrade._id || selectedTrade.id || "";
+      const tradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
       await fetch("/api/daily-journal/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -826,7 +831,7 @@ const DailyJournal = () => {
 
         const blob = await (await fetch(dataUrl)).blob();
         const formData = new FormData();
-        const tradeId = selectedTrade._id || selectedTrade.id || "";
+        const tradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
         formData.append("image", blob, file.name);
         formData.append("id", tradeId);
         formData.append("imgType", type === "before" ? "beforeURL" : "afterURL");
@@ -949,7 +954,7 @@ const DailyJournal = () => {
               <button
                 onClick={() => setShareModal({
                   isOpen: true,
-                  tradeId: selectedTrade._id || selectedTrade.id || "",
+                  tradeId: selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "",
                   accountId: selectedTrade.accountType || "",
                   tradeSummary: {
                     symbol: selectedTrade.Item || selectedTrade.symbol,
@@ -1643,14 +1648,14 @@ const DailyJournal = () => {
                       value={selectedTrade.strategy || ""}
                       onChange={async (e) => {
                         const newStrategy = e.target.value;
-                        const tradeId = selectedTrade._id || selectedTrade.id || "";
+                        const tradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
                         
                         setSelectedTrade(prev => prev ? { ...prev, strategy: newStrategy } : null);
-                        setTrades(prev => prev.map(t => 
-                          (t.id || t._id) === (selectedTrade.id || selectedTrade._id) 
-                            ? { ...t, strategy: newStrategy } 
-                            : t
-                        ));
+                        const currentTradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
+                        setTrades(prev => prev.map(t => {
+                          const tId = t._id || t.id || (t as any).Ticket?.toString() || "";
+                          return tId === currentTradeId ? { ...t, strategy: newStrategy } : t;
+                        }));
                         
                         if (newStrategy && newStrategy !== "Select") {
                           fetchStrategyRules(newStrategy);

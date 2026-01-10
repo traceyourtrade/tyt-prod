@@ -461,8 +461,8 @@ export async function editDropdownsHandler(req, userId: string, token: string) {
         // Get the correct model
         const TradeModel = await getTradeModel(accountType);
 
-        // Update directly with findOneAndUpdate using positional operator
-        const result = await TradeModel.findOneAndUpdate(
+        // Try to find by id first, then by Ticket (for broker sync trades)
+        let result = await TradeModel.findOneAndUpdate(
             {
                 uniqueId: user.uniqueId,
                 "tradeData.id": id
@@ -476,6 +476,27 @@ export async function editDropdownsHandler(req, userId: string, token: string) {
                 new: true
             }
         );
+
+        // If not found by id, try by Ticket (for broker sync trades)
+        if (!result) {
+            const ticketId = parseInt(id, 10);
+            if (!isNaN(ticketId)) {
+                result = await TradeModel.findOneAndUpdate(
+                    {
+                        uniqueId: user.uniqueId,
+                        "tradeData.Ticket": ticketId
+                    },
+                    {
+                        $set: {
+                            [`tradeData.$.${type}`]: value
+                        }
+                    },
+                    {
+                        new: true
+                    }
+                );
+            }
+        }
 
         if (!result) {
             return NextResponse.json({ error: "Trade not found" }, { status: 404 });
