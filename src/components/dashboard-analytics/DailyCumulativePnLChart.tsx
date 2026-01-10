@@ -61,7 +61,7 @@ const DailyCumulativePnLChart: React.FC<DailyCumulativePnLChartProps> = ({ trade
   };
 
   return (
-    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden h-full">
+    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-muted/50">
@@ -77,9 +77,9 @@ const DailyCumulativePnLChart: React.FC<DailyCumulativePnLChartProps> = ({ trade
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-3">
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={180}>
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid 
                 stroke="var(--border)" 
@@ -151,7 +151,7 @@ const DailyCumulativePnLChart: React.FC<DailyCumulativePnLChartProps> = ({ trade
             </ComposedChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
+          <div className="h-[180px] flex items-center justify-center text-muted-foreground text-sm">
             No trading data available
           </div>
         )}

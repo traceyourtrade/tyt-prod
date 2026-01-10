@@ -124,8 +124,8 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
       </div>
 
       {/* Chart */}
-      <div className="p-4">
-        <ResponsiveContainer width="100%" height={240}>
+      <div className="p-3">
+        <ResponsiveContainer width="100%" height={180}>
           <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               {getGradientConfig()}
