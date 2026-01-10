@@ -198,17 +198,17 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
           <span className="text-xs font-medium text-muted-foreground">Win Rate</span>
         </div>
         
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-shrink-0 mt-1">
             <p className="text-lg font-bold text-foreground">{winrate}%</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{totalTrades} trades</p>
           </div>
           
-          <div className="flex flex-col items-end">
-            <div className="relative w-[70px] h-[38px]">
+          <div className="flex flex-col items-center flex-shrink-0">
+            <div className="relative w-[90px] h-[48px]">
               <Doughnut data={dataWinLoss} options={optionsWinLoss} />
             </div>
-            <div className="flex items-center justify-end gap-1 mt-1">
+            <div className="flex items-center justify-center gap-1 mt-1">
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-profit/20 text-profit">{winners}</span>
               <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-muted/50 text-muted-foreground">0</span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-loss/20 text-loss">{losers}</span>
