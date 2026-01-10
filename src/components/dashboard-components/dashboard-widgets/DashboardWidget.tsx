@@ -137,6 +137,9 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   const avgProfitFormatted = formatCompactCurrency(avgProfits || 0, currency, exchangeRate, undefined, undefined, valuesAlreadyConverted);
   const avgLossFormatted = formatCompactCurrency(Math.abs(avgLoses || 0), currency, exchangeRate, undefined, undefined, valuesAlreadyConverted);
 
+  const startingBalance = balanceValue - numericPnl;
+  const balanceData = data.map(d => ({ value: startingBalance + d.value }));
+
   const dataWinLoss = {
     labels: ["Wins", "Losses"],
     datasets: [
@@ -233,7 +236,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         dataTour="account-balance"
       >
         <div className="w-16 h-8">
-          <TinyChart data={data} />
+          <TinyChart data={balanceData} />
         </div>
       </StatCard>
 
