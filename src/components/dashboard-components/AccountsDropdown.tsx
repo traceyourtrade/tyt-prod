@@ -132,7 +132,7 @@ const AccountsDropdown = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute top-full right-0 mt-2 w-72 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+            className="absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-border bg-muted/30">
@@ -206,13 +206,13 @@ const AccountsDropdown = () => {
                   {filteredAccounts.map((account) => (
                     <div
                       key={account._id || account.accountName}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
+                      className="w-full flex items-start gap-2 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
                     >
                       {/* Checkbox */}
                       <button
                         onClick={() => handleToggleAccount(account.accountName)}
                         className={cn(
-                          "w-5 h-5 rounded flex items-center justify-center transition-all flex-shrink-0 cursor-pointer",
+                          "w-5 h-5 mt-0.5 rounded flex items-center justify-center transition-all flex-shrink-0 cursor-pointer",
                           account.checked 
                             ? "bg-primary text-white" 
                             : "border-2 border-border group-hover:border-primary/50"
@@ -221,29 +221,36 @@ const AccountsDropdown = () => {
                         {account.checked && <Check className="w-3.5 h-3.5" />}
                       </button>
 
-                      {/* Broker Icon */}
+                      {/* Account Info - Full width layout */}
                       <div 
                         onClick={() => handleToggleAccount(account.accountName)}
-                        className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center flex-shrink-0 cursor-pointer"
+                        className="flex-1 min-w-0 cursor-pointer"
                       >
-                        <span className="text-[10px] font-bold text-blue-400">
-                          {brokerIcons[account.broker || ""] || "AC"}
-                        </span>
-                      </div>
-
-                      {/* Account Info */}
-                      <div 
-                        onClick={() => handleToggleAccount(account.accountName)}
-                        className="flex-1 min-w-0 text-left cursor-pointer"
-                      >
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {account.accountName}
-                        </p>
-                        <div className="flex items-center gap-1.5">
+                        {/* Row 1: Name + Balance */}
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground truncate flex-1">
+                            {account.accountName}
+                          </p>
+                          {account.accountBalance && !syncingAccounts.has(account.accountName) && (
+                            <span className="text-xs font-medium text-profit flex-shrink-0">
+                              ${Number(account.accountBalance).toLocaleString()}
+                            </span>
+                          )}
+                          {/* Delete Button */}
+                          <button
+                            onClick={(e) => handleDeleteAccount(e, account)}
+                            className="p-1 rounded-lg sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-500/10 transition-all flex-shrink-0"
+                            title="Delete account"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500 transition-colors" />
+                          </button>
+                        </div>
+                        {/* Row 2: Prop badge + Sync status */}
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           {account.isPropFirm && (
-                            <span className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium bg-amber-500/20 text-amber-500 flex-shrink-0">
-                              <Zap className="w-2 h-2" />
-                              Prop
+                            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-500/20 text-amber-500 flex-shrink-0">
+                              <Zap className="w-2.5 h-2.5" />
+                              Prop Firm
                             </span>
                           )}
                           {syncingAccounts.has(account.accountName) ? (
@@ -257,31 +264,12 @@ const AccountsDropdown = () => {
                               Auto-sync
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground truncate">
-                              {account.broker || account.accountType || "Trading Account"}
+                            <span className="text-xs text-muted-foreground">
+                              {account.broker || account.accountType || "Manual"}
                             </span>
                           )}
                         </div>
                       </div>
-
-                      {/* Balance */}
-                      {account.accountBalance && !syncingAccounts.has(account.accountName) && (
-                        <span 
-                          onClick={() => handleToggleAccount(account.accountName)}
-                          className="text-xs font-medium text-profit flex-shrink-0 cursor-pointer"
-                        >
-                          ${Number(account.accountBalance).toLocaleString()}
-                        </span>
-                      )}
-
-                      {/* Delete Button - Always visible on mobile, hover on desktop */}
-                      <button
-                        onClick={(e) => handleDeleteAccount(e, account)}
-                        className="p-1.5 rounded-lg sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-500/10 transition-all flex-shrink-0"
-                        title="Delete account"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-500 transition-colors" />
-                      </button>
                     </div>
                   ))}
                 </div>
