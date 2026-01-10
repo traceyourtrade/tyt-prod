@@ -191,12 +191,18 @@ export async function getAccountDetailsHandler(req: NextRequest, userId: string,
 
         const accountIds = userData.accounts.map((acc: any) => acc.accountId);
 
-        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades] = await Promise.all([
+        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts] = await Promise.all([
             fileUpload.find({ uniqueId: userId, accountId: { $in: accountIds } }),
             Manual.find({ uniqueId: userId, accountId: { $in: accountIds } }),
             asyncUpload.find({ uniqueId: userId, accountId: { $in: accountIds } }),
             OpenAsTrades.find({ uniqueId: userId, accountId: { $in: accountIds } }),
+            ASacc.find({ uniqueId: userId, accountId: { $in: accountIds } }),
         ]);
+
+        const lastFetchByAccountId: { [key: string]: Date | null } = {};
+        asAccounts.forEach((asAcc: any) => {
+            lastFetchByAccountId[asAcc.accountId] = asAcc.lastFetch || null;
+        });
 
         const tradesByAccount: { [key: string]: any[] } = {};
 
@@ -226,7 +232,8 @@ export async function getAccountDetailsHandler(req: NextRequest, userId: string,
 
         const enhancedAccounts = userData.accounts.map((account: any) => ({
             ...account.toObject(),
-            tradeData: tradesByAccount[account.accountId] || []
+            tradeData: tradesByAccount[account.accountId] || [],
+            lastFetch: lastFetchByAccountId[account.accountId] || null
         }));
 
         return NextResponse.json({

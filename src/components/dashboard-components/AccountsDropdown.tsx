@@ -31,6 +31,24 @@ const brokerIcons: Record<string, string> = {
   "Angel One": "AO",
 };
 
+const formatRelativeTime = (date: Date | string | null | undefined): string => {
+  if (!date) return "";
+  const now = new Date();
+  const syncDate = new Date(date);
+  if (isNaN(syncDate.getTime())) return "";
+  const diffMs = now.getTime() - syncDate.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return syncDate.toLocaleDateString();
+};
+
 const AccountsDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -261,7 +279,11 @@ const AccountsDropdown = () => {
                           ) : account.accountType === 'Broker Sync' ? (
                             <span className="flex items-center gap-1 text-xs text-emerald-500">
                               <RefreshCw className="w-3 h-3" />
-                              Auto-sync
+                              {account.lastFetch ? (
+                                <span>Synced {formatRelativeTime(account.lastFetch)}</span>
+                              ) : (
+                                <span>Auto-sync</span>
+                              )}
                             </span>
                           ) : (
                             <span className="text-xs text-muted-foreground">
