@@ -158,8 +158,8 @@ export default function PerformanceRadar() {
         </button>
       </div>
       
-      <div className="w-full p-4 flex flex-col items-center justify-center">
-        <ResponsiveContainer width="100%" height={220}>
+      <div className="w-full p-2 flex flex-col items-center justify-center">
+        <ResponsiveContainer width="100%" height={265}>
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
             <defs>
               <linearGradient id="radarFill" x1="0" y1="0" x2="0" y2="1">
