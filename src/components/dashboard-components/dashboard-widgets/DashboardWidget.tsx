@@ -156,8 +156,8 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
 
   const optionsWinLoss = {
     responsive: true,
-    maintainAspectRatio: true,
-    cutout: "70%",
+    maintainAspectRatio: false,
+    cutout: "65%",
     rotation: -90,
     circumference: 180,
     plugins: {
@@ -204,11 +204,11 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
             <p className="text-[10px] text-muted-foreground mt-0.5">{totalTrades} trades</p>
           </div>
           
-          <div className="flex flex-col items-center flex-shrink-0 -mr-1">
-            <div className="relative w-[100px] h-[52px]">
+          <div className="flex flex-col items-center flex-shrink-0">
+            <div className="relative w-[120px] h-[65px]">
               <Doughnut data={dataWinLoss} options={optionsWinLoss} />
             </div>
-            <div className="flex items-center justify-between w-[100px] -mt-1">
+            <div className="flex items-center justify-between w-[120px] -mt-2">
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-profit/20 text-profit">{winners}</span>
               <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-muted/50 text-muted-foreground">0</span>
               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-loss/20 text-loss">{losers}</span>
