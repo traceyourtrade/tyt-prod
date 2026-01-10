@@ -192,6 +192,7 @@ export default function PerformanceRadar() {
               stroke="#2563EB"
               strokeWidth={2}
               fill="url(#radarFill)"
+              isAnimationActive={false}
               dot={{ 
                 r: 4, 
                 fill: '#2563EB',

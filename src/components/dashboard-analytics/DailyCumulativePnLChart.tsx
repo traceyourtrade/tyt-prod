@@ -129,6 +129,7 @@ const DailyCumulativePnLChart: React.FC<DailyCumulativePnLChartProps> = ({ trade
                 name="Daily P&L"
                 radius={[2, 2, 0, 0]}
                 maxBarSize={20}
+                isAnimationActive={false}
               >
                 {chartData.map((entry, index) => (
                   <Cell 
@@ -147,6 +148,7 @@ const DailyCumulativePnLChart: React.FC<DailyCumulativePnLChartProps> = ({ trade
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
+                isAnimationActive={false}
               />
             </ComposedChart>
           </ResponsiveContainer>

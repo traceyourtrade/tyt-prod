@@ -106,6 +106,7 @@ const DayOfWeekChart: React.FC<DayOfWeekChartProps> = ({ data }) => {
                 dataKey="profit" 
                 radius={[4, 4, 0, 0]}
                 maxBarSize={50}
+                isAnimationActive={false}
               >
                 {weekdayData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.profit >= 0 ? colors.profit : colors.loss} fillOpacity={0.8} />

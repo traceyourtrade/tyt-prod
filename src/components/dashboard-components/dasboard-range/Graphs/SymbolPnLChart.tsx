@@ -114,6 +114,7 @@ const SymbolPnLChart: React.FC<SymbolPnLChartProps> = ({ data }) => {
                 dataKey="profit" 
                 radius={[0, 4, 4, 0]}
                 maxBarSize={30}
+                isAnimationActive={false}
               >
                 {symbolData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.profit >= 0 ? colors.profit : colors.loss} fillOpacity={0.8} />

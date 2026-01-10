@@ -106,6 +106,7 @@ const DailyPnLBarChart: React.FC<DailyPnLBarChartProps> = ({ data }) => {
                 dataKey="profit" 
                 radius={[4, 4, 0, 0]}
                 maxBarSize={40}
+                isAnimationActive={false}
               >
                 {dailyData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.profit >= 0 ? colors.profit : colors.loss} fillOpacity={0.8} />
