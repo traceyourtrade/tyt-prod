@@ -263,6 +263,18 @@ const DashboardCustom: React.FC = () => {
     );
   };
 
+  const sortedTradesForPF = [...displayTrades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const profitFactorData: { value: number }[] = [];
+  let runningWins = 0;
+  let runningLosses = 0;
+  sortedTradesForPF.forEach(trade => {
+    const profit = trade.Profit || 0;
+    if (profit > 0) runningWins += profit;
+    else runningLosses += Math.abs(profit);
+    const pf = runningLosses > 0 ? runningWins / runningLosses : runningWins > 0 ? runningWins : 0;
+    profitFactorData.push({ value: parseFloat(pf.toFixed(2)) });
+  });
+
   const dashWidgetProps = {
     data: processedData,
     pnl: parseFloat(totalPnL.toFixed(2)),
@@ -270,6 +282,7 @@ const DashboardCustom: React.FC = () => {
     winners: winCount,
     losers: lossCount,
     profitF: calculateProfitFactor(displayTrades),
+    profitFactorData,
     avgProfits: parseFloat(metrics.avgWin),
     avgLoses: parseFloat(metrics.avgLoss),
     rrRatio: metrics.rrRatio,

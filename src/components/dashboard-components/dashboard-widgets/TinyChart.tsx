@@ -4,9 +4,10 @@ import React, { useEffect, useState } from 'react';
 
 interface TinyChartProps {
   data: { value: number }[];
+  color?: string;
 }
 
-const TinyChart: React.FC<TinyChartProps> = ({ data }) => {
+const TinyChart: React.FC<TinyChartProps> = ({ data, color }) => {
   const [colors, setColors] = useState({ profit: '#22C55E', loss: '#EF4444' });
 
   useEffect(() => {
@@ -43,7 +44,7 @@ const TinyChart: React.FC<TinyChartProps> = ({ data }) => {
   const areaPoints = `${padding},${height - padding} ${points} ${width - padding},${height - padding}`;
   
   const isPositive = values[values.length - 1] >= values[0];
-  const lineColor = isPositive ? colors.profit : colors.loss;
+  const lineColor = color || (isPositive ? colors.profit : colors.loss);
   const gradientId = `gradient-${Math.random().toString(36).substr(2, 9)}`;
 
   return (

@@ -17,6 +17,7 @@ interface DashWidgetsProps {
   winners?: number;
   losers?: number;
   profitF: number | string;
+  profitFactorData?: { value: number }[];
   avgProfits: number;
   avgLoses: number;
   rrRatio: number | string;
@@ -119,6 +120,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   winners = 0, 
   losers = 0, 
   profitF, 
+  profitFactorData = [],
   avgProfits, 
   avgLoses, 
   rrRatio, 
@@ -225,7 +227,13 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         iconColor="amber"
         status={profitFactorNum >= 1.5 ? "Profitable" : profitFactorNum < 1 ? "Losing" : "Breakeven"}
         dataTour="profit-factor"
-      />
+      >
+        {profitFactorData.length > 0 && (
+          <div className="w-16 h-8">
+            <TinyChart data={profitFactorData} color="#f59e0b" />
+          </div>
+        )}
+      </StatCard>
 
       <StatCard
         title="Account Balance"

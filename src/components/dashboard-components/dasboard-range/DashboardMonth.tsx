@@ -80,6 +80,18 @@ const DashboardMonth: React.FC = () => {
 
   const metrics = calculateRiskRewardRatio(thisMonthData);
 
+  const sortedTrades = [...thisMonthData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const profitFactorData: { value: number }[] = [];
+  let runningWins = 0;
+  let runningLosses = 0;
+  sortedTrades.forEach(trade => {
+    const profit = convertProfit(trade);
+    if (profit > 0) runningWins += profit;
+    else runningLosses += Math.abs(profit);
+    const pf = runningLosses > 0 ? runningWins / runningLosses : runningWins > 0 ? runningWins : 0;
+    profitFactorData.push({ value: parseFloat(pf.toFixed(2)) });
+  });
+
   const dashWidgetProps = {
     data,
     pnl: thisMonthData.reduce((sum, trade) => sum + convertProfit(trade), 0).toFixed(2),
@@ -87,6 +99,7 @@ const DashboardMonth: React.FC = () => {
     winners: thisMonthData.filter(t => t.Profit > 0).length,
     losers: thisMonthData.filter(t => t.Profit < 0).length,
     profitF: calculateProfitFactor(thisMonthData),
+    profitFactorData,
     totalProfits: thisMonthData.reduce((sum, trade) => trade.Profit > 0 ? sum + convertProfit(trade) : sum, 0),
     totalLoses: thisMonthData.reduce((sum, trade) => trade.Profit < 0 ? sum + convertProfit(trade) : sum, 0),
     avgProfits: parseFloat(metrics.avgWin),

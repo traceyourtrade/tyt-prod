@@ -221,6 +221,18 @@ const DashboardWeek: React.FC = () => {
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  const sortedTradesForPF = [...allTrades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const profitFactorData: { value: number }[] = [];
+  let runningWins = 0;
+  let runningLosses = 0;
+  sortedTradesForPF.forEach(trade => {
+    const profit = trade.Profit || 0;
+    if (profit > 0) runningWins += profit;
+    else runningLosses += Math.abs(profit);
+    const pf = runningLosses > 0 ? runningWins / runningLosses : runningWins > 0 ? runningWins : 0;
+    profitFactorData.push({ value: parseFloat(pf.toFixed(2)) });
+  });
+
   const dashWidgetProps = {
     data: PNLcumulative,
     pnl: parseFloat(allTrades.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2)),
@@ -228,6 +240,7 @@ const DashboardWeek: React.FC = () => {
     winners: winCount,
     losers: lossCount,
     profitF: calculateProfitFactor(allTrades),
+    profitFactorData,
     avgProfits: parseFloat(metrics.avgWin),
     avgLoses: parseFloat(metrics.avgLoss),
     rrRatio: metrics.rrRatio,
