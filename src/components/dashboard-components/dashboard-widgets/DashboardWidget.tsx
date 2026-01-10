@@ -157,7 +157,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   const optionsWinLoss = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: "65%",
+    cutout: "78%",
     rotation: -90,
     circumference: 180,
     plugins: {
