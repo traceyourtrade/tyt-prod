@@ -121,7 +121,7 @@ const DashboardMonth: React.FC = () => {
         <DashWidgets {...dashWidgetProps} />
       )}
 
-      {(isWidgetVisible('calendar') || isWidgetVisible('cumulative-pnl') || isWidgetVisible('trades-table')) && (
+      {(isWidgetVisible('calendar') || isWidgetVisible('cumulative-pnl') || isWidgetVisible('trades-table') || isWidgetVisible('daily-pnl-bar')) && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           {isWidgetVisible('calendar') && (
             <div className="xl:col-span-2">
@@ -129,7 +129,7 @@ const DashboardMonth: React.FC = () => {
             </div>
           )}
 
-          {(isWidgetVisible('cumulative-pnl') || isWidgetVisible('trades-table')) && (
+          {(isWidgetVisible('cumulative-pnl') || isWidgetVisible('trades-table') || isWidgetVisible('daily-pnl-bar')) && (
             <div className="xl:col-span-1 flex flex-col gap-4">
               {isWidgetVisible('cumulative-pnl') && (
                 <PnLDailyChart data={data} />
@@ -137,16 +137,16 @@ const DashboardMonth: React.FC = () => {
               {isWidgetVisible('trades-table') && (
                 <TradesWidget data={thisMonthData} />
               )}
+              {isWidgetVisible('daily-pnl-bar') && (
+                <DailyPnLBarChart data={thisMonthData} />
+              )}
             </div>
           )}
         </div>
       )}
 
-      {(isWidgetVisible('daily-pnl-bar') || isWidgetVisible('day-of-week') || isWidgetVisible('symbol-pnl') || isWidgetVisible('hourly-pnl') || isWidgetVisible('radar')) && (
+      {(isWidgetVisible('day-of-week') || isWidgetVisible('symbol-pnl') || isWidgetVisible('hourly-pnl') || isWidgetVisible('radar')) && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {isWidgetVisible('daily-pnl-bar') && (
-            <DailyPnLBarChart data={thisMonthData} />
-          )}
           {isWidgetVisible('day-of-week') && (
             <DayOfWeekChart data={thisMonthData} />
           )}
