@@ -243,6 +243,25 @@
   *:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
+  
+  /* Remove focus outline from chart containers */
+  .recharts-wrapper,
+  .recharts-wrapper *,
+  .recharts-surface,
+  .recharts-surface *,
+  .recharts-responsive-container,
+  .recharts-responsive-container * {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  .recharts-wrapper:focus,
+  .recharts-wrapper:focus-visible,
+  .recharts-surface:focus,
+  .recharts-surface:focus-visible {
+    outline: none !important;
+    ring: none !important;
+  }
 }
 
 /* =====================================================
