@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown, TrendingUp, TrendingDown, BarChart3, Calendar as CalendarIcon, Flame, Target, Trophy, Zap, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Calendar as CalendarIcon, Trophy, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -462,63 +462,6 @@ const Calendar = () => {
           >
             <ChevronRight className="h-5 w-5" />
           </motion.button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
-          <div className="bg-muted/30 dark:bg-[#1a1a1a] rounded-xl p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              {monthlyStats.totalPnL >= 0 ? (
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-              )}
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">P&L</span>
-            </div>
-            <p className={cn(
-              "text-base sm:text-lg font-bold",
-              monthlyStats.totalPnL >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-            )}>
-              {monthlyStats.totalPnL >= 0 ? "+" : ""}{formatCurrencyDisplay(monthlyStats.totalPnL)}
-            </p>
-          </div>
-
-          <div className="bg-muted/30 dark:bg-[#1a1a1a] rounded-xl p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <Target className="w-3.5 h-3.5 text-primary" />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Win Rate</span>
-            </div>
-            <p className="text-base sm:text-lg font-bold text-foreground">
-              {monthlyStats.winRate}%
-            </p>
-          </div>
-
-          <div className="bg-muted/30 dark:bg-[#1a1a1a] rounded-xl p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <BarChart3 className="w-3.5 h-3.5 text-violet-500" />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Trades</span>
-            </div>
-            <p className="text-base sm:text-lg font-bold text-foreground">
-              {monthlyStats.totalTrades}
-            </p>
-          </div>
-
-          <div className="bg-muted/30 dark:bg-[#1a1a1a] rounded-xl p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 mb-1">
-              <Flame className={cn(
-                "w-3.5 h-3.5",
-                monthlyStats.streakType === "win" ? "text-orange-500" : "text-blue-500"
-              )} />
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Streak</span>
-            </div>
-            <p className={cn(
-              "text-base sm:text-lg font-bold",
-              monthlyStats.streakType === "win" ? "text-emerald-600 dark:text-emerald-400" : monthlyStats.streakType === "loss" ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
-            )}>
-              {monthlyStats.currentStreak > 0 ? (
-                <>{monthlyStats.streakType === "win" ? "+" : "-"}{monthlyStats.currentStreak}</>
-              ) : "0"}
-            </p>
-          </div>
         </div>
       </div>
 
