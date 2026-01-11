@@ -139,7 +139,7 @@ const Calendar = () => {
 
     for (let i = 0; i < firstDayIndex; i++) {
       cells.push(
-        <div key={`empty-${i}`} className="aspect-square sm:h-[80px] sm:aspect-auto rounded-xl bg-gray-100 dark:bg-[#262626]" />
+        <div key={`empty-${i}`} className="aspect-square sm:h-[80px] sm:aspect-auto rounded-xl bg-gray-50 dark:bg-[#181818]" />
       );
     }
 
