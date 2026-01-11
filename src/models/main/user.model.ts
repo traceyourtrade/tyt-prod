@@ -50,6 +50,18 @@ export interface IUserSubscription {
   billingPeriod?: 'monthly' | 'yearly';
 }
 
+export interface IPublicProfileSettings {
+  isPublic: boolean;
+  showEquityCurve: boolean;
+  showMonthlyPnL: boolean;
+  showWinRate: boolean;
+  showProfitFactor: boolean;
+  showTotalTrades: boolean;
+  showTotalPnL: boolean;
+  hideDollarAmounts: boolean;
+  customUsername?: string;
+}
+
 export interface IUser extends Document {
   uniqueId: string;
   fullName: string;
@@ -76,6 +88,7 @@ export interface IUser extends Document {
   referredBy?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: number;
+  publicProfile: IPublicProfileSettings;
 
   // Methods
   generateAuthToken(): Promise<string>;
@@ -223,7 +236,18 @@ const userSchema = new Schema<IUser>({
   referralCode: { type: String, unique: true, sparse: true },
   referredBy: { type: String, index: true },
   resetPasswordToken: String,
-  resetPasswordExpires: Number
+  resetPasswordExpires: Number,
+  publicProfile: {
+    isPublic: { type: Boolean, default: false },
+    showEquityCurve: { type: Boolean, default: true },
+    showMonthlyPnL: { type: Boolean, default: true },
+    showWinRate: { type: Boolean, default: true },
+    showProfitFactor: { type: Boolean, default: true },
+    showTotalTrades: { type: Boolean, default: true },
+    showTotalPnL: { type: Boolean, default: true },
+    hideDollarAmounts: { type: Boolean, default: false },
+    customUsername: { type: String, sparse: true }
+  }
 }, { collection: "users" });
 
 // 🔒 Hash passwords before save
