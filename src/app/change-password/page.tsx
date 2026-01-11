@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
-export default function ChangePassword() {
+function ChangePasswordContent() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -128,5 +128,24 @@ export default function ChangePassword() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+function ChangePasswordLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#050505] px-4">
+      <div className="max-w-md w-full text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+        <p className="text-gray-400 text-sm mt-4">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ChangePassword() {
+  return (
+    <Suspense fallback={<ChangePasswordLoading />}>
+      <ChangePasswordContent />
+    </Suspense>
   );
 }

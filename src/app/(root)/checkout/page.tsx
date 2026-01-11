@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -72,7 +72,7 @@ const recentSignups = [
   { name: "Kavya", city: "Ahmedabad" },
 ];
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -550,128 +550,104 @@ export default function CheckoutPage() {
                 transition={{ delay: 0.1 }}
                 className="relative"
               >
-                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/30 via-red-500/20 to-amber-500/30 rounded-2xl blur-xl opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-2xl blur-xl" />
                 
-                <div className="relative p-5 rounded-2xl bg-zinc-900/95 backdrop-blur-xl border border-zinc-800">
-                  {billingPeriod === 'yearly' && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <div className="px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-xs font-bold text-black shadow-lg shadow-orange-500/30">
-                        MOST POPULAR - BEST VALUE
-                      </div>
+                <div className="relative bg-zinc-900/90 backdrop-blur-xl rounded-2xl border border-zinc-800 p-5 shadow-2xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">ProJournX Pro</h2>
+                      <p className="text-xs text-zinc-400">Unlock your trading potential</p>
                     </div>
-                  )}
-
-                  {subscriptionStatus?.isOnTrial && (
-                    <div className="mb-4 p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
-                      <p className="text-xs font-medium text-red-400">Trial ends in {subscriptionStatus.trialDaysLeft} days - Don't lose access!</p>
-                    </div>
-                  )}
-
-                  <div className="p-1 rounded-xl bg-zinc-800/80 border border-zinc-700/50 mb-4 mt-2">
-                    <div className="grid grid-cols-2 gap-1">
-                      <button
-                        onClick={() => setBillingPeriod('monthly')}
-                        className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
-                          billingPeriod === 'monthly'
-                            ? 'bg-zinc-700 text-white shadow-md'
-                            : 'text-zinc-400 hover:text-white'
-                        }`}
-                      >
-                        Monthly
-                      </button>
-                      <button
-                        onClick={() => setBillingPeriod('yearly')}
-                        className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
-                          billingPeriod === 'yearly'
-                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-orange-500/30'
-                            : 'text-zinc-400 hover:text-white'
-                        }`}
-                      >
-                        Yearly
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          billingPeriod === 'yearly' ? 'bg-black/20 text-black' : 'bg-red-500/20 text-red-400'
-                        }`}>SAVE 35%</span>
-                      </button>
+                    <div className="px-2 py-1 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+                      <span className="text-[10px] font-bold text-amber-400">MOST POPULAR</span>
                     </div>
                   </div>
 
-                  <div className="text-center mb-4">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={billingPeriod + (appliedCoupon?.code || '')}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                      >
-                        {appliedCoupon ? (
-                          <div className="space-y-1">
-                            <div className="flex items-baseline justify-center gap-2">
-                              <span className="text-lg text-zinc-500 line-through">₹{Math.round(getOriginalPrice())}</span>
-                              <span className="text-4xl font-bold text-emerald-400">₹{Math.round(getCurrentPrice())}</span>
-                            </div>
-                            <p className="text-xs font-medium text-emerald-400">You save ₹{Math.round(appliedCoupon.discountAmount)}</p>
-                          </div>
-                        ) : (
-                          <div>
-                            <div className="flex items-baseline justify-center gap-2">
-                              <span className="text-lg text-zinc-500 line-through">₹{billingPeriod === 'yearly' ? monthlyOriginal : monthlyOriginal}</span>
-                              <span className="text-4xl font-bold text-white">₹{displayPrice}</span>
-                              <span className="text-zinc-500">/mo</span>
-                            </div>
-                            {billingPeriod === 'yearly' ? (
-                              <div className="mt-1 space-y-0.5">
-                                <p className="text-xs text-zinc-400">
-                                  ₹{yearlyPrice}/yr billed annually
-                                </p>
-                                <p className="text-xs font-semibold text-amber-400">
-                                  You save ₹{yearlySavings} per year!
-                                </p>
-                              </div>
-                            ) : (
-                              <p className="text-xs text-zinc-500 mt-1">Switch to yearly & save ₹{yearlySavings}</p>
-                            )}
-                          </div>
-                        )}
-                      </motion.div>
-                    </AnimatePresence>
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={() => setBillingPeriod('yearly')}
+                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all relative ${
+                        billingPeriod === 'yearly'
+                          ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border-2 border-emerald-500 text-white'
+                          : 'bg-zinc-800 border-2 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                      }`}
+                    >
+                      {billingPeriod === 'yearly' && (
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-emerald-500 text-[9px] font-bold text-black">
+                          BEST VALUE
+                        </div>
+                      )}
+                      <div className="flex flex-col items-center">
+                        <span>Yearly</span>
+                        <span className="text-lg font-bold text-white">₹{yearlyMonthlyPrice}/mo</span>
+                        <span className="text-[10px] text-emerald-400">Save ₹{yearlySavings}</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setBillingPeriod('monthly')}
+                      className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold transition-all ${
+                        billingPeriod === 'monthly'
+                          ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border-2 border-emerald-500 text-white'
+                          : 'bg-zinc-800 border-2 border-zinc-700 text-zinc-400 hover:border-zinc-600'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center">
+                        <span>Monthly</span>
+                        <span className="text-lg font-bold text-white">₹{monthlyPrice}/mo</span>
+                        <span className="text-[10px] text-zinc-500 line-through">₹{monthlyOriginal}</span>
+                      </div>
+                    </button>
                   </div>
 
                   <div className="space-y-2 mb-4">
-                    <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Everything you need to profit:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { icon: Rocket, text: "Bar replay backtesting", value: "₹600/mo value" },
-                        { icon: Brain, text: "AI win patterns", value: "₹300/mo value" },
-                        { icon: Target, text: "Prop firm tracking", value: "₹400/mo value" },
-                        { icon: Infinity, text: "Unlimited trades", value: "₹200/mo value" },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-zinc-800/50 border border-zinc-700/30">
-                          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center flex-shrink-0">
-                            <item.icon className="w-3.5 h-3.5 text-emerald-400" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-xs text-white font-medium block truncate">{item.text}</span>
-                            <span className="text-[10px] text-emerald-400/70">{item.value}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    {[
+                      { icon: Infinity, text: "Unlimited trade entries" },
+                      { icon: Brain, text: "AI pattern detection" },
+                      { icon: LineChart, text: "Advanced analytics" },
+                      { icon: Target, text: "Prop firm challenge tracker" },
+                      { icon: Clock, text: "Bar replay backtesting" },
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-zinc-300">
+                        <feature.icon className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>{feature.text}</span>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="mb-4">
+                  <div className="border-t border-zinc-800 pt-4 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-zinc-400">Total</span>
+                      <div className="text-right">
+                        {appliedCoupon ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-zinc-500 line-through">₹{getOriginalPrice()}</span>
+                            <span className="text-xl font-bold text-white">₹{getCurrentPrice()}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xl font-bold text-white">₹{getCurrentPrice()}</span>
+                        )}
+                        <p className="text-[10px] text-zinc-500">
+                          {billingPeriod === 'yearly' ? 'billed annually' : 'billed monthly'}
+                        </p>
+                      </div>
+                    </div>
+
                     {appliedCoupon ? (
-                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 mb-2">
                         <div className="flex items-center gap-2">
-                          <Gift className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="text-xs font-semibold text-emerald-400">{appliedCoupon.code} applied!</span>
+                          <Tag className="w-3.5 h-3.5 text-emerald-400" />
+                          <span className="text-xs text-emerald-400 font-medium">{appliedCoupon.code}</span>
+                          <span className="text-xs text-emerald-300">-₹{appliedCoupon.discountAmount}</span>
                         </div>
-                        <button onClick={() => { setAppliedCoupon(null); setCouponCode(""); }} className="p-1 hover:bg-emerald-500/20 rounded transition-colors">
-                          <X className="h-3.5 w-3.5 text-emerald-400" />
+                        <button 
+                          onClick={() => { setAppliedCoupon(null); setCouponCode(""); }}
+                          className="text-zinc-400 hover:text-white"
+                        >
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ) : (
-                      <div>
+                      <div className="space-y-2">
                         <button 
                           onClick={() => setShowCoupon(!showCoupon)}
                           className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-amber-400 transition-colors"
@@ -792,5 +768,26 @@ export default function CheckoutPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function CheckoutLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#171717]">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-white" />
+        </div>
+        <p className="text-zinc-400 text-sm">Loading...</p>
+      </motion.div>
+    </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }
