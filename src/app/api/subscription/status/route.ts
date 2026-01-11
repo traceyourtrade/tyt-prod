@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
         canStartTrial: false,
         status: 'demo',
         demoMode: true,
-        email: 'demo@projournx.com'
+        email: 'demo@projournx.com',
+        hasPaidSubscription: false,
+        hasAutoSyncAccess: false
       });
     }
 

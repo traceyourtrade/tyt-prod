@@ -18,11 +18,16 @@ import {
   User,
   Loader2,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  Lock,
+  Sparkles,
+  Crown,
+  Timer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useAccountDetails from "@/store/accountdetails";
 import notifications from "@/store/notifications";
+import { useRouter } from "next/navigation";
 
 interface BrokerConnection {
   id: string;
@@ -491,14 +496,49 @@ const MT5ConnectionModal = ({
   );
 };
 
+interface SubscriptionStatus {
+  hasAccess: boolean;
+  isSubscribed: boolean;
+  isOnTrial: boolean;
+  trialDaysLeft: number;
+  canStartTrial: boolean;
+  status: string;
+  hasPaidSubscription: boolean;
+  hasAutoSyncAccess: boolean;
+}
+
 const AutoSync = () => {
   const [showMT5Modal, setShowMT5Modal] = useState(false);
   const [limitError, setLimitError] = useState<string | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(true);
   const { accounts } = useAccountDetails();
   const { setAlertBoxG } = notifications();
+  const router = useRouter();
 
   const totalAccounts = accounts.length;
   const brokerSyncAccounts = accounts.filter(acc => acc.accountType === "Broker Sync").length;
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const response = await fetch("/api/subscription/status", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSubscriptionStatus(data);
+        }
+      } catch (error) {
+        console.error("Error fetching subscription status:", error);
+      } finally {
+        setLoadingSubscription(false);
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, []);
 
   useEffect(() => {
     const checkRedStatusAccounts = async () => {
@@ -545,6 +585,156 @@ const AutoSync = () => {
       setShowMT5Modal(true);
     }
   };
+
+  const handleUpgradeClick = () => {
+    router.push("/pricing");
+  };
+
+  const hasAutoSyncAccess = subscriptionStatus?.hasAutoSyncAccess ?? false;
+  const isOnTrial = subscriptionStatus?.isOnTrial ?? false;
+
+  if (loadingSubscription) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!hasAutoSyncAccess) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6 p-1"
+      >
+        <div className="relative p-6 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20 overflow-hidden">
+          <div className="absolute top-4 right-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
+              <Crown className="w-3.5 h-3.5" />
+              Pro Feature
+            </span>
+          </div>
+
+          <div className="flex items-start gap-4 mb-6">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+              <Zap className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <div className="flex-1 pt-1">
+              <h3 className="font-bold text-foreground text-xl mb-2">
+                Automatic Trade Sync
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Save hours every week by automatically importing your trades from MT5. 
+                No more manual data entry - your journal stays perfectly up to date.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-border/50">
+              <div className="w-8 h-8 rounded-lg bg-profit/10 flex items-center justify-center flex-shrink-0">
+                <Timer className="w-4 h-4 text-profit" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground">Save 5+ Hours/Week</h4>
+                <p className="text-xs text-muted-foreground">No more manual trade entry</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-border/50">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <RefreshCw className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground">Real-time Sync</h4>
+                <p className="text-xs text-muted-foreground">Trades sync automatically</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-border/50">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-4 h-4 text-blue-500" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground">100% Accurate</h4>
+                <p className="text-xs text-muted-foreground">Zero manual entry errors</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-border/50">
+              <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-4 h-4 text-violet-500" />
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-foreground">Verified P&L</h4>
+                <p className="text-xs text-muted-foreground">Build trust with your audience</p>
+              </div>
+            </div>
+          </div>
+
+          {isOnTrial && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm mb-4">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <p>Auto-Sync is only available for paid Pro subscribers. Upgrade now to unlock this time-saving feature.</p>
+            </div>
+          )}
+
+          <button
+            onClick={handleUpgradeClick}
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
+          >
+            <Crown className="w-5 h-5" />
+            Upgrade to Pro
+          </button>
+
+          <p className="text-xs text-muted-foreground text-center mt-3">
+            Join 1000+ traders who save hours every week with Auto-Sync
+          </p>
+        </div>
+
+        <div className="relative opacity-60 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background z-10" />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-foreground flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-primary" />
+                Available Connections
+              </h4>
+              <span className="text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                Locked
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {brokerConnections.slice(0, 3).map((broker) => (
+                <div
+                  key={broker.id}
+                  className="relative p-4 rounded-xl border bg-muted/20 border-border/50"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-sm opacity-50",
+                      broker.id === "mt5" ? "from-blue-500 to-blue-600" : "from-gray-500 to-gray-600"
+                    )}>
+                      {broker.logo}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-foreground">{broker.name}</h3>
+                        <Lock className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {broker.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <>
