@@ -16,6 +16,10 @@ The application is built on Next.js 16 with React 19 and Tailwind CSS, utilizing
 ### UI/UX Decisions
 The UI features a premium neutral dashboard aesthetic, drawing inspiration from Notion, Linear, and Stripe. It uses a primary blue palette, with green/red for P&L, and neutral blacks for dark mode. A custom UI component library resides in `src/components/ui/`. Key pages, including Dashboard, Daily Journal, Notebook, Settings, and authentication, incorporate modern design elements such as glassmorphic effects, gradient accents, and micro-animations with Framer Motion.
 
+**Theme Contrast (Jan 2026):** Enhanced visual separation between backgrounds and cards:
+- Dark mode: Deep black background (#050505) with elevated cards (#141414) and defined borders (#2a2a2a)
+- Light mode: Light gray background (#eef1f5) with pure white cards for clear contrast
+
 **Settings Page (Redesigned Jan 2026):**
 - Two-panel layout with sticky sidebar navigation on desktop, horizontal pills on mobile
 - Lucide icons throughout (migrated from FontAwesome)
