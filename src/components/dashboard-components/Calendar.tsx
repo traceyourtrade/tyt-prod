@@ -139,7 +139,7 @@ const Calendar = () => {
 
     for (let i = 0; i < firstDayIndex; i++) {
       cells.push(
-        <div key={`empty-${i}`} className="aspect-square sm:h-[80px] sm:aspect-auto rounded-xl bg-muted/20" />
+        <div key={`empty-${i}`} className="aspect-square sm:h-[80px] sm:aspect-auto rounded-xl bg-gray-100 dark:bg-[#262626]" />
       );
     }
 
@@ -152,7 +152,7 @@ const Calendar = () => {
       const isLoss = dayData && dayData.profit < 0;
 
       const getProfitBgClass = () => {
-        if (!hasTrades) return "bg-muted/20 hover:bg-muted/40";
+        if (!hasTrades) return "bg-gray-100 dark:bg-[#262626] hover:bg-gray-200 dark:hover:bg-[#303030]";
         if (isProfit) return "bg-profit/10 border border-profit/20 hover:border-profit/40 hover:bg-profit/15";
         if (isLoss) return "bg-loss/10 border border-loss/20 hover:border-loss/40 hover:bg-loss/15";
         return "bg-card/80 border border-border/50 hover:border-border hover:bg-card";
