@@ -8,6 +8,7 @@ import { getManualModel } from '@/models/accounts/manual.model';
 import { getASAccountModel } from '@/models/accounts/asAccounts.model';
 import { getOpenTradeModel } from '@/models/accounts/openTrades.model';
 import { getStrategyModel } from '@/models/main/strategy.model';
+import { getSubscriptionStatus } from '@/lib/subscription';
 // Import your models (adjust paths as needed)
 const User = await getUserModel();
 const ASacc = await getASAccountModel();
@@ -79,6 +80,15 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
         const rootUser = await getUserFromToken(token);
         if (!rootUser) {
             return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
+        }
+
+        // Check subscription status - autosync requires paid subscription or grandfathered access
+        const subscriptionStatus = getSubscriptionStatus(rootUser);
+        if (!subscriptionStatus.hasAutoSyncAccess) {
+            return NextResponse.json({ 
+                error: "Auto-Sync is a Pro feature. Please upgrade to access MT5 automatic trade sync.",
+                requiresUpgrade: true 
+            }, { status: 402 });
         }
 
         const email = rootUser.email;

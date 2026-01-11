@@ -11,6 +11,8 @@ export interface SubscriptionStatus {
   trialDaysLeft: number;
   canStartTrial: boolean;
   status: 'subscribed' | 'trial' | 'expired' | 'none' | 'inactive';
+  hasPaidSubscription: boolean;
+  hasAutoSyncAccess: boolean;
 }
 
 export function isTrialEligible(user: IUser): boolean {
@@ -21,6 +23,11 @@ export function isTrialEligible(user: IUser): boolean {
 }
 
 export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
+  // Check if user has autosync accounts (for grandfathering)
+  const hasExistingAutoSyncAccounts = user.accounts?.some(
+    (acc) => acc.accountType === "Broker Sync" || acc.investorId
+  ) ?? false;
+  
   // Admin bypass - admins always have full access
   if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return {
@@ -29,7 +36,9 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
       isOnTrial: false,
       trialDaysLeft: 0,
       canStartTrial: false,
-      status: 'subscribed'
+      status: 'subscribed',
+      hasPaidSubscription: true,
+      hasAutoSyncAccess: true
     };
   }
 
@@ -45,7 +54,9 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
         isOnTrial: false,
         trialDaysLeft: 0,
         canStartTrial: false,
-        status: 'subscribed'
+        status: 'subscribed',
+        hasPaidSubscription: true,
+        hasAutoSyncAccess: true
       };
     }
   }
@@ -55,13 +66,20 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
     const trialEnd = new Date(user.subscription.trialEndsAt);
     if (trialEnd > now) {
       const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Autosync access during trial: only if grandfathered OR has existing autosync accounts
+      const autosyncGrandfathered = user.subscription?.autosyncGrandfathered ?? false;
+      const hasAutoSyncAccess = autosyncGrandfathered || hasExistingAutoSyncAccounts;
+      
       return {
         hasAccess: true,
         isSubscribed: false,
         isOnTrial: true,
         trialDaysLeft: Math.max(0, daysLeft),
         canStartTrial: false,
-        status: 'trial'
+        status: 'trial',
+        hasPaidSubscription: false,
+        hasAutoSyncAccess: hasAutoSyncAccess
       };
     }
   }
@@ -78,7 +96,9 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
       isOnTrial: false,
       trialDaysLeft: 0,
       canStartTrial: true,
-      status: 'inactive'
+      status: 'inactive',
+      hasPaidSubscription: false,
+      hasAutoSyncAccess: false
     };
   }
   
@@ -89,7 +109,9 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
     isOnTrial: false,
     trialDaysLeft: 0,
     canStartTrial: false,
-    status: 'expired'
+    status: 'expired',
+    hasPaidSubscription: false,
+    hasAutoSyncAccess: false
   };
 }
 

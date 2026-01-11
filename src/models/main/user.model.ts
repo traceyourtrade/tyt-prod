@@ -48,6 +48,7 @@ export interface IUserSubscription {
   hasEverSubscribed?: boolean;
   razorpayCustomerId?: string;
   billingPeriod?: 'monthly' | 'yearly';
+  autosyncGrandfathered?: boolean;
 }
 
 export interface IPublicProfileSettings {
@@ -231,7 +232,8 @@ const userSchema = new Schema<IUser>({
       type: String,
       enum: ['monthly', 'yearly'],
       default: 'monthly'
-    }
+    },
+    autosyncGrandfathered: { type: Boolean, default: false }
   },
   referralCode: { type: String, unique: true, sparse: true },
   referredBy: { type: String, index: true },
