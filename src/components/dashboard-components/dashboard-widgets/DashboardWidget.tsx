@@ -71,7 +71,7 @@ const StatCard: React.FC<StatCardProps> = ({
 
   return (
     <div 
-      className="group bg-card backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border"
+      className="group bg-card backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border min-h-[110px]"
       {...(dataTour && { 'data-tour': dataTour })}
     >
       <div className="flex items-start justify-between mb-2">
@@ -192,7 +192,7 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
         </div>
       </StatCard>
 
-      <div className="group bg-card backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border" data-tour="win-rate">
+      <div className="group bg-card backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border min-h-[110px]" data-tour="win-rate">
         <div className="flex items-center gap-2 mb-2">
           <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
             <Target className="w-4 h-4" />
