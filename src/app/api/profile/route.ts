@@ -92,6 +92,8 @@ export async function GET(req: NextRequest) {
             lastName = nameParts.slice(1).join(" ") || "";
         }
 
+        const hasVerifiedAccounts = userObj.accounts?.some((acc: { investorId?: string }) => acc.investorId) || false;
+
         return NextResponse.json({
             firstName,
             lastName,
@@ -101,6 +103,9 @@ export async function GET(req: NextRequest) {
             phone: userObj.phone?.toString() || "",
             bio: userObj.bio || "",
             profilePicture: userObj.profilePicture || null,
+            uniqueId: userObj.uniqueId || "",
+            publicProfile: userObj.publicProfile || null,
+            hasVerifiedAccounts,
         });
 
     } catch (error) {

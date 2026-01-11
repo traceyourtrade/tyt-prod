@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  User, Shield, Crown, Wallet, Settings as SettingsIcon, AlertTriangle, ChevronRight
+  User, Shield, Crown, Wallet, Settings as SettingsIcon, AlertTriangle, ChevronRight, Share2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ import Security from "@/components/settings/Security";
 import Account from "@/components/settings/Account";
 import GlobalSettings from "@/components/settings/GlobalSettings";
 import DangerZone from "@/components/settings/DangerZone";
+import PublicProfile from "@/components/settings/PublicProfile";
 import useAccountDetails from "@/store/accountdetails";
 
 type NavItem = { 
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { name: "Security", icon: Shield, id: "security", description: "Password & authentication" },
   { name: "Subscription", icon: Crown, id: "subscription", description: "Plan & billing" },
   { name: "Accounts", icon: Wallet, id: "accounts", description: "Trading accounts" },
+  { name: "Public Profile", icon: Share2, id: "public", description: "Share your stats" },
   { name: "Preferences", icon: SettingsIcon, id: "global", description: "Theme & notifications" },
   { name: "Danger Zone", icon: AlertTriangle, id: "danger", description: "Delete account", color: "red" },
 ];
@@ -199,6 +201,7 @@ const Settings = () => {
               {active === "subscription" && <Subscription />}
               {active === "security" && <Security />}
               {active === "accounts" && <Account />}
+              {active === "public" && <PublicProfile />}
               {active === "global" && <GlobalSettings />}
               {active === "danger" && <DangerZone />}
             </motion.div>
