@@ -15,40 +15,36 @@ interface Announcement {
 
 const typeStyles = {
     success: {
-        bg: "bg-emerald-500/10",
-        border: "border-emerald-500/30",
+        wrapper: "bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-500/15 dark:to-green-500/10 border-emerald-200 dark:border-emerald-500/30",
+        iconWrapper: "bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/25",
         icon: CheckCircle,
-        iconColor: "text-emerald-400",
-        iconBg: "from-emerald-500 to-emerald-600",
-        titleColor: "text-emerald-300",
-        textColor: "text-emerald-200/80"
+        title: "text-emerald-800 dark:text-emerald-300",
+        message: "text-emerald-700 dark:text-emerald-200/80",
+        closeBtn: "text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:text-white dark:hover:bg-emerald-500/20"
     },
     info: {
-        bg: "bg-blue-500/10",
-        border: "border-blue-500/30",
+        wrapper: "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/15 dark:to-indigo-500/10 border-blue-200 dark:border-blue-500/30",
+        iconWrapper: "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/25",
         icon: Info,
-        iconColor: "text-blue-400",
-        iconBg: "from-blue-500 to-blue-600",
-        titleColor: "text-blue-300",
-        textColor: "text-blue-200/80"
+        title: "text-blue-800 dark:text-blue-300",
+        message: "text-blue-700 dark:text-blue-200/80",
+        closeBtn: "text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-white dark:hover:bg-blue-500/20"
     },
     warning: {
-        bg: "bg-amber-500/10",
-        border: "border-amber-500/30",
+        wrapper: "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/15 dark:to-orange-500/10 border-amber-200 dark:border-amber-500/30",
+        iconWrapper: "bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/25",
         icon: AlertTriangle,
-        iconColor: "text-amber-400",
-        iconBg: "from-amber-500 to-amber-600",
-        titleColor: "text-amber-300",
-        textColor: "text-amber-200/80"
+        title: "text-amber-800 dark:text-amber-300",
+        message: "text-amber-700 dark:text-amber-200/80",
+        closeBtn: "text-amber-600 hover:text-amber-800 hover:bg-amber-100 dark:text-amber-400 dark:hover:text-white dark:hover:bg-amber-500/20"
     },
     urgent: {
-        bg: "bg-red-500/10",
-        border: "border-red-500/30",
+        wrapper: "bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-500/15 dark:to-rose-500/10 border-red-200 dark:border-red-500/30",
+        iconWrapper: "bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/25",
         icon: AlertOctagon,
-        iconColor: "text-red-400",
-        iconBg: "from-red-500 to-red-600",
-        titleColor: "text-red-300",
-        textColor: "text-red-200/80"
+        title: "text-red-800 dark:text-red-300",
+        message: "text-red-700 dark:text-red-200/80",
+        closeBtn: "text-red-600 hover:text-red-800 hover:bg-red-100 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-500/20"
     }
 };
 
@@ -170,22 +166,22 @@ export default function AnnouncementBanner() {
                         exit={{ opacity: 0, y: -10, height: 0 }}
                         transition={{ duration: 0.25, ease: "easeOut" }}
                     >
-                        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#4EBF94]/10 via-emerald-500/5 to-violet-500/10 border border-[#4EBF94]/20 backdrop-blur-sm">
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#4EBF94]/5 to-transparent opacity-50" />
+                        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-[#4EBF94]/15 dark:via-emerald-500/10 dark:to-teal-500/10 border border-emerald-200 dark:border-[#4EBF94]/30">
+                            <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent_0%,rgba(78,191,148,0.05)_50%,transparent_100%)]" />
                             
-                            <div className="relative flex items-center justify-between gap-3 px-4 py-3">
+                            <div className="relative flex items-center justify-between gap-4 px-4 py-3.5">
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-[#4EBF94] to-emerald-600 flex items-center justify-center shadow-lg shadow-[#4EBF94]/20">
-                                        <Sparkles className="w-3.5 h-3.5 text-white" />
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-[#4EBF94] to-emerald-600 flex items-center justify-center shadow-lg shadow-[#4EBF94]/25">
+                                        <Sparkles className="w-4 h-4 text-white" />
                                     </div>
-                                    <p className="text-sm text-foreground font-medium">
+                                    <p className="text-sm text-emerald-800 dark:text-emerald-100 font-medium leading-relaxed">
                                         {banner}
                                     </p>
                                 </div>
                                 
                                 <motion.button
                                     onClick={() => setDismissed(true)}
-                                    className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-all duration-200"
+                                    className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:text-white dark:hover:bg-emerald-500/20 transition-all duration-200"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
@@ -208,17 +204,17 @@ export default function AnnouncementBanner() {
                             exit={{ opacity: 0, y: -10, height: 0 }}
                             transition={{ duration: 0.25, ease: "easeOut" }}
                         >
-                            <div className={`relative overflow-hidden rounded-xl ${style.bg} border ${style.border} backdrop-blur-sm`}>
-                                <div className="relative flex items-start justify-between gap-3 px-4 py-3">
+                            <div className={`relative overflow-hidden rounded-xl border ${style.wrapper}`}>
+                                <div className="relative flex items-start justify-between gap-4 px-4 py-3.5">
                                     <div className="flex items-start gap-3 min-w-0">
-                                        <div className={`flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br ${style.iconBg} flex items-center justify-center shadow-lg mt-0.5`}>
-                                            <Icon className="w-3.5 h-3.5 text-white" />
+                                        <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${style.iconWrapper} flex items-center justify-center shadow-lg mt-0.5`}>
+                                            <Icon className="w-4 h-4 text-white" />
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className={`text-sm font-semibold ${style.titleColor}`}>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`text-sm font-semibold ${style.title}`}>
                                                 {announcement.title}
                                             </p>
-                                            <p className={`text-sm mt-1 ${style.textColor}`}>
+                                            <p className={`text-sm mt-1 leading-relaxed ${style.message}`}>
                                                 {announcement.message}
                                             </p>
                                         </div>
@@ -226,7 +222,7 @@ export default function AnnouncementBanner() {
                                     
                                     <motion.button
                                         onClick={() => dismissAnnouncement(announcement.id)}
-                                        className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-all duration-200"
+                                        className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${style.closeBtn}`}
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                     >
