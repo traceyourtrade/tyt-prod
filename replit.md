@@ -18,7 +18,7 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
 
 **Theme Contrast (Jan 2026):** Enhanced visual separation between backgrounds and cards:
 - Dark mode: Deep black background (#050505) with elevated cards (#141414) and defined borders (#2a2a2a)
-- Light mode: Light gray background (#eef1f5) with pure white cards for clear contrast
+- Light mode: Light gray background (#f6f6f6) with pure white cards for clear contrast
 
 **Settings Page (Redesigned Jan 2026):**
 - Two-panel layout with sticky sidebar navigation on desktop, horizontal pills on mobile
