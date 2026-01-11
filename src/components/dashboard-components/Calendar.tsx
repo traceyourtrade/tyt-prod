@@ -162,7 +162,7 @@ const Calendar = () => {
         <div
           key={day}
           className={cn(
-            "aspect-square sm:h-[80px] sm:aspect-auto rounded-xl flex flex-col justify-between p-1.5 sm:p-2 cursor-pointer transition-all duration-200 relative group",
+            "aspect-square sm:h-[80px] sm:aspect-auto rounded-xl flex flex-col justify-center items-center cursor-pointer transition-all duration-200 relative",
             getProfitBgClass()
           )}
           onClick={() => {
@@ -172,25 +172,23 @@ const Calendar = () => {
           }}
         >
           <span className={cn(
-            "text-xs sm:text-sm font-semibold self-start",
-            hasTrades ? "text-foreground" : "text-muted-foreground/50"
+            "text-[10px] sm:text-xs font-medium",
+            hasTrades ? "text-foreground/70" : "text-muted-foreground/60"
           )}>
             {day}
           </span>
-          {hasTrades ? (
-            <div className="flex flex-col items-center sm:items-start">
+          {hasTrades && (
+            <>
               <span className={cn(
-                "text-[10px] sm:text-sm font-bold",
+                "text-[10px] sm:text-sm font-bold mt-0.5",
                 isProfit ? "text-profit" : isLoss ? "text-loss" : "text-muted-foreground"
               )}>
-                {isProfit ? "+" : ""}{formatCurrencyDisplay(dayData.profit)}
+                {formatCurrencyDisplay(dayData.profit)}
               </span>
-              <span className="text-[7px] sm:text-[9px] text-muted-foreground/60 hidden sm:block">
+              <span className="text-[8px] sm:text-[9px] text-muted-foreground/70 hidden sm:block">
                 {dayData.tradeLength} {dayData.tradeLength === 1 ? 'trade' : 'trades'}
               </span>
-            </div>
-          ) : (
-            <div className="flex-1" />
+            </>
           )}
         </div>
       );

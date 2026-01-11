@@ -1,11 +1,14 @@
 "use client";
 
 import React from 'react';
+import { Doughnut } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, DoughnutController } from "chart.js";
 import { DollarSign, Target, Activity, Wallet, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TinyChart from "./TinyChart";
-import CircularProgress, { DualCircularProgress } from "@/components/ui/CircularProgress";
 import useCurrencyStore, { formatCurrencyValue, formatCompactCurrency } from "@/store/currencyStore";
+
+ChartJS.register(DoughnutController, ArcElement, Tooltip, Legend);
 
 interface DashWidgetsProps {
   data: { value: number }[];
@@ -139,9 +142,37 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
   const startingBalance = balanceValue - numericPnl;
   const balanceData = data.map(d => ({ value: startingBalance + d.value }));
 
+  const dataWinLoss = {
+    labels: ["Wins", "Losses"],
+    datasets: [
+      {
+        data: [winners, losers],
+        backgroundColor: ["rgba(34, 197, 94, 0.7)", "rgba(239, 68, 68, 0.7)"],
+        hoverBackgroundColor: ["rgba(34, 197, 94, 0.9)", "rgba(239, 68, 68, 0.9)"],
+        borderColor: ["rgba(34, 197, 94, 1)", "rgba(239, 68, 68, 1)"],
+        borderWidth: 1,
+        spacing: 2,
+      },
+    ],
+  };
+
+  const optionsWinLoss = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: "85%",
+    rotation: -90,
+    circumference: 180,
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: true },
+    },
+    elements: {
+      arc: { borderRadius: 4 },
+    },
+  };
+
   const profitFactorNum = parseFloat(profitF as string);
   const profitFactorStatus = profitFactorNum >= 1.5 ? "Good" : profitFactorNum >= 1 ? "Even" : "Needs work";
-  const profitFactorPercentage = Math.min((profitFactorNum / 3) * 100, 100);
 
   const avgProfitPercentage = avgProfits && avgLoses ? (avgProfits / (Math.abs(avgProfits) + Math.abs(avgLoses))) * 100 : 50;
 
@@ -169,55 +200,40 @@ const DashWidgets: React.FC<DashWidgetsProps> = ({
           <span className="text-xs font-medium text-muted-foreground">Win Rate</span>
         </div>
         
-        <div className="flex items-center justify-between">
-          <div className="flex-shrink-0">
+        <div className="flex items-start justify-between">
+          <div className="flex-shrink-0 mt-1">
             <p className="text-lg font-bold text-foreground">{winrate}%</p>
             <p className="text-[10px] text-muted-foreground mt-0.5">{totalTrades} trades</p>
           </div>
           
-          <DualCircularProgress
-            value1={winners}
-            value2={losers}
-            size={56}
-            strokeWidth={5}
-            color1="#4EBF94"
-            color2="#EF4444"
-            label1={String(winners)}
-            label2={String(losers)}
-          />
+          <div className="flex flex-col items-center flex-shrink-0 -mt-3">
+            <div className="relative w-[85px] h-[45px]">
+              <Doughnut data={dataWinLoss} options={optionsWinLoss} />
+            </div>
+            <div className="flex items-center justify-between w-[85px] mt-0.5">
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-profit/20 text-profit">{winners}</span>
+              <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-muted/50 text-muted-foreground">0</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-loss/20 text-loss">{losers}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="group bg-card backdrop-blur-sm border border-border/50 rounded-xl px-3.5 py-3 transition-all duration-300 hover:bg-card/80 hover:border-border" data-tour="profit-factor">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
-              <Activity className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground">Profit Factor</span>
+      <StatCard
+        title="Profit Factor"
+        value={typeof profitF === 'number' ? profitF.toFixed(2) : profitF}
+        subtitle={profitFactorStatus}
+        icon={<Activity className="w-4 h-4" />}
+        iconColor="amber"
+        status={profitFactorNum >= 1.5 ? "Profitable" : profitFactorNum < 1 ? "Losing" : "Breakeven"}
+        dataTour="profit-factor"
+      >
+        {profitFactorData.length > 0 && (
+          <div className="w-16 h-8">
+            <TinyChart data={profitFactorData} color="#f59e0b" />
           </div>
-          <span className={cn(
-            "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide",
-            profitFactorNum >= 1.5 ? "bg-profit/20 text-profit" : profitFactorNum < 1 ? "bg-loss/20 text-loss" : "bg-muted/50 text-muted-foreground"
-          )}>
-            {profitFactorNum >= 1.5 ? "Profitable" : profitFactorNum < 1 ? "Losing" : "Breakeven"}
-          </span>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex-shrink-0">
-            <p className="text-lg font-bold text-foreground">{typeof profitF === 'number' ? profitF.toFixed(2) : profitF}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{profitFactorStatus}</p>
-          </div>
-          
-          <CircularProgress
-            value={profitFactorPercentage}
-            size={48}
-            strokeWidth={5}
-            primaryColor={profitFactorNum >= 1.5 ? "#4EBF94" : profitFactorNum >= 1 ? "#FACC15" : "#EF4444"}
-          />
-        </div>
-      </div>
+        )}
+      </StatCard>
 
       <StatCard
         title="Account Balance"
