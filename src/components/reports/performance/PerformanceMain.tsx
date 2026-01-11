@@ -45,7 +45,7 @@ export default function PerformanceMain({ metric = 'pnl', type = 'gross' }: Prop
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
-          className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden hover:border-border transition-all duration-300"
+          className="bg-card backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden hover:border-border transition-all duration-300"
         >
           <div className="h-0.5 bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
           
@@ -93,7 +93,7 @@ export default function PerformanceMain({ metric = 'pnl', type = 'gross' }: Prop
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.3 }}
-          className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden hover:border-border transition-all duration-300"
+          className="bg-card backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden hover:border-border transition-all duration-300"
         >
           <div className="h-0.5 bg-gradient-to-r from-transparent via-profit/40 to-transparent" />
           

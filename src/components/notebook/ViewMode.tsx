@@ -305,7 +305,7 @@ const ViewMode = ({ notes, selectedFolder, selectedFile, changeMode }: ViewModeP
             {template && Object.keys(fields).length > 0 ? (
               <div className="space-y-4">
                 {fields.sentiment && (
-                  <div className="flex items-center gap-4 p-4 bg-card/50 border border-border rounded-xl">
+                  <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getSentimentColor(fields.sentiment)}`}>
                       {getSentimentIcon(fields.sentiment)}
                     </div>
@@ -332,7 +332,7 @@ const ViewMode = ({ notes, selectedFolder, selectedFile, changeMode }: ViewModeP
                 {(fields.entry || fields.stopLoss || fields.takeProfit) && (
                   <div className="grid grid-cols-3 gap-3">
                     {fields.entry && (
-                      <div className="p-4 bg-card/50 border border-border rounded-xl text-center">
+                      <div className="p-4 bg-card border border-border rounded-xl text-center">
                         <p className="text-xs text-muted-foreground mb-1">Entry</p>
                         <p className="text-lg font-bold text-foreground">{fields.entry}</p>
                       </div>
@@ -359,7 +359,7 @@ const ViewMode = ({ notes, selectedFolder, selectedFile, changeMode }: ViewModeP
                     if (!value && field.type !== "textarea") return null;
                     
                     return (
-                      <div key={field.id} className="p-4 bg-card/50 border border-border rounded-xl">
+                      <div key={field.id} className="p-4 bg-card border border-border rounded-xl">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                           {field.label}
                         </p>

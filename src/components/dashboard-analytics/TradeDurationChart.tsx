@@ -79,7 +79,7 @@ const TradeDurationChart: React.FC<TradeDurationChartProps> = ({ trades }) => {
   };
 
   return (
-    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden h-full">
+    <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden h-full">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-muted/50">

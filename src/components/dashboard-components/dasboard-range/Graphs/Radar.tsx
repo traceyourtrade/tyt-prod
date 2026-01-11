@@ -145,7 +145,7 @@ export default function PerformanceRadar() {
   return (
     <div className={cn(
       "w-full flex flex-col rounded-2xl border transition-colors overflow-hidden",
-      "bg-card/50 backdrop-blur-sm border-border/50"
+      "bg-card backdrop-blur-sm border-border/50"
     )}>
       <div className="w-full flex items-center justify-between px-5 py-4 border-b border-border/50">
         <div className="flex items-center gap-2">

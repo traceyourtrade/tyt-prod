@@ -299,7 +299,7 @@ const DashboardCustom: React.FC = () => {
         {/* Left Column */}
         <div className="xl:col-span-2 space-y-4">
           {/* Date Range Picker Header */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 overflow-visible relative z-20">
+          <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl p-4 overflow-visible relative z-20">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -423,7 +423,7 @@ const DashboardCustom: React.FC = () => {
 
           {/* Insight Tiles - Responsive Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-profit/10">
                   <TrendingUp className="w-3 h-3 text-profit" />
@@ -435,7 +435,7 @@ const DashboardCustom: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-loss/10">
                   <TrendingDown className="w-3 h-3 text-loss" />
@@ -447,7 +447,7 @@ const DashboardCustom: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-profit/10">
                   <Target className="w-3 h-3 text-profit" />
@@ -459,7 +459,7 @@ const DashboardCustom: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-loss/10">
                   <Target className="w-3 h-3 text-loss" />
@@ -471,7 +471,7 @@ const DashboardCustom: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-primary/10">
                   <BarChart3 className="w-3 h-3 text-primary" />
@@ -483,7 +483,7 @@ const DashboardCustom: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className={cn("p-1 rounded-lg", totalPnL >= 0 ? "bg-profit/10" : "bg-loss/10")}>
                   <Flame className={cn("w-3 h-3", totalPnL >= 0 ? "text-profit" : "text-loss")} />

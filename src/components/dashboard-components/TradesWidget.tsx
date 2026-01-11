@@ -59,7 +59,7 @@ const TradesWidget: React.FC<TradesWidgetProps> = ({ data }) => {
   const recentTrades = [...data].slice(-10).reverse();
 
   return (
-    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
+    <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
       <div className="flex border-b border-border/50">
         <button
           className={cn(

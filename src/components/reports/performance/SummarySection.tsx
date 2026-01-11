@@ -302,7 +302,7 @@ export default function SummarySection({ trades = [] }: { trades?: any[] }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.3 }}
-      className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden"
+      className="bg-card backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden"
     >
       <div className="h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
       

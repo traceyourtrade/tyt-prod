@@ -261,7 +261,7 @@ const DashboardWeek: React.FC = () => {
         {/* Left Column - Calendar + Insight Tiles */}
         <div className="xl:col-span-2 space-y-4">
           {/* Week Calendar */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-5">
+          <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-5">
             {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <button 
@@ -420,7 +420,7 @@ const DashboardWeek: React.FC = () => {
 
           {/* Insight Tiles - Responsive Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-profit/10">
                   <TrendingUp className="w-3 h-3 text-profit" />
@@ -432,7 +432,7 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-loss/10">
                   <TrendingDown className="w-3 h-3 text-loss" />
@@ -444,7 +444,7 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-profit/10">
                   <Target className="w-3 h-3 text-profit" />
@@ -456,7 +456,7 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-loss/10">
                   <Target className="w-3 h-3 text-loss" />
@@ -468,7 +468,7 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className={cn("p-1 rounded-lg", streak.type === 'win' ? "bg-profit/10" : streak.type === 'loss' ? "bg-loss/10" : "bg-muted/50")}>
                   <Flame className={cn("w-3 h-3", streak.type === 'win' ? "text-profit" : streak.type === 'loss' ? "text-loss" : "text-muted-foreground")} />
@@ -480,7 +480,7 @@ const DashboardWeek: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-3">
+            <div className="bg-card backdrop-blur-sm border border-border/50 rounded-xl p-3">
               <div className="flex items-center gap-2 mb-1">
                 <div className="p-1 rounded-lg bg-primary/10">
                   <BarChart3 className="w-3 h-3 text-primary" />

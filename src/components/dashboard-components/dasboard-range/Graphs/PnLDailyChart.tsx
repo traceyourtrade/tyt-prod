@@ -107,7 +107,7 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
   const strokeColor = status === "negative" ? colors.loss : status === "positive" ? colors.profit : "rgba(255,255,255,0.5)";
 
   return (
-    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
+    <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div className="flex items-center gap-2">

@@ -403,7 +403,7 @@ const Files = ({
                     >
                       <button 
                         onClick={() => setFile(file.filename)}
-                        className={`w-full p-2.5 bg-card/50 border rounded-lg hover:bg-card transition-all text-left ${
+                        className={`w-full p-2.5 bg-card border rounded-lg hover:bg-card transition-all text-left ${
                           isDailyJournal && hasPnl
                             ? isProfit 
                               ? "border-l-2 border-l-profit border-t-border border-r-border border-b-border hover:border-l-profit hover:border-profit/30"

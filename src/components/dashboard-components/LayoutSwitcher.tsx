@@ -22,7 +22,7 @@ const LayoutSwitcher: React.FC = () => {
             flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all
             ${layoutMode === mode 
               ? 'bg-card text-foreground shadow-sm border border-border/50' 
-              : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+              : 'text-muted-foreground hover:text-foreground hover:bg-card'
             }
           `}
         >

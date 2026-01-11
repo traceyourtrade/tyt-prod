@@ -230,7 +230,7 @@ const Calendar = () => {
   const monthName = new Date(selectedYear, selectedMonth).toLocaleString("default", { month: "long" });
 
   return (
-    <div className="flex-1 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-5 overflow-hidden">
+    <div className="flex-1 bg-card backdrop-blur-sm border border-border/50 rounded-2xl p-4 sm:p-5 overflow-hidden">
       <div className="flex justify-between items-center mb-4 sm:mb-5">
         <button 
           onClick={handlePrevMonth}

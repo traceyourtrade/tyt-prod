@@ -61,7 +61,7 @@ const DailyCumulativePnLChart: React.FC<DailyCumulativePnLChartProps> = ({ trade
   };
 
   return (
-    <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
+    <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-muted/50">
