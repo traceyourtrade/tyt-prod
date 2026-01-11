@@ -65,12 +65,12 @@
 
 /* =====================================================
    LIGHT THEME - Clean White & Neutral Grays
-   Better contrast for visibility
+   Enhanced contrast for better visibility
    ===================================================== */
 :root {
   --radius: 0.75rem;
   
-  --background: #fafafa;
+  --background: #eef1f5;
   --foreground: #1a1a1a;
   
   --card: #ffffff;
@@ -85,20 +85,20 @@
   --primary-soft: #e8f0fe;
   --primary-foreground: #ffffff;
   
-  --secondary: #e8eaed;
+  --secondary: #f3f4f6;
   --secondary-foreground: #3c4043;
   
-  --muted: #e8eaed;
+  --muted: #e5e7eb;
   --muted-foreground: #5f6368;
   
-  --accent: #e8eaed;
+  --accent: #f3f4f6;
   --accent-foreground: #1a1a1a;
   
   --destructive: #EF4444;
   --warning: #FACC15;
   
   --border: #d1d5db;
-  --input: #d1d5db;
+  --input: #e5e7eb;
   --ring: #2563EB;
   
   --profit: #4EBF94;
@@ -116,27 +116,28 @@
   --sidebar-foreground: #3c4043;
   --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8eaed;
+  --sidebar-accent: #f3f4f6;
   --sidebar-accent-foreground: #1a1a1a;
-  --sidebar-border: #d1d5db;
+  --sidebar-border: #e5e7eb;
   --sidebar-ring: #2563EB;
   
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08);
 }
 
 /* =====================================================
    DARK THEME - Deep Black Aesthetic
+   Enhanced contrast for better card visibility
    ===================================================== */
 .dark {
-  --background: #0a0a0a;
-  --background-section: #0f0f0f;
+  --background: #050505;
+  --background-section: #0a0a0a;
   --foreground: #e5e5e5;
   
-  --card: #151515;
+  --card: #141414;
   --card-foreground: #e5e5e5;
   
-  --popover: #1a1a1a;
+  --popover: #181818;
   --popover-foreground: #e5e5e5;
   
   --primary: #2563EB;
@@ -145,20 +146,20 @@
   --primary-soft: #1e293b;
   --primary-foreground: #ffffff;
   
-  --secondary: #1f1f1f;
+  --secondary: #1c1c1c;
   --secondary-foreground: #e5e5e5;
   
-  --muted: #262626;
+  --muted: #222222;
   --muted-foreground: #737373;
   
-  --accent: #1f1f1f;
+  --accent: #1c1c1c;
   --accent-foreground: #60A5FA;
   
   --destructive: #EF4444;
   --warning: #FACC15;
   
-  --border: #262626;
-  --input: #1f1f1f;
+  --border: #2a2a2a;
+  --input: #1c1c1c;
   --ring: #2563EB;
   
   --profit: #4EBF94;
@@ -172,13 +173,13 @@
   --chart-5: #60A5FA;
   --chart-text: #9CA3AF;
   
-  --sidebar: #0a0a0a;
+  --sidebar: #080808;
   --sidebar-foreground: #a3a3a3;
   --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1f1f1f;
+  --sidebar-accent: #1c1c1c;
   --sidebar-accent-foreground: #e5e5e5;
-  --sidebar-border: #262626;
+  --sidebar-border: #2a2a2a;
   --sidebar-ring: #2563EB;
   
   /* AstraFlow Design System - Backtesting Module */
