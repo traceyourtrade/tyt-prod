@@ -1,0 +1,22 @@
+ℹ️ Using existing Accounts DB connection
+2026-01-10T15:55:08.099Z  ℹ️ Using existing Main DB connection
+2026-01-10T15:55:08.185Z  (node:397) [MONGOOSE] Warning: Duplicate schema index on {"uniqueId":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition. 
+2026-01-10T15:55:08.186Z  (Use `node --trace-warnings ...` to show where the warning was created)
+2026-01-10T15:55:08.272Z  (node:397) [MONGOOSE] Warning: Duplicate schema index on {"shareToken":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+2026-01-10T15:55:08.349Z  ℹ️ Using existing Main DB connection
+2026-01-10T15:55:08.513Z    Generating static pages using 1 worker (0/111) ...
+2026-01-10T15:55:08.904Z  ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/checkout". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+2026-01-10T15:55:08.904Z      at Q (/vercel/path0/.next/server/chunks/ssr/node_modules_next_920e7746._.js:2:2111)      
+2026-01-10T15:55:08.905Z      at o (/vercel/path0/.next/server/chunks/ssr/node_modules_next_920e7746._.js:4:5314)      
+2026-01-10T15:55:08.905Z      at D (/vercel/path0/.next/server/chunks/ssr/src_app_(root)_checkout_page_tsx_6e429083._.js:1:849)
+2026-01-10T15:55:08.905Z      at an (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:84360)
+2026-01-10T15:55:08.905Z      at ai (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:86179)
+2026-01-10T15:55:08.905Z      at al (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:107953)
+2026-01-10T15:55:08.905Z      at as (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:105368)
+2026-01-10T15:55:08.905Z      at aa (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:84712)
+2026-01-10T15:55:08.905Z      at ai (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:86228)
+2026-01-10T15:55:08.905Z      at ai (/vercel/path0/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.prod.js:2:104708)
+2026-01-10T15:55:08.906Z  Error occurred prerendering page "/checkout". Read more: https://nextjs.org/docs/messages/prerender-error
+2026-01-10T15:55:08.907Z  Export encountered an error on /(root)/checkout/page: /checkout, exiting the build.
+2026-01-10T15:55:08.931Z  ⨯ Next.js build worker exited with code: 1 and signal: null
+2026-01-10T15:55:08.979Z  Error: Command "npm run build" exited with 1
