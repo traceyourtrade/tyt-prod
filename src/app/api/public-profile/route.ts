@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserModel, IUserAccount } from '@/models/main/user.model';
 import { getManualModel } from '@/models/accounts/manual.model';
+import { getFileUploadModel } from '@/models/accounts/fileUploadSchema.model';
+import { getAutoSyncModel } from '@/models/accounts/autoSync.model';
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,7 +14,6 @@ export async function GET(req: NextRequest) {
     }
 
     const User = await getUserModel();
-    const Manual = await getManualModel();
 
     const user = await User.findOne({
       $or: [
@@ -29,26 +30,61 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "This profile is private" }, { status: 403 });
     }
 
-    const trades = await Manual.find({ uniqueId: user.uniqueId });
-    const allTradeData = trades.flatMap(t => t.tradeData || []);
+    const Manual = await getManualModel();
+    const FileUpload = await getFileUploadModel();
+    let AutoSync: any = null;
+    try {
+      AutoSync = await getAutoSyncModel();
+    } catch (e) {
+    }
+
+    const accountIds = user.accounts.map((acc: any) => acc.accountId);
+
+    const [manualTrades, fileUploadTrades, autoSyncTrades] = await Promise.all([
+      Manual.find({ uniqueId: user.uniqueId, accountId: { $in: accountIds } }),
+      FileUpload.find({ uniqueId: user.uniqueId, accountId: { $in: accountIds } }),
+      AutoSync ? AutoSync.find({ uniqueId: user.uniqueId, accountId: { $in: accountIds } }) : Promise.resolve([])
+    ]);
+
+    const allTradeData: any[] = [];
+
+    manualTrades.forEach((tradeDoc: any) => {
+      if (tradeDoc.tradeData) {
+        allTradeData.push(...tradeDoc.tradeData);
+      }
+    });
+
+    fileUploadTrades.forEach((tradeDoc: any) => {
+      if (tradeDoc.tradeData) {
+        allTradeData.push(...tradeDoc.tradeData);
+      }
+    });
+
+    autoSyncTrades.forEach((tradeDoc: any) => {
+      if (tradeDoc.tradeData) {
+        allTradeData.push(...tradeDoc.tradeData);
+      }
+    });
 
     const hasVerifiedAccounts = user.accounts.some((acc: IUserAccount) => acc.investorId);
 
     const totalTrades = allTradeData.length;
-    const wins = allTradeData.filter(t => (t.pnl || 0) > 0);
-    const losses = allTradeData.filter(t => (t.pnl || 0) < 0);
+    const wins = allTradeData.filter((t: any) => (t.Profit || t.pnl || 0) > 0);
+    const losses = allTradeData.filter((t: any) => (t.Profit || t.pnl || 0) < 0);
     const winRate = totalTrades > 0 ? (wins.length / totalTrades) * 100 : 0;
-    const totalPnL = allTradeData.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const totalPnL = allTradeData.reduce((sum: number, t: any) => sum + (t.Profit || t.pnl || 0), 0);
 
-    const avgWin = wins.length > 0 ? wins.reduce((sum, t) => sum + (t.pnl || 0), 0) / wins.length : 0;
-    const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((sum, t) => sum + (t.pnl || 0), 0) / losses.length) : 1;
-    const profitFactor = avgLoss > 0 ? avgWin / avgLoss : avgWin;
+    const totalWins = wins.reduce((sum: number, t: any) => sum + (t.Profit || t.pnl || 0), 0);
+    const totalLosses = Math.abs(losses.reduce((sum: number, t: any) => sum + (t.Profit || t.pnl || 0), 0));
+    const profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? totalWins : 0;
 
     const monthlyPnL: { [key: string]: number } = {};
-    allTradeData.forEach(trade => {
-      const date = new Date(trade.closeDate || trade.date);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      monthlyPnL[key] = (monthlyPnL[key] || 0) + (trade.pnl || 0);
+    allTradeData.forEach((trade: any) => {
+      const date = new Date(trade.CloseTime || trade.closeDate || trade.date);
+      if (!isNaN(date.getTime())) {
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyPnL[key] = (monthlyPnL[key] || 0) + (trade.Profit || trade.pnl || 0);
+      }
     });
 
     const monthlyPnLData = Object.entries(monthlyPnL)
@@ -56,19 +92,19 @@ export async function GET(req: NextRequest) {
       .slice(-12)
       .map(([month, pnl]) => ({ month, pnl }));
 
-    const sortedTrades = [...allTradeData].sort((a, b) => {
-      const dateA = new Date(a.closeDate || a.date).getTime();
-      const dateB = new Date(b.closeDate || b.date).getTime();
+    const sortedTrades = [...allTradeData].sort((a: any, b: any) => {
+      const dateA = new Date(a.CloseTime || a.closeDate || a.date).getTime();
+      const dateB = new Date(b.CloseTime || b.closeDate || b.date).getTime();
       return dateA - dateB;
     });
 
     let cumulativePnL = 0;
-    const equityCurveData = sortedTrades.map((trade, index) => {
-      cumulativePnL += (trade.pnl || 0);
+    const equityCurveData = sortedTrades.map((trade: any, index: number) => {
+      cumulativePnL += (trade.Profit || trade.pnl || 0);
       return {
         tradeNumber: index + 1,
         equity: cumulativePnL,
-        date: trade.closeDate || trade.date
+        date: trade.CloseTime || trade.closeDate || trade.date
       };
     });
 

@@ -47,6 +47,8 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
   - Custom username support for vanity URLs
   - Shareable link generator with copy-to-clipboard functionality
   - Dollar amounts can be hidden to show relative performance only
+  - Dark theme UI matching main dashboard aesthetic (uses hardcoded zinc colors for public layout)
+  - Data sourced from Manual, FileUpload, and AutoSync collections (same as dashboard)
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for routes, components, utilities, database models, state management, and type definitions.
