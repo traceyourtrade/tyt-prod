@@ -40,6 +40,13 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
 - **Subscription System:** Integrates Razorpay with a manual opt-in 3-day free trial. Access to pro features is gated, and trial status is managed via backend and client-side flags. Admin users bypass all subscription checks.
 - **Coupon System:** Supports coupon codes at checkout, linked to Razorpay Offers for actual discounts.
 - **User Referral System:** Each user receives a unique referral code, enabling tracking of referred sign-ups.
+- **Verified P&L / Public Profile (Jan 2026):** Influencers can share authenticated trading performance with their audience. Features include:
+  - Public profile page at `/profile/[username]` displaying trader stats, equity curve, and monthly P&L
+  - Verification badge: "Verified" (green shield) for accounts with broker sync (MT5), "Unverified" for manual-only accounts
+  - Privacy controls in Settings > Public Profile to toggle visibility of stats (equity curve, win rate, profit factor, P&L, etc.)
+  - Custom username support for vanity URLs
+  - Shareable link generator with copy-to-clipboard functionality
+  - Dollar amounts can be hidden to show relative performance only
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for routes, components, utilities, database models, state management, and type definitions.

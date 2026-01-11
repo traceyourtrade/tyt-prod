@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
 import { getUserModel } from '@/models/main/user.model';
 
-interface JWTPayload {
-  _id: string;
+async function getUserFromToken(token: string) {
+  const User = await getUserModel();
+  return await User.findOne({ "tokens.token": token });
 }
 
 export async function POST(req: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('jwt')?.value;
+    const token = cookieStore.get('authToken')?.value;
+    const userId = cookieStore.get('userId')?.value;
 
-    if (!token) {
+    if (!token || !userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    let decoded: JWTPayload;
-    try {
-      decoded = jwt.verify(token, process.env.SECRET_KEY as string) as JWTPayload;
-    } catch {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    const user = await getUserFromToken(token);
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -37,11 +37,6 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const User = await getUserModel();
-    const user = await User.findById(decoded._id);
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
 
     if (customUsername && customUsername !== user.publicProfile?.customUsername) {
       const existingUser = await User.findOne({
