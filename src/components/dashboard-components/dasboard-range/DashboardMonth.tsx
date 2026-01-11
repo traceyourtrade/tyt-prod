@@ -10,7 +10,6 @@ import DailyPnLBarChart from "./Graphs/DailyPnLBarChart";
 import DayOfWeekChart from "./Graphs/DayOfWeekChart";
 import SymbolPnLChart from "./Graphs/SymbolPnLChart";
 import HourlyPnLChart from "./Graphs/HourlyPnLChart";
-import LayoutSwitcher from "../LayoutSwitcher";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import useCurrencyStore, { convertTradeCurrency } from '@/store/currencyStore';
@@ -269,9 +268,6 @@ const DashboardMonth: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <LayoutSwitcher />
-      </div>
       {layoutMode === 'view1' ? renderView1() : renderView2()}
     </div>
   );
