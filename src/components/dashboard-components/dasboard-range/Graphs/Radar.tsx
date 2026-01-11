@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { Info } from 'lucide-react';
+import { Info, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
@@ -148,9 +148,10 @@ export default function PerformanceRadar() {
       "bg-card/50 backdrop-blur-sm border-border/50"
     )}>
       <div className="w-full flex items-center justify-between px-5 py-4 border-b border-border/50">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-blue-500" />
           <h2 className="text-sm font-semibold text-foreground">
-            Performance Score
+            AI Performance Score
           </h2>
         </div>
         <button className="p-2 rounded-lg hover:bg-muted/50 transition-colors">
@@ -205,7 +206,7 @@ export default function PerformanceRadar() {
 
         <div className="w-full mt-2 px-2">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-muted-foreground font-medium">Your Score</span>
+            <span className="text-xs text-muted-foreground font-medium">AI Score</span>
             <span 
               className="text-xl font-bold"
               style={{ color: getScoreColor(metrics.overallScore) }}
