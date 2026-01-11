@@ -157,7 +157,9 @@ const DashboardMonth: React.FC = () => {
             <HourlyPnLChart data={thisMonthData} />
           )}
           {isWidgetVisible('radar') && (
-            <Radar />
+            <div className="md:col-span-2">
+              <Radar />
+            </div>
           )}
         </div>
       )}
