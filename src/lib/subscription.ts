@@ -67,8 +67,11 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
     if (trialEnd > now) {
       const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
-      // Autosync access during trial: only if grandfathered OR has existing autosync accounts
-      const autosyncGrandfathered = user.subscription?.autosyncGrandfathered ?? false;
+      // Autosync access during trial: 
+      // - If user has autosyncGrandfathered flag set to true, they have access
+      // - If user has existing autosync accounts (detected dynamically), they have access
+      // - Otherwise, new trial users don't get autosync access (Pro feature)
+      const autosyncGrandfathered = user.subscription?.autosyncGrandfathered === true;
       const hasAutoSyncAccess = autosyncGrandfathered || hasExistingAutoSyncAccounts;
       
       return {

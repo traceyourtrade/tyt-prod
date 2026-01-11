@@ -42,6 +42,7 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
 - **Dashboard Smart Alerts:** Provides real-time warnings for tilt, low-performance hours, and overtrading.
 - **Backtesting Module:** A full-screen TradingView-powered chart for historical market simulation, offering replay controls, trade placement, real-time P&L, and session analytics with persistent chart layouts.
 - **Subscription System:** Integrates Razorpay with a manual opt-in 3-day free trial. Access to pro features is gated, and trial status is managed via backend and client-side flags. Admin users bypass all subscription checks.
+- **Auto-Sync Paywall (Jan 2026):** MT5 Auto-Sync is restricted to paid Pro subscribers only. Grandfathering logic: existing trial users who already have broker sync accounts retain access until trial ends; new trial users see a compelling upgrade CTA with feature preview. API returns 402 with `requiresUpgrade` flag when blocked. Subscription status includes `hasPaidSubscription` and `hasAutoSyncAccess` flags.
 - **Coupon System:** Supports coupon codes at checkout, linked to Razorpay Offers for actual discounts.
 - **User Referral System:** Each user receives a unique referral code, enabling tracking of referred sign-ups.
 - **Verified P&L / Public Profile (Jan 2026):** Influencers can share authenticated trading performance with their audience. Features include:

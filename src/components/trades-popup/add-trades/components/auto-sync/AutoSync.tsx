@@ -242,6 +242,7 @@ const MT5ConnectionModal = ({
 }) => {
   const { setAccounts } = useAccountDetails();
   const { setAlertBoxG, accStatusPolling } = notifications();
+  const router = useRouter();
   
   const [formData, setFormData] = useState<MT5FormData>({
     accountName: "",
@@ -253,6 +254,7 @@ const MT5ConnectionModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [requiresUpgrade, setRequiresUpgrade] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -307,6 +309,11 @@ const MT5ConnectionModal = ({
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 402 && data.requiresUpgrade) {
+          const upgradeError = new Error(data.error || "Upgrade required");
+          (upgradeError as any).requiresUpgrade = true;
+          throw upgradeError;
+        }
         throw new Error(data.error || "Failed to connect account");
       }
 
@@ -320,10 +327,20 @@ const MT5ConnectionModal = ({
       }, 2000);
 
     } catch (err: any) {
-      setError(err.message || "Failed to connect MT5 account");
+      if (err.requiresUpgrade) {
+        setRequiresUpgrade(true);
+        setError("Auto-Sync is a Pro feature. Please upgrade to access MT5 automatic trade sync.");
+      } else {
+        setError(err.message || "Failed to connect MT5 account");
+      }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleUpgradeFromModal = () => {
+    onClose();
+    router.push("/pricing");
   };
 
   if (!isOpen) return null;
@@ -437,9 +454,30 @@ const MT5ConnectionModal = ({
           </label>
 
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-loss/10 border border-loss/20 text-loss text-sm">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
+            <div className={cn(
+              "p-3 rounded-xl border text-sm",
+              requiresUpgrade 
+                ? "bg-primary/10 border-primary/20" 
+                : "bg-loss/10 border-loss/20 text-loss"
+            )}>
+              <div className="flex items-center gap-2">
+                {requiresUpgrade ? (
+                  <Crown className="w-4 h-4 flex-shrink-0 text-primary" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                )}
+                <span className={requiresUpgrade ? "text-foreground" : ""}>{error}</span>
+              </div>
+              {requiresUpgrade && (
+                <button
+                  type="button"
+                  onClick={handleUpgradeFromModal}
+                  className="mt-3 w-full py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Crown className="w-4 h-4" />
+                  Upgrade to Pro
+                </button>
+              )}
             </div>
           )}
 
