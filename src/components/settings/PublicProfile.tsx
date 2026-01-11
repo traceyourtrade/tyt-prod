@@ -99,12 +99,13 @@ const PublicProfile = () => {
 
   const getProfileUrl = useCallback(() => {
     const username = settings.customUsername || uniqueId;
-    return `projournx.com/profile/${username}`;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://app.projournx.com';
+    return `${baseUrl}/profile/${username}`;
   }, [settings.customUsername, uniqueId]);
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(`https://${getProfileUrl()}`);
+      await navigator.clipboard.writeText(getProfileUrl());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
