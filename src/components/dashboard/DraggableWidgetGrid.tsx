@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Eye, EyeOff, Settings, RotateCcw, X } from 'lucide-react';
+import { Eye, EyeOff, Settings, RotateCcw, X, LayoutGrid, Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import { WIDGET_REGISTRY } from '@/lib/dashboardWidgets';
@@ -12,7 +12,7 @@ interface EditModeToolbarProps {
 }
 
 export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) => {
-  const { isEditMode, toggleEditMode, resetLayout, layout, toggleWidgetVisibility } = useDashboardLayoutStore();
+  const { isEditMode, toggleEditMode, resetLayout, layout, toggleWidgetVisibility, layoutMode, setLayoutMode } = useDashboardLayoutStore();
   const [showWidgetPicker, setShowWidgetPicker] = useState(false);
 
   const hiddenWidgets = layout.filter(l => !l.visible);
@@ -42,6 +42,33 @@ export const EditModeToolbar: React.FC<EditModeToolbarProps> = ({ className }) =
         
         {isEditMode && (
           <>
+            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg border border-border/50">
+              <button
+                onClick={() => setLayoutMode('view1')}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                  layoutMode === 'view1' 
+                    ? "bg-card text-foreground shadow-sm border border-border/50" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                )}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden sm:inline">View 1</span>
+              </button>
+              <button
+                onClick={() => setLayoutMode('view2')}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                  layoutMode === 'view2' 
+                    ? "bg-card text-foreground shadow-sm border border-border/50" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                )}
+              >
+                <Grid3X3 className="w-4 h-4" />
+                <span className="hidden sm:inline">View 2</span>
+              </button>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
