@@ -26,6 +26,14 @@ export const currencyLabels: Record<CurrencyType, string> = {
   R: "R Factor",
 };
 
+const formatWithCommas = (num: number): string => {
+  return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+};
+
+const formatIndianNumber = (num: number): string => {
+  return num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+};
+
 export const normalizeTradeCurrency = (tradeCurrency?: string): "USD" | "INR" => {
   if (!tradeCurrency) return "USD";
   const lower = tradeCurrency.toLowerCase();
@@ -100,20 +108,18 @@ export const formatCurrencyValue = (
       formatted = `${(absValue / 10000000).toFixed(2)}Cr`;
     } else if (absValue >= 100000) {
       formatted = `${(absValue / 100000).toFixed(2)}L`;
-    } else if (absValue >= 1000) {
-      formatted = `${(absValue / 1000).toFixed(1)}K`;
     } else {
-      formatted = absValue.toFixed(2);
+      formatted = formatIndianNumber(Math.round(absValue));
     }
   } else {
     if (absValue >= 1000000000) {
       formatted = `${(absValue / 1000000000).toFixed(2)}B`;
     } else if (absValue >= 1000000) {
       formatted = `${(absValue / 1000000).toFixed(2)}M`;
-    } else if (absValue >= 1000) {
+    } else if (absValue >= 100000) {
       formatted = `${(absValue / 1000).toFixed(1)}K`;
     } else {
-      formatted = absValue.toFixed(2);
+      formatted = formatWithCommas(Math.round(absValue));
     }
   }
   
@@ -167,18 +173,16 @@ export const formatCompactCurrency = (
       formatted = `${(absValue / 10000000).toFixed(1)}Cr`;
     } else if (absValue >= 100000) {
       formatted = `${(absValue / 100000).toFixed(1)}L`;
-    } else if (absValue >= 1000) {
-      formatted = `${(absValue / 1000).toFixed(1)}K`;
     } else {
-      formatted = absValue.toFixed(0);
+      formatted = formatIndianNumber(Math.round(absValue));
     }
   } else {
     if (absValue >= 1000000) {
       formatted = `${(absValue / 1000000).toFixed(1)}M`;
-    } else if (absValue >= 1000) {
+    } else if (absValue >= 100000) {
       formatted = `${(absValue / 1000).toFixed(1)}K`;
     } else {
-      formatted = absValue.toFixed(0);
+      formatted = formatWithCommas(Math.round(absValue));
     }
   }
   
