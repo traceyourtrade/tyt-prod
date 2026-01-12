@@ -285,7 +285,7 @@ const Calendar = () => {
             monthlyStats.maxProfit,
             monthlyStats.maxLoss,
           )
-        : "bg-gray-100 dark:bg-[#191919] border-transparent hover:border-border/50";
+        : "bg-gray-100 dark:bg-[#202020] border-transparent hover:border-border/50";
 
       cells.push(
         <motion.div
