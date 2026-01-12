@@ -59,7 +59,7 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
   const zeroOffset = calculateOffset(data);
 
   const formatCompact = (num: number) => {
-    return formatCompactCurrency(num, currency, exchangeRate);
+    return formatCompactCurrency(num, currency, exchangeRate, undefined, undefined, true);
   };
 
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) => {
