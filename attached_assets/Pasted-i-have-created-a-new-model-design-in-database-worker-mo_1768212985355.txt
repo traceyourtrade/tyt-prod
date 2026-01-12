@@ -1,0 +1,75 @@
+i have created a new model design in database:
+
+// worker.model.ts 
+
+import mongoose, { Schema, Document, Model } from "mongoose";
+import { connectWorkersDB } from "@/lib/db/connect";
+
+export interface IWorker extends Document {
+    workerId: string;
+    workerName: string;
+    createdAt: Date;
+}
+
+const workerSchema = new Schema<IWorker>({
+    workerId: { type: String, required: true, unique: true },
+    workerName: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+});
+
+export const getWorkerModel = async (): Promise<Model<IWorker>> => {
+    const conn = await connectWorkersDB();
+    return conn.models.WORKERS || conn.model<IWorker>("WORKERS", workerSchema);
+};
+
+
+Example documents in worker schema database: 
+
+_id:6964b8d8f905a819acba8f76
+workerId:"9348067f-7af9-4957-bde8-dbbf4ddcbf2a"
+workerName:"ASW1"
+createdAt:2026-01-12T09:03:20.671+00:00
+__v:0
+
+_id:6964b8dbf905a819acba8f78
+workerId:"260b0e18-3667-4849-a3c1-4e8b707a4a2d"
+workerName:"ASW2"
+createdAt:2026-01-12T09:03:23.517+00:00
+__v:0
+
+_id:6964b8ddf905a819acba8f7a
+workerId:"e679fc27-16d7-4dfd-a725-37122a50ef7d"
+workerName:"ASW3"
+createdAt:2026-01-12T09:03:25.887+00:00
+__v:0
+
+Now while creating an autosync account, i want you to check worker model and generate list of workers,
+for example, in this case we have 3 workers [ASW1, ASW2, ASW3]
+
+So, now check how many accounts we have in asAccounts.model.ts,
+and figure out how many [ASW1, ASW2, ASW3] accounts we have using vpsId
+
+example :
+ASW1 - 50 accounts
+ASW2 - 50 accounts
+ASW3 - 49 accounts
+
+then now, when a user is creating an autosync account give vpsId according to the availability
+example in this case, ASW3 account has one less account so assign ASW3
+
+so its like create a equal distribution table and assign vpsId accordingly
+
+Few more examples:
+
+1) ASW1 - 55 accounts
+ASW2 - 53 accounts
+ASW3 - 53 accounts
+Assign wither ASW2 or ASW3
+
+2) ASW1 - 78 accounts
+ASW2 - 78 accounts
+ASW3 - 78 accounts
+Assign ASW1 
+
+so there should be equal accounts in each vps is what i mean...
+So check vps availability and then assign vps accordingly!
