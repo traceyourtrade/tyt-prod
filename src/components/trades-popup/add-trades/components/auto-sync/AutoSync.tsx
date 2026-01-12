@@ -340,7 +340,7 @@ const MT5ConnectionModal = ({
 
   const handleUpgradeFromModal = () => {
     onClose();
-    router.push("/pricing");
+    router.push("/checkout");
   };
 
   if (!isOpen) return null;
@@ -625,7 +625,7 @@ const AutoSync = () => {
   };
 
   const handleUpgradeClick = () => {
-    router.push("/pricing");
+    router.push("/checkout");
   };
 
   const hasAutoSyncAccess = subscriptionStatus?.hasAutoSyncAccess ?? false;

@@ -1053,7 +1053,7 @@ const AddAccPopup = () => {
                   onClick={() => {
                     setShowUpgradePrompt(false);
                     setAddAcc();
-                    router.push("/pricing");
+                    router.push("/checkout");
                   }}
                   className="flex-1 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
                 >
