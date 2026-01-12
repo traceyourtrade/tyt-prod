@@ -1,13 +1,368 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import html2canvas from "html2canvas";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import Cookies from "js-cookie";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {,""""
+    ""
+   ""
+   ""
+  
+   """"""""""""""""""""""""""""""""
+  
+ ,
+""
+   
+   
+   
+   
+   
+   
+   ,
+ 
+   
+   ;
+ """"
+      
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     ,
+    
+    ()        ,  ,  
+                ,              
+   ()()""""""""()()
+   
+    
+   ,
+  
+    ()
+    
+    (),
+  
+   
+     
+     
+       
+       
+    
+   ,
+  
+     
+          
+           
+         ,
+          
+   ()
+   ()""
+    
+   ,
+  """"""
+     
+     ,
+   
+     """"""
+       
+       ,
+     ()(
+      
+     
+     
+     
+     
+    )
+     ,()()()
+           
+           
+          
+                 
+                 
+                 
+               
+                 
+                 
+                 
+               
+             
+             
+             
+           
+               
+              ,""
+                
+                 
+                 
+                   
+                   
+              
+        
+       
+      """""""","",
+   
+   
+   
+   
+   
+   ,
+ 
+         
+        
+            
+          
+            
+          
+   
+   ,
+ 
+   
+   ;
+ 
+               
+                  ""  ""  ""
+              """"""
+             
+            """"
+              
+              
+                """"""
+               ,
+              
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                      
+                    
+                        
+                        
+                      
+                        
+                      
+                     
+                     
+                   
+                     
+                     
+                   
+                     
+                     
+                   
+                     
+                     
+                   
+                     
+                     
+                   
+                     
+                     
+                   
+                   
+                   
+                 
+                  
+                
+                 
+                   
+                   
+                 
+                     
+                     
+                   
+                    
+                  
+                     
+                     
+                   
+                   
+                   
+                   
+                 
+                  
+                
+                      
+                    
+                         
+                         
+                       
+                          
+                        
+                         
+                         
+                       
+                       
+                       
+                     
+                     """"
+                    
+                       """"
+                      """"
+                        
+                        
+                        
+                      
+                       
+                       
+                     
+                       
+                       
+                     
+                          
+                        
+                         """"
+                        """"
+                          
+                          
+                          
+                        
+                          
+                        
+                          
+                           
+                           
+                        
+                          
+                           
+                           
+                        
+                          
+                           
+                           """"
+                        
+                          
+                           
+                           
+                             
+                             
+                        
+                          
+                           
+                           
+                             
+                             
+                        ""
+                          """"""""
+                          """"""""
+                          """"""
+                         
+                         
+                       
+                          {" "}
+                         ""
+                           ""
+                           ""
+                             ""
+                             ""
+                        
+                         
+                         
+                       
+                               ""
+                               
+                             """"""
+                               ""
+                               
+                             """"""
+                               ""
+                               
+                             """"""
+                      """"
+                              
+                            
+                              
+                            
+                              
+                            
+                              
+                            
+                              
+                            
+                              
+                            
+                              
+                            
+                              
+                            
+                              
+                            
+                                       
+                                       
+                                     
+                                      
+                                    
+                                      
+                                    
+                                      
+                                    
+                                      
+                                    
+                                      
+                                        
+                                       ,
+                                      
+                                    
+                                     
+                                        ""  ""  ""
+                                    ""
+                                       ""
+                                       ""
+                                     
+                                    """"
+                                      
+                                        
+                                       ,
+                                      
+                                      
+                                        ""
+                                         ""
+                                         ""
+                                       
+                                         
+                                         ,
+                                       ,
+                                      
+                                     
+                                     
+                                    
+                                         
+                                         
+                                       
+                                         
+                                         
+                                       
+                                         
+                                            
+                                             
+                                             
+                                             ,
+                                          
+                                        
+                                         
+                                         
+                                        
   faPenToSquare, 
   faTrashCan, 
   faShareNodes, 
@@ -1139,7 +1494,10 @@ const CalendarPopup = () => {
                                       <td colSpan={10} className="p-0">
                                         <motion.div
                                           initial={{ height: 0, opacity: 0 }}
-                                          animate={{ height: "auto", opacity: 1 }}
+                                          animate={{
+                                            height: "auto",
+                                            opacity: 1,
+                                          }}
                                           exit={{ height: 0, opacity: 0 }}
                                           transition={{ duration: 0.2 }}
                                           className="overflow-hidden"
@@ -1147,48 +1505,119 @@ const CalendarPopup = () => {
                                           <div className="px-6 py-4 bg-white/[0.02] border-b border-white/[0.06]">
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                               <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Ticket #</span>
-                                                <span className="text-sm text-white font-medium">{data.Ticket}</span>
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                  Ticket #
+                                                </span>
+                                                <span className="text-sm text-white font-medium">
+                                                  {data.Ticket}
+                                                </span>
                                               </div>
                                               {data.accountName && (
                                                 <div>
-                                                  <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Account</span>
-                                                  <span className="text-sm text-white font-medium">{data.accountName}</span>
+                                                  <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                    Account
+                                                  </span>
+                                                  <span className="text-sm text-white font-medium">
+                                                    {data.accountName}
+                                                  </span>
                                                 </div>
                                               )}
                                               <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Commission</span>
-                                                <span className="text-sm text-amber-400 font-medium">{getCurrencySymbol(data.Currency, data.marketType)}{Math.abs(Number(data.Commission) || 0).toFixed(2)}</span>
-                                              </div>
-                                              <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Swap</span>
-                                                <span className="text-sm text-white font-medium">{getCurrencySymbol(data.Currency, data.marketType)}{(Number(data.Swap) || 0).toFixed(2)}</span>
-                                              </div>
-                                              <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Entry Time</span>
-                                                <span className="text-sm text-white font-medium">{data.OpenTime}</span>
-                                              </div>
-                                              <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Exit Time</span>
-                                                <span className="text-sm text-white font-medium">{data.CloseTime}</span>
-                                              </div>
-                                              <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Gross P&L</span>
-                                                <span className={`text-sm font-medium ${data.Profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                  {data.Profit >= 0 ? '+' : ''}{getCurrencySymbol(data.Currency, data.marketType)}{(Number(data.Profit) || 0).toFixed(2)}
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                  Commission
+                                                </span>
+                                                <span className="text-sm text-amber-400 font-medium">
+                                                  {getCurrencySymbol(
+                                                    data.Currency,
+                                                    data.marketType,
+                                                  )}
+                                                  {Math.abs(
+                                                    Number(data.Commission) ||
+                                                      0,
+                                                  ).toFixed(2)}
                                                 </span>
                                               </div>
                                               <div>
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Net P&L</span>
-                                                <span className={`text-sm font-medium ${(data.Profit - Math.abs(data.Commission)) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                  {(data.Profit - Math.abs(data.Commission)) >= 0 ? '+' : ''}{getCurrencySymbol(data.Currency, data.marketType)}{((Number(data.Profit) || 0) - Math.abs(Number(data.Commission) || 0)).toFixed(2)}
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                  Swap
+                                                </span>
+                                                <span className="text-sm text-white font-medium">
+                                                  {getCurrencySymbol(
+                                                    data.Currency,
+                                                    data.marketType,
+                                                  )}
+                                                  {(
+                                                    Number(data.Swap) || 0
+                                                  ).toFixed(2)}
+                                                </span>
+                                              </div>
+                                              <div>
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                  Entry Time
+                                                </span>
+                                                <span className="text-sm text-white font-medium">
+                                                  {data.OpenTime}
+                                                </span>
+                                              </div>
+                                              <div>
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                  Exit Time
+                                                </span>
+                                                <span className="text-sm text-white font-medium">
+                                                  {data.CloseTime}
+                                                </span>
+                                              </div>
+                                              <div>
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                  Gross P&L
+                                                </span>
+                                                <span
+                                                  className={`text-sm font-medium ${data.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                                                >
+                                                  {data.Profit >= 0 ? "+" : ""}
+                                                  {getCurrencySymbol(
+                                                    data.Currency,
+                                                    data.marketType,
+                                                  )}
+                                                  {(
+                                                    Number(data.Profit) || 0
+                                                  ).toFixed(2)}
+                                                </span>
+                                              </div>
+                                              <div>
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">
+                                                  Net P&L
+                                                </span>
+                                                <span
+                                                  className={`text-sm font-medium ${data.Profit - Math.abs(data.Commission) >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                                                >
+                                                  {data.Profit -
+                                                    Math.abs(data.Commission) >=
+                                                  0
+                                                    ? "+"
+                                                    : ""}
+                                                  {getCurrencySymbol(
+                                                    data.Currency,
+                                                    data.marketType,
+                                                  )}
+                                                  {(
+                                                    (Number(data.Profit) || 0) -
+                                                    Math.abs(
+                                                      Number(data.Commission) ||
+                                                        0,
+                                                    )
+                                                  ).toFixed(2)}
                                                 </span>
                                               </div>
                                             </div>
                                             {data.notes && (
                                               <div className="mt-4 pt-4 border-t border-white/[0.04]">
-                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-2">Notes</span>
-                                                <p className="text-sm text-gray-300">{data.notes}</p>
+                                                <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-2">
+                                                  Notes
+                                                </span>
+                                                <p className="text-sm text-gray-300">
+                                                  {data.notes}
+                                                </p>
                                               </div>
                                             )}
                                           </div>
@@ -1207,7 +1636,11 @@ const CalendarPopup = () => {
 
                   <div className="md:hidden space-y-3">
                     {filteredTrades.map((trade, index) => (
-                      <MobileTradeCard key={getTradeId(trade, index)} trade={trade} index={index} />
+                      <MobileTradeCard
+                        key={getTradeId(trade, index)}
+                        trade={trade}
+                        index={index}
+                      />
                     ))}
                   </div>
                 </div>
