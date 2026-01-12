@@ -366,24 +366,6 @@ function CheckoutPageContent() {
                 </motion.div>
               ))}
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex items-center gap-6 pt-4"
-            >
-              {[
-                { value: "500+", label: "Active Traders" },
-                { value: "50K+", label: "Trades Logged" },
-                { value: "99.9%", label: "Uptime" },
-              ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-2xl font-bold text-white">{stat.value}</div>
-                  <div className="text-xs text-zinc-500">{stat.label}</div>
-                </div>
-              ))}
-            </motion.div>
           </motion.div>
 
           <motion.div
