@@ -22,6 +22,7 @@ export interface IUserAccount {
   investorId?: string;
   investorPw?: string;
   serverName?: string;
+  vpsId?: string;
 }
 
 export interface IOtherData {
@@ -112,7 +113,8 @@ export interface IUser extends Document {
     investorPw: string,
     serverName: string,
     accountId: string,
-    isPropFirm?: boolean
+    isPropFirm?: boolean,
+    vpsId?: string
   ): Promise<IUserAccount[]>;
   updateAccountBalance(accountId: string, newBalance: number): Promise<IUserAccount | null>;
 }
@@ -154,7 +156,8 @@ const userSchema = new Schema<IUser>({
       accountId: { type: String },
       investorId: { type: String },
       investorPw: { type: String },
-      serverName: { type: String }
+      serverName: { type: String },
+      vpsId: { type: String }
     }
   ],
   otherData: {
@@ -329,7 +332,8 @@ userSchema.methods.addAutoSyncAccount = async function (
   investorPw: string,
   serverName: string,
   accountId: string,
-  isPropFirm: boolean = false
+  isPropFirm: boolean = false,
+  vpsId?: string
 ): Promise<IUserAccount[]> {
   try {
     this.accounts = this.accounts.concat({
@@ -342,7 +346,8 @@ userSchema.methods.addAutoSyncAccount = async function (
       investorId,
       investorPw,
       serverName,
-      isPropFirm
+      isPropFirm,
+      vpsId
     });
     await this.save();
     return this.accounts;

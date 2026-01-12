@@ -9,7 +9,7 @@ import { getASAccountModel } from '@/models/accounts/asAccounts.model';
 import { getOpenTradeModel } from '@/models/accounts/openTrades.model';
 import { getStrategyModel } from '@/models/main/strategy.model';
 import { getSubscriptionStatus } from '@/lib/subscription';
-import { getAvailableVPS } from '@/lib/vps-distribution';
+import { claimVpsWithRollback } from '@/lib/vps-distribution';
 // Import your models (adjust paths as needed)
 const User = await getUserModel();
 const ASacc = await getASAccountModel();
@@ -107,26 +107,50 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
             const accountId = uuidv4();
             let investorPw = password;
 
-            const addAcc = await isUser.addAutoSyncAccount(accountName, accountType, broker, description, investorId, investorPw, serverName, accountId, isPropFirm);
-            
-            const assignedVPS = await getAvailableVPS();
+            const vpsClaim = await claimVpsWithRollback();
+            const assignedVPS = vpsClaim.workerName;
             console.log(`🔄 Assigning account to VPS: ${assignedVPS}`);
             
-            const newAsAc = new ASacc({
-                uniqueId: rootUser.uniqueId,
-                email: email,
-                accountId: accountId,
-                accountName: accountName,
-                investorId: investorId,
-                investorPw: investorPw,
-                server: serverName,
-                vpsId: assignedVPS,
-                isActive: true
-            });
+            let userAccountAdded = false;
+            
+            try {
+                await isUser.addAutoSyncAccount(accountName, accountType, broker, description, investorId, investorPw, serverName, accountId, isPropFirm, assignedVPS);
+                userAccountAdded = true;
+                
+                const newAsAc = new ASacc({
+                    uniqueId: rootUser.uniqueId,
+                    email: email,
+                    accountId: accountId,
+                    accountName: accountName,
+                    investorId: investorId,
+                    investorPw: investorPw,
+                    server: serverName,
+                    vpsId: assignedVPS,
+                    isActive: true
+                });
 
-            await newAsAc.save();
+                await newAsAc.save();
 
-            return NextResponse.json({ message: "Account added successfully!" });
+                return NextResponse.json({ message: "Account added successfully!" });
+            } catch (saveError) {
+                console.error("❌ Failed to save account, rolling back:", saveError);
+                
+                try {
+                    if (userAccountAdded) {
+                        try {
+                            isUser.accounts = isUser.accounts.filter((acc: any) => acc.accountId !== accountId);
+                            await isUser.save();
+                            console.log("🔄 Rolled back user account entry");
+                        } catch (rollbackError) {
+                            console.error("❌ Failed to rollback user account:", rollbackError);
+                        }
+                    }
+                } finally {
+                    await vpsClaim.release();
+                }
+                
+                throw saveError;
+            }
         } else {
             return NextResponse.json({ error: "Account already exists" }, { status: 400 });
         }
