@@ -200,7 +200,7 @@ const Calendar = () => {
 
     for (let i = 0; i < firstDayIndex; i++) {
       cells.push(
-        <div key={`empty-${i}`} className="aspect-square sm:h-[72px] sm:aspect-auto rounded-xl bg-gray-50/50 dark:bg-[#181818]" />
+        <div key={`empty-${i}`} className="aspect-square sm:h-[72px] sm:aspect-auto rounded-xl bg-gray-100/50 dark:bg-[#1a1a1a] border border-gray-200/30 dark:border-[#333]" />
       );
     }
 
@@ -216,7 +216,7 @@ const Calendar = () => {
 
       const heatmapClass = hasTrades 
         ? getHeatmapColor(dayData.profit, monthlyStats.maxProfit, monthlyStats.maxLoss)
-        : "bg-gray-100 dark:bg-[#262626] border-transparent hover:border-border/50";
+        : "bg-gray-100 dark:bg-[#1a1a1a] border-[#333] hover:border-border/60";
 
       cells.push(
         <motion.div
