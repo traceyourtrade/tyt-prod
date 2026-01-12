@@ -10,6 +10,7 @@ const options = {
 const connections: {
   main?: mongoose.Connection;
   accounts?: mongoose.Connection;
+  workers?: mongoose.Connection;
 } = {};
 console.log("🌐 DB Connect Module Loaded");
 
@@ -52,5 +53,26 @@ export const connectAccountsDB = async (): Promise<mongoose.Connection> => {
   conn.on("disconnected", () => console.warn("⚠️ Accounts DB: Disconnected"));
 
   connections.accounts = conn;
+  return conn;
+};
+
+export const connectWorkersDB = async (): Promise<mongoose.Connection> => {
+  if (connections.workers) {
+    console.log("ℹ️ Using existing Workers DB connection");
+    return connections.workers;
+  }
+
+  const uri = process.env.DATABASE3 as string;
+  if (!uri) throw new Error("❌ Missing DATABASE3 environment variable");
+
+  console.log("🔌 Connecting to Workers DB...");
+
+  const conn = await mongoose.createConnection(uri, options);
+
+  conn.on("connected", () => console.log("✅ Workers DB: Connection Successful"));
+  conn.on("error", (err) => console.error("❌ Workers DB: Connection Error", err));
+  conn.on("disconnected", () => console.warn("⚠️ Workers DB: Disconnected"));
+
+  connections.workers = conn;
   return conn;
 };
