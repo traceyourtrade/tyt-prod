@@ -404,22 +404,25 @@ function CheckoutPageContent() {
                   
                   <button
                     onClick={() => setBillingPeriod('monthly')}
-                    className={`relative p-3 rounded-xl text-left transition-all ${
+                    className={`relative p-3 rounded-xl text-left transition-all ring-2 ring-orange-500/30 ${
                       billingPeriod === 'monthly'
-                        ? 'bg-emerald-500/10 border-2 border-emerald-500'
-                        : 'bg-white/5 border-2 border-transparent hover:border-white/10'
+                        ? 'bg-gradient-to-br from-orange-500/20 to-amber-500/10 border-2 border-orange-500 shadow-lg shadow-orange-500/20'
+                        : 'bg-gradient-to-br from-orange-500/10 to-amber-500/5 border-2 border-orange-500/50 hover:border-orange-500'
                     }`}
                   >
-                    <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-full bg-amber-500 text-[9px] font-bold text-black">
+                    <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-[9px] font-bold text-black animate-pulse">
                       MOST POPULAR
                     </div>
-                    <div className="text-[10px] text-zinc-500 mb-0.5">Monthly</div>
+                    <div className="absolute -top-2 right-3 px-1.5 py-0.5 rounded-full bg-red-500 text-[9px] font-bold text-white">
+                      53% OFF
+                    </div>
+                    <div className="text-[10px] text-orange-300 mb-0.5 font-medium">Monthly</div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xs text-zinc-500 line-through">₹{monthlyOriginalPrice}</span>
-                      <span className="text-xl font-bold">₹{monthlyPrice}</span>
+                      <span className="text-xs text-red-400 line-through">₹{monthlyOriginalPrice}</span>
+                      <span className="text-xl font-bold text-white">₹{monthlyPrice}</span>
                       <span className="text-xs font-normal text-zinc-500">/mo</span>
                     </div>
-                    <div className="text-[10px] text-zinc-500">Billed monthly</div>
+                    <div className="text-[10px] text-orange-300/70">Limited time offer</div>
                   </button>
                 </div>
               </div>
@@ -525,9 +528,13 @@ function CheckoutPageContent() {
                   <motion.button
                     onClick={handlePayment}
                     disabled={loading}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-500/20"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full py-3.5 px-4 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all ${
+                      billingPeriod === 'monthly'
+                        ? 'bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 hover:from-orange-600 hover:via-amber-600 hover:to-orange-600 shadow-lg shadow-orange-500/30'
+                        : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/20'
+                    }`}
                   >
                     {loading ? (
                       <>
@@ -536,7 +543,7 @@ function CheckoutPageContent() {
                       </>
                     ) : (
                       <>
-                        <span>Get Pro — ₹{displayPrice}/mo</span>
+                        <span>{billingPeriod === 'monthly' ? 'Start Saving Now' : 'Get Pro'} — ₹{displayPrice}/mo</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
