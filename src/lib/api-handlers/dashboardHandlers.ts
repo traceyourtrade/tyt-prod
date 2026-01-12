@@ -9,6 +9,7 @@ import { getASAccountModel } from '@/models/accounts/asAccounts.model';
 import { getOpenTradeModel } from '@/models/accounts/openTrades.model';
 import { getStrategyModel } from '@/models/main/strategy.model';
 import { getSubscriptionStatus } from '@/lib/subscription';
+import { getAvailableVPS } from '@/lib/vps-distribution';
 // Import your models (adjust paths as needed)
 const User = await getUserModel();
 const ASacc = await getASAccountModel();
@@ -108,6 +109,9 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
 
             const addAcc = await isUser.addAutoSyncAccount(accountName, accountType, broker, description, investorId, investorPw, serverName, accountId, isPropFirm);
             
+            const assignedVPS = await getAvailableVPS();
+            console.log(`🔄 Assigning account to VPS: ${assignedVPS}`);
+            
             const newAsAc = new ASacc({
                 uniqueId: rootUser.uniqueId,
                 email: email,
@@ -116,7 +120,7 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
                 investorId: investorId,
                 investorPw: investorPw,
                 server: serverName,
-                vpsId: "ASDF01",
+                vpsId: assignedVPS,
                 isActive: true
             });
 
