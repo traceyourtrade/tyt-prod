@@ -81,10 +81,12 @@ function CheckoutPageContent() {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
   
+  const monthlyOriginalPrice = 1799;
   const monthlyPrice = 849;
   const yearlyPrice = 8199;
   const yearlyMonthlyPrice = Math.round(yearlyPrice / 12);
   const yearlySavings = (monthlyPrice * 12) - yearlyPrice;
+  const monthlyDiscount = monthlyOriginalPrice - monthlyPrice;
 
   const getCurrentPrice = () => {
     if (appliedCoupon) return appliedCoupon.finalPrice;
@@ -402,14 +404,21 @@ function CheckoutPageContent() {
                   
                   <button
                     onClick={() => setBillingPeriod('monthly')}
-                    className={`p-3 rounded-xl text-left transition-all ${
+                    className={`relative p-3 rounded-xl text-left transition-all ${
                       billingPeriod === 'monthly'
                         ? 'bg-emerald-500/10 border-2 border-emerald-500'
                         : 'bg-white/5 border-2 border-transparent hover:border-white/10'
                     }`}
                   >
+                    <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-full bg-amber-500 text-[9px] font-bold text-black">
+                      MOST POPULAR
+                    </div>
                     <div className="text-[10px] text-zinc-500 mb-0.5">Monthly</div>
-                    <div className="text-xl font-bold">₹{monthlyPrice}<span className="text-xs font-normal text-zinc-500">/mo</span></div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-xs text-zinc-500 line-through">₹{monthlyOriginalPrice}</span>
+                      <span className="text-xl font-bold">₹{monthlyPrice}</span>
+                      <span className="text-xs font-normal text-zinc-500">/mo</span>
+                    </div>
                     <div className="text-[10px] text-zinc-500">Billed monthly</div>
                   </button>
                 </div>
