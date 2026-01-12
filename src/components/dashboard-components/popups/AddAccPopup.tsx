@@ -23,13 +23,27 @@ import {
   Bitcoin,
   IndianRupee,
   DollarSign,
-  MoreHorizontal
+  MoreHorizontal,
+  Crown,
+  Lock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 import calendarPopUp from "@/store/calendarPopUp";
 import notifications from "@/store/notifications";
 import useAccountDetails from "@/store/accountdetails";
+
+interface SubscriptionStatus {
+  hasAccess: boolean;
+  isSubscribed: boolean;
+  isOnTrial: boolean;
+  trialDaysLeft: number;
+  canStartTrial: boolean;
+  status: string;
+  hasPaidSubscription: boolean;
+  hasAutoSyncAccess: boolean;
+}
 
 interface AccountDetails {
   accountName: string;
@@ -145,6 +159,7 @@ const AddAccPopup = () => {
   const { showAddAcc, setAddAcc } = calendarPopUp();
   const { setAccounts, setSyncingAccount } = useAccountDetails();
   const { setAlertBoxG } = notifications();
+  const router = useRouter();
 
   const [accountType, setAccountType] = useState<string>("");
   const [selectedMarket, setSelectedMarket] = useState<string>("");
@@ -166,10 +181,34 @@ const AddAccPopup = () => {
   const [syncStatus, setSyncStatus] = useState<string>("");
   const [showAccountTypeDropdown, setShowAccountTypeDropdown] = useState(false);
   const [showBrokerDropdown, setShowBrokerDropdown] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   const accountTypeRef = useRef<HTMLDivElement>(null);
   const brokerRef = useRef<HTMLDivElement>(null);
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const hasAutoSyncAccess = subscriptionStatus?.hasAutoSyncAccess ?? false;
+  const isOnTrial = subscriptionStatus?.isOnTrial ?? false;
+
+  // Fetch subscription status when modal opens
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const res = await fetch('/api/subscription/status');
+        if (res.ok) {
+          const data = await res.json();
+          setSubscriptionStatus(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscription status:', error);
+      }
+    };
+    
+    if (showAddAcc) {
+      fetchSubscriptionStatus();
+    }
+  }, [showAddAcc]);
 
   // Cleanup sync interval on unmount or modal close
   useEffect(() => {
@@ -298,6 +337,11 @@ const AddAccPopup = () => {
             setAccounts();
             setIsSyncing(false);
           }, 1500);
+        } else if (res.status === 402) {
+          setSyncingAccount(accountName, false);
+          setIsSyncing(false);
+          setIsSubmitting(false);
+          setShowUpgradePrompt(true);
         } else {
           setSyncingAccount(accountName, false);
           setIsSyncing(false);
@@ -535,39 +579,58 @@ const AddAccPopup = () => {
                       exit={{ opacity: 0, y: -10 }}
                       className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden"
                     >
-                      {accountTypeOptions.map((option) => (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => {
-                            setAccountType(option.id);
-                            setShowAccountTypeDropdown(false);
-                            if (option.id === "Broker Sync") {
-                              setSelectedMarket("forex");
-                              setBroker("MetaTrader 5");
-                            }
-                          }}
-                          className={cn(
-                            "w-full px-4 py-3 flex items-center gap-3 text-left transition-colors",
-                            "hover:bg-muted/50",
-                            accountType === option.id && "bg-primary/10"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-8 h-8 rounded-lg flex items-center justify-center",
-                            accountType === option.id ? "bg-primary text-white" : "bg-muted/50 text-muted-foreground"
-                          )}>
-                            {option.icon}
-                          </div>
-                          <div className="flex-1">
-                            <span className="text-sm font-medium text-foreground">{option.label}</span>
-                            <p className="text-xs text-muted-foreground">{option.description}</p>
-                          </div>
-                          {accountType === option.id && (
-                            <CheckCircle2 className="w-4 h-4 text-primary" />
-                          )}
-                        </button>
-                      ))}
+                      {accountTypeOptions.map((option) => {
+                        const isBrokerSync = option.id === "Broker Sync";
+                        const isLocked = isBrokerSync && !hasAutoSyncAccess;
+                        
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => {
+                              if (isLocked) {
+                                setShowAccountTypeDropdown(false);
+                                setShowUpgradePrompt(true);
+                                return;
+                              }
+                              setAccountType(option.id);
+                              setShowAccountTypeDropdown(false);
+                              if (option.id === "Broker Sync") {
+                                setSelectedMarket("forex");
+                                setBroker("MetaTrader 5");
+                              }
+                            }}
+                            className={cn(
+                              "w-full px-4 py-3 flex items-center gap-3 text-left transition-colors",
+                              "hover:bg-muted/50",
+                              accountType === option.id && "bg-primary/10",
+                              isLocked && "opacity-60"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-8 h-8 rounded-lg flex items-center justify-center",
+                              accountType === option.id ? "bg-primary text-white" : "bg-muted/50 text-muted-foreground"
+                            )}>
+                              {isLocked ? <Lock className="w-4 h-4" /> : option.icon}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground">{option.label}</span>
+                                {isBrokerSync && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                                    <Crown className="w-2.5 h-2.5" />
+                                    Pro
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">{option.description}</p>
+                            </div>
+                            {accountType === option.id && (
+                              <CheckCircle2 className="w-4 h-4 text-primary" />
+                            )}
+                          </button>
+                        );
+                      })}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -935,6 +998,73 @@ const AddAccPopup = () => {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Upgrade Prompt Modal */}
+      {showUpgradePrompt && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowUpgradePrompt(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+          >
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+                  <Zap className="w-7 h-7 text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-foreground text-xl">
+                    Upgrade to Pro
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    MT5 Auto-Sync is a Pro feature
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Save hours every week by automatically importing your trades from MT5. 
+                No more manual data entry - your journal stays perfectly up to date.
+              </p>
+
+              {isOnTrial && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p>Auto-Sync is only available for paid Pro subscribers.</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowUpgradePrompt(false)}
+                  className="flex-1 py-3 rounded-xl border border-border text-foreground font-medium hover:bg-muted/50 transition-colors"
+                >
+                  Maybe Later
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUpgradePrompt(false);
+                    setAddAcc();
+                    router.push("/pricing");
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
+                >
+                  <Crown className="w-4 h-4" />
+                  Upgrade Now
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };
