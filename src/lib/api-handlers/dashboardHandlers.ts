@@ -286,9 +286,9 @@ export async function getAccountDetailsHandler(req: NextRequest, userId: string,
     }
 }
 
-export async function editAccCheckHandler(req: NextRequest, userId: string, token: string) {
+export async function editAccCheckHandler(req: any, userId: string, token: string) {
     try {
-        const { accountName } = await req.json();
+        const { accountName } = req;
 
         const rootUser = await getUserFromToken(token);
         if (!rootUser) {
