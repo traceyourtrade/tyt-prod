@@ -13,6 +13,8 @@ export interface IASAccount extends Document {
   isActive: boolean;
   lastFetch?: Date;
   status: string;
+  failCount?: string[];
+  errorReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,12 +30,31 @@ const autoSyncAccountsSchema = new Schema<IASAccount>({
   vpsId: { type: String, required: true },
   isActive: { type: Boolean, required: true },
   lastFetch: { type: Date, default: null },
-  status: { type: String, required: true, default: "yellow" }
+  status: { type: String, required: true, default: "yellow" },
+  failCount: { type: [String], default: [] },
+  errorReason: { type: String, default: null }
 }, {
   timestamps: true
 });
 
 autoSyncAccountsSchema.index({ accountId: 1 }, { unique: true });
+
+const MAX_FAIL_COUNT_LENGTH = 15;
+
+export async function addFailCountEntry(accountId: string, value: string): Promise<void> {
+  const ASAccountModel = await getASAccountModel();
+  await ASAccountModel.findOneAndUpdate(
+    { accountId },
+    {
+      $push: {
+        failCount: {
+          $each: [value],
+          $slice: -MAX_FAIL_COUNT_LENGTH
+        }
+      }
+    }
+  );
+}
 
 export const getASAccountModel = async (): Promise<Model<IASAccount>> => {
   const conn = await connectAccountsDB();
