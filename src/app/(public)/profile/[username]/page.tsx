@@ -272,19 +272,62 @@ export default function PublicProfilePage() {
               </motion.div>
             )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {data.settings.showTotalTrades && data.stats.totalTrades !== undefined && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {data.settings.showTotalPnL && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                  className="bg-[#0d0d0d] border border-[#1f1f1f] rounded-xl px-4 py-3 min-h-[100px]"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
-                    <BarChart3 className="w-5 h-5 text-blue-400" />
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                        <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <span className="text-xs font-medium text-zinc-500">Net P&L</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-zinc-500 mb-1">Total Trades</p>
-                  <p className="text-2xl font-bold text-white">{data.stats.totalTrades}</p>
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <p className={`text-lg font-bold ${data.stats.totalPnLHidden ? 'text-zinc-500' : isProfitable ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {data.stats.totalPnLHidden ? "Hidden" : formatCurrency(data.stats.totalPnL)}
+                      </p>
+                      <p className="text-[10px] text-zinc-600 mt-0.5">
+                        {isProfitable ? 'Profitable' : 'In drawdown'}
+                      </p>
+                    </div>
+                    {data.equityCurve && data.equityCurve.length > 1 && (
+                      <div className="w-16 h-8">
+                        <svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="pnlGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor={isProfitable ? "#22c55e" : "#ef4444"} stopOpacity="0.2" />
+                              <stop offset="100%" stopColor={isProfitable ? "#22c55e" : "#ef4444"} stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                          {(() => {
+                            const values = data.equityCurve!.map(d => d.equity);
+                            const min = Math.min(...values);
+                            const max = Math.max(...values);
+                            const range = max - min || 1;
+                            const points = data.equityCurve!.map((d, i) => {
+                              const x = 2 + (i / (data.equityCurve!.length - 1)) * 96;
+                              const y = 38 - ((d.equity - min) / range) * 36;
+                              return `${x},${y}`;
+                            }).join(' ');
+                            const areaPoints = `2,38 ${points} 98,38`;
+                            return (
+                              <>
+                                <polygon points={areaPoints} fill="url(#pnlGradient)" />
+                                <polyline points={points} fill="none" stroke={isProfitable ? "#22c55e" : "#ef4444"} strokeWidth="1.5" strokeLinecap="round" />
+                              </>
+                            );
+                          })()}
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               )}
 
@@ -293,15 +336,33 @@ export default function PublicProfilePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
-                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                  className="bg-[#0d0d0d] border border-[#1f1f1f] rounded-xl px-4 py-3 min-h-[100px]"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
-                    <Target className="w-5 h-5 text-blue-400" />
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1.5 rounded-lg bg-blue-500/10">
+                      <Target className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <span className="text-xs font-medium text-zinc-500">Win Rate</span>
                   </div>
-                  <p className="text-xs text-zinc-500 mb-1">Win Rate</p>
-                  <p className={`text-2xl font-bold ${data.stats.winRate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {data.stats.winRate.toFixed(1)}%
-                  </p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-lg font-bold text-white">{data.stats.winRate.toFixed(1)}%</p>
+                      <p className="text-[10px] text-zinc-600 mt-0.5">{data.stats.totalTrades || 0} trades</p>
+                    </div>
+                    <div className="relative w-[70px] h-[40px]">
+                      <svg viewBox="0 0 100 50" className="w-full h-full">
+                        <path d="M10,45 A35,35 0 0,1 90,45" fill="none" stroke="#27272a" strokeWidth="8" strokeLinecap="round" />
+                        <path 
+                          d="M10,45 A35,35 0 0,1 90,45" 
+                          fill="none" 
+                          stroke="#22c55e" 
+                          strokeWidth="8" 
+                          strokeLinecap="round"
+                          strokeDasharray={`${(data.stats.winRate / 100) * 110} 110`}
+                        />
+                      </svg>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
@@ -310,32 +371,60 @@ export default function PublicProfilePage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                  className="bg-[#0d0d0d] border border-[#1f1f1f] rounded-xl px-4 py-3 min-h-[100px]"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
-                    <Trophy className="w-5 h-5 text-blue-400" />
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-amber-500/10">
+                        <Activity className="w-4 h-4 text-amber-400" />
+                      </div>
+                      <span className="text-xs font-medium text-zinc-500">Profit Factor</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
+                      data.stats.profitFactor >= 1.5 ? 'bg-emerald-500/20 text-emerald-400' : 
+                      data.stats.profitFactor >= 1 ? 'bg-amber-500/20 text-amber-400' : 
+                      'bg-red-500/20 text-red-400'
+                    }`}>
+                      {data.stats.profitFactor >= 1.5 ? 'Good' : data.stats.profitFactor >= 1 ? 'Even' : 'Needs work'}
+                    </span>
                   </div>
-                  <p className="text-xs text-zinc-500 mb-1">Profit Factor</p>
-                  <p className={`text-2xl font-bold ${data.stats.profitFactor >= 1 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {data.stats.profitFactor.toFixed(2)}
-                  </p>
+                  <div className="flex items-end justify-between gap-3">
+                    <p className={`text-lg font-bold ${data.stats.profitFactor >= 1 ? 'text-white' : 'text-red-400'}`}>
+                      {data.stats.profitFactor.toFixed(2)}
+                    </p>
+                    <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${
+                          data.stats.profitFactor >= 1.5 ? 'bg-emerald-500' : 
+                          data.stats.profitFactor >= 1 ? 'bg-amber-500' : 
+                          'bg-red-500'
+                        }`}
+                        style={{ width: `${Math.min(data.stats.profitFactor / 2 * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
                 </motion.div>
               )}
 
-              {data.settings.showTotalPnL && (
+              {data.settings.showTotalTrades && data.stats.totalTrades !== undefined && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                  className="bg-[#0d0d0d] border border-[#1f1f1f] rounded-xl px-4 py-3 min-h-[100px]"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
-                    {isProfitable ? <TrendingUp className="w-5 h-5 text-blue-400" /> : <TrendingDown className="w-5 h-5 text-blue-400" />}
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-violet-500/10">
+                        <BarChart3 className="w-4 h-4 text-violet-400" />
+                      </div>
+                      <span className="text-xs font-medium text-zinc-500">Total Trades</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-zinc-500 mb-1">Total P&L</p>
-                  <p className={`text-2xl font-bold ${data.stats.totalPnLHidden ? 'text-zinc-500' : isProfitable ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {data.stats.totalPnLHidden ? "Hidden" : formatCurrency(data.stats.totalPnL)}
-                  </p>
+                  <div>
+                    <p className="text-lg font-bold text-white">{data.stats.totalTrades}</p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">All time</p>
+                  </div>
                 </motion.div>
               )}
             </div>
