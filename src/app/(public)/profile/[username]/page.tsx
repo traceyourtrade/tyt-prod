@@ -334,6 +334,60 @@ export default function PublicProfilePage() {
           </div>
         </motion.div>
 
+        {data.referralCode && referralLink && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 mb-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Users className="w-5 h-5 text-blue-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Join {data.displayName}&apos;s Trading Community</h2>
+            </div>
+            
+            <p className="text-zinc-400 text-sm mb-6">
+              Sign up using this trader&apos;s referral code to get started
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-zinc-500 mb-2 block">Referral Code</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3">
+                    <code className="text-blue-400 font-mono text-sm">{data.referralCode}</code>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(data.referralCode!, 'code')}
+                    className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
+                  >
+                    {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span className="text-sm">{copiedCode ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-zinc-500 mb-2 block">Referral Link</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 overflow-hidden">
+                    <code className="text-zinc-300 font-mono text-sm truncate block">{referralLink}</code>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(referralLink, 'link')}
+                    className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
+                  >
+                    {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span className="text-sm">{copiedLink ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {data.settings.showMonthlyPnL && data.monthlyPnL && data.monthlyPnL.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -438,60 +492,6 @@ export default function PublicProfilePage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
-            </div>
-          </motion.div>
-        )}
-
-        {data.referralCode && referralLink && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 mb-8"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <Users className="w-5 h-5 text-blue-400" />
-              </div>
-              <h2 className="text-lg font-semibold text-white">Join {data.displayName}&apos;s Trading Community</h2>
-            </div>
-            
-            <p className="text-zinc-400 text-sm mb-6">
-              Sign up using this trader&apos;s referral code to get started
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs text-zinc-500 mb-2 block">Referral Code</label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3">
-                    <code className="text-blue-400 font-mono text-sm">{data.referralCode}</code>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(data.referralCode!, 'code')}
-                    className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
-                  >
-                    {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    <span className="text-sm">{copiedCode ? 'Copied!' : 'Copy'}</span>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs text-zinc-500 mb-2 block">Referral Link</label>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 overflow-hidden">
-                    <code className="text-zinc-300 font-mono text-sm truncate block">{referralLink}</code>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(referralLink, 'link')}
-                    className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
-                  >
-                    {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    <span className="text-sm">{copiedLink ? 'Copied!' : 'Copy'}</span>
-                  </button>
-                </div>
-              </div>
             </div>
           </motion.div>
         )}
