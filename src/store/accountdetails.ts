@@ -215,13 +215,15 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       const data = await response.json();
       console.log("updateAccView: response", data);
 
-      if (data.data && data.data.accounts) {
-        const selectedAccounts = data.data.accounts.filter(
+      // Use data.accounts (enhanced accounts with trade data) from editAccCheckHandler
+      const accounts = data.accounts || (data.data && data.data.accounts);
+      if (accounts) {
+        const selectedAccounts = accounts.filter(
           (account: Account) => account.checked === true,
         );
 
         set({
-          accounts: data.data.accounts,
+          accounts: accounts,
           selectedAccounts: selectedAccounts,
           loading: false,
         });
@@ -291,13 +293,15 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       const data = await response.json();
       console.log("checkAll: response", data);
 
-      if (data.data && data.data.accounts) {
-        const selectedAccounts = data.data.accounts.filter(
+      // Use data.accounts (enhanced accounts with trade data) from checkAllHandler
+      const accounts = data.accounts || (data.data && data.data.accounts);
+      if (accounts) {
+        const selectedAccounts = accounts.filter(
           (account: Account) => account.checked === true,
         );
 
         set({
-          accounts: data.data.accounts,
+          accounts: accounts,
           selectedAccounts: selectedAccounts,
           loading: false,
         });

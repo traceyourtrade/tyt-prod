@@ -307,9 +307,62 @@ export async function editAccCheckHandler(req: any, userId: string, token: strin
         accountToUpdate.checked = !accountToUpdate.checked;
         await rootUser.save();
 
-        return NextResponse.json({ data: rootUser });
+        // Fetch trade data from all collections (same as getAccountDetailsHandler)
+        const accountIds = rootUser.accounts.map((acc: any) => acc.accountId);
+        const uniqueId = rootUser.uniqueId;
+
+        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts] = await Promise.all([
+            fileUpload.find({ uniqueId, accountId: { $in: accountIds } }),
+            Manual.find({ uniqueId, accountId: { $in: accountIds } }),
+            asyncUpload.find({ uniqueId, accountId: { $in: accountIds } }),
+            OpenAsTrades.find({ uniqueId, accountId: { $in: accountIds } }),
+            ASacc.find({ uniqueId, accountId: { $in: accountIds } }),
+        ]);
+
+        const lastFetchByAccountId: { [key: string]: Date | null } = {};
+        asAccounts.forEach((asAcc: any) => {
+            lastFetchByAccountId[asAcc.accountId] = asAcc.lastFetch || null;
+        });
+
+        const tradesByAccount: { [key: string]: any[] } = {};
+
+        fileUploadTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        manualTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        autoSyncTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        asOpenTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        const enhancedAccounts = rootUser.accounts.map((account: any) => ({
+            ...account.toObject(),
+            tradeData: tradesByAccount[account.accountId] || [],
+            lastFetch: lastFetchByAccountId[account.accountId] || null
+        }));
+
+        return NextResponse.json({ 
+            data: rootUser,
+            accounts: enhancedAccounts
+        });
 
     } catch (error) {
+        console.error("editAccCheckHandler error:", error);
         return NextResponse.json({ error: "Error" }, { status: 500 });
     }
 }
@@ -333,12 +386,63 @@ export async function checkAllHandler(req: any, userId: string, token: string) {
 
         await rootUser.save();
 
+        // Fetch trade data from all collections (same as getAccountDetailsHandler)
+        const accountIds = rootUser.accounts.map((acc: any) => acc.accountId);
+        const uniqueId = rootUser.uniqueId;
+
+        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts] = await Promise.all([
+            fileUpload.find({ uniqueId, accountId: { $in: accountIds } }),
+            Manual.find({ uniqueId, accountId: { $in: accountIds } }),
+            asyncUpload.find({ uniqueId, accountId: { $in: accountIds } }),
+            OpenAsTrades.find({ uniqueId, accountId: { $in: accountIds } }),
+            ASacc.find({ uniqueId, accountId: { $in: accountIds } }),
+        ]);
+
+        const lastFetchByAccountId: { [key: string]: Date | null } = {};
+        asAccounts.forEach((asAcc: any) => {
+            lastFetchByAccountId[asAcc.accountId] = asAcc.lastFetch || null;
+        });
+
+        const tradesByAccount: { [key: string]: any[] } = {};
+
+        fileUploadTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        manualTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        autoSyncTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        asOpenTrades.forEach((tradeDoc: any) => {
+            const accountId = tradeDoc.accountId;
+            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
+            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+        });
+
+        const enhancedAccounts = rootUser.accounts.map((account: any) => ({
+            ...account.toObject(),
+            tradeData: tradesByAccount[account.accountId] || [],
+            lastFetch: lastFetchByAccountId[account.accountId] || null
+        }));
+
         return NextResponse.json({
             message: `All accounts set to ${value}`,
-            data: rootUser
+            data: rootUser,
+            accounts: enhancedAccounts
         });
 
     } catch (error) {
+        console.error("checkAllHandler error:", error);
         return NextResponse.json({ error: "Server error" }, { status: 500 });
     }
 }// POST Handlers
