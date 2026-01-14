@@ -2,10 +2,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { ChevronDown, Calendar, Sparkles, TrendingUp, TrendingDown, Minus, HelpCircle, AlertTriangle, Clock, Zap, X, CalendarRange } from "lucide-react";
 
-import DashboardCustom from "@/components/dashboard-components/dasboard-range/DashboardCustom";
-import DashboardDay from "@/components/dashboard-components/dasboard-range/DashboardDay";
 import DashboardMonth from "@/components/dashboard-components/dasboard-range/DashboardMonth";
-import DashboardWeek from "@/components/dashboard-components/dasboard-range/DashboardWeek";
 import useAccountDetails from "@/store/accountdetails";
 import usePropFirmStore from "@/store/propFirmStore";
 import notifications from "@/store/notifications";
@@ -19,13 +16,6 @@ import useDateRangeStore, { dateRangeLabels, DateRangeOption } from "@/store/dat
 
 import { cn } from "@/lib/utils";
 
-const timeRangeOptions = [
-  { label: "Monthly", value: "Monthly" },
-  { label: "Weekly", value: "Weekly" },
-  { label: "Daily", value: "Daily" },
-  { label: "Custom", value: "Custom" },
-];
-
 const dateRangeOptions: DateRangeOption[] = [
   "this_week",
   "this_month",
@@ -37,12 +27,9 @@ const dateRangeOptions: DateRangeOption[] = [
 ];
 
 const DashboardMain = () => {
-  const [selected, setSelected] = useState("Monthly");
-  const [isOpen, setIsOpen] = useState(false);
   const [isDateRangeOpen, setIsDateRangeOpen] = useState(false);
   const [greeting, setGreeting] = useState("");
   const [formattedDate, setFormattedDate] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const dateRangeDropdownRef = useRef<HTMLDivElement>(null);
   const { setAccounts, profileData, selectedAccounts, loading } = useAccountDetails();
   const { hrBarTxt, hrBarType } = notifications();
@@ -71,9 +58,6 @@ const DashboardMain = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
       if (dateRangeDropdownRef.current && !dateRangeDropdownRef.current.contains(event.target as Node)) {
         setIsDateRangeOpen(false);
       }
@@ -445,47 +429,6 @@ const DashboardMain = () => {
                 </div>
               )}
             </div>
-            
-            <div className="relative" ref={dropdownRef}>
-              <button
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  "bg-card border border-border text-foreground hover:bg-muted",
-                  isOpen && "border-primary/50 ring-2 ring-primary/20"
-                )}
-                onClick={() => setIsOpen(!isOpen)}
-              >
-                {selected}
-                <ChevronDown className={cn(
-                  "h-4 w-4 text-muted-foreground transition-transform",
-                  isOpen && "rotate-180"
-                )} />
-              </button>
-              
-              {isOpen && (
-                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
-                  <div className="p-1">
-                    {timeRangeOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        className={cn(
-                          "w-full text-left px-3 py-2.5 text-sm rounded-lg transition-colors",
-                          selected === option.value 
-                            ? "bg-primary/10 text-primary" 
-                            : "hover:bg-muted text-foreground"
-                        )}
-                        onClick={() => {
-                          setSelected(option.value);
-                          setIsOpen(false);
-                        }}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
             <EditModeToolbar />
           </div>
         )}
@@ -507,12 +450,7 @@ const DashboardMain = () => {
         {isPropFirmMode ? (
           <PropFirmDashboard />
         ) : (
-          <>
-            {selected === "Daily" && <DashboardDay />}
-            {selected === "Weekly" && <DashboardWeek />}
-            {selected === "Monthly" && <DashboardMonth />}
-            {selected === "Custom" && <DashboardCustom />}
-          </>
+          <DashboardMonth />
         )}
       </div>
 
