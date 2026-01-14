@@ -46,7 +46,7 @@ export default function VerifiedCertificate({
   useEffect(() => {
     const loadLogo = async () => {
       try {
-        const response = await fetch('/images/logo-dark.png');
+        const response = await fetch('/images/projournx-full-logo.png');
         const blob = await response.blob();
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -126,43 +126,40 @@ export default function VerifiedCertificate({
         <div 
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)'
+            background: 'radial-gradient(ellipse at 50% 30%, rgba(59, 130, 246, 0.06) 0%, transparent 50%)'
           }}
         />
         <div 
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at 70% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%)'
+            background: 'radial-gradient(ellipse at 80% 70%, rgba(139, 92, 246, 0.04) 0%, transparent 40%)'
           }}
         />
 
         <div 
-          className="absolute inset-0 opacity-[0.02]"
+          className="absolute inset-0 opacity-[0.015]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
 
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-blue-400 to-blue-600" />
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-blue-600" />
 
-        <div className="absolute left-8 top-6 right-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {logoBase64 ? (
-              <img 
-                src={logoBase64} 
-                alt="ProJournX" 
-                className="h-10 w-10 object-contain"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <span className="text-white font-bold text-xl">P</span>
+        <div className="absolute inset-x-12 top-8 flex items-center justify-between">
+          {logoBase64 ? (
+            <img 
+              src={logoBase64} 
+              alt="ProJournX" 
+              className="h-8 object-contain"
+            />
+          ) : (
+            <div className="h-8 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">P</span>
               </div>
-            )}
-            <div>
-              <h3 className="text-white font-semibold text-lg tracking-tight">ProJournX</h3>
-              <p className="text-zinc-500 text-[10px]">Trading Journal Platform</p>
+              <span className="text-white font-semibold text-lg">ProJournX</span>
             </div>
-          </div>
+          )}
           
           {isVerified && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
@@ -172,136 +169,121 @@ export default function VerifiedCertificate({
           )}
         </div>
 
-        <div className="absolute left-8 top-24 w-[340px]">
-          <p className="text-zinc-500 text-xs mb-1 uppercase tracking-widest">Certificate of Achievement</p>
-          
-          <h1 
-            className="text-[32px] font-bold leading-tight mb-1"
-            style={{ 
-              background: 'linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}
-          >
-            Verified Performance
-          </h1>
-          
-          <div className="h-px w-20 bg-gradient-to-r from-blue-500 to-transparent mb-4" />
-
-          <p className="text-zinc-500 text-xs italic mb-1">Proudly presented to</p>
-          <h2 className="text-2xl font-semibold text-white mb-1">{displayName}</h2>
-          <p className="text-zinc-600 text-xs">@{username}</p>
-        </div>
-
-        {showPnL && (
-          <div className="absolute left-8 bottom-20">
-            <p className="text-zinc-500 text-xs mb-1 uppercase tracking-wider">Total Performance</p>
-            <p 
-              className="text-4xl font-bold tracking-tight"
+        <div className="absolute inset-x-12 top-24 flex justify-between items-start">
+          <div className="flex-1 max-w-[380px]">
+            <p className="text-zinc-500 text-[10px] mb-1 uppercase tracking-[0.2em]">Certificate of Achievement</p>
+            
+            <h1 
+              className="text-[36px] font-bold leading-tight mb-4"
               style={{ 
-                background: isProfitable 
-                  ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' 
-                  : 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}
             >
-              {isProfitable ? '+' : ''}{formatCurrency(pnlValue)}
-            </p>
-          </div>
-        )}
+              Verified Performance
+            </h1>
+            
+            <div className="h-px w-16 bg-gradient-to-r from-blue-500 via-purple-500 to-transparent mb-5" />
 
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 w-[200px] h-[240px] flex items-center justify-center">
-          <div className="relative w-full h-full">
-            <div 
-              className="absolute left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 w-[100px] h-[140px]"
-              style={{
-                background: 'linear-gradient(180deg, #1a1a1f 0%, #141418 50%, #0a0a0c 100%)',
-                clipPath: 'polygon(15% 0%, 85% 0%, 100% 12%, 100% 88%, 85% 100%, 15% 100%, 0% 88%, 0% 12%)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)'
-              }}
-            >
+            <p className="text-zinc-500 text-xs italic mb-1">Proudly presented to</p>
+            <h2 className="text-2xl font-semibold text-white mb-0.5">{displayName}</h2>
+            <p className="text-zinc-600 text-sm">@{username}</p>
+          </div>
+
+          <div className="w-[180px] h-[180px] flex items-center justify-center">
+            <div className="relative w-full h-full">
               <div 
-                className="absolute inset-0"
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90px] h-[130px]"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 60%)',
-                  clipPath: 'polygon(15% 0%, 85% 0%, 100% 12%, 100% 88%, 85% 100%, 15% 100%, 0% 88%, 0% 12%)'
+                  background: 'linear-gradient(180deg, #1a1a1f 0%, #141418 50%, #0a0a0c 100%)',
+                  clipPath: 'polygon(15% 0%, 85% 0%, 100% 12%, 100% 88%, 85% 100%, 15% 100%, 0% 88%, 0% 12%)',
+                  boxShadow: '0 15px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)'
                 }}
-              />
-              
+              >
+                <div 
+                  className="absolute inset-0"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, transparent 60%)',
+                    clipPath: 'polygon(15% 0%, 85% 0%, 100% 12%, 100% 88%, 85% 100%, 15% 100%, 0% 88%, 0% 12%)'
+                  }}
+                />
+                
+                <div 
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%)',
+                    boxShadow: '0 0 25px rgba(59, 130, 246, 0.15)'
+                  }}
+                />
+                
+                <div 
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full border"
+                  style={{
+                    borderColor: 'rgba(59, 130, 246, 0.35)',
+                    boxShadow: '0 0 12px rgba(59, 130, 246, 0.2)'
+                  }}
+                />
+              </div>
+
               <div 
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full"
+                className="absolute left-1/2 -translate-x-1/2 bottom-[10%] w-[50px] h-[20px]"
                 style={{
-                  background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)',
-                  boxShadow: '0 0 30px rgba(59, 130, 246, 0.2)'
-                }}
-              />
-              
-              <div 
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border"
-                style={{
-                  borderColor: 'rgba(59, 130, 246, 0.4)',
-                  boxShadow: '0 0 15px rgba(59, 130, 246, 0.3), inset 0 0 10px rgba(59, 130, 246, 0.1)'
+                  background: 'linear-gradient(180deg, #141418 0%, #0a0a0c 100%)',
+                  borderRadius: '2px',
+                  boxShadow: '0 6px 15px rgba(0,0,0,0.3)'
                 }}
               />
             </div>
-
-            <div 
-              className="absolute left-1/2 -translate-x-1/2 bottom-[20%] w-[60px] h-[25px]"
-              style={{
-                background: 'linear-gradient(180deg, #141418 0%, #0a0a0c 100%)',
-                borderRadius: '3px',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.4)'
-              }}
-            />
-
-            <div 
-              className="absolute right-[20%] top-[25%] w-2 h-2 rounded-full"
-              style={{
-                background: 'radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, transparent 70%)',
-                filter: 'blur(1px)'
-              }}
-            />
-            <div 
-              className="absolute right-[30%] top-[35%] w-1 h-1 rounded-full"
-              style={{
-                background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)'
-              }}
-            />
           </div>
         </div>
 
-        <div className="absolute left-8 bottom-6 flex items-center gap-6">
-          <div>
-            <div className="w-16 h-px bg-zinc-700 mb-1" />
-            <p className="text-zinc-600 text-[10px]">{currentDate}</p>
-          </div>
-          
-          {isVerified && (
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3 h-3 text-emerald-500" />
-              <p className="text-[9px] text-zinc-600">Broker sync verified</p>
+        <div className="absolute inset-x-12 bottom-8 flex items-end justify-between">
+          <div className="flex items-center gap-8">
+            {showPnL && (
+              <div>
+                <p className="text-zinc-500 text-[10px] mb-1 uppercase tracking-wider">Total Performance</p>
+                <p 
+                  className="text-3xl font-bold tracking-tight"
+                  style={{ 
+                    background: isProfitable 
+                      ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' 
+                      : 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent'
+                  }}
+                >
+                  {isProfitable ? '+' : ''}{formatCurrency(pnlValue)}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="w-14 h-px bg-zinc-700 mb-1" />
+                <p className="text-zinc-600 text-[10px]">{currentDate}</p>
+              </div>
+              
+              {isVerified && (
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                  <p className="text-[9px] text-zinc-600">Broker sync verified</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-
-        <div className="absolute right-6 bottom-6 flex flex-col items-end gap-2">
-          <div className="bg-white p-1.5 rounded-lg shadow-lg">
-            <QRCodeSVG 
-              value={profileUrl}
-              size={50}
-              level="M"
-              includeMargin={false}
-            />
           </div>
-          <p className="text-zinc-700 text-[8px]">Scan to verify</p>
-        </div>
 
-        <div 
-          className="absolute right-8 top-6 text-[9px] font-medium tracking-widest"
-          style={{ color: 'rgba(63, 63, 70, 0.6)' }}
-        >
-          #{username.toUpperCase().slice(0, 8)}
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="bg-white p-1.5 rounded-lg shadow-lg">
+              <QRCodeSVG 
+                value={profileUrl}
+                size={55}
+                level="M"
+                includeMargin={false}
+              />
+            </div>
+            <p className="text-zinc-700 text-[8px]">Scan to verify</p>
+          </div>
         </div>
       </div>
 
