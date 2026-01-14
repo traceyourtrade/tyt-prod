@@ -979,7 +979,7 @@ export default function RootLayout({
       <div className="min-h-screen bg-background">
         <div className="max-w-5xl mx-auto px-4 py-8">
           <div className="mb-6 flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center">
               <Image
                 src="/images/logo-icon.png"
                 width={28}
@@ -988,7 +988,6 @@ export default function RootLayout({
                 className="w-7 h-7 object-contain"
                 unoptimized
               />
-              <span className="font-bold text-foreground tracking-tight text-[15px]">ProJournX</span>
             </Link>
             <div className="flex items-center gap-3">
               <Link
