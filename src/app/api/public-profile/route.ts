@@ -3,11 +3,24 @@ import { getUserModel, IUserAccount } from '@/models/main/user.model';
 import { getManualModel } from '@/models/accounts/manual.model';
 import { getFileUploadModel } from '@/models/accounts/fileUploadSchema.model';
 import { getAutoSyncModel } from '@/models/accounts/autoSync.model';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const username = url.searchParams.get('username');
+    
+    let currentUserUniqueId: string | null = null;
+    try {
+      const cookieStore = await cookies();
+      const token = cookieStore.get('token')?.value;
+      if (token) {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { uniqueId: string };
+        currentUserUniqueId = decoded.uniqueId;
+      }
+    } catch (e) {
+    }
 
     if (!username) {
       return NextResponse.json({ error: "Username is required" }, { status: 400 });
@@ -109,12 +122,15 @@ export async function GET(req: NextRequest) {
     });
 
     const publicProfile = user.publicProfile;
+    const isOwner = currentUserUniqueId === user.uniqueId;
+    
     const response: any = {
       displayName: user.fullName,
       profilePicture: user.profilePicture || null,
       bio: user.bio || null,
       isVerified: hasVerifiedAccounts,
       memberSince: user.date,
+      isOwner,
       settings: {
         showEquityCurve: publicProfile.showEquityCurve,
         showMonthlyPnL: publicProfile.showMonthlyPnL,

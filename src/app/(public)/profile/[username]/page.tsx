@@ -39,6 +39,7 @@ interface PublicProfileData {
   bio: string | null;
   isVerified: boolean;
   memberSince: string;
+  isOwner: boolean;
   settings: {
     showEquityCurve: boolean;
     showMonthlyPnL: boolean;
@@ -155,13 +156,15 @@ export default function PublicProfilePage() {
             <span className="text-sm">Trading Journal</span>
           </Link>
           
-          <button
-            onClick={() => setShowCertificate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
-          >
-            <Award className="w-4 h-4" />
-            <span className="text-sm font-medium">Get Certificate</span>
-          </button>
+          {data.isOwner && (
+            <button
+              onClick={() => setShowCertificate(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
+            >
+              <Award className="w-4 h-4" />
+              <span className="text-sm font-medium">Get Certificate</span>
+            </button>
+          )}
         </div>
 
         <motion.div
