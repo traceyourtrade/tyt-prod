@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { ChevronDown, Calendar, Sparkles, TrendingUp, TrendingDown, Minus, HelpCircle, AlertTriangle, Clock, Zap, X } from "lucide-react";
+import { ChevronDown, Calendar, Sparkles, TrendingUp, TrendingDown, Minus, HelpCircle, AlertTriangle, Clock, Zap, X, CalendarRange } from "lucide-react";
 
 import DashboardCustom from "@/components/dashboard-components/dasboard-range/DashboardCustom";
 import DashboardDay from "@/components/dashboard-components/dasboard-range/DashboardDay";
@@ -15,6 +15,7 @@ import { PropFirmModeToggle, PropFirmDashboard } from "@/components/prop-firm";
 import { EditModeToolbar } from "@/components/dashboard/DraggableWidgetGrid";
 import { useTourStore } from "@/stores/useTourStore";
 import FreeTrialBanner from "@/components/subscription/FreeTrialBanner";
+import useDateRangeStore, { dateRangeLabels, DateRangeOption } from "@/store/dateRangeStore";
 
 import { cn } from "@/lib/utils";
 
@@ -25,17 +26,30 @@ const timeRangeOptions = [
   { label: "Custom", value: "Custom" },
 ];
 
+const dateRangeOptions: DateRangeOption[] = [
+  "this_week",
+  "this_month",
+  "last_30_days",
+  "last_month",
+  "this_quarter",
+  "this_year",
+  "all_time",
+];
+
 const DashboardMain = () => {
   const [selected, setSelected] = useState("Monthly");
   const [isOpen, setIsOpen] = useState(false);
+  const [isDateRangeOpen, setIsDateRangeOpen] = useState(false);
   const [greeting, setGreeting] = useState("");
   const [formattedDate, setFormattedDate] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dateRangeDropdownRef = useRef<HTMLDivElement>(null);
   const { setAccounts, profileData, selectedAccounts, loading } = useAccountDetails();
   const { hrBarTxt, hrBarType } = notifications();
   const { isEnabled: isPropFirmMode } = usePropFirmStore();
   const { currency, exchangeRate } = useCurrencyStore();
   const startTour = useTourStore((state) => state.startTour);
+  const { selectedRange, setSelectedRange } = useDateRangeStore();
 
   useEffect(() => {
     setAccounts();
@@ -59,6 +73,9 @@ const DashboardMain = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+      }
+      if (dateRangeDropdownRef.current && !dateRangeDropdownRef.current.contains(event.target as Node)) {
+        setIsDateRangeOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -385,6 +402,50 @@ const DashboardMain = () => {
               <HelpCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Tour</span>
             </button>
+            
+            <div className="relative" ref={dateRangeDropdownRef}>
+              <button
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                  "bg-card border border-border text-foreground hover:bg-muted",
+                  isDateRangeOpen && "border-primary/50 ring-2 ring-primary/20"
+                )}
+                onClick={() => setIsDateRangeOpen(!isDateRangeOpen)}
+              >
+                <CalendarRange className="w-4 h-4 text-muted-foreground" />
+                <span className="hidden sm:inline">{dateRangeLabels[selectedRange]}</span>
+                <span className="sm:hidden">{dateRangeLabels[selectedRange].split(' ')[0]}</span>
+                <ChevronDown className={cn(
+                  "h-4 w-4 text-muted-foreground transition-transform",
+                  isDateRangeOpen && "rotate-180"
+                )} />
+              </button>
+              
+              {isDateRangeOpen && (
+                <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="p-1">
+                    {dateRangeOptions.map((option) => (
+                      <button
+                        key={option}
+                        className={cn(
+                          "w-full text-left px-3 py-2.5 text-sm rounded-lg transition-colors",
+                          selectedRange === option 
+                            ? "bg-primary/10 text-primary" 
+                            : "hover:bg-muted text-foreground"
+                        )}
+                        onClick={() => {
+                          setSelectedRange(option);
+                          setIsDateRangeOpen(false);
+                        }}
+                      >
+                        {dateRangeLabels[option]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
             <div className="relative" ref={dropdownRef}>
               <button
                 className={cn(
