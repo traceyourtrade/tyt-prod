@@ -11,14 +11,17 @@ import {
   Target,
   BarChart3,
   User,
-  ArrowLeft,
   AlertCircle,
   Calendar,
   Trophy,
   Activity,
   Award,
-  X
+  X,
+  Copy,
+  Check,
+  Users
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   BarChart,
@@ -40,6 +43,7 @@ interface PublicProfileData {
   isVerified: boolean;
   memberSince: string;
   isOwner: boolean;
+  referralCode: string | null;
   settings: {
     showEquityCurve: boolean;
     showMonthlyPnL: boolean;
@@ -68,6 +72,8 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCertificate, setShowCertificate] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -106,9 +112,24 @@ export default function PublicProfilePage() {
     return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
   };
 
+  const copyToClipboard = async (text: string, type: 'code' | 'link') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'code') {
+        setCopiedCode(true);
+        setTimeout(() => setCopiedCode(false), 2000);
+      } else {
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4" />
           <p className="text-zinc-400">Loading profile...</p>
@@ -119,7 +140,7 @@ export default function PublicProfilePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
             <AlertCircle className="w-8 h-8 text-red-400" />
@@ -130,7 +151,6 @@ export default function PublicProfilePage() {
             href="/"
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
             Go Home
           </Link>
         </div>
@@ -141,121 +161,174 @@ export default function PublicProfilePage() {
   if (!data) return null;
 
   const isProfitable = (data.stats.totalPnL || 0) > 0;
+  const referralLink = data.referralCode ? `https://projournx.com/signup?ref=${data.referralCode}` : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-blue-500/10 to-transparent" />
-
-      <div className="relative max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Trading Journal</span>
+    <div className="min-h-screen bg-[#050505]">
+      <header className="sticky top-0 z-40 bg-[#050505]/80 backdrop-blur-xl border-b border-[#2a2a2a]">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center">
+            <Image 
+              src="/images/projournx-full-logo.png" 
+              alt="ProJournX" 
+              width={140} 
+              height={32}
+              className="h-8 w-auto"
+            />
           </Link>
           
-          {data.isOwner && (
-            <button
-              onClick={() => setShowCertificate(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
-            >
-              <Award className="w-4 h-4" />
-              <span className="text-sm font-medium">Get Certificate</span>
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {data.isVerified && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-400">Verified Trader</span>
+              </div>
+            )}
+            
+            {data.isOwner && (
+              <button
+                onClick={() => setShowCertificate(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
+              >
+                <Award className="w-4 h-4" />
+                <span className="text-sm font-medium">Get Certificate</span>
+              </button>
+            )}
+          </div>
         </div>
+      </header>
 
+      <div className="max-w-5xl mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-xl mb-6"
+          className="bg-[#141414] border border-[#2a2a2a] rounded-2xl overflow-hidden shadow-2xl mb-8"
         >
-          <div className={`h-2 ${data.isVerified ? "bg-gradient-to-r from-green-500 to-emerald-500" : "bg-gradient-to-r from-gray-500 to-slate-500"}`} />
-
-          <div className="p-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border-2 border-zinc-700">
-                {data.profilePicture ? (
-                  <img src={data.profilePicture} alt={data.displayName} className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-10 h-10 text-zinc-500" />
-                )}
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
+              <div className={`relative p-1 rounded-full bg-gradient-to-br ${data.isVerified ? 'from-blue-500 via-blue-400 to-cyan-400' : 'from-zinc-600 to-zinc-700'}`}>
+                <div className="w-28 h-28 rounded-full bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
+                  {data.profilePicture ? (
+                    <img src={data.profilePicture} alt={data.displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-14 h-14 text-zinc-500" />
+                  )}
+                </div>
               </div>
               
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-bold text-white">{data.displayName}</h1>
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-3">
+                  <h1 className="text-3xl font-bold text-white">{data.displayName}</h1>
                   {data.isVerified ? (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-green-500/20 rounded-full">
-                      <ShieldCheck className="w-4 h-4 text-green-400" />
-                      <span className="text-xs font-medium text-green-400">Verified</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 rounded-full">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-semibold text-emerald-400">Verified</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-gray-500/20 rounded-full">
-                      <Shield className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs font-medium text-gray-400">Unverified</span>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-700/50 rounded-full">
+                      <Shield className="w-4 h-4 text-zinc-400" />
+                      <span className="text-xs font-semibold text-zinc-400">Unverified</span>
                     </div>
                   )}
                 </div>
                 
                 {data.bio && (
-                  <p className="text-zinc-400 mb-2">{data.bio}</p>
+                  <p className="text-zinc-400 mb-3 max-w-xl">{data.bio}</p>
                 )}
                 
-                <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-zinc-500">
                   <Calendar className="w-4 h-4" />
                   <span>Member since {new Date(data.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                 </div>
               </div>
             </div>
 
+            {data.isVerified && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 rounded-xl p-4 mb-6"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <ShieldCheck className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-blue-400 mb-1">Verified by ProJournX</h3>
+                    <p className="text-sm text-zinc-400 leading-relaxed">
+                      This trader&apos;s performance is verified through real auto-sync broker accounts connected directly to ProJournX. All P&L data is automatically pulled from their trading platform.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {data.settings.showTotalTrades && data.stats.totalTrades !== undefined && (
-                <div className="p-4 bg-zinc-800/50 rounded-lg">
-                  <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                    <BarChart3 className="w-4 h-4" />
-                    <span className="text-xs">Total Trades</span>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
+                    <BarChart3 className="w-5 h-5 text-blue-400" />
                   </div>
-                  <p className="text-xl font-bold text-white">{data.stats.totalTrades}</p>
-                </div>
+                  <p className="text-xs text-zinc-500 mb-1">Total Trades</p>
+                  <p className="text-2xl font-bold text-white">{data.stats.totalTrades}</p>
+                </motion.div>
               )}
 
               {data.settings.showWinRate && data.stats.winRate !== undefined && (
-                <div className="p-4 bg-zinc-800/50 rounded-lg">
-                  <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                    <Target className="w-4 h-4" />
-                    <span className="text-xs">Win Rate</span>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
+                    <Target className="w-5 h-5 text-blue-400" />
                   </div>
-                  <p className={`text-xl font-bold ${data.stats.winRate >= 50 ? 'text-green-400' : 'text-red-400'}`}>
+                  <p className="text-xs text-zinc-500 mb-1">Win Rate</p>
+                  <p className={`text-2xl font-bold ${data.stats.winRate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {data.stats.winRate.toFixed(1)}%
                   </p>
-                </div>
+                </motion.div>
               )}
 
               {data.settings.showProfitFactor && data.stats.profitFactor !== undefined && (
-                <div className="p-4 bg-zinc-800/50 rounded-lg">
-                  <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                    <Trophy className="w-4 h-4" />
-                    <span className="text-xs">Profit Factor</span>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
+                    <Trophy className="w-5 h-5 text-blue-400" />
                   </div>
-                  <p className={`text-xl font-bold ${data.stats.profitFactor >= 1 ? 'text-green-400' : 'text-red-400'}`}>
+                  <p className="text-xs text-zinc-500 mb-1">Profit Factor</p>
+                  <p className={`text-2xl font-bold ${data.stats.profitFactor >= 1 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {data.stats.profitFactor.toFixed(2)}
                   </p>
-                </div>
+                </motion.div>
               )}
 
               {data.settings.showTotalPnL && (
-                <div className="p-4 bg-zinc-800/50 rounded-lg">
-                  <div className="flex items-center gap-2 text-zinc-400 mb-1">
-                    {isProfitable ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                    <span className="text-xs">Total P&L</span>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="group p-5 bg-[#1a1a1a]/50 backdrop-blur-sm border border-[#2a2a2a] rounded-xl hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all duration-300"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-500/10 rounded-lg mb-3 group-hover:bg-blue-500/20 transition-colors">
+                    {isProfitable ? <TrendingUp className="w-5 h-5 text-blue-400" /> : <TrendingDown className="w-5 h-5 text-blue-400" />}
                   </div>
-                  <p className={`text-xl font-bold ${data.stats.totalPnLHidden ? 'text-zinc-500' : isProfitable ? 'text-green-400' : 'text-red-400'}`}>
+                  <p className="text-xs text-zinc-500 mb-1">Total P&L</p>
+                  <p className={`text-2xl font-bold ${data.stats.totalPnLHidden ? 'text-zinc-500' : isProfitable ? 'text-emerald-400' : 'text-red-400'}`}>
                     {data.stats.totalPnLHidden ? "Hidden" : formatCurrency(data.stats.totalPnL)}
                   </p>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
@@ -265,33 +338,33 @@ export default function PublicProfilePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6"
+            transition={{ delay: 0.3 }}
+            className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 mb-6"
           >
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-zinc-400" />
+            <div className="flex items-center gap-2 mb-6">
+              <BarChart3 className="w-5 h-5 text-blue-400" />
               <h2 className="text-lg font-semibold text-white">Monthly Performance</h2>
             </div>
             
-            <div className="h-64">
+            <div className="h-72 bg-[#1a1a1a] rounded-xl p-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.monthlyPnL}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
                   <XAxis 
                     dataKey="month" 
                     tickFormatter={formatMonth}
-                    tick={{ fill: '#888', fontSize: 12 }}
-                    axisLine={{ stroke: '#444' }}
+                    tick={{ fill: '#71717a', fontSize: 12 }}
+                    axisLine={{ stroke: '#2a2a2a' }}
                   />
                   <YAxis 
-                    tick={{ fill: '#888', fontSize: 12 }}
-                    axisLine={{ stroke: '#444' }}
+                    tick={{ fill: '#71717a', fontSize: 12 }}
+                    axisLine={{ stroke: '#2a2a2a' }}
                     tickFormatter={(value) => data.settings.hideDollarAmounts ? (value > 0 ? '+' : value < 0 ? '-' : '0') : `$${value}`}
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#1a1a1a',
-                      border: '1px solid #333',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '8px'
                     }}
                     labelFormatter={formatMonth}
@@ -315,15 +388,15 @@ export default function PublicProfilePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-6"
+            transition={{ delay: 0.4 }}
+            className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 mb-6"
           >
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-5 h-5 text-zinc-400" />
+            <div className="flex items-center gap-2 mb-6">
+              <Activity className="w-5 h-5 text-blue-400" />
               <h2 className="text-lg font-semibold text-white">Equity Curve</h2>
             </div>
             
-            <div className="h-64">
+            <div className="h-72 bg-[#1a1a1a] rounded-xl p-4">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data.equityCurve}>
                   <defs>
@@ -332,22 +405,22 @@ export default function PublicProfilePage() {
                       <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
                   <XAxis 
                     dataKey="tradeNumber"
-                    tick={{ fill: '#888', fontSize: 12 }}
-                    axisLine={{ stroke: '#444' }}
-                    label={{ value: 'Trade #', position: 'insideBottom', offset: -5, fill: '#888' }}
+                    tick={{ fill: '#71717a', fontSize: 12 }}
+                    axisLine={{ stroke: '#2a2a2a' }}
+                    label={{ value: 'Trade #', position: 'insideBottom', offset: -5, fill: '#71717a' }}
                   />
                   <YAxis 
-                    tick={{ fill: '#888', fontSize: 12 }}
-                    axisLine={{ stroke: '#444' }}
+                    tick={{ fill: '#71717a', fontSize: 12 }}
+                    axisLine={{ stroke: '#2a2a2a' }}
                     tickFormatter={(value) => data.settings.hideDollarAmounts ? `${value}%` : `$${value}`}
                   />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#1a1a1a',
-                      border: '1px solid #333',
+                      border: '1px solid #2a2a2a',
                       borderRadius: '8px'
                     }}
                     formatter={(value: number) => [
@@ -369,14 +442,84 @@ export default function PublicProfilePage() {
           </motion.div>
         )}
 
-        <div className="flex items-center justify-center gap-2 mt-8 text-zinc-500">
-          <Shield className="w-4 h-4" />
-          <span className="text-sm">
-            {data.isVerified 
-              ? "This trader has broker-synced accounts with verified P&L" 
-              : "This trader uses manually entered trades"}
-          </span>
-        </div>
+        {data.referralCode && referralLink && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 mb-8"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Users className="w-5 h-5 text-blue-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Join {data.displayName}&apos;s Trading Community</h2>
+            </div>
+            
+            <p className="text-zinc-400 text-sm mb-6">
+              Sign up using this trader&apos;s referral code to get started
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-zinc-500 mb-2 block">Referral Code</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3">
+                    <code className="text-blue-400 font-mono text-sm">{data.referralCode}</code>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(data.referralCode!, 'code')}
+                    className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
+                  >
+                    {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span className="text-sm">{copiedCode ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-zinc-500 mb-2 block">Referral Link</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-4 py-3 overflow-hidden">
+                    <code className="text-zinc-300 font-mono text-sm truncate block">{referralLink}</code>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(referralLink, 'link')}
+                    className="flex items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
+                  >
+                    {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span className="text-sm">{copiedLink ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        <footer className="border-t border-[#2a2a2a] pt-8 pb-6">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Image 
+                src="/images/projournx-full-logo.png" 
+                alt="ProJournX" 
+                width={100} 
+                height={24}
+                className="h-6 w-auto opacity-60"
+              />
+            </div>
+            <div className="flex items-center gap-2 text-zinc-500">
+              <Shield className="w-4 h-4" />
+              <span className="text-sm">
+                {data.isVerified 
+                  ? "This trader has broker-synced accounts with verified P&L data" 
+                  : "This trader uses manually entered trades - performance is not verified"}
+              </span>
+            </div>
+            <p className="text-xs text-zinc-600">
+              © {new Date().getFullYear()} ProJournX. All rights reserved.
+            </p>
+          </div>
+        </footer>
       </div>
 
       <AnimatePresence>

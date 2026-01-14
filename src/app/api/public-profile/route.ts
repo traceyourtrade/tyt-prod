@@ -131,6 +131,7 @@ export async function GET(req: NextRequest) {
       isVerified: hasVerifiedAccounts,
       memberSince: user.date,
       isOwner,
+      referralCode: user.referralCode || null,
       settings: {
         showEquityCurve: publicProfile.showEquityCurve,
         showMonthlyPnL: publicProfile.showMonthlyPnL,
