@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
   ShieldCheck,
@@ -15,7 +15,9 @@ import {
   AlertCircle,
   Calendar,
   Trophy,
-  Activity
+  Activity,
+  Award,
+  X
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -29,6 +31,7 @@ import {
   Area,
   CartesianGrid
 } from "recharts";
+import VerifiedCertificate from "@/components/VerifiedCertificate";
 
 interface PublicProfileData {
   displayName: string;
@@ -63,6 +66,7 @@ export default function PublicProfilePage() {
   const [data, setData] = useState<PublicProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCertificate, setShowCertificate] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -150,6 +154,14 @@ export default function PublicProfilePage() {
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Trading Journal</span>
           </Link>
+          
+          <button
+            onClick={() => setShowCertificate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-lg transition-colors"
+          >
+            <Award className="w-4 h-4" />
+            <span className="text-sm font-medium">Get Certificate</span>
+          </button>
         </div>
 
         <motion.div
@@ -363,6 +375,43 @@ export default function PublicProfilePage() {
           </span>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showCertificate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setShowCertificate(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-[650px] max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowCertificate(false)}
+                className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              
+              <VerifiedCertificate
+                displayName={data.displayName}
+                username={username}
+                profilePicture={data.profilePicture}
+                isVerified={data.isVerified}
+                stats={data.stats}
+                settings={data.settings}
+                memberSince={data.memberSince}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

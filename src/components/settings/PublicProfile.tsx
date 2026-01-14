@@ -3,9 +3,10 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Share2, Link, Copy, Check, ShieldCheck, ShieldAlert, 
-  Eye, EyeOff, Loader2, ExternalLink
+  Eye, EyeOff, Loader2, ExternalLink, Award, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import VerifiedCertificate from "@/components/VerifiedCertificate";
 
 interface PublicProfileSettings {
   isPublic: boolean;
@@ -45,6 +46,9 @@ const PublicProfile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [profileStats, setProfileStats] = useState<any>(null);
+  const [displayName, setDisplayName] = useState("");
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -54,11 +58,15 @@ const PublicProfile = () => {
           const data = await res.json();
           setUniqueId(data.uniqueId || "");
           setHasVerifiedAccounts(data.hasVerifiedAccounts || false);
+          setDisplayName(data.fullName || data.displayName || "Trader");
           if (data.publicProfile) {
             setSettings({
               ...defaultSettings,
               ...data.publicProfile
             });
+          }
+          if (data.stats) {
+            setProfileStats(data.stats);
           }
         }
       } catch (e) {
@@ -354,6 +362,53 @@ const PublicProfile = () => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {settings.isPublic && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ delay: 0.2 }}
+            className={cn(
+              "rounded-2xl border overflow-hidden",
+              "bg-card dark:bg-zinc-900/50",
+              "border-border dark:border-white/[0.08]"
+            )}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center">
+                  <Award className="w-4 h-4 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-foreground">Verified Certificate</h3>
+                  <p className="text-xs text-muted-foreground">Download a shareable certificate with QR code</p>
+                </div>
+              </div>
+              
+              <p className="text-sm text-muted-foreground mb-4">
+                Generate a professional certificate to share your verified trading stats with your audience. 
+                Includes a QR code that links directly to your public profile.
+              </p>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowCertificate(true)}
+                className={cn(
+                  "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all",
+                  "bg-blue-500/10 text-blue-500 border border-blue-500/20",
+                  "hover:bg-blue-500/20 hover:border-blue-500/30"
+                )}
+              >
+                <Award className="w-4 h-4" />
+                Preview & Download Certificate
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex items-center justify-between">
         <AnimatePresence>
           {saveMessage && (
@@ -397,6 +452,48 @@ const PublicProfile = () => {
           )}
         </motion.button>
       </div>
+
+      <AnimatePresence>
+        {showCertificate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setShowCertificate(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-[650px] max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowCertificate(false)}
+                className="absolute -top-2 -right-2 z-10 w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              
+              <VerifiedCertificate
+                displayName={displayName}
+                username={settings.customUsername || uniqueId}
+                profilePicture={null}
+                isVerified={hasVerifiedAccounts}
+                stats={profileStats || {}}
+                settings={{
+                  showWinRate: settings.showWinRate,
+                  showProfitFactor: settings.showProfitFactor,
+                  showTotalTrades: settings.showTotalTrades,
+                  showTotalPnL: settings.showTotalPnL,
+                  hideDollarAmounts: settings.hideDollarAmounts
+                }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
