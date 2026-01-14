@@ -54,7 +54,7 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
   - Dollar amounts can be hidden to show relative performance only
   - Dark theme UI matching main dashboard aesthetic (uses hardcoded zinc colors for public layout)
   - Data sourced from Manual, FileUpload, and AutoSync collections (same as dashboard)
-  - **Verified Certificate (Jan 2026):** Downloadable PNG certificate with QR code for influencers to share on social media. Uses html2canvas for export, shows trader stats based on privacy settings, and displays verification badge. Available from both public profile page and Settings > Public Profile section. Uses initial-based avatar (no profile pictures) to avoid CORS issues with html2canvas.
+  - **Verified Certificate (Jan 2026):** Premium downloadable PNG certificate for influencers to share on social media. Features a landscape format (700x400px) with warm brown/gold gradient background, "Verified Performance Certificate" title with elegant typography, "Proudly presented to" section with trader name, featured P&L stat prominently displayed, decorative CSS-based trophy graphic, date and ProJournX signature section, and small QR code in corner. Uses html2canvas for export with initial-based avatar (no profile pictures) to avoid CORS issues. Available from both public profile page ("Get Certificate" button) and Settings > Public Profile section.
 
 ### System Design Choices
 - **Project Structure:** Clear separation of concerns with dedicated directories for routes, components, utilities, database models, state management, and type definitions.
