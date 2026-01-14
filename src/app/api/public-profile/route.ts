@@ -6,6 +6,14 @@ import { getAutoSyncModel } from '@/models/accounts/autoSync.model';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 
+const generateReferralCode = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from(
+    { length: 8 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
+};
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
@@ -41,6 +49,19 @@ export async function GET(req: NextRequest) {
 
     if (!user.publicProfile?.isPublic) {
       return NextResponse.json({ error: "This profile is private" }, { status: 403 });
+    }
+
+    // Auto-generate referral code for users who don't have one
+    if (!user.referralCode) {
+      let newCode: string;
+      let codeExists = true;
+      while (codeExists) {
+        newCode = generateReferralCode();
+        const existing = await User.findOne({ referralCode: newCode });
+        codeExists = !!existing;
+      }
+      user.referralCode = newCode!;
+      await user.save();
     }
 
     const Manual = await getManualModel();
