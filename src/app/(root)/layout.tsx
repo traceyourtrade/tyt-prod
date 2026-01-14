@@ -909,11 +909,63 @@ export default function RootLayout({
   const preTrialAllowedPages2 = ['/dashboard', '/settings', '/support', '/checkout'];
   const isPreTrialAllowedPage = preTrialAllowedPages2.some(page => pathname.startsWith(page));
   
-  // For unpaid users (not pre-trial), NEVER show sidebar, popups, or app shell
+  // For unpaid users (not pre-trial), show subscription prompt instead of app shell
   // This prevents paywall bypass via modals or sidebar navigation
   if (!hasSubscriptionAccess && !isPreTrial) {
-    // Expired users: On protected pages show redirect, on public pages show bare children
+    // Expired users: Show subscription prompt on dashboard, or redirect on protected pages
     if (!isPublicPage) {
+      // If on dashboard, show subscription expired prompt
+      if (pathname === '/dashboard' || pathname === '/') {
+        return (
+          <div className="min-h-screen bg-background flex items-center justify-center p-4">
+            <div className="max-w-md w-full">
+              <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-br from-amber-500/20 via-orange-500/15 to-red-500/10 p-8">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30 mb-6">
+                    <Clock className="w-8 h-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-center text-foreground mb-3">
+                    Your Trial Has Ended
+                  </h2>
+                  <p className="text-muted-foreground text-center text-sm leading-relaxed">
+                    Your 3-day free trial has expired. Subscribe now to continue tracking your trades and accessing all features.
+                  </p>
+                </div>
+                <div className="p-6 space-y-4">
+                  <Link
+                    href="/checkout"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#4EBF94] to-[#3da87e] text-white font-semibold text-sm shadow-lg shadow-[#4EBF94]/25 hover:shadow-[#4EBF94]/40 transition-all"
+                  >
+                    <Crown className="w-4 h-4" />
+                    Subscribe Now
+                  </Link>
+                  <div className="flex items-center gap-4">
+                    <Link
+                      href="/settings"
+                      className="flex-1 text-center py-2.5 px-4 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 text-sm transition-all"
+                    >
+                      Settings
+                    </Link>
+                    <Link
+                      href="/support"
+                      className="flex-1 text-center py-2.5 px-4 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 text-sm transition-all"
+                    >
+                      Support
+                    </Link>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-center py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      // Other protected pages: redirect to checkout
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
