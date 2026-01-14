@@ -16,7 +16,8 @@ export function middleware(req: NextRequest) {
     console.log("Middleware check - error reading cookies", e);
   }
   // include both the intended path and the existing misspelled folder name
-  const protectedRoutes = ["/dashboard", "/dashbaord", "/profile", "/settings", "/reports"];
+  // Note: /profile/[username] is a PUBLIC route for verified P&L sharing
+  const protectedRoutes = ["/dashboard", "/dashbaord", "/settings", "/reports"];
 
   const isProtected = protectedRoutes.some((route) =>
     req.nextUrl.pathname.startsWith(route)
