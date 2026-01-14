@@ -13,6 +13,7 @@ import HourlyPnLChart from "./Graphs/HourlyPnLChart";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 import useDashboardLayoutStore from '@/store/dashboardLayoutStore';
 import useCurrencyStore, { convertTradeCurrency } from '@/store/currencyStore';
+import useDateRangeStore from '@/store/dateRangeStore';
 
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import datesforcal from '@/store/datesforcal';
@@ -43,20 +44,36 @@ const DashboardMonth: React.FC = () => {
   const { calMonth, calYear } = datesforcal();
   const { layout, layoutMode } = useDashboardLayoutStore();
   const { currency, exchangeRate } = useCurrencyStore();
+  const { getDateRange } = useDateRangeStore();
+  
+  const dateRange = getDateRange();
 
-  function isCurrentMonth(dateString: string): boolean {
+  function isInDateRange(dateString: string): boolean {
     const date = new Date(dateString);
-    return date.getFullYear() === calYear && (date.getMonth() + 1) === calMonth;
+    date.setHours(0, 0, 0, 0);
+    
+    if (!dateRange.startDate && !dateRange.endDate) {
+      return true;
+    }
+    
+    if (dateRange.startDate && dateRange.endDate) {
+      return date >= dateRange.startDate && date <= dateRange.endDate;
+    }
+    
+    if (dateRange.startDate) {
+      return date >= dateRange.startDate;
+    }
+    
+    if (dateRange.endDate) {
+      return date <= dateRange.endDate;
+    }
+    
+    return true;
   }
 
-  const thisMonthData = (selectedAccounts as Account[]).flatMap((account) => {
+  const filteredData = (selectedAccounts as Account[]).flatMap((account) => {
     if (!account.tradeData) return [];
-    return account.tradeData.filter(trade => isCurrentMonth(trade.date));
-  });
-
-  const allTradeData = (selectedAccounts as Account[]).flatMap((account) => {
-    if (!account.tradeData) return [];
-    return account.tradeData;
+    return account.tradeData.filter(trade => isInDateRange(trade.date));
   });
 
   const totalAccountBalance = calculateBalance(selectedAccounts);
@@ -64,7 +81,7 @@ const DashboardMonth: React.FC = () => {
   const convertProfit = (trade: TradeData) => convertTradeCurrency(trade.Profit || 0, trade.Currency, currency, exchangeRate);
 
   let data = Object.entries(
-    (thisMonthData || []).reduce((acc: { [key: string]: number }, trade) => {
+    (filteredData || []).reduce((acc: { [key: string]: number }, trade) => {
       acc[trade.date] = (acc[trade.date] || 0) + convertProfit(trade);
       return acc;
     }, {})
@@ -78,9 +95,9 @@ const DashboardMonth: React.FC = () => {
     return { time, value: parseFloat(cumulativeProfit.toFixed(2)) };
   });
 
-  const metrics = calculateRiskRewardRatio(thisMonthData);
+  const metrics = calculateRiskRewardRatio(filteredData);
 
-  const sortedTrades = [...thisMonthData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const sortedTrades = [...filteredData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const profitFactorData: { value: number }[] = [];
   let runningWins = 0;
   let runningLosses = 0;
@@ -94,14 +111,14 @@ const DashboardMonth: React.FC = () => {
 
   const dashWidgetProps = {
     data,
-    pnl: thisMonthData.reduce((sum, trade) => sum + convertProfit(trade), 0).toFixed(2),
-    winrate: ((thisMonthData.filter(trade => trade.Profit > 0).length / thisMonthData.length * 100 || 0).toFixed(2)),
-    winners: thisMonthData.filter(t => t.Profit > 0).length,
-    losers: thisMonthData.filter(t => t.Profit < 0).length,
-    profitF: calculateProfitFactor(thisMonthData),
+    pnl: filteredData.reduce((sum, trade) => sum + convertProfit(trade), 0).toFixed(2),
+    winrate: ((filteredData.filter(trade => trade.Profit > 0).length / filteredData.length * 100 || 0).toFixed(2)),
+    winners: filteredData.filter(t => t.Profit > 0).length,
+    losers: filteredData.filter(t => t.Profit < 0).length,
+    profitF: calculateProfitFactor(filteredData),
     profitFactorData,
-    totalProfits: thisMonthData.reduce((sum, trade) => trade.Profit > 0 ? sum + convertProfit(trade) : sum, 0),
-    totalLoses: thisMonthData.reduce((sum, trade) => trade.Profit < 0 ? sum + convertProfit(trade) : sum, 0),
+    totalProfits: filteredData.reduce((sum, trade) => trade.Profit > 0 ? sum + convertProfit(trade) : sum, 0),
+    totalLoses: filteredData.reduce((sum, trade) => trade.Profit < 0 ? sum + convertProfit(trade) : sum, 0),
     avgProfits: parseFloat(metrics.avgWin),
     avgLoses: parseFloat(metrics.avgLoss),
     rrRatio: metrics.rrRatio,
@@ -134,7 +151,7 @@ const DashboardMonth: React.FC = () => {
                 <PnLDailyChart data={data} />
               )}
               {isWidgetVisible('trades-table') && (
-                <TradesWidget data={thisMonthData} />
+                <TradesWidget data={filteredData} />
               )}
             </div>
           )}
@@ -144,16 +161,16 @@ const DashboardMonth: React.FC = () => {
       {(isWidgetVisible('daily-pnl-bar') || isWidgetVisible('day-of-week') || isWidgetVisible('symbol-pnl') || isWidgetVisible('hourly-pnl') || isWidgetVisible('radar')) && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {isWidgetVisible('daily-pnl-bar') && (
-            <DailyPnLBarChart data={thisMonthData} />
+            <DailyPnLBarChart data={filteredData} />
           )}
           {isWidgetVisible('day-of-week') && (
-            <DayOfWeekChart data={thisMonthData} />
+            <DayOfWeekChart data={filteredData} />
           )}
           {isWidgetVisible('symbol-pnl') && (
-            <SymbolPnLChart data={thisMonthData} />
+            <SymbolPnLChart data={filteredData} />
           )}
           {isWidgetVisible('hourly-pnl') && (
-            <HourlyPnLChart data={thisMonthData} />
+            <HourlyPnLChart data={filteredData} />
           )}
           {isWidgetVisible('radar') && (
             <div className="md:col-span-2">
@@ -165,24 +182,24 @@ const DashboardMonth: React.FC = () => {
 
       {isWidgetVisible('daily-cumulative-pnl') && (
         <div className="grid grid-cols-1">
-          <DailyCumulativePnLChart trades={allTradeData} />
+          <DailyCumulativePnLChart trades={filteredData} />
         </div>
       )}
 
       {(isWidgetVisible('trade-duration') || isWidgetVisible('win-rate-metrics') || isWidgetVisible('drawdown') || isWidgetVisible('progress-tracker')) && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {isWidgetVisible('trade-duration') && (
-            <TradeDurationChart trades={allTradeData} />
+            <TradeDurationChart trades={filteredData} />
           )}
           {isWidgetVisible('win-rate-metrics') && (
-            <WinRateMetricsChart trades={allTradeData} />
+            <WinRateMetricsChart trades={filteredData} />
           )}
           {isWidgetVisible('drawdown') && (
-            <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
+            <DrawdownChart trades={filteredData} startingBalance={totalAccountBalance} />
           )}
           {isWidgetVisible('progress-tracker') && (
             <div className="md:col-span-2">
-              <ProgressTracker trades={allTradeData} />
+              <ProgressTracker trades={filteredData} />
             </div>
           )}
         </div>
@@ -205,7 +222,7 @@ const DashboardMonth: React.FC = () => {
             <PnLDailyChart data={data} />
           )}
           {isWidgetVisible('daily-cumulative-pnl') && (
-            <DailyCumulativePnLChart trades={allTradeData} />
+            <DailyCumulativePnLChart trades={filteredData} />
           )}
         </div>
       )}
@@ -221,10 +238,10 @@ const DashboardMonth: React.FC = () => {
           {(isWidgetVisible('trades-table') || isWidgetVisible('daily-pnl-bar')) && (
             <div className="xl:col-span-1 flex flex-col gap-4">
               {isWidgetVisible('trades-table') && (
-                <TradesWidget data={thisMonthData} />
+                <TradesWidget data={filteredData} />
               )}
               {isWidgetVisible('daily-pnl-bar') && (
-                <DailyPnLBarChart data={thisMonthData} />
+                <DailyPnLBarChart data={filteredData} />
               )}
             </div>
           )}
@@ -234,13 +251,13 @@ const DashboardMonth: React.FC = () => {
       {(isWidgetVisible('day-of-week') || isWidgetVisible('symbol-pnl') || isWidgetVisible('hourly-pnl')) && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {isWidgetVisible('day-of-week') && (
-            <DayOfWeekChart data={thisMonthData} />
+            <DayOfWeekChart data={filteredData} />
           )}
           {isWidgetVisible('symbol-pnl') && (
-            <SymbolPnLChart data={thisMonthData} />
+            <SymbolPnLChart data={filteredData} />
           )}
           {isWidgetVisible('hourly-pnl') && (
-            <HourlyPnLChart data={thisMonthData} />
+            <HourlyPnLChart data={filteredData} />
           )}
         </div>
       )}
@@ -248,17 +265,17 @@ const DashboardMonth: React.FC = () => {
       {(isWidgetVisible('trade-duration') || isWidgetVisible('win-rate-metrics') || isWidgetVisible('drawdown') || isWidgetVisible('progress-tracker')) && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {isWidgetVisible('trade-duration') && (
-            <TradeDurationChart trades={allTradeData} />
+            <TradeDurationChart trades={filteredData} />
           )}
           {isWidgetVisible('win-rate-metrics') && (
-            <WinRateMetricsChart trades={allTradeData} />
+            <WinRateMetricsChart trades={filteredData} />
           )}
           {isWidgetVisible('drawdown') && (
-            <DrawdownChart trades={allTradeData} startingBalance={totalAccountBalance} />
+            <DrawdownChart trades={filteredData} startingBalance={totalAccountBalance} />
           )}
           {isWidgetVisible('progress-tracker') && (
             <div className="md:col-span-2">
-              <ProgressTracker trades={allTradeData} />
+              <ProgressTracker trades={filteredData} />
             </div>
           )}
         </div>
