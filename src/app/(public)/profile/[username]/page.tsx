@@ -421,6 +421,7 @@ export default function PublicProfilePage() {
                       border: '1px solid #2a2a2a',
                       borderRadius: '8px'
                     }}
+                    cursor={{ fill: 'transparent' }}
                     labelFormatter={formatMonth}
                     formatter={(value: number) => [
                       data.settings.hideDollarAmounts ? (value > 0 ? 'Profit' : value < 0 ? 'Loss' : 'Break Even') : formatCurrency(value),
