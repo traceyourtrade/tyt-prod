@@ -52,8 +52,16 @@ The UI features a premium neutral dashboard aesthetic, drawing inspiration from 
   - Custom username support for vanity URLs
   - Shareable link generator with copy-to-clipboard functionality
   - Dollar amounts can be hidden to show relative performance only
-  - Dark theme UI matching main dashboard aesthetic (uses hardcoded zinc colors for public layout)
   - Data sourced from Manual, FileUpload, and AutoSync collections (same as dashboard)
+  - **Public Profile Redesign (Jan 2026):** Complete UI overhaul matching dashboard aesthetic:
+    - Sticky header with ProJournX logo and "Verified Trader" badge
+    - Profile card with gradient border ring (blue for verified, gray for unverified)
+    - "Verified by ProJournX" banner explaining auto-sync broker verification
+    - Glassmorphic stats cards with icons and hover effects
+    - Charts with updated styling (#1a1a1a backgrounds, #3b82f6 accents)
+    - Referral section showing owner's referral code and copyable sign-up link
+    - Certificate button visible only to profile owners (JWT ownership check)
+    - Deep black (#050505) background, elevated cards (#141414), zinc tones
   - **Verified Certificate (Jan 2026):** Premium downloadable PNG certificate for influencers to share on social media. Features a landscape format (700x400px) matching the dashboard dark theme (deep black #050505, blue accents, zinc tones). Includes ProJournX logo loaded as base64 for html2canvas compatibility, "Certificate of Achievement" / "Verified Performance" title with elegant gradient typography, "Proudly presented to" section with trader name, featured P&L stat prominently displayed, decorative CSS-based trophy graphic with blue glow, blue accent bar, date section, and small QR code in corner. Available from both public profile page ("Get Certificate" button) and Settings > Public Profile section.
 
 ### System Design Choices
