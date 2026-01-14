@@ -975,38 +975,43 @@ export default function RootLayout({
         </div>
       );
     }
+    const isCheckoutPage = pathname.startsWith('/checkout');
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-5xl mx-auto px-4 py-8">
-          <div className="mb-6 flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center">
-              <Image
-                src="/images/logo-icon.png"
-                width={28}
-                height={28}
-                alt="ProJournX"
-                className="w-7 h-7 object-contain"
-                unoptimized
-              />
-            </Link>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/checkout"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#4EBF94] to-[#3da87e] text-white font-medium text-sm shadow-lg shadow-[#4EBF94]/25 hover:shadow-[#4EBF94]/40 transition-all"
-              >
-                <Crown className="w-4 h-4" />
-                Subscribe
+        {isCheckoutPage ? (
+          children
+        ) : (
+          <div className="max-w-5xl mx-auto px-4 py-8">
+            <div className="mb-6 flex items-center justify-between">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <Image
+                  src="/images/projournx-full-logo.png"
+                  width={140}
+                  height={32}
+                  alt="ProJournX"
+                  className="h-8 w-auto object-contain"
+                  unoptimized
+                />
               </Link>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/checkout"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#4EBF94] to-[#3da87e] text-white font-medium text-sm shadow-lg shadow-[#4EBF94]/25 hover:shadow-[#4EBF94]/40 transition-all"
+                >
+                  <Crown className="w-4 h-4" />
+                  Subscribe
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+            {children}
           </div>
-          {children}
-        </div>
+        )}
       </div>
     );
   }
