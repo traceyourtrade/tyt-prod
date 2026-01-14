@@ -200,6 +200,20 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Add recent trades (last 10)
+    const recentTradesSorted = [...allTradeData].sort((a: any, b: any) => {
+      const dateA = new Date(a.CloseTime || a.closeDate || a.date).getTime();
+      const dateB = new Date(b.CloseTime || b.closeDate || b.date).getTime();
+      return dateB - dateA; // Most recent first
+    }).slice(0, 10);
+
+    response.recentTrades = recentTradesSorted.map((trade: any) => ({
+      date: trade.CloseTime || trade.closeDate || trade.date,
+      symbol: trade.Item || trade.symbol || 'Unknown',
+      pnl: publicProfile.hideDollarAmounts ? null : (trade.Profit || trade.pnl || 0),
+      type: trade.Type || trade.type || 'trade'
+    }));
+
     return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching public profile:", error);

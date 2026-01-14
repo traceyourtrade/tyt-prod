@@ -36,6 +36,13 @@ import {
 } from "recharts";
 import VerifiedCertificate from "@/components/VerifiedCertificate";
 
+interface RecentTrade {
+  date: string;
+  symbol: string;
+  pnl: number | null;
+  type: string;
+}
+
 interface PublicProfileData {
   displayName: string;
   profilePicture: string | null;
@@ -62,6 +69,7 @@ interface PublicProfileData {
   };
   monthlyPnL?: Array<{ month: string; pnl: number }>;
   equityCurve?: Array<{ tradeNumber: number; equity: number; date: string }>;
+  recentTrades?: RecentTrade[];
 }
 
 export default function PublicProfilePage() {
@@ -493,6 +501,60 @@ export default function PublicProfilePage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+            </div>
+          </motion.div>
+        )}
+
+        {data.recentTrades && data.recentTrades.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-[#141414] border border-[#2a2a2a] rounded-2xl p-6 mb-6"
+          >
+            <div className="flex items-center gap-2 mb-6">
+              <Activity className="w-5 h-5 text-blue-400" />
+              <h2 className="text-lg font-semibold text-white">Recent Trades</h2>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#2a2a2a]">
+                    <th className="text-left text-xs text-zinc-500 font-medium pb-3 uppercase tracking-wider">Date</th>
+                    <th className="text-left text-xs text-zinc-500 font-medium pb-3 uppercase tracking-wider">Symbol</th>
+                    <th className="text-right text-xs text-zinc-500 font-medium pb-3 uppercase tracking-wider">P&L</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.recentTrades.map((trade, index) => {
+                    const tradeDate = new Date(trade.date);
+                    const formattedDate = tradeDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const pnlValue = trade.pnl ?? 0;
+                    const isProfitable = pnlValue >= 0;
+                    
+                    return (
+                      <tr key={index} className="border-b border-[#1a1a1a] last:border-0 hover:bg-[#1a1a1a]/50 transition-colors">
+                        <td className="py-3 text-sm text-zinc-400">{formattedDate}</td>
+                        <td className="py-3 text-sm font-medium text-white">{trade.symbol}</td>
+                        <td className={`py-3 text-sm font-semibold text-right ${data.settings.hideDollarAmounts ? 'text-zinc-500' : isProfitable ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {data.settings.hideDollarAmounts ? (
+                            <span className="flex items-center justify-end gap-1">
+                              {isProfitable ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                              {isProfitable ? 'Profit' : 'Loss'}
+                            </span>
+                          ) : (
+                            <span className="flex items-center justify-end gap-1">
+                              {isProfitable ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                              {isProfitable ? '+' : ''}{formatCurrency(pnlValue)}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </motion.div>
         )}
