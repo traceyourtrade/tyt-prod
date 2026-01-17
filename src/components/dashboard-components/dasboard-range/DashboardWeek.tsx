@@ -37,9 +37,17 @@ const DashboardWeek: React.FC = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
-  const { selectedRange, setViewingMonth, getDateRange } = useDateRangeStore();
+  const { selectedRange, setViewingMonth, viewingMonth } = useDateRangeStore();
 
-  const dateRange = getDateRange();
+  const dateRange = useMemo(() => {
+    if (selectedRange === "this_month") {
+      const startDate = new Date(viewingMonth.getFullYear(), viewingMonth.getMonth(), 1, 0, 0, 0, 0);
+      const endDate = new Date(viewingMonth.getFullYear(), viewingMonth.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { startDate, endDate };
+    }
+    const store = useDateRangeStore.getState();
+    return store.getDateRange();
+  }, [selectedRange, viewingMonth]);
 
   function isInDateRange(dateString: string): boolean {
     const date = new Date(dateString);

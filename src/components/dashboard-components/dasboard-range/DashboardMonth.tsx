@@ -44,9 +44,17 @@ const DashboardMonth: React.FC = () => {
   const { calMonth, calYear } = datesforcal();
   const { layout, layoutMode } = useDashboardLayoutStore();
   const { currency, exchangeRate } = useCurrencyStore();
-  const { getDateRange } = useDateRangeStore();
+  const { selectedRange, viewingMonth } = useDateRangeStore();
   
-  const dateRange = getDateRange();
+  const dateRange = React.useMemo(() => {
+    if (selectedRange === "this_month") {
+      const startDate = new Date(viewingMonth.getFullYear(), viewingMonth.getMonth(), 1, 0, 0, 0, 0);
+      const endDate = new Date(viewingMonth.getFullYear(), viewingMonth.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { startDate, endDate };
+    }
+    const store = useDateRangeStore.getState();
+    return store.getDateRange();
+  }, [selectedRange, viewingMonth]);
 
   function isInDateRange(dateString: string): boolean {
     const date = new Date(dateString);

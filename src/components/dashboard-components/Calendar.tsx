@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useModeFilteredAccounts } from "@/hooks/useModeFilteredAccounts";
 import calendarPopUp from "@/store/calendarPopUp";
 import datesforcal from "@/store/datesforcal";
+import useDateRangeStore from "@/store/dateRangeStore";
 import useCurrencyStore, {
   formatCompactCurrency,
   convertTradeCurrency,
@@ -42,6 +43,7 @@ interface GroupedTrade {
 const Calendar = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { setcalMonth, setcalYear } = datesforcal();
+  const { selectedRange, setViewingMonth } = useDateRangeStore();
   const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
 
@@ -401,30 +403,46 @@ const Calendar = () => {
   const handlePrevMonth = () => {
     setDirection(-1);
     setIsDropdownVisible(false);
+    let newYear = selectedYear;
+    let newMonth = selectedMonth;
     if (selectedMonth === 0) {
-      setSelectedYear((prev) => prev - 1);
-      setSelectedMonth(11);
-      setcalYear(selectedYear - 1);
+      newYear = selectedYear - 1;
+      newMonth = 11;
+      setSelectedYear(newYear);
+      setSelectedMonth(newMonth);
+      setcalYear(newYear);
       setcalMonth(12);
     } else {
-      setSelectedMonth((prev) => prev - 1);
+      newMonth = selectedMonth - 1;
+      setSelectedMonth(newMonth);
       setcalYear(selectedYear);
       setcalMonth(selectedMonth);
+    }
+    if (selectedRange === "this_month") {
+      setViewingMonth(new Date(newYear, newMonth, 1));
     }
   };
 
   const handleNextMonth = () => {
     setDirection(1);
     setIsDropdownVisible(false);
+    let newYear = selectedYear;
+    let newMonth = selectedMonth;
     if (selectedMonth === 11) {
-      setSelectedYear((prev) => prev + 1);
-      setSelectedMonth(0);
-      setcalYear(selectedYear + 1);
+      newYear = selectedYear + 1;
+      newMonth = 0;
+      setSelectedYear(newYear);
+      setSelectedMonth(newMonth);
+      setcalYear(newYear);
       setcalMonth(1);
     } else {
-      setSelectedMonth((prev) => prev + 1);
+      newMonth = selectedMonth + 1;
+      setSelectedMonth(newMonth);
       setcalYear(selectedYear);
       setcalMonth(selectedMonth + 2);
+    }
+    if (selectedRange === "this_month") {
+      setViewingMonth(new Date(newYear, newMonth, 1));
     }
   };
 
@@ -521,6 +539,9 @@ const Calendar = () => {
                             setSelectedMonth(i);
                             setcalMonth(i + 1);
                             setIsDropdownVisible(false);
+                            if (selectedRange === "this_month") {
+                              setViewingMonth(new Date(selectedYear, i, 1));
+                            }
                           }}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
