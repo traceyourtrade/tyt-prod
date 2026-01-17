@@ -820,59 +820,65 @@ export async function updateAsyncCredentialsHandler(req: any, userId: string, to
             return NextResponse.json({ message: "Account updated successfully (no credential changes)" });
         } else {
             // If account details changed, we need to update both ASacc and AutoSync schemas, and reset trade data
+            const previousVpsId = existingAsAcc.vpsId;
 
-            // Update the ASacc schema
-            await ASacc.findOneAndUpdate(
-                { uniqueId: rootUser.uniqueId, accountId },
-                {
-                    $set: {
-                        accountName,
-                        description,
-                        investorId,
-                        investorPw,
-                        server: server,
-                        status: 'yellow',  // Change status to yellow
-                        tradeData: []  // Clear existing trade data
-                    }
-                },
-                { new: true }
-            );
+            // Claim a new VPS with least load (same logic as account creation)
+            const vpsClaim = await claimVpsWithRollback();
+            const assignedVPS = vpsClaim.workerName;
+            console.log(`🔄 Re-assigning account from VPS: ${previousVpsId || 'none'} to VPS: ${assignedVPS}`);
 
-            // Update the User schema
-            await User.findOneAndUpdate(
-                { uniqueId: rootUser.uniqueId, "accounts.accountId": accountId },
-                {
-                    $set: {
-                        "accounts.$.accountName": accountName,
-                        "accounts.$.description": description,
-                        "accounts.$.investorId": investorId,
-                        "accounts.$.investorPw": investorPw,
-                        "accounts.$.serverName": server,
-                        "accounts.$.status": 'yellow' // Update status to yellow
-                    }
+            try {
+                // Update the ASacc schema with new VPS
+                await ASacc.findOneAndUpdate(
+                    { uniqueId: rootUser.uniqueId, accountId },
+                    {
+                        $set: {
+                            accountName,
+                            description,
+                            investorId,
+                            investorPw,
+                            server: server,
+                            status: 'yellow',  // Change status to yellow (pending verification)
+                            vpsId: assignedVPS,  // Assign new VPS
+                            tradeData: []  // Clear existing trade data
+                        }
+                    },
+                    { new: true }
+                );
+
+                // Update the User schema
+                await User.findOneAndUpdate(
+                    { uniqueId: rootUser.uniqueId, "accounts.accountId": accountId },
+                    {
+                        $set: {
+                            "accounts.$.accountName": accountName,
+                            "accounts.$.description": description,
+                            "accounts.$.investorId": investorId,
+                            "accounts.$.investorPw": investorPw,
+                            "accounts.$.serverName": server,
+                            "accounts.$.status": 'yellow', // Update status to yellow
+                            "accounts.$.assignedVPS": assignedVPS
+                        }
+                    });
+
+                // Delete existing trades for this account since credentials changed
+                await asyncUpload.deleteMany({
+                    uniqueId: rootUser.uniqueId,
+                    accountId: accountId
                 });
 
-            // Deleting trades of given accountId 
-            await asyncUpload.deleteMany({
-                uniqueId: rootUser.uniqueId,
-                accountId: accountId
-            });
+                console.log(`✅ Account ${accountId} updated with new VPS: ${assignedVPS}`);
 
-            // If you need to make the external sync request, you can do it here as well
-            const sendReq = await fetch("http://auto-sync-backend-env.ap-south-1.elasticbeanstalk.com/tytusersasqwzxerdfcv/verify/syncAcc", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accountName, accountId, accountType, uniqueId: rootUser.uniqueId, email: rootUser.email, investorId, password: investorPw, server })
-            });
-
-            if (!sendReq.ok) {
-                return NextResponse.json({ error: "Failed to sync with external service" }, { status: 500 });
+                return NextResponse.json({ 
+                    message: "Account updated successfully, credentials changed. Sync will resume shortly.",
+                    vpsId: assignedVPS
+                });
+            } catch (updateError) {
+                // Release the VPS claim if the update failed
+                console.error(`❌ Failed to update account, releasing VPS claim: ${assignedVPS}`);
+                await vpsClaim.release();
+                throw updateError;
             }
-
-            const sendRes = await sendReq.json();
-            console.log("External sync response:", sendRes);
-
-            return NextResponse.json({ message: "Account updated successfully, credentials changed and synced" });
         }
 
     } catch (error) {
