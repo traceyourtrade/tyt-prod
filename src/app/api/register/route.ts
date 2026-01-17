@@ -303,11 +303,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Send verification email using Resend
-    await sendEmail({
-      to: email,
-      subject: "Email Verification: ProJournX",
-      html: `
+    // ✅ Send verification email using Resend (non-blocking - don't fail registration if email fails)
+    try {
+      await sendEmail({
+        to: email,
+        subject: "Email Verification: ProJournX",
+        html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -373,14 +374,18 @@ export async function POST(req: Request) {
         </body>
         </html>
       `,
-    });
+      });
+    } catch (emailError) {
+      console.error("[REGISTER] Non-blocking: Failed to send verification email:", emailError);
+    }
 
     return NextResponse.json(
       { message: "Registration successful. Verification email sent." },
       { status: 200 },
     );
-  } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Registration error:", error?.message || error);
+    console.error("Registration error stack:", error?.stack);
+    return NextResponse.json({ error: "Server error", details: error?.message }, { status: 500 });
   }
 }
