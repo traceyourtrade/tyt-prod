@@ -80,32 +80,49 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
   const getGradientConfig = () => {
     if (status === "positive") {
       return (
-        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={colors.profit} stopOpacity={0.25} />
-          <stop offset="100%" stopColor={colors.profit} stopOpacity={0} />
-        </linearGradient>
+        <>
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors.profit} stopOpacity={0.25} />
+            <stop offset="100%" stopColor={colors.profit} stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="strokeGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors.profit} />
+            <stop offset="100%" stopColor={colors.profit} />
+          </linearGradient>
+        </>
       );
     }
     if (status === "negative") {
       return (
-        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={colors.loss} stopOpacity={0.05} />
-          <stop offset="100%" stopColor={colors.loss} stopOpacity={0.25} />
-        </linearGradient>
+        <>
+          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors.loss} stopOpacity={0.05} />
+            <stop offset="100%" stopColor={colors.loss} stopOpacity={0.25} />
+          </linearGradient>
+          <linearGradient id="strokeGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors.loss} />
+            <stop offset="100%" stopColor={colors.loss} />
+          </linearGradient>
+        </>
       );
     }
     return (
-      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor={colors.profit} stopOpacity={0.25} />
-        <stop offset={zeroOffset} stopColor={colors.profit} stopOpacity={0} />
-        <stop offset={zeroOffset} stopColor={colors.loss} stopOpacity={0} />
-        <stop offset="100%" stopColor={colors.loss} stopOpacity={0.25} />
-      </linearGradient>
+      <>
+        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={colors.profit} stopOpacity={0.25} />
+          <stop offset={zeroOffset} stopColor={colors.profit} stopOpacity={0} />
+          <stop offset={zeroOffset} stopColor={colors.loss} stopOpacity={0} />
+          <stop offset="100%" stopColor={colors.loss} stopOpacity={0.25} />
+        </linearGradient>
+        <linearGradient id="strokeGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={colors.profit} />
+          <stop offset={zeroOffset} stopColor={colors.profit} />
+          <stop offset={zeroOffset} stopColor={colors.loss} />
+          <stop offset="100%" stopColor={colors.loss} />
+        </linearGradient>
+      </>
     );
   };
-
-  // Blue line for mixed status, profit/loss colors for single direction
-  const strokeColor = status === "negative" ? colors.loss : status === "positive" ? colors.profit : "#3b82f6";
 
   return (
     <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
@@ -163,7 +180,7 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
             <Area
               type="linear"
               dataKey="value"
-              stroke={strokeColor}
+              stroke="url(#strokeGradient)"
               strokeWidth={1.5}
               fill="url(#chartGradient)"
               fillOpacity={1}
