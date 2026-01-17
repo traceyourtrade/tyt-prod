@@ -11,6 +11,7 @@ import TradesWidget from '../TradesWidget';
 import { useModeFilteredAccounts } from '@/hooks/useModeFilteredAccounts';
 import calendarPopUp from '@/store/calendarPopUp';
 import useCurrencyStore, { formatCompactCurrency } from "@/store/currencyStore";
+import useDateRangeStore from "@/store/dateRangeStore";
 import { calculateProfitFactor, calculateRiskRewardRatio, calculateBalance } from '@/utils/dashboard-calculations/dashboardCalculations';
 
 interface TradeData {
@@ -36,6 +37,7 @@ const DashboardWeek: React.FC = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
+  const { selectedRange, setViewingMonth } = useDateRangeStore();
 
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: { [key: string]: GroupedTrade }, trade: TradeData) => {
@@ -120,6 +122,12 @@ const DashboardWeek: React.FC = () => {
   useEffect(() => {
     setDisplayWeekIndex(currentWeekIndex >= 0 ? currentWeekIndex : 0);
   }, [currentWeekIndex]);
+
+  useEffect(() => {
+    if (selectedRange === "this_month") {
+      setViewingMonth(currentDate);
+    }
+  }, [currentDate, selectedRange, setViewingMonth]);
 
   const currentWeek = allWeeks[displayWeekIndex] || [];
   const currentMonth = currentDate.toLocaleString("default", { month: "long" });

@@ -18,8 +18,10 @@ interface DateRange {
 interface DateRangeStore {
   selectedRange: DateRangeOption;
   customRange: DateRange;
+  viewingMonth: Date;
   setSelectedRange: (range: DateRangeOption) => void;
   setCustomRange: (range: DateRange) => void;
+  setViewingMonth: (date: Date) => void;
   getDateRange: () => DateRange;
 }
 
@@ -61,13 +63,16 @@ const getEndOfQuarter = (date: Date): Date => {
 const useDateRangeStore = create<DateRangeStore>((set, get) => ({
   selectedRange: "this_month",
   customRange: { startDate: null, endDate: null },
+  viewingMonth: new Date(),
   
   setSelectedRange: (range) => set({ selectedRange: range }),
   
   setCustomRange: (range) => set({ customRange: range, selectedRange: "custom" }),
   
+  setViewingMonth: (date) => set({ viewingMonth: date }),
+  
   getDateRange: () => {
-    const { selectedRange, customRange } = get();
+    const { selectedRange, customRange, viewingMonth } = get();
     const now = new Date();
     
     switch (selectedRange) {
@@ -78,8 +83,8 @@ const useDateRangeStore = create<DateRangeStore>((set, get) => ({
         };
       case "this_month":
         return {
-          startDate: getStartOfMonth(now),
-          endDate: getEndOfMonth(now),
+          startDate: getStartOfMonth(viewingMonth),
+          endDate: getEndOfMonth(viewingMonth),
         };
       case "last_30_days":
         const thirtyDaysAgo = new Date(now);
@@ -114,8 +119,8 @@ const useDateRangeStore = create<DateRangeStore>((set, get) => ({
         return customRange;
       default:
         return {
-          startDate: getStartOfMonth(now),
-          endDate: getEndOfMonth(now),
+          startDate: getStartOfMonth(viewingMonth),
+          endDate: getEndOfMonth(viewingMonth),
         };
     }
   },
