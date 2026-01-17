@@ -104,7 +104,8 @@ const GradientAreaChart: React.FC<GradientAreaChartProps> = ({ data }) => {
     );
   };
 
-  const strokeColor = status === "negative" ? colors.loss : status === "positive" ? colors.profit : "rgba(255,255,255,0.5)";
+  // Use CSS variable for mixed status stroke color to support both light and dark modes
+  const strokeColor = status === "negative" ? colors.loss : status === "positive" ? colors.profit : "var(--foreground)";
 
   return (
     <div className="bg-card backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden">
