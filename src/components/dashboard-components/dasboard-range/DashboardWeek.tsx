@@ -37,7 +37,35 @@ const DashboardWeek: React.FC = () => {
   const { setShowTr, setDataDate } = calendarPopUp();
   const { selectedAccounts } = useModeFilteredAccounts();
   const { currency, exchangeRate } = useCurrencyStore();
-  const { selectedRange, setViewingMonth } = useDateRangeStore();
+  const { selectedRange, setViewingMonth, getDateRange } = useDateRangeStore();
+
+  const dateRange = getDateRange();
+
+  function isInDateRange(dateString: string): boolean {
+    const date = new Date(dateString);
+    date.setHours(0, 0, 0, 0);
+    
+    if (!dateRange.startDate && !dateRange.endDate) {
+      return true;
+    }
+    
+    if (dateRange.startDate && dateRange.endDate) {
+      return date >= dateRange.startDate && date <= dateRange.endDate;
+    }
+    
+    if (dateRange.startDate) {
+      return date >= dateRange.startDate;
+    }
+    
+    if (dateRange.endDate) {
+      return date <= dateRange.endDate;
+    }
+    
+    return true;
+  }
+
+  const filteredTradesForWidgets = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
+    .filter(trade => isInDateRange(trade.date));
 
   const groupedTrades = (selectedAccounts as Account[]).flatMap((acc) => acc.tradeData || [])
     .reduce((acc: { [key: string]: GroupedTrade }, trade: TradeData) => {
@@ -203,9 +231,10 @@ const DashboardWeek: React.FC = () => {
   };
 
   const PNLcumulative = calculateCumulativePNL();
+  const widgetMetrics = calculateRiskRewardRatio(filteredTradesForWidgets);
+  const widgetWinCount = filteredTradesForWidgets.filter(t => t.Profit > 0).length;
+  const widgetLossCount = filteredTradesForWidgets.filter(t => t.Profit < 0).length;
   const metrics = calculateRiskRewardRatio(allTrades);
-  const winCount = allTrades.filter(t => t.Profit > 0).length;
-  const lossCount = allTrades.filter(t => t.Profit < 0).length;
 
   const bestTrade = allTrades.length > 0 ? Math.max(...allTrades.map(t => t.Profit)) : 0;
   const worstTrade = allTrades.length > 0 ? Math.min(...allTrades.map(t => t.Profit)) : 0;
@@ -229,7 +258,7 @@ const DashboardWeek: React.FC = () => {
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  const sortedTradesForPF = [...allTrades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const sortedTradesForPF = [...filteredTradesForWidgets].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const profitFactorData: { value: number }[] = [];
   let runningWins = 0;
   let runningLosses = 0;
@@ -241,20 +270,34 @@ const DashboardWeek: React.FC = () => {
     profitFactorData.push({ value: parseFloat(pf.toFixed(2)) });
   });
 
+  const widgetCumulativePNL = (() => {
+    const cumulativePNL = [{ time: "", value: 0 }];
+    let runningTotal = 0;
+    const dailySums: { [key: string]: number } = {};
+    filteredTradesForWidgets.forEach(trade => {
+      dailySums[trade.date] = (dailySums[trade.date] || 0) + (trade.Profit || 0);
+    });
+    Object.keys(dailySums).sort().forEach(date => {
+      runningTotal += dailySums[date];
+      cumulativePNL.push({ time: date, value: parseFloat(runningTotal.toFixed(2)) });
+    });
+    return cumulativePNL;
+  })();
+
   const dashWidgetProps = {
-    data: PNLcumulative,
-    pnl: parseFloat(allTrades.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2)),
-    winrate: parseFloat(((allTrades.filter(trade => trade.Profit > 0).length / allTrades.length * 100) || 0).toFixed(2)),
-    winners: winCount,
-    losers: lossCount,
-    profitF: calculateProfitFactor(allTrades),
+    data: widgetCumulativePNL,
+    pnl: parseFloat(filteredTradesForWidgets.reduce((sum, trade) => sum + (trade.Profit || 0), 0).toFixed(2)),
+    winrate: parseFloat(((filteredTradesForWidgets.filter(trade => trade.Profit > 0).length / filteredTradesForWidgets.length * 100) || 0).toFixed(2)),
+    winners: widgetWinCount,
+    losers: widgetLossCount,
+    profitF: calculateProfitFactor(filteredTradesForWidgets),
     profitFactorData,
-    avgProfits: parseFloat(metrics.avgWin),
-    avgLoses: parseFloat(metrics.avgLoss),
-    rrRatio: metrics.rrRatio,
+    avgProfits: parseFloat(widgetMetrics.avgWin),
+    avgLoses: parseFloat(widgetMetrics.avgLoss),
+    rrRatio: widgetMetrics.rrRatio,
     accBal: parseFloat(calculateBalance(selectedAccounts).toFixed(2)),
-    totalProfits: allTrades.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0),
-    totalLoses: allTrades.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0),
+    totalProfits: filteredTradesForWidgets.reduce((sum, trade) => trade.Profit > 0 ? sum + trade.Profit : sum, 0),
+    totalLoses: filteredTradesForWidgets.reduce((sum, trade) => trade.Profit < 0 ? sum + trade.Profit : sum, 0),
   };
 
   const formatCurrencyDisplay = (num: number) => {
