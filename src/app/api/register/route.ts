@@ -6,7 +6,7 @@ import { getNoteModel } from "@/models/main/notes.model";
 import { activateTrial } from "@/lib/subscription";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
-import { sendEmail, addContactToAudience, syncContactWithSubscription } from "@/lib/resend";
+import { sendEmail } from "@/lib/resend";
 
 const generateReferralUniqueId = () => {
   const chars =
@@ -190,26 +190,7 @@ export async function POST(req: Request) {
     await user.save();
     await notes.save();
 
-    // ✅ Sync user to Resend contacts for bulk emails
-    const nameParts = fullName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-    
-    try {
-      await syncContactWithSubscription({
-        email,
-        fullName,
-        subscription: {
-          isSubscribed: false,
-          subscriptionStatus: 'pending',
-          trialEndsAt: undefined,
-          trialUsed: false
-        },
-        date: new Date()
-      });
-    } catch (contactError) {
-      console.error('[REGISTER] Non-blocking: Failed to sync contact to Resend:', contactError);
-    }
+    // NOTE: Resend contact sync moved to email verification to avoid rate limiting during registration
 
     // ✅ Track referrals
     if (referralCode || couponCode) {
@@ -304,6 +285,7 @@ export async function POST(req: Request) {
     }
 
     // ✅ Send verification email using Resend (non-blocking - don't fail registration if email fails)
+    let emailSent = false;
     try {
       await sendEmail({
         to: email,
@@ -375,12 +357,18 @@ export async function POST(req: Request) {
         </html>
       `,
       });
+      emailSent = true;
     } catch (emailError) {
       console.error("[REGISTER] Non-blocking: Failed to send verification email:", emailError);
     }
 
     return NextResponse.json(
-      { message: "Registration successful. Verification email sent." },
+      { 
+        message: emailSent 
+          ? "Registration successful. Verification email sent." 
+          : "Registration successful. Please check your email or contact support if you don't receive verification.",
+        emailSent
+      },
       { status: 200 },
     );
   } catch (error: any) {
