@@ -3,11 +3,11 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Loader2, 
-  ArrowLeft, 
-  Shield, 
-  Zap, 
+import {
+  Loader2,
+  ArrowLeft,
+  Shield,
+  Zap,
   Brain,
   Lock,
   Sparkles,
@@ -70,18 +70,18 @@ function CheckoutPageContent() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [isUpgrade, setIsUpgrade] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
-  
+
   const planParam = searchParams.get('plan');
   const upgradeParam = searchParams.get('upgrade');
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>(
     planParam === 'monthly' ? 'monthly' : 'yearly'
   );
-  
+
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponData | null>(null);
-  
+
   const monthlyOriginalPrice = 1799;
   const monthlyPrice = 849;
   const yearlyPrice = 8199;
@@ -193,13 +193,35 @@ function CheckoutPageContent() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to create subscription");
-      
+
       const options = {
         key: data.keyId,
         subscription_id: data.subscriptionId,
         name: "ProJournX",
         description: billingPeriod === 'yearly' ? "Pro Yearly" : "Pro Monthly",
-        handler: () => router.push("/dashboard?payment=success"),
+        handler: async (response: any) => {
+          setLoading(true);
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ...response,
+                billingPeriod
+              }),
+            });
+            if (verifyRes.ok) {
+              router.push("/dashboard?payment=success");
+            } else {
+              const errorData = await verifyRes.json();
+              setError(errorData.error || "Verification failed but payment was done. Please contact support.");
+              setLoading(false);
+            }
+          } catch (err) {
+            setError("Verification failed. Please contact support.");
+            setLoading(false);
+          }
+        },
         prefill: { email: subscriptionStatus?.email || "" },
         theme: { color: "#10B981" },
         modal: { ondismiss: () => setLoading(false) },
@@ -310,7 +332,7 @@ function CheckoutPageContent() {
 
       <main className="relative z-10 max-w-5xl mx-auto px-6 py-6 lg:py-8">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -326,12 +348,12 @@ function CheckoutPageContent() {
                 <Sparkles className="w-3 h-3 text-emerald-400" />
                 <span className="text-[11px] font-medium text-emerald-400">Upgrade to Pro</span>
               </motion.div>
-              
+
               <h1 className="text-2xl lg:text-3xl font-bold leading-tight">
                 Trade Smarter with{' '}
                 <span className="text-emerald-400">Auto Sync</span>
               </h1>
-              
+
               <p className="text-sm text-zinc-400 max-w-sm">
                 Connect your broker once, and let ProJournX automatically track and analyze every trade you make.
               </p>
@@ -344,17 +366,15 @@ function CheckoutPageContent() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 + i * 0.05 }}
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                    feature.highlight 
-                      ? 'bg-emerald-500/10 border border-emerald-500/20' 
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${feature.highlight
+                      ? 'bg-emerald-500/10 border border-emerald-500/20'
                       : 'bg-white/[0.02] border border-white/5 hover:bg-white/[0.04]'
-                  }`}
+                    }`}
                 >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    feature.highlight 
-                      ? 'bg-emerald-500 text-white' 
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${feature.highlight
+                      ? 'bg-emerald-500 text-white'
                       : 'bg-white/5 text-zinc-400'
-                  }`}>
+                    }`}>
                     <feature.icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -391,11 +411,10 @@ function CheckoutPageContent() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setBillingPeriod('yearly')}
-                    className={`relative p-3 rounded-xl text-left transition-all ${
-                      billingPeriod === 'yearly'
+                    className={`relative p-3 rounded-xl text-left transition-all ${billingPeriod === 'yearly'
                         ? 'bg-emerald-500/10 border-2 border-emerald-500'
                         : 'bg-white/5 border-2 border-transparent hover:border-white/10'
-                    }`}
+                      }`}
                   >
                     {billingPeriod === 'yearly' && (
                       <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-full bg-emerald-500 text-[9px] font-bold text-black">
@@ -406,14 +425,13 @@ function CheckoutPageContent() {
                     <div className="text-xl font-bold">₹{yearlyMonthlyPrice}<span className="text-xs font-normal text-zinc-500">/mo</span></div>
                     <div className="text-[10px] text-zinc-500">Billed annually</div>
                   </button>
-                  
+
                   <button
                     onClick={() => setBillingPeriod('monthly')}
-                    className={`relative p-3 rounded-xl text-left transition-all ring-2 ring-orange-500/30 ${
-                      billingPeriod === 'monthly'
+                    className={`relative p-3 rounded-xl text-left transition-all ring-2 ring-orange-500/30 ${billingPeriod === 'monthly'
                         ? 'bg-gradient-to-br from-orange-500/20 to-amber-500/10 border-2 border-orange-500 shadow-lg shadow-orange-500/20'
                         : 'bg-gradient-to-br from-orange-500/10 to-amber-500/5 border-2 border-orange-500/50 hover:border-orange-500'
-                    }`}
+                      }`}
                   >
                     <div className="absolute -top-2 left-3 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-[9px] font-bold text-black animate-pulse">
                       MOST POPULAR
@@ -474,7 +492,7 @@ function CheckoutPageContent() {
                         <span className="text-xs text-emerald-400 font-medium">{appliedCoupon.code}</span>
                         <span className="text-xs text-emerald-300">-₹{appliedCoupon.discountAmount}</span>
                       </div>
-                      <button 
+                      <button
                         onClick={() => { setAppliedCoupon(null); setCouponCode(""); }}
                         className="text-zinc-400 hover:text-white transition-colors"
                       >
@@ -483,7 +501,7 @@ function CheckoutPageContent() {
                     </div>
                   ) : (
                     <div className="mb-3">
-                      <button 
+                      <button
                         onClick={() => setShowCoupon(!showCoupon)}
                         className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-emerald-400 transition-colors"
                       >
@@ -491,7 +509,7 @@ function CheckoutPageContent() {
                         <span>Have a coupon code?</span>
                         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCoupon ? 'rotate-180' : ''}`} />
                       </button>
-                      
+
                       <AnimatePresence>
                         {showCoupon && (
                           <motion.div
@@ -535,11 +553,10 @@ function CheckoutPageContent() {
                     disabled={loading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3.5 px-4 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all ${
-                      billingPeriod === 'monthly'
+                    className={`w-full py-3.5 px-4 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all ${billingPeriod === 'monthly'
                         ? 'bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 hover:from-orange-600 hover:via-amber-600 hover:to-orange-600 shadow-lg shadow-orange-500/30'
                         : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/20'
-                    }`}
+                      }`}
                   >
                     {loading ? (
                       <>

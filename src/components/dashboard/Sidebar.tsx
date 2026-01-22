@@ -53,9 +53,7 @@ export default function Sidebar({ expanded }: SidebarProps) {
   ]
 
   const handleLogout = async () => {
-    console.log("Logout clicked");
     const resposne = await axios.post('/api/logout');
-    console.log(resposne.data);
     if (resposne.data.success) {
       window.location.href = "/login";
     }

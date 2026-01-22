@@ -110,7 +110,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   setAccounts: async () => {
     try {
       set({ loading: true, error: null });
-      console.log("setAccounts: Fetching accounts with cookies");
 
       const res = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
@@ -123,7 +122,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       });
 
       const data = await res.json();
-      console.log("setAccounts: response", data, "status", res.status);
 
       if (!res.ok) {
         throw new Error(data.error || "Failed to fetch accounts");
@@ -137,11 +135,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
           (account: Account) => account.checked === true,
         );
 
-        console.log(
-          "setAccounts: selectedAccounts (filtered):",
-          selectedAccounts,
-        );
-
         set({
           accounts: accounts,
           profileData: data.data || {},
@@ -152,7 +145,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
 
         return accounts;
       } else {
-        console.warn("setAccounts: unexpected response", res.status, data);
         set({ loading: false });
       }
     } catch (error) {
@@ -176,7 +168,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   updateAccView: async (accountName: string) => {
     try {
       set({ loading: true, error: null });
-      console.log("updateAccView: sending accountName", accountName);
 
       const response = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
@@ -213,7 +204,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       }
 
       const data = await response.json();
-      console.log("updateAccView: response", data);
 
       // Use data.accounts (enhanced accounts with trade data) from editAccCheckHandler
       const accounts = data.accounts || (data.data && data.data.accounts);
@@ -257,7 +247,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   checkAll: async (newAllSelected: boolean) => {
     try {
       set({ loading: true, error: null });
-      console.log("checkAll: value=", newAllSelected);
 
       const response = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
@@ -291,7 +280,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       }
 
       const data = await response.json();
-      console.log("checkAll: response", data);
 
       // Use data.accounts (enhanced accounts with trade data) from checkAllHandler
       const accounts = data.accounts || (data.data && data.data.accounts);
@@ -323,7 +311,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   createAccount: async (accountData) => {
     try {
       set({ loading: true, error: null });
-      console.log("createAccount: creating account", accountData);
 
       const response = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
@@ -337,7 +324,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       });
 
       const data = await response.json();
-      console.log("createAccount: response", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to create account");
@@ -370,10 +356,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   createAutoSyncAccount: async (accountData) => {
     try {
       set({ loading: true, error: null });
-      console.log(
-        "createAutoSyncAccount: creating auto sync account",
-        accountData,
-      );
 
       const response = await fetch(`${API_BASE_URL}/post`, {
         method: "POST",
@@ -387,7 +369,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       });
 
       const data = await response.json();
-      console.log("createAutoSyncAccount: response", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to create auto sync account");
@@ -430,7 +411,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
   ) => {
     try {
       set({ loading: true, error: null });
-      console.log("deleteAccount: deleting account", accountName, accountType);
 
       const apiName =
         accountType === "async" ? "deleteAsyncAcc" : "deleteFileManual";
@@ -447,7 +427,6 @@ const useAccountDetails = create<AccountDetailsState>((set, get) => ({
       });
 
       const data = await response.json();
-      console.log("deleteAccount: response", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to delete account");

@@ -10,6 +10,7 @@ import { getOpenTradeModel } from '@/models/accounts/openTrades.model';
 import { getStrategyModel } from '@/models/main/strategy.model';
 import { getSubscriptionStatus } from '@/lib/subscription';
 import { claimVpsWithRollback } from '@/lib/vps-distribution';
+import { getTradeEnrichmentModel } from '@/models/main/tradeEnrichment.model';
 // Import your models (adjust paths as needed)
 const User = await getUserModel();
 const ASacc = await getASAccountModel();
@@ -86,9 +87,9 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
         // Check subscription status - autosync requires paid subscription or grandfathered access
         const subscriptionStatus = getSubscriptionStatus(rootUser);
         if (!subscriptionStatus.hasAutoSyncAccess) {
-            return NextResponse.json({ 
+            return NextResponse.json({
                 error: "Auto-Sync is a Pro feature. Please upgrade to access MT5 automatic trade sync.",
-                requiresUpgrade: true 
+                requiresUpgrade: true
             }, { status: 402 });
         }
 
@@ -110,13 +111,13 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
             const vpsClaim = await claimVpsWithRollback();
             const assignedVPS = vpsClaim.workerName;
             console.log(`🔄 Assigning account to VPS: ${assignedVPS}`);
-            
+
             let userAccountAdded = false;
-            
+
             try {
                 await isUser.addAutoSyncAccount(accountName, accountType, broker, description, investorId, investorPw, serverName, accountId, isPropFirm, assignedVPS);
                 userAccountAdded = true;
-                
+
                 const newAsAc = new ASacc({
                     uniqueId: rootUser.uniqueId,
                     email: email,
@@ -134,7 +135,7 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
                 return NextResponse.json({ message: "Account added successfully!" });
             } catch (saveError) {
                 console.error("❌ Failed to save account, rolling back:", saveError);
-                
+
                 try {
                     if (userAccountAdded) {
                         try {
@@ -148,7 +149,7 @@ export async function createAutoSyncAccountHandler(req: any, userId: string, tok
                 } finally {
                     await vpsClaim.release();
                 }
-                
+
                 throw saveError;
             }
         } else {
@@ -199,9 +200,9 @@ export async function getRedStatusAccountsHandler(req: any, userId: string, toke
             return NextResponse.json({ error: "User not authenticated" }, { status: 401 });
         }
 
-        const redAccounts = await ASacc.find({ 
-            uniqueId: rootUser.uniqueId, 
-            status: "red" 
+        const redAccounts = await ASacc.find({
+            uniqueId: rootUser.uniqueId,
+            status: "red"
         });
 
         const redAccountNames = redAccounts.map((acc: any) => acc.accountName);
@@ -225,17 +226,23 @@ export async function getAccountDetailsHandler(req: NextRequest, userId: string,
         if (!userData || userData.email !== rootUser.email) {
             return NextResponse.json({ error: "User not found or unauthorized" }, { status: 404 });
         }
-  const strategies = await Strategy.find({ uniqueId: userId }).sort({ createdDate: -1 });
+        const strategies = await Strategy.find({ uniqueId: userId }).sort({ createdDate: -1 });
 
         const accountIds = userData.accounts.map((acc: any) => acc.accountId);
 
-        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts] = await Promise.all([
+        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts, enrichmentDocs] = await Promise.all([
             fileUpload.find({ uniqueId: userId, accountId: { $in: accountIds } }),
             Manual.find({ uniqueId: userId, accountId: { $in: accountIds } }),
             asyncUpload.find({ uniqueId: userId, accountId: { $in: accountIds } }),
             OpenAsTrades.find({ uniqueId: userId, accountId: { $in: accountIds } }),
             ASacc.find({ uniqueId: userId, accountId: { $in: accountIds } }),
+            (await getTradeEnrichmentModel()).find({ uniqueId: userId, accountId: { $in: accountIds } })
         ]);
+
+        const enrichmentMap: { [key: string]: any } = {};
+        enrichmentDocs.forEach((ed: any) => {
+            enrichmentMap[`${ed.accountId}_${ed.tradeId}`] = ed.toObject();
+        });
 
         const lastFetchByAccountId: { [key: string]: Date | null } = {};
         asAccounts.forEach((asAcc: any) => {
@@ -244,28 +251,28 @@ export async function getAccountDetailsHandler(req: NextRequest, userId: string,
 
         const tradesByAccount: { [key: string]: any[] } = {};
 
-        fileUploadTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
+        const allTradeDocs = [
+            { docs: fileUploadTrades },
+            { docs: manualTrades },
+            { docs: autoSyncTrades },
+            { docs: asOpenTrades }
+        ];
 
-        manualTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
+        allTradeDocs.forEach(group => {
+            group.docs.forEach((tradeDoc: any) => {
+                const accountId = tradeDoc.accountId;
+                if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
 
-        autoSyncTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
-
-        asOpenTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+                const enrichedTrades = tradeDoc.tradeData.map((trade: any) => {
+                    const tradeId = trade.id || trade.Ticket?.toString() || trade._id?.toString();
+                    const enrichment = enrichmentMap[`${accountId}_${tradeId}`];
+                    if (enrichment) {
+                        return { ...trade, ...enrichment };
+                    }
+                    return trade;
+                });
+                tradesByAccount[accountId].push(...enrichedTrades);
+            });
         });
 
         const enhancedAccounts = userData.accounts.map((account: any) => ({
@@ -311,13 +318,19 @@ export async function editAccCheckHandler(req: any, userId: string, token: strin
         const accountIds = rootUser.accounts.map((acc: any) => acc.accountId);
         const uniqueId = rootUser.uniqueId;
 
-        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts] = await Promise.all([
+        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts, enrichmentDocs] = await Promise.all([
             fileUpload.find({ uniqueId, accountId: { $in: accountIds } }),
             Manual.find({ uniqueId, accountId: { $in: accountIds } }),
             asyncUpload.find({ uniqueId, accountId: { $in: accountIds } }),
             OpenAsTrades.find({ uniqueId, accountId: { $in: accountIds } }),
             ASacc.find({ uniqueId, accountId: { $in: accountIds } }),
+            (await getTradeEnrichmentModel()).find({ uniqueId, accountId: { $in: accountIds } })
         ]);
+
+        const enrichmentMap: { [key: string]: any } = {};
+        enrichmentDocs.forEach((ed: any) => {
+            enrichmentMap[`${ed.accountId}_${ed.tradeId}`] = ed.toObject();
+        });
 
         const lastFetchByAccountId: { [key: string]: Date | null } = {};
         asAccounts.forEach((asAcc: any) => {
@@ -326,28 +339,28 @@ export async function editAccCheckHandler(req: any, userId: string, token: strin
 
         const tradesByAccount: { [key: string]: any[] } = {};
 
-        fileUploadTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
+        const allTradeDocs = [
+            { docs: fileUploadTrades },
+            { docs: manualTrades },
+            { docs: autoSyncTrades },
+            { docs: asOpenTrades }
+        ];
 
-        manualTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
+        allTradeDocs.forEach(group => {
+            group.docs.forEach((tradeDoc: any) => {
+                const accountId = tradeDoc.accountId;
+                if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
 
-        autoSyncTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
-
-        asOpenTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+                const enrichedTrades = tradeDoc.tradeData.map((trade: any) => {
+                    const tradeId = trade.id || trade.Ticket?.toString() || trade._id?.toString();
+                    const enrichment = enrichmentMap[`${accountId}_${tradeId}`];
+                    if (enrichment) {
+                        return { ...trade, ...enrichment };
+                    }
+                    return trade;
+                });
+                tradesByAccount[accountId].push(...enrichedTrades);
+            });
         });
 
         const enhancedAccounts = rootUser.accounts.map((account: any) => ({
@@ -356,7 +369,7 @@ export async function editAccCheckHandler(req: any, userId: string, token: strin
             lastFetch: lastFetchByAccountId[account.accountId] || null
         }));
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             data: rootUser,
             accounts: enhancedAccounts
         });
@@ -390,13 +403,19 @@ export async function checkAllHandler(req: any, userId: string, token: string) {
         const accountIds = rootUser.accounts.map((acc: any) => acc.accountId);
         const uniqueId = rootUser.uniqueId;
 
-        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts] = await Promise.all([
+        const [fileUploadTrades, manualTrades, autoSyncTrades, asOpenTrades, asAccounts, enrichmentDocs] = await Promise.all([
             fileUpload.find({ uniqueId, accountId: { $in: accountIds } }),
             Manual.find({ uniqueId, accountId: { $in: accountIds } }),
             asyncUpload.find({ uniqueId, accountId: { $in: accountIds } }),
             OpenAsTrades.find({ uniqueId, accountId: { $in: accountIds } }),
             ASacc.find({ uniqueId, accountId: { $in: accountIds } }),
+            (await getTradeEnrichmentModel()).find({ uniqueId, accountId: { $in: accountIds } })
         ]);
+
+        const enrichmentMap: { [key: string]: any } = {};
+        enrichmentDocs.forEach((ed: any) => {
+            enrichmentMap[`${ed.accountId}_${ed.tradeId}`] = ed.toObject();
+        });
 
         const lastFetchByAccountId: { [key: string]: Date | null } = {};
         asAccounts.forEach((asAcc: any) => {
@@ -405,28 +424,28 @@ export async function checkAllHandler(req: any, userId: string, token: string) {
 
         const tradesByAccount: { [key: string]: any[] } = {};
 
-        fileUploadTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
+        const allTradeDocs = [
+            { docs: fileUploadTrades },
+            { docs: manualTrades },
+            { docs: autoSyncTrades },
+            { docs: asOpenTrades }
+        ];
 
-        manualTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
+        allTradeDocs.forEach(group => {
+            group.docs.forEach((tradeDoc: any) => {
+                const accountId = tradeDoc.accountId;
+                if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
 
-        autoSyncTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
-        });
-
-        asOpenTrades.forEach((tradeDoc: any) => {
-            const accountId = tradeDoc.accountId;
-            if (!tradesByAccount[accountId]) tradesByAccount[accountId] = [];
-            tradesByAccount[accountId].push(...tradeDoc.tradeData);
+                const enrichedTrades = tradeDoc.tradeData.map((trade: any) => {
+                    const tradeId = trade.id || trade.Ticket?.toString() || trade._id?.toString();
+                    const enrichment = enrichmentMap[`${accountId}_${tradeId}`];
+                    if (enrichment) {
+                        return { ...trade, ...enrichment };
+                    }
+                    return trade;
+                });
+                tradesByAccount[accountId].push(...enrichedTrades);
+            });
         });
 
         const enhancedAccounts = rootUser.accounts.map((account: any) => ({
@@ -869,7 +888,7 @@ export async function updateAsyncCredentialsHandler(req: any, userId: string, to
 
                 console.log(`✅ Account ${accountId} updated with new VPS: ${assignedVPS}`);
 
-                return NextResponse.json({ 
+                return NextResponse.json({
                     message: "Account updated successfully, credentials changed. Sync will resume shortly.",
                     vpsId: assignedVPS
                 });
@@ -887,9 +906,9 @@ export async function updateAsyncCredentialsHandler(req: any, userId: string, to
     }
 }
 
-export async function editManualUploadHandler(req:any, userId: string, token: string) {
+export async function editManualUploadHandler(req: any, userId: string, token: string) {
     try {
-        const { accountId, tradeId, updatedTradeData } =  req;
+        const { accountId, tradeId, updatedTradeData } = req;
 
         const rootUser = await getUserFromToken(token);
         if (!rootUser) {
@@ -1029,7 +1048,7 @@ export async function deleteFileManualHandler(req: any, userId: string, token: s
     }
 }
 
-export async function deleteManualUploadHandler(req:any, userId: string, token: string) {
+export async function deleteManualUploadHandler(req: any, userId: string, token: string) {
     try {
         const { tradeId } = req;
 
@@ -1074,7 +1093,7 @@ export async function deleteManualUploadHandler(req:any, userId: string, token: 
         return NextResponse.json({ error: "Server error deleting trade" }, { status: 500 });
     }
 }
-export async function updateFileManualCredentialsHandler(req:any, userId: string, token: string) {
+export async function updateFileManualCredentialsHandler(req: any, userId: string, token: string) {
     try {
         const { accountId, accountName, accountType, broker, description } = req;
 
@@ -1087,7 +1106,7 @@ export async function updateFileManualCredentialsHandler(req:any, userId: string
             return NextResponse.json({ error: "User not found" }, { status: 401 });
         }
 
-        
+
 
         // Update User schema
         await User.findOneAndUpdate(
@@ -1206,7 +1225,7 @@ export async function getTradeHistoryHandler(req: NextRequest, userId: string, t
 
         const url = new URL(req.url);
         const accountId = url.searchParams.get('accountId');
-        
+
         let query: any = { uniqueId: userId };
         if (accountId) {
             query.accountId = accountId;
@@ -1242,10 +1261,10 @@ export async function getDashboardStatsHandler(req: NextRequest, userId: string,
         // Get account stats
         const totalAccounts = rootUser.accounts.length;
         const activeAccounts = rootUser.accounts.filter((acc: any) => acc.checked).length;
-        
+
         // Get trade stats (you can customize this based on your needs)
         const totalTrades = await getTotalTradesCount(userId);
-        
+
         const stats = {
             totalAccounts,
             activeAccounts,
@@ -1268,6 +1287,6 @@ async function getTotalTradesCount(userId: string) {
         Manual.countDocuments({ uniqueId: userId }),
         asyncUpload.countDocuments({ uniqueId: userId })
     ]);
-    
+
     return fileCount + manualCount + autoCount;
 }

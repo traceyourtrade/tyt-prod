@@ -28,23 +28,23 @@ interface NotebookStore {
     selectedFile: string;
     loading: boolean;
     error: string | null;
-    
+
     // Actions
     setNotes: () => Promise<void>;
     setFolder: (folderName: string) => void;
     setFile: (fileName: string) => void;
-    
+
     // Folder Operations
     createFolder: (folderName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
     renameFolder: (oldFolderName: string, newFolderName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
     deleteFolder: (folderName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
-    
+
     // File Operations
     createFile: (fileName: string, folderName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
     renameFile: (folderName: string, oldFileName: string, newFileName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
     deleteFile: (folderName: string, fileName: string) => Promise<{ success: boolean; message?: string; error?: string }>;
     editFile: (folderName: string, fileName: string, content: { title: string; content: string }) => Promise<{ success: boolean; message?: string; error?: string }>;
-    
+
     // Daily Journal Integration
     addNotesFromDailyJournal: (data: {
         tradeId: string;
@@ -54,7 +54,7 @@ interface NotebookStore {
         accountType: string;
         pnl?: number;
     }) => Promise<{ success: boolean; message?: string; error?: string; finalFileName?: string }>;
-    
+
     // Utility
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
@@ -255,7 +255,7 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     setNotes: async () => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/get?apiName=getNotes', {
                 method: 'GET',
                 headers: {
@@ -270,22 +270,20 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
             }
 
             if (data.error) {
-                console.log("Notebook: Loading demo data for UI preview");
-                set({ 
+                set({
                     notes: demoNotebookData,
                     loading: false,
                     error: null
                 });
             } else {
-                set({ 
+                set({
                     notes: data.data || [],
-                    loading: false 
+                    loading: false
                 });
             }
 
         } catch (error) {
-            console.log("Notebook: Loading demo data for UI preview");
-            set({ 
+            set({
                 notes: demoNotebookData,
                 loading: false,
                 error: null
@@ -303,24 +301,24 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     createFolder: async (folderName: string) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'createFolder',
                     newFolder: folderName
                 }),
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to create folder');
             }
 
             set({ loading: false });
-            
+
             // Refresh notes after successful creation
             if (response.ok) {
                 await get().setNotes();
@@ -328,13 +326,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
 
             return { success: true, message: result.message };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to create folder',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to create folder' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to create folder'
             };
         }
     },
@@ -342,11 +340,11 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     renameFolder: async (oldFolderName: string, newFolderName: string) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'renameFolder',
                     folderName: oldFolderName,
                     renameFolder: newFolderName
@@ -354,13 +352,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to rename folder');
             }
 
             set({ loading: false });
-            
+
             // Refresh notes and update selection if needed
             if (response.ok) {
                 await get().setNotes();
@@ -371,13 +369,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
 
             return { success: true, message: result.message };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to rename folder',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to rename folder' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to rename folder'
             };
         }
     },
@@ -385,24 +383,24 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     deleteFolder: async (folderName: string) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/delete', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'deleteFolder',
-                    folderName 
+                    folderName
                 }),
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to delete folder');
             }
 
             set({ loading: false });
-            
+
             // Refresh notes and clear selection if deleted folder was selected
             if (response.ok) {
                 await get().setNotes();
@@ -413,13 +411,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
 
             return { success: true, message: result.message };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to delete folder',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to delete folder' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to delete folder'
             };
         }
     },
@@ -428,11 +426,11 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     createFile: async (fileName: string, folderName: string) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'createFile',
                     newFile: fileName,
                     folderName
@@ -440,13 +438,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to create file');
             }
 
             set({ loading: false });
-            
+
             // Refresh notes after successful creation
             if (response.ok) {
                 await get().setNotes();
@@ -454,13 +452,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
 
             return { success: true, message: result.message };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to create file',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to create file' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to create file'
             };
         }
     },
@@ -468,11 +466,11 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     renameFile: async (folderName: string, oldFileName: string, newFileName: string) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'renameFile',
                     folderName,
                     fileName: oldFileName,
@@ -481,13 +479,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to rename file');
             }
 
             set({ loading: false });
-            
+
             // Refresh notes and update selection if needed
             if (response.ok) {
                 await get().setNotes();
@@ -498,13 +496,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
 
             return { success: true, message: result.message };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to rename file',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to rename file' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to rename file'
             };
         }
     },
@@ -512,11 +510,11 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     deleteFile: async (folderName: string, fileName: string) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/delete', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'deleteFile',
                     folderName,
                     fileName
@@ -524,13 +522,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to delete file');
             }
 
             set({ loading: false });
-            
+
             // Refresh notes and clear selection if deleted file was selected
             if (response.ok) {
                 await get().setNotes();
@@ -541,13 +539,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
 
             return { success: true, message: result.message };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to delete file',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to delete file' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to delete file'
             };
         }
     },
@@ -555,11 +553,11 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     editFile: async (folderName: string, fileName: string, content: { title: string; content: string }) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'editNotebookFile',
                     selectedFolder: folderName,
                     selectedFile: fileName,
@@ -568,7 +566,7 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to update file');
             }
@@ -576,13 +574,13 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
             set({ loading: false });
             return { success: true, message: result.message };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to update file',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to update file' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to update file'
             };
         }
     },
@@ -591,42 +589,42 @@ const useNotebookStore = create<NotebookStore>((set, get) => ({
     addNotesFromDailyJournal: async (data) => {
         try {
             set({ loading: true, error: null });
-            
+
             const response = await fetch('/api/notebook/post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     apiName: 'addNotesFromDailyJournal',
                     ...data
                 }),
             });
 
             const result = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Failed to add notes from daily journal');
             }
 
             set({ loading: false });
-            
+
             // Refresh notes after successful addition
             if (response.ok) {
                 await get().setNotes();
             }
 
-            return { 
-                success: true, 
+            return {
+                success: true,
                 message: result.message,
-                finalFileName: result.data?.finalFileName 
+                finalFileName: result.data?.finalFileName
             };
         } catch (error) {
-            set({ 
+            set({
                 error: error instanceof Error ? error.message : 'Failed to add notes from daily journal',
-                loading: false 
+                loading: false
             });
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : 'Failed to add notes from daily journal' 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to add notes from daily journal'
             };
         }
     },

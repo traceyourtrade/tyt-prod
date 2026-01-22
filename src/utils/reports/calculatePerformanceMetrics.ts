@@ -56,7 +56,7 @@ interface PerformanceMetrics {
  * @returns {Object} An object containing all calculated performance metrics.
  */
 export const calculatePerformanceMetrics= (trades: Trade[]): PerformanceMetrics => {
-  console.log("Calculating Performance Metrics for Net P&L");
+
   if (!Array.isArray(trades) || trades.length === 0) {
     return {
       // Return default values or null for empty data

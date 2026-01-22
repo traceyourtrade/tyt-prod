@@ -80,10 +80,6 @@ export const calculateWeeklyPnL = (monthIndex: number, year: number, monthData: 
             pnl: roundedPnl
         });
     }
-
-    // Optional: Log the result for confirmation
-    console.log(`--- Final Weekly PNL Array for ${year}-${targetMonthStr} ---`);
-    console.log(finalPnlArray);
     
     return finalPnlArray;
 };

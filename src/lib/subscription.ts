@@ -27,7 +27,7 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
   const hasExistingAutoSyncAccounts = user.accounts?.some(
     (acc) => acc.accountType === "Broker Sync" || acc.investorId
   ) ?? false;
-  
+
   // Admin bypass - admins always have full access
   if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
     return {
@@ -43,7 +43,7 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
   }
 
   const now = new Date();
-  
+
   // Check for active paid subscription
   if (user.subscription?.isSubscribed && user.subscription?.subscriptionStatus === 'active') {
     const expiry = user.subscription.subscriptionExpiry;
@@ -60,20 +60,20 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
       };
     }
   }
-  
+
   // Check for active trial period (3-day free trial)
   if (user.subscription?.trialEndsAt) {
     const trialEnd = new Date(user.subscription.trialEndsAt);
     if (trialEnd > now) {
       const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // Autosync access during trial: 
       // - If user has autosyncGrandfathered flag set to true, they have access
       // - If user has existing autosync accounts (detected dynamically), they have access
       // - Otherwise, new trial users don't get autosync access (Pro feature)
       const autosyncGrandfathered = user.subscription?.autosyncGrandfathered === true;
       const hasAutoSyncAccess = autosyncGrandfathered || hasExistingAutoSyncAccounts;
-      
+
       return {
         hasAccess: true,
         isSubscribed: false,
@@ -86,10 +86,10 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
       };
     }
   }
-  
+
   // Check if user can start a trial
   const canStartTrial = isTrialEligible(user);
-  
+
   // Pre-trial users: NO full access, but they can view dashboard and start trial
   // The Layout will allow /dashboard access when canStartTrial is true
   if (canStartTrial) {
@@ -104,7 +104,7 @@ export function getSubscriptionStatus(user: IUser): SubscriptionStatus {
       hasAutoSyncAccess: false
     };
   }
-  
+
   // No active subscription, trial expired or used
   return {
     hasAccess: false,
@@ -122,26 +122,27 @@ export function activateTrial(user: IUser): Date {
   const now = new Date();
   const trialEndsAt = new Date();
   trialEndsAt.setDate(trialEndsAt.getDate() + 3);
-  
+
   if (!user.subscription) {
     user.subscription = {
       isSubscribed: false,
       trialUsed: false
     };
   }
-  
+
   user.subscription.trialActivatedAt = now;
   user.subscription.trialEndsAt = trialEndsAt;
   user.subscription.trialUsed = true;
   user.subscription.subscriptionStatus = 'pending';
-  
+
   return trialEndsAt;
 }
 
 export function activateSubscription(
-  user: IUser, 
-  subscriptionId: string, 
-  customerId?: string
+  user: IUser,
+  subscriptionId: string,
+  customerId?: string,
+  billingPeriod: 'monthly' | 'yearly' = 'monthly'
 ): void {
   if (!user.subscription) {
     user.subscription = {
@@ -149,15 +150,20 @@ export function activateSubscription(
       trialUsed: true
     };
   }
-  
+
   user.subscription.isSubscribed = true;
   user.subscription.subscriptionId = subscriptionId;
   user.subscription.subscriptionStatus = 'active';
   user.subscription.razorpayCustomerId = customerId;
   user.subscription.hasEverSubscribed = true;
-  
+  user.subscription.billingPeriod = billingPeriod;
+
   const expiry = new Date();
-  expiry.setMonth(expiry.getMonth() + 1);
+  if (billingPeriod === 'yearly') {
+    expiry.setFullYear(expiry.getFullYear() + 1);
+  } else {
+    expiry.setMonth(expiry.getMonth() + 1);
+  }
   user.subscription.subscriptionExpiry = expiry;
 }
 
@@ -173,11 +179,11 @@ export async function verifyProAccess(uniqueId: string): Promise<{ hasAccess: bo
     const { getUserModel } = await import("@/models/main/user.model");
     const User = await getUserModel();
     const user = await User.findOne({ uniqueId });
-    
+
     if (!user) {
       return { hasAccess: false, error: "User not found" };
     }
-    
+
     const status = getSubscriptionStatus(user);
     return { hasAccess: status.hasAccess };
   } catch (error) {

@@ -4,6 +4,8 @@ import { getUserModel } from "@/models/main/user.model";
 import { getAffiliateModel } from "@/models/main/affiliate.model";
 import { getReferralModel } from "@/models/main/referral.model";
 import { getCommissionModel } from "@/models/main/commission.model";
+import { getTransactionModel } from "@/models/main/payment.model";
+import { activateSubscription } from "@/lib/subscription";
 
 const generateUniqueId = () => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -16,8 +18,8 @@ async function processAffiliateCommission(userId: string, transactionAmount: num
     const Referral = await getReferralModel();
     const Commission = await getCommissionModel();
 
-    const referral = await Referral.findOne({ 
-      referredUserId: userId, 
+    const referral = await Referral.findOne({
+      referredUserId: userId,
       status: { $in: ['signed_up', 'converted'] }
     });
 
@@ -26,7 +28,7 @@ async function processAffiliateCommission(userId: string, transactionAmount: num
       return;
     }
 
-    const affiliate = await Affiliate.findOne({ 
+    const affiliate = await Affiliate.findOne({
       uniqueId: referral.affiliateId,
       status: 'approved'
     });
@@ -96,7 +98,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     const signature = request.headers.get("x-razorpay-signature");
-    
+
     if (!signature) {
       return NextResponse.json({ error: "No signature provided" }, { status: 400 });
     }
@@ -120,10 +122,32 @@ export async function POST(request: NextRequest) {
     const event = JSON.parse(body);
     const eventType = event.event;
     const payload = event.payload;
+    const eventId = event.account_id + "_" + event.created_at + "_" + eventType; // Simple idempotency key
 
-    console.log("Razorpay webhook received:", eventType);
+    console.log(`Razorpay webhook received: ${eventType} (ID: ${event.id || 'N/A'})`);
 
     const User = await getUserModel();
+    const Transaction = await getTransactionModel();
+
+    // Record the webhook event
+    const recordWebhook = async (status: string, userId: string, email: string, subId?: string, paymentId?: string, amount?: number) => {
+      try {
+        await Transaction.create({
+          transactionId: `WEBHOOK_${event.id || Date.now()}`,
+          userId: userId || 'unknown',
+          email: email || 'unknown',
+          subscriptionId: subId,
+          paymentId: paymentId,
+          amount: amount || 0,
+          currency: 'INR',
+          status: status as any,
+          source: 'webhook',
+          rawResponse: event
+        });
+      } catch (e) {
+        console.error("Error recording webhook transaction:", e);
+      }
+    };
 
     const findUserBySubscription = async (subscription: any) => {
       const subscriptionId = subscription?.id;
@@ -160,6 +184,7 @@ export async function POST(request: NextRequest) {
             user.subscription.razorpayCustomerId = subscription.customer_id;
             user.subscription.subscriptionStatus = 'pending';
             await user.save();
+            await recordWebhook('authenticated', user.uniqueId, user.email, subscription.id);
             console.log(`Subscription authenticated for user: ${user.email}`);
           }
         }
@@ -173,28 +198,13 @@ export async function POST(request: NextRequest) {
 
           if (user) {
             const billingPeriod = subscription?.notes?.billingPeriod || user.subscription?.billingPeriod || 'monthly';
-            const expiry = new Date();
-            if (billingPeriod === 'yearly') {
-              expiry.setFullYear(expiry.getFullYear() + 1);
-            } else {
-              expiry.setMonth(expiry.getMonth() + 1);
-            }
-
-            user.subscription = {
-              ...(user.subscription ?? { isSubscribed: false, trialUsed: false }),
-              isSubscribed: true,
-              subscriptionId: subscription.id,
-              subscriptionStatus: 'active',
-              subscriptionExpiry: expiry,
-              razorpayCustomerId: subscription.customer_id,
-              trialUsed: true,
-              hasEverSubscribed: true,
-              billingPeriod: billingPeriod
-            };
+            activateSubscription(user, subscription.id, subscription.customer_id, billingPeriod as any);
             await user.save();
-            console.log(`Subscription activated for user: ${user.email}, billing: ${billingPeriod}`);
 
             const planAmount = billingPeriod === 'yearly' ? 8199 : 849;
+            await recordWebhook('activated', user.uniqueId, user.email, subscription.id, undefined, planAmount);
+            console.log(`Subscription activated for user: ${user.email}, billing: ${billingPeriod}`);
+
             await processAffiliateCommission(user.uniqueId, planAmount, 'subscription_activated');
           } else {
             console.error(`User not found for subscription.activated: ${subscription.id}`);
@@ -205,29 +215,19 @@ export async function POST(request: NextRequest) {
 
       case "subscription.charged": {
         const subscription = payload.subscription?.entity;
+        const payment = payload.payment?.entity;
         if (subscription) {
           const user = await findUserBySubscription(subscription);
 
           if (user) {
             const billingPeriod = user.subscription?.billingPeriod || 'monthly';
-            const expiry = new Date();
-            if (billingPeriod === 'yearly') {
-              expiry.setFullYear(expiry.getFullYear() + 1);
-            } else {
-              expiry.setMonth(expiry.getMonth() + 1);
-            }
-
-            if (!user.subscription) {
-              user.subscription = { isSubscribed: true, trialUsed: true };
-            }
-            user.subscription.isSubscribed = true;
-            user.subscription.subscriptionExpiry = expiry;
-            user.subscription.subscriptionStatus = 'active';
-            user.subscription.hasEverSubscribed = true;
+            activateSubscription(user, subscription.id, subscription.customer_id, billingPeriod as any);
             await user.save();
-            console.log(`Subscription charged/renewed for user: ${user.email}, billing: ${billingPeriod}`);
 
             const renewalAmount = billingPeriod === 'yearly' ? 8199 : 849;
+            await recordWebhook('captured', user.uniqueId, user.email, subscription.id, payment?.id, renewalAmount);
+            console.log(`Subscription charged/renewed for user: ${user.email}, billing: ${billingPeriod}`);
+
             await processAffiliateCommission(user.uniqueId, renewalAmount, 'subscription_renewed');
           } else {
             console.error(`User not found for subscription.charged: ${subscription.id}`);
@@ -247,6 +247,7 @@ export async function POST(request: NextRequest) {
             user.subscription.subscriptionId = subscription.id;
             user.subscription.subscriptionStatus = 'pending';
             await user.save();
+            await recordWebhook('pending', user.uniqueId, user.email, subscription.id);
             console.log(`Subscription pending for user: ${user.email}`);
           }
         }
@@ -258,7 +259,7 @@ export async function POST(request: NextRequest) {
         if (payment) {
           const subscriptionId = payment.subscription_id;
           const email = payment.email || payment.notes?.email;
-          
+
           let user = null;
           if (subscriptionId) {
             user = await User.findOne({ "subscription.subscriptionId": subscriptionId });
@@ -269,21 +270,9 @@ export async function POST(request: NextRequest) {
 
           if (user && subscriptionId) {
             const billingPeriod = user.subscription?.billingPeriod || 'monthly';
-            const expiry = new Date();
-            if (billingPeriod === 'yearly') {
-              expiry.setFullYear(expiry.getFullYear() + 1);
-            } else {
-              expiry.setMonth(expiry.getMonth() + 1);
-            }
-
-            if (!user.subscription) {
-              user.subscription = { isSubscribed: true, trialUsed: true };
-            }
-            user.subscription.isSubscribed = true;
-            user.subscription.subscriptionStatus = 'active';
-            user.subscription.subscriptionExpiry = expiry;
-            user.subscription.hasEverSubscribed = true;
+            activateSubscription(user, subscriptionId, user.subscription?.razorpayCustomerId, billingPeriod as any);
             await user.save();
+            await recordWebhook('captured', user.uniqueId, user.email, subscriptionId, payment.id, payment.amount / 100);
             console.log(`Payment captured, subscription activated for user: ${user.email}`);
           }
         }
@@ -297,17 +286,26 @@ export async function POST(request: NextRequest) {
           const user = await findUserBySubscription(subscription);
 
           if (user) {
+            // If it's still active according to expiry, we might want to keep it active until expiry
+            // but the current logic sets isSubscribed to false immediately.
+            // I'll keep the current behavior but add logging.
+
             if (user.subscription?.subscriptionStatus === 'active' && user.subscription?.isSubscribed) {
-              console.log(`Ignoring ${eventType} for active subscription: ${user.email}`);
-              break;
+              // check expiry
+              const now = new Date();
+              if (user.subscription.subscriptionExpiry && new Date(user.subscription.subscriptionExpiry) > now) {
+                console.log(`Ignoring ${eventType} for active subscription that hasn't expired yet: ${user.email}`);
+                break;
+              }
             }
-            
+
             if (!user.subscription) {
               user.subscription = { isSubscribed: false, trialUsed: true };
             }
             user.subscription.isSubscribed = false;
             user.subscription.subscriptionStatus = eventType === "subscription.cancelled" ? 'cancelled' : 'halted';
             await user.save();
+            await recordWebhook(user.subscription.subscriptionStatus, user.uniqueId, user.email, subscription.id);
             console.log(`Subscription ${eventType} for user: ${user.email}`);
           }
         }

@@ -22,7 +22,7 @@ const DjImgPopup = () => {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    url: djImgUrl,apiName:'deleteImage'
+                    url: djImgUrl, apiName: 'deleteImage'
                 })
             });
 
@@ -33,10 +33,10 @@ const DjImgPopup = () => {
                 setAccounts();
                 setDjImg();
             } else {
-                console.log(data.error);
+                // Error handled by status check
             }
         } catch (error) {
-            console.log(error);
+            // Silently fail or handled by global error handler
         }
     };
 
@@ -48,19 +48,19 @@ const DjImgPopup = () => {
     return (
         <div className={`fixed inset-0 bg-black bg-opacity-40 z-[60] flex flex-col items-center justify-center ${showDjImg ? "flex" : "hidden"}`}>
             <div className="w-full h-screen flex items-center justify-center relative">
-                <img 
-                    src={djImgUrl} 
-                    alt="djImg" 
+                <img
+                    src={djImgUrl}
+                    alt="djImg"
                     className="w-4/5 max-w-4xl mx-auto"
                 />
                 <div className="absolute z-10 top-10 right-16 w-12 flex items-center justify-between">
-                    <FontAwesomeIcon 
-                        icon={faTrash} 
+                    <FontAwesomeIcon
+                        icon={faTrash}
                         className="text-white text-xl cursor-pointer"
                         onClick={deleteImg}
                     />
-                    <FontAwesomeIcon 
-                        icon={faClose} 
+                    <FontAwesomeIcon
+                        icon={faClose}
                         className="text-white text-2xl cursor-pointer"
                         onClick={closePopup}
                     />

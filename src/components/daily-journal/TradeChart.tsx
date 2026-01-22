@@ -42,14 +42,7 @@ export default function TradeChart({
   const [candleCount, setCandleCount] = useState(0);
 
   useEffect(() => {
-    console.log('[TradeChart] useEffect triggered:', { symbol, date, hasContainer: !!chartContainerRef.current });
-    
     if (!chartContainerRef.current || !symbol || !date) {
-      console.log('[TradeChart] Early return - missing:', { 
-        hasContainer: !!chartContainerRef.current, 
-        symbol, 
-        date
-      });
       return;
     }
 
@@ -61,12 +54,10 @@ export default function TradeChart({
 
       try {
         // Fetch candle data
-        console.log('[TradeChart] Fetching candle data...');
         const response = await fetch(
           `/api/trade-chart?symbol=${encodeURIComponent(symbol)}&date=${date}&interval=${interval}`
         );
         const data = await response.json();
-        console.log('[TradeChart] API response:', data);
 
         if (!isActive) return;
 
@@ -77,7 +68,7 @@ export default function TradeChart({
         }
 
         const candles: Candle[] = data.candles || [];
-        
+
         if (candles.length === 0) {
           setError("No chart data available for this symbol and date");
           setLoading(false);
@@ -85,8 +76,6 @@ export default function TradeChart({
         }
 
         setCandleCount(candles.length);
-        console.log('[TradeChart] Creating chart with', candles.length, 'candles');
-        console.log('[TradeChart] Container dimensions:', chartContainerRef.current?.clientWidth, 'x', chartContainerRef.current?.clientHeight);
 
         // Create chart
         if (chartRef.current) {
@@ -161,7 +150,7 @@ export default function TradeChart({
             // Daily: "2024-01-15"
             timeValue = c.time as Time;
           }
-          
+
           return {
             time: timeValue,
             open: c.open,
@@ -187,7 +176,7 @@ export default function TradeChart({
                 size: 2,
               },
             ];
-            
+
             if (exitPrice && exitTime) {
               const exitMarkerTime = findClosestCandleTime(candles, exitTime);
               if (exitMarkerTime) {
@@ -201,14 +190,14 @@ export default function TradeChart({
                 });
               }
             }
-            
+
             // Sort markers by time
             markers.sort((a, b) => {
               const timeA = typeof a.time === 'number' ? a.time : 0;
               const timeB = typeof b.time === 'number' ? b.time : 0;
               return timeA - timeB;
             });
-            
+
             // Create markers using v5 API
             createSeriesMarkers(candleSeries, markers);
           }
@@ -253,7 +242,6 @@ export default function TradeChart({
         window.addEventListener("resize", handleResize);
         handleResize();
 
-        console.log('[TradeChart] Chart created successfully, setting loading to false');
         setLoading(false);
 
         return () => {

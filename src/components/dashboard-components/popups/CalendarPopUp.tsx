@@ -7,12 +7,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Cookies from "js-cookie";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  faPenToSquare, 
-  faTrashCan, 
-  faShareNodes, 
-  faChevronLeft, 
-  faChevronRight, 
+import {
+  faPenToSquare,
+  faTrashCan,
+  faShareNodes,
+  faChevronLeft,
+  faChevronRight,
   faXmark,
   faPlus,
   faTrophy,
@@ -86,13 +86,13 @@ type SortType = 'time' | 'pnl' | 'size';
 
 const parseTimeToDate = (timeStr: string): Date | null => {
   if (!timeStr) return null;
-  
+
   // Try ISO format first (e.g., "2025-12-30T18:58" or "2025-12-30T18:58:00")
   if (timeStr.includes('T') || timeStr.includes('-')) {
     const parsed = new Date(timeStr);
     if (!isNaN(parsed.getTime())) return parsed;
   }
-  
+
   // Try simple time format (e.g., "18:58" or "18:58:00")
   if (timeStr.includes(':')) {
     const today = new Date();
@@ -101,30 +101,30 @@ const parseTimeToDate = (timeStr: string): Date | null => {
     today.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0);
     return today;
   }
-  
+
   return null;
 };
 
 const calculateDuration = (openTime: string, closeTime: string): string => {
   if (!openTime || !closeTime) return '-';
-  
+
   try {
     const open = parseTimeToDate(openTime);
     const close = parseTimeToDate(closeTime);
-    
+
     if (!open || !close) return '-';
-    
+
     let diffMs = close.getTime() - open.getTime();
     if (diffMs < 0) {
       diffMs += 24 * 60 * 60 * 1000;
     }
-    
+
     const diffMins = Math.floor(diffMs / 60000);
     if (isNaN(diffMins) || diffMins < 0) return '-';
-    
+
     const hours = Math.floor(diffMins / 60);
     const mins = diffMins % 60;
-    
+
     if (hours > 0) {
       return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
     }
@@ -136,18 +136,18 @@ const calculateDuration = (openTime: string, closeTime: string): string => {
 
 const calculateDurationMinutes = (openTime: string, closeTime: string): number => {
   if (!openTime || !closeTime) return 0;
-  
+
   try {
     const open = parseTimeToDate(openTime);
     const close = parseTimeToDate(closeTime);
-    
+
     if (!open || !close) return 0;
-    
+
     let diffMs = close.getTime() - open.getTime();
     if (diffMs < 0) {
       diffMs += 24 * 60 * 60 * 1000;
     }
-    
+
     const result = Math.floor(diffMs / 60000);
     return isNaN(result) || result < 0 ? 0 : result;
   } catch {
@@ -182,7 +182,7 @@ const CalendarPopup = () => {
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "";
-    
+
     const dateObj = new Date(dateString);
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -241,19 +241,19 @@ const CalendarPopup = () => {
   const grossWins = dataToday.filter(t => t.Profit > 0).reduce((a, t) => a + t.Profit, 0);
   const grossLosses = Math.abs(dataToday.filter(t => t.Profit < 0).reduce((a, t) => a + t.Profit, 0));
   const profitFactor = grossLosses > 0 ? (grossWins / grossLosses).toFixed(2) : grossWins > 0 ? "∞" : "0.00";
-  
+
   const totalLots = dataToday.reduce((sum, trade) => sum + (trade.Size || 0), 0);
-  const avgDurationMins = dataToday.length > 0 
-    ? dataToday.reduce((sum, trade) => sum + calculateDurationMinutes(trade.OpenTime, trade.CloseTime), 0) / dataToday.length 
+  const avgDurationMins = dataToday.length > 0
+    ? dataToday.reduce((sum, trade) => sum + calculateDurationMinutes(trade.OpenTime, trade.CloseTime), 0) / dataToday.length
     : 0;
   const bestTrade = dataToday.length > 0 ? Math.max(...dataToday.map(t => t.Profit)) : 0;
   const worstTrade = dataToday.length > 0 ? Math.min(...dataToday.map(t => t.Profit)) : 0;
-  
+
   const primaryCurrency = dataToday[0]?.Currency || 'USD';
   const primaryMarketType = dataToday[0]?.marketType;
   const dayCurrencySymbol = getCurrencySymbol(primaryCurrency, primaryMarketType);
   const isINR = primaryCurrency === 'INR';
-  
+
   const formatPnLValue = (value: number, decimals: number = 2): string => {
     const absValue = Math.abs(value);
     return absValue.toLocaleString(isINR ? 'en-IN' : 'en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -359,9 +359,9 @@ const CalendarPopup = () => {
             </defs>
 
             <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" vertical={false} />
-            <XAxis 
-              dataKey="time" 
-              stroke="rgba(255, 255, 255, 0.2)" 
+            <XAxis
+              dataKey="time"
+              stroke="rgba(255, 255, 255, 0.2)"
               tick={{ fill: "rgba(255, 255, 255, 0.4)", fontSize: 10 }}
               axisLine={false}
               tickLine={false}
@@ -374,10 +374,10 @@ const CalendarPopup = () => {
               tickLine={false}
             />
 
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: "rgba(12, 12, 12, 0.95)", 
-                color: "white", 
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "rgba(12, 12, 12, 0.95)",
+                color: "white",
                 border: "1px solid rgba(255,255,255,0.08)",
                 borderRadius: "12px",
                 backdropFilter: "blur(16px)",
@@ -503,7 +503,7 @@ const CalendarPopup = () => {
       const requestData = {
         tokenn,
         tradeId,
-        apiName:'deleteManualUpload'
+        apiName: 'deleteManualUpload'
       };
 
       const response = await fetch(
@@ -547,15 +547,15 @@ const CalendarPopup = () => {
     setShowTr();
   };
 
-  const StatCard = ({ icon, label, value, valueColor = "text-white", iconBg = "bg-white/5", index = 0 }: { 
-    icon: any; 
-    label: string; 
-    value: string; 
+  const StatCard = ({ icon, label, value, valueColor = "text-white", iconBg = "bg-white/5", index = 0 }: {
+    icon: any;
+    label: string;
+    value: string;
     valueColor?: string;
     iconBg?: string;
     index?: number;
   }) => (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
@@ -577,7 +577,7 @@ const CalendarPopup = () => {
   const MobileTradeCard = ({ trade, index }: { trade: Trade; index: number }) => {
     const tradeId = getTradeId(trade, index);
     const isExpanded = expandedTrades.has(tradeId);
-    
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -585,7 +585,7 @@ const CalendarPopup = () => {
         transition={{ delay: index * 0.05 }}
         className="bg-gradient-to-br from-white/[0.04] to-transparent rounded-xl border border-white/[0.06] overflow-hidden"
       >
-        <div 
+        <div
           className="p-4 cursor-pointer"
           onClick={() => toggleTradeExpand(tradeId)}
         >
@@ -594,20 +594,19 @@ const CalendarPopup = () => {
               <span className="inline-flex items-center px-2.5 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-semibold border border-emerald-500/20">
                 {trade.Item}
               </span>
-              <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-semibold border ${
-                trade.Type?.toLowerCase() === 'buy' 
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                  : 'bg-red-500/10 text-red-400 border-red-500/20'
-              }`}>
+              <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-semibold border ${trade.Type?.toLowerCase() === 'buy'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                : 'bg-red-500/10 text-red-400 border-red-500/20'
+                }`}>
                 {trade.Type?.toLowerCase() === 'buy' ? 'Long' : 'Short'}
               </span>
             </div>
-            <FontAwesomeIcon 
-              icon={isExpanded ? faChevronUp : faChevronDown} 
+            <FontAwesomeIcon
+              icon={isExpanded ? faChevronUp : faChevronDown}
               className="text-gray-400 text-xs"
             />
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className={`text-lg font-bold ${trade.Profit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
               {trade.Profit >= 0 ? '+' : '-'}{getCurrencySymbol(trade.Currency, trade.marketType)}{Math.abs(trade.Profit).toLocaleString(trade.Currency === 'INR' ? 'en-IN' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -615,7 +614,7 @@ const CalendarPopup = () => {
             <span className="text-gray-500 text-xs">{trade.OpenTime}</span>
           </div>
         </div>
-        
+
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -664,21 +663,21 @@ const CalendarPopup = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2 pt-2 border-t border-white/[0.04]">
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); handleJournal(trade); }}
                     className="flex-1 py-2 rounded-lg bg-white/[0.04] hover:bg-blue-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-blue-500/30"
                   >
                     <FontAwesomeIcon icon={faBook} className="text-gray-400 hover:text-blue-400 text-xs" />
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); handleEdit(trade); }}
                     className="flex-1 py-2 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-emerald-500/30"
                   >
                     <FontAwesomeIcon icon={faPenToSquare} className="text-gray-400 hover:text-emerald-400 text-xs" />
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); confirmDelete(tradeId); }}
                     className="flex-1 py-2 rounded-lg bg-white/[0.04] hover:bg-red-500/15 flex items-center justify-center transition-all duration-200 border border-white/[0.04] hover:border-red-500/30"
                   >
@@ -697,30 +696,30 @@ const CalendarPopup = () => {
     <>
       <AnimatePresence>
         {deleteConfirmation.show && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/90 backdrop-blur-md z-[70] flex items-center justify-center p-4"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className="w-full max-w-sm bg-gradient-to-b from-[#1a1a1a] to-[#0f0f0f] rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden relative"
             >
               <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
-              
+
               <div className="p-6 text-center">
                 <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
                   <FontAwesomeIcon icon={faTrashCan} className="text-red-400 text-xl" />
                 </div>
-                
+
                 <h3 className="text-lg font-bold text-white mb-2">Delete Trade</h3>
                 <p className="text-gray-400 text-sm mb-6">
                   Are you sure you want to delete this trade? This action cannot be undone.
                 </p>
-                
+
                 <div className="flex gap-3">
                   <button
                     onClick={cancelDelete}
@@ -740,17 +739,17 @@ const CalendarPopup = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <AnimatePresence>
         {showTr && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
           >
             {dataToday.length === 0 ? (
-              <motion.div 
+              <motion.div
                 ref={popupRef}
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -758,7 +757,7 @@ const CalendarPopup = () => {
                 className="w-full max-w-2xl bg-gradient-to-b from-[#161616] to-[#0c0c0c] rounded-3xl flex flex-col items-center justify-center p-8 border border-white/[0.06] shadow-2xl min-h-[400px] relative overflow-hidden"
               >
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                
+
                 <button
                   onClick={closePopup}
                   className="absolute top-4 right-4 w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center transition-all duration-200 border border-white/[0.04]"
@@ -785,9 +784,9 @@ const CalendarPopup = () => {
                 <div className="w-20 h-20 rounded-2xl bg-white/[0.04] flex items-center justify-center mb-4 border border-white/[0.04]">
                   <img src="/favicon.png" alt="logo" className="w-12 h-12 opacity-60" />
                 </div>
-                
+
                 <p className="text-gray-500 text-sm font-medium mb-6">No trades recorded for this day</p>
-                
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -802,8 +801,8 @@ const CalendarPopup = () => {
                 </motion.button>
               </motion.div>
             ) : (
-              <motion.div 
-                ref={popupRef} 
+              <motion.div
+                ref={popupRef}
                 id="trade-details"
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -811,7 +810,7 @@ const CalendarPopup = () => {
                 className="w-full max-w-5xl max-h-[90vh] bg-gradient-to-b from-[#151515] to-[#0a0a0a] rounded-2xl md:rounded-3xl flex flex-col border border-white/[0.06] shadow-2xl overflow-hidden relative"
               >
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
-                
+
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.04] gap-3">
                   <div className="flex items-center justify-between sm:justify-start gap-3 md:gap-4">
                     <h2 className="text-base md:text-lg font-bold text-white tracking-tight">Trade Details</h2>
@@ -846,10 +845,23 @@ const CalendarPopup = () => {
                         {grossPnL >= 0 ? '+' : '-'}{dayCurrencySymbol}{formatPnLValue(grossPnL, 0)}
                       </span>
                     </div>
-                    
+
                     <div className="px-2 md:px-3 py-1.5 md:py-2 bg-white/[0.04] rounded-xl border border-white/[0.04]">
                       <span className="text-gray-400 text-[10px] md:text-xs font-medium">{dataToday.length}</span>
                     </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        closePopup();
+                        setTimeout(() => setAddTrades(), 300);
+                      }}
+                      className="flex items-center gap-2 px-2.5 md:px-4 py-1.5 md:py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] md:text-xs font-bold rounded-xl border border-emerald-500/20 transition-all duration-200"
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="text-[10px] md:text-xs" />
+                      <span className="whitespace-nowrap">Add Trades</span>
+                    </motion.button>
 
                     <button
                       onClick={handleShare}
@@ -882,65 +894,65 @@ const CalendarPopup = () => {
                     </div>
 
                     <div className="w-full md:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-                      <StatCard 
-                        icon={faChartLine} 
-                        label="Gross P&L" 
+                      <StatCard
+                        icon={faChartLine}
+                        label="Gross P&L"
                         value={`${dayCurrencySymbol}${formatPnLValue(grossPnL)}`}
                         valueColor={grossPnL >= 0 ? "text-emerald-400" : "text-red-400"}
                         iconBg={grossPnL >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
                         index={0}
                       />
-                      <StatCard 
-                        icon={faTrophy} 
-                        label="Winners" 
+                      <StatCard
+                        icon={faTrophy}
+                        label="Winners"
                         value={wins.toString()}
                         valueColor="text-emerald-400"
                         iconBg="bg-emerald-500/10"
                         index={1}
                       />
-                      <StatCard 
-                        icon={faSkullCrossbones} 
-                        label="Losers" 
+                      <StatCard
+                        icon={faSkullCrossbones}
+                        label="Losers"
                         value={losses.toString()}
                         valueColor="text-red-400"
                         iconBg="bg-red-500/10"
                         index={2}
                       />
-                      <StatCard 
-                        icon={faPercent} 
-                        label="Win Rate" 
+                      <StatCard
+                        icon={faPercent}
+                        label="Win Rate"
                         value={`${winRate}%`}
                         valueColor={parseFloat(winRate) >= 50 ? "text-emerald-400" : "text-red-400"}
                         iconBg={parseFloat(winRate) >= 50 ? "bg-emerald-500/10" : "bg-red-500/10"}
                         index={3}
                       />
-                      <StatCard 
-                        icon={faLayerGroup} 
-                        label="Total Lots" 
+                      <StatCard
+                        icon={faLayerGroup}
+                        label="Total Lots"
                         value={(Number(totalLots) || 0).toFixed(2)}
                         valueColor="text-blue-400"
                         iconBg="bg-blue-500/10"
                         index={4}
                       />
-                      <StatCard 
-                        icon={faClock} 
-                        label="Avg Duration" 
+                      <StatCard
+                        icon={faClock}
+                        label="Avg Duration"
                         value={formatAvgDuration(avgDurationMins)}
                         valueColor="text-purple-400"
                         iconBg="bg-purple-500/10"
                         index={5}
                       />
-                      <StatCard 
-                        icon={faArrowUp} 
-                        label="Best Trade" 
+                      <StatCard
+                        icon={faArrowUp}
+                        label="Best Trade"
                         value={`${dayCurrencySymbol}${formatPnLValue(bestTrade)}`}
                         valueColor="text-emerald-400"
                         iconBg="bg-emerald-500/10"
                         index={6}
                       />
-                      <StatCard 
-                        icon={faArrowDown} 
-                        label="Worst Trade" 
+                      <StatCard
+                        icon={faArrowDown}
+                        label="Worst Trade"
                         value={dataToday.length <= 1 ? "N/A" : `${worstTrade >= 0 ? '+' : '-'}${dayCurrencySymbol}${formatPnLValue(Math.abs(worstTrade))}`}
                         valueColor={dataToday.length <= 1 ? "text-gray-400" : worstTrade >= 0 ? "text-emerald-400" : "text-red-400"}
                         iconBg={dataToday.length <= 1 ? "bg-gray-500/10" : worstTrade >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
@@ -953,36 +965,33 @@ const CalendarPopup = () => {
                     <div className="flex items-center gap-1 bg-white/[0.03] rounded-lg p-1 border border-white/[0.06]">
                       <button
                         onClick={() => setFilter('all')}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                          filter === 'all' 
-                            ? 'bg-white/[0.1] text-white' 
-                            : 'text-gray-400 hover:text-white hover:bg-white/[0.05]'
-                        }`}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${filter === 'all'
+                          ? 'bg-white/[0.1] text-white'
+                          : 'text-gray-400 hover:text-white hover:bg-white/[0.05]'
+                          }`}
                       >
                         All
                       </button>
                       <button
                         onClick={() => setFilter('winners')}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                          filter === 'winners' 
-                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                            : 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10'
-                        }`}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${filter === 'winners'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : 'text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10'
+                          }`}
                       >
                         Winners
                       </button>
                       <button
                         onClick={() => setFilter('losers')}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                          filter === 'losers' 
-                            ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                            : 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
-                        }`}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${filter === 'losers'
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          : 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
+                          }`}
                       >
                         Losers
                       </button>
                     </div>
-                    
+
                     <div className="relative">
                       <button
                         onClick={() => setShowSortDropdown(!showSortDropdown)}
@@ -992,7 +1001,7 @@ const CalendarPopup = () => {
                         <span>Sort: {sortBy === 'time' ? 'By Time' : sortBy === 'pnl' ? 'By P&L' : 'By Size'}</span>
                         <FontAwesomeIcon icon={faChevronDown} className="text-[10px]" />
                       </button>
-                      
+
                       <AnimatePresence>
                         {showSortDropdown && (
                           <motion.div
@@ -1023,7 +1032,7 @@ const CalendarPopup = () => {
                         )}
                       </AnimatePresence>
                     </div>
-                    
+
                     <span className="text-gray-500 text-xs ml-auto">
                       {filteredTrades.length} trade{filteredTrades.length !== 1 ? 's' : ''}
                     </span>
@@ -1051,7 +1060,7 @@ const CalendarPopup = () => {
                           {filteredTrades.map((data, index) => {
                             const tradeId = getTradeId(data, index);
                             const isExpanded = expandedTrades.has(tradeId);
-                            
+
                             return (
                               <React.Fragment key={tradeId}>
                                 <motion.tr
@@ -1090,11 +1099,10 @@ const CalendarPopup = () => {
                                     <span className="text-purple-400 text-xs md:text-sm font-medium">{calculateDuration(data.OpenTime, data.CloseTime)}</span>
                                   </td>
                                   <td className="px-3 md:px-4 py-3 md:py-4">
-                                    <span className={`inline-flex items-center px-2 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-semibold border ${
-                                      data.Type?.toLowerCase() === 'buy' 
-                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                                        : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                    }`}>
+                                    <span className={`inline-flex items-center px-2 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-semibold border ${data.Type?.toLowerCase() === 'buy'
+                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                      : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                      }`}>
                                       {data.Type?.toLowerCase() === 'buy' ? 'Long' : 'Short'}
                                     </span>
                                   </td>
@@ -1105,7 +1113,7 @@ const CalendarPopup = () => {
                                   </td>
                                   <td className="px-3 md:px-4 py-3 md:py-4">
                                     <div className="flex items-center justify-center gap-1.5 md:gap-2" onClick={(e) => e.stopPropagation()}>
-                                      <motion.button 
+                                      <motion.button
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => handleJournal(data)}
@@ -1113,7 +1121,7 @@ const CalendarPopup = () => {
                                       >
                                         <FontAwesomeIcon icon={faBook} className="text-gray-400 hover:text-blue-400 text-[10px] md:text-xs" />
                                       </motion.button>
-                                      <motion.button 
+                                      <motion.button
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => handleEdit(data)}
@@ -1121,7 +1129,7 @@ const CalendarPopup = () => {
                                       >
                                         <FontAwesomeIcon icon={faPenToSquare} className="text-gray-400 hover:text-emerald-400 text-[10px] md:text-xs" />
                                       </motion.button>
-                                      <motion.button 
+                                      <motion.button
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => confirmDelete(data._id || data.id || data.tradeId || String(data.Ticket))}
@@ -1132,7 +1140,7 @@ const CalendarPopup = () => {
                                     </div>
                                   </td>
                                 </motion.tr>
-                                
+
                                 <AnimatePresence>
                                   {isExpanded && (
                                     <tr key={`${tradeId}-expanded`}>

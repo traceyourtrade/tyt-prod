@@ -4,6 +4,7 @@ interface Trade {
 
 interface Account {
     accountBalance?: number;
+    accountType?: string;
     tradeData?: Trade[];
 }
 
@@ -49,49 +50,56 @@ function calculateRiskRewardRatio(trades: Trade[]): RiskRewardResult {
         }
     });
 
-    const avgWin = (winningTrades.length > 0) 
-        ? winningTrades.reduce((sum, profit) => sum + profit, 0) / winningTrades.length 
+    const avgWin = (winningTrades.length > 0)
+        ? winningTrades.reduce((sum, profit) => sum + profit, 0) / winningTrades.length
         : 0;
 
-    const avgLoss = (losingTrades.length > 0) 
-        ? losingTrades.reduce((sum, loss) => sum + loss, 0) / losingTrades.length 
+    const avgLoss = (losingTrades.length > 0)
+        ? losingTrades.reduce((sum, loss) => sum + loss, 0) / losingTrades.length
         : 0;
 
-    if (avgWin === 0 && avgLoss === 0) return { 
-        rrRatio: '-', 
-        avgWin: avgWin.toFixed(2), 
-        avgLoss: avgLoss.toFixed(2) 
+    if (avgWin === 0 && avgLoss === 0) return {
+        rrRatio: '-',
+        avgWin: avgWin.toFixed(2),
+        avgLoss: avgLoss.toFixed(2)
     };
-    
-    if (avgLoss === 0 && avgWin > 0) return { 
-        rrRatio: '2+', 
-        avgWin: avgWin.toFixed(2), 
-        avgLoss: avgLoss.toFixed(2) 
+
+    if (avgLoss === 0 && avgWin > 0) return {
+        rrRatio: '2+',
+        avgWin: avgWin.toFixed(2),
+        avgLoss: avgLoss.toFixed(2)
     };
-    
-    if (avgWin === 0 && avgLoss > 0) return { 
-        rrRatio: '0', 
-        avgWin: avgWin.toFixed(2), 
-        avgLoss: avgLoss.toFixed(2) 
+
+    if (avgWin === 0 && avgLoss > 0) return {
+        rrRatio: '0',
+        avgWin: avgWin.toFixed(2),
+        avgLoss: avgLoss.toFixed(2)
     };
 
     const riskRewardRatio = avgWin / avgLoss;
-    return { 
-        rrRatio: riskRewardRatio.toFixed(2), 
-        avgWin: avgWin.toFixed(2), 
-        avgLoss: avgLoss.toFixed(2) 
+    return {
+        rrRatio: riskRewardRatio.toFixed(2),
+        avgWin: avgWin.toFixed(2),
+        avgLoss: avgLoss.toFixed(2)
     };
 }
 
 function calculateBalance(accounts: Account[]): number {
     let totalBalance = 0;
-    
+
     accounts.forEach(account => {
         const initialBalance = account.accountBalance || 0;
-        const tradePnL = (account.tradeData || []).reduce((sum, trade) => sum + (trade.Profit || 0), 0);
-        totalBalance += initialBalance + tradePnL;
+
+        if (account.accountType === "Broker Sync") {
+            // Auto Sync: use reported balance as-is (already includes PnL)
+            totalBalance += initialBalance;
+        } else {
+            // Manual or File: initial balance + trade PnL
+            const tradePnL = (account.tradeData || []).reduce((sum, trade) => sum + (trade.Profit || 0), 0);
+            totalBalance += initialBalance + tradePnL;
+        }
     });
-    
+
     return totalBalance;
 }
 

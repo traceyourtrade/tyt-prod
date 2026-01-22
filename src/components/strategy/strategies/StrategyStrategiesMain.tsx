@@ -96,7 +96,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         },
         body: JSON.stringify({
           tokenn, newName: tempName,
-          id:id, apiName:'updateStrategyName'
+          id: id, apiName: 'updateStrategyName'
         })
       });
 
@@ -106,7 +106,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         setEditing(null);
         setOpenMenu(null);
       } else {
-        console.log(data);
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck the Email & Password")
         } else if (data.error === "Enter all the details") {
@@ -130,8 +129,8 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         },
         body: JSON.stringify({
           tokenn,
-          id:id,
-          apiName:'deleteStrategy'
+          id: id,
+          apiName: 'deleteStrategy'
         })
       });
 
@@ -141,7 +140,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         setNewStrategy({ name: "", tags: "", author: "", rules: [] });
         setShowPopup(false);
       } else {
-        console.log(data);
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck the Email & Password")
         } else if (data.error === "Enter all the details") {
@@ -164,8 +162,8 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          id:id,
-          apiName:'setDefaultStrategy'
+          id: id,
+          apiName: 'setDefaultStrategy'
         })
       });
 
@@ -187,12 +185,12 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
 
   const addRule = () => {
     if (!newRuleText.trim()) return;
-    
+
     const rule: StrategyRule = {
       id: `rule-${Date.now()}`,
       text: newRuleText.trim()
     };
-    
+
     setNewStrategy({
       ...newStrategy,
       rules: [...newStrategy.rules, rule]
@@ -222,10 +220,10 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          apiName:'addStrategy',
-          tokenn, 
-          strategy: newStrategy.name, 
-          tags: newStrategy.tags, 
+          apiName: 'addStrategy',
+          tokenn,
+          strategy: newStrategy.name,
+          tags: newStrategy.tags,
           description: newStrategy.author,
           rules: newStrategy.rules
         })
@@ -238,7 +236,6 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         setNewRuleText("");
         setShowPopup(false);
       } else {
-        console.log(data);
         if (data.error === "Invalid credentials") {
           setError("Invalid credentials, please recheck the Email & Password")
         } else if (data.error === "Enter all the details") {
@@ -301,7 +298,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-          <button 
+          <button
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all shadow-sm touch-manipulation"
             onClick={() => setShowPopup(true)}
           >
@@ -338,8 +335,8 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
             if (!s) return null;
 
             return (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 flex flex-col hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 cursor-pointer group"
                 onClick={() => setSelectedStrategy({ name, ...s })}
               >
@@ -419,14 +416,14 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                         >
                           Rename
                         </button>
-                        <button 
+                        <button
                           className="w-full px-4 py-2 text-left text-sm text-loss hover:bg-loss/10 transition-colors flex items-center gap-2"
                           onClick={(e) => { e.stopPropagation(); handleDelete(e, name, s.id); }}
                         >
                           Delete
                         </button>
                         {!s.isDefault && (
-                          <button 
+                          <button
                             className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
                             onClick={(e) => { e.stopPropagation(); handleMakeDefault(e, s.id); }}
                           >
@@ -441,8 +438,8 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                   {s.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {s.tags.map((tag, i) => (
-                        <span 
-                          key={i} 
+                        <span
+                          key={i}
                           className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-xs font-medium transition-colors hover:bg-primary/10 hover:text-primary"
                         >
                           {tag}
@@ -484,7 +481,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
 
       {/* Add Strategy Popup */}
       {showPopup && (
-        <div 
+        <div
           className="fixed inset-0 bg-background/80 backdrop-blur-sm flex justify-center items-center z-50"
           onClick={() => setShowPopup(false)}
         >
@@ -550,7 +547,7 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
                 <p className="text-xs text-muted-foreground mb-3">
                   Add rules that must be followed when trading this strategy. These will appear as a checklist when journaling.
                 </p>
-                
+
                 <div className="flex gap-2 mb-3">
                   <input
                     type="text"
@@ -610,13 +607,13 @@ const Strategies = ({ allStrategies, strategies, strategiesDataObj }: Strategies
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <button 
+              <button
                 className="px-4 py-2.5 border border-border rounded-lg text-foreground text-sm font-medium hover:bg-muted transition-colors"
                 onClick={() => setShowPopup(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                 onClick={handleAddStrategy}
               >

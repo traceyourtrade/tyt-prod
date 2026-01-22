@@ -58,7 +58,6 @@ const notifications = create<NotificationsStore>((set, get) => ({
         } catch (err: any) {
           // For non-2xx like 403/red or 406/yellow
           const data = err.response?.data;
-          // console.log("Polling response (non-2xx):", data);
 
           if (data?.status === "red") {
             set({ pollResult: { error: true }, polling: false, alertType: "error", alertBoxG: "Invalid Credentials, please reset Investor ID & Password" });

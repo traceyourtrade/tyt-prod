@@ -151,7 +151,7 @@ interface NavItemProps {
 
 const NavItem = memo(function NavItem({ item, showLabel = true, active, isRestricted, onNavigate, onRestrictedClick }: NavItemProps) {
   const Icon = item.icon;
-  
+
   const handleClick = (e: React.MouseEvent) => {
     onNavigate();
     if (isRestricted) {
@@ -159,7 +159,7 @@ const NavItem = memo(function NavItem({ item, showLabel = true, active, isRestri
       onRestrictedClick();
     }
   };
-  
+
   return (
     <Link
       href={isRestricted ? '/checkout' : item.href}
@@ -167,24 +167,24 @@ const NavItem = memo(function NavItem({ item, showLabel = true, active, isRestri
       data-tour={item.tourId}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
-        active 
-          ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+        active
+          ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
         !showLabel && "justify-center px-1.5"
       )}
     >
       {active && (
-        <div 
+        <div
           className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-          style={{ 
+          style={{
             backgroundColor: item.color,
             boxShadow: `0 0 12px 2px ${item.color}60, 0 0 20px 4px ${item.color}30`
           }}
         />
       )}
-      
+
       <div className="relative flex-shrink-0 transition-all duration-200">
-        <Icon 
+        <Icon
           className={cn(
             "h-4 w-4 transition-all duration-200",
             !active && "group-hover:scale-110"
@@ -192,7 +192,7 @@ const NavItem = memo(function NavItem({ item, showLabel = true, active, isRestri
           style={{ color: active ? item.color : undefined }}
         />
       </div>
-      
+
       {showLabel && (
         <span className="flex-1 truncate">{item.name}</span>
       )}
@@ -268,11 +268,11 @@ const SidebarContent = memo(function SidebarContent({
   const handleRestrictedClick = useCallback(() => router.push('/checkout'), [router]);
 
   const renderNavItem = (item: typeof tradingItems[0], showLabel: boolean) => {
-    const active = item.href === "/dashboard" 
-      ? pathname === "/dashboard" || pathname === "/" 
+    const active = item.href === "/dashboard"
+      ? pathname === "/dashboard" || pathname === "/"
       : pathname.startsWith(item.href);
     const restricted = isPreTrial && !preTrialAllowedPaths.some(allowed => item.href.startsWith(allowed));
-    
+
     return (
       <NavItem
         key={item.name}
@@ -291,7 +291,7 @@ const SidebarContent = memo(function SidebarContent({
       <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#4EBF94]/10 dark:bg-[#4EBF94]/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -top-4 left-12 w-20 h-20 bg-violet-500/5 dark:bg-violet-500/10 rounded-full blur-2xl pointer-events-none" style={{ animationDelay: '1s' }} />
       <div className="absolute bottom-20 -right-8 w-24 h-24 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      
+
       <div className={cn(
         "relative flex items-center h-14 z-10",
         !isExpanded ? "justify-center px-2" : "justify-between px-3"
@@ -301,7 +301,7 @@ const SidebarContent = memo(function SidebarContent({
           className="flex items-center gap-3 overflow-hidden group"
           onClick={() => setMobileOpen(false)}
         >
-          <motion.div 
+          <motion.div
             className="relative flex-shrink-0"
             whileHover={{ scale: 1.05, rotate: 2 }}
             whileTap={{ scale: 0.95 }}
@@ -316,9 +316,9 @@ const SidebarContent = memo(function SidebarContent({
             />
             <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#4EBF94]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </motion.div>
-          
+
           {isExpanded && (
-            <motion.div 
+            <motion.div
               className="flex flex-col"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -333,7 +333,7 @@ const SidebarContent = memo(function SidebarContent({
             </motion.div>
           )}
         </Link>
-        
+
         {isExpanded && (
           <motion.button
             className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all"
@@ -386,73 +386,73 @@ const SidebarContent = memo(function SidebarContent({
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3 px-2 scrollbar-hide relative" data-tour-scroll="sidebar">
-        
+
         <SectionLabel label="Trading" isExpanded={isExpanded} />
         <div className="space-y-0.5 mb-1">
           {tradingItems.map((item) => renderNavItem(item, isExpanded))}
         </div>
 
         <div className="mb-2 mt-3" data-tour="nav-backtesting">
-            {isExpanded && (
-              <div className="px-3 mb-1.5">
-                <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
-                  Backtesting
-                </span>
-              </div>
-            )}
-            <div className={cn(
-              "relative rounded-lg overflow-hidden",
-              isExpanded && "mx-1 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20"
-            )}>
-              {isExpanded && (
-                <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
-              )}
-              
-              <button
-                onClick={() => setBacktestingOpen(!backtestingOpen)}
-                aria-expanded={backtestingOpen}
-                className={cn(
-                  "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
-                  "text-blue-400 hover:text-blue-300",
-                  !isExpanded && "justify-center rounded-md hover:bg-blue-500/10"
-                )}
-              >
-                <CandlestickChart 
-                  className="h-[17px] w-[17px] flex-shrink-0"
-                  style={{ color: '#3B82F6' }}
-                />
-                {isExpanded && (
-                  <>
-                    <span className="flex-1 text-left">Backtesting</span>
-                    <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white uppercase tracking-wide">
-                      Pro
-                    </span>
-                    <motion.div
-                      animate={{ rotate: backtestingOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="h-4 w-4 text-blue-400/60" />
-                    </motion.div>
-                  </>
-                )}
-              </button>
-              
-              <AnimatePresence>
-                {backtestingOpen && isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pb-2 px-1 space-y-0.5">
-                      {backtestingSubItems.map((item) => renderNavItem(item, true))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+          {isExpanded && (
+            <div className="px-3 mb-1.5">
+              <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-[0.2em]">
+                Backtesting
+              </span>
             </div>
+          )}
+          <div className={cn(
+            "relative rounded-lg overflow-hidden",
+            isExpanded && "mx-1 bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20"
+          )}>
+            {isExpanded && (
+              <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
+            )}
+
+            <button
+              onClick={() => setBacktestingOpen(!backtestingOpen)}
+              aria-expanded={backtestingOpen}
+              className={cn(
+                "relative w-full flex items-center gap-2.5 px-2.5 py-2 text-[13px] font-medium transition-all duration-200",
+                "text-blue-400 hover:text-blue-300",
+                !isExpanded && "justify-center rounded-md hover:bg-blue-500/10"
+              )}
+            >
+              <CandlestickChart
+                className="h-[17px] w-[17px] flex-shrink-0"
+                style={{ color: '#3B82F6' }}
+              />
+              {isExpanded && (
+                <>
+                  <span className="flex-1 text-left">Backtesting</span>
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-gradient-to-r from-blue-500 to-blue-600 text-white uppercase tracking-wide">
+                    Pro
+                  </span>
+                  <motion.div
+                    animate={{ rotate: backtestingOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="h-4 w-4 text-blue-400/60" />
+                  </motion.div>
+                </>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {backtestingOpen && isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pb-2 px-1 space-y-0.5">
+                    {backtestingSubItems.map((item) => renderNavItem(item, true))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <SectionLabel label="Analysis" isExpanded={isExpanded} />
@@ -471,7 +471,7 @@ const SidebarContent = memo(function SidebarContent({
         <div className="px-4 mb-2">
           <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
-        
+
         <div className="py-2 px-2 space-y-0.5">
           {bottomNavItems.map((item) => renderNavItem(item, isExpanded))}
         </div>
@@ -565,7 +565,7 @@ const SidebarContent = memo(function SidebarContent({
 
         <div className={cn("p-2 pt-0", !isExpanded && "px-1")}>
           {profileData.fullName && (
-            <motion.div 
+            <motion.div
               className={cn(
                 "relative rounded-lg overflow-hidden transition-all duration-200 cursor-pointer",
                 isExpanded && "rounded-xl"
@@ -579,7 +579,7 @@ const SidebarContent = memo(function SidebarContent({
                   <div className="absolute inset-0 border border-border rounded-xl" />
                 </>
               )}
-              
+
               <Link
                 href="/settings"
                 onClick={() => setMobileOpen(false)}
@@ -602,7 +602,7 @@ const SidebarContent = memo(function SidebarContent({
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#4EBF94] rounded-full border-2 border-sidebar" />
                 </div>
-                
+
                 {isExpanded && (
                   <div className="overflow-hidden flex-1 min-w-0">
                     <p className="text-[12px] font-semibold text-foreground truncate">
@@ -616,7 +616,7 @@ const SidebarContent = memo(function SidebarContent({
               </Link>
             </motion.div>
           )}
-          
+
           <motion.button
             className={cn(
               "group w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 mt-1 text-[12px] font-medium transition-all duration-200",
@@ -683,7 +683,7 @@ export default function RootLayout({
       setPreTourMobileOpen(null);
     }
   }, [isTourOpen]);
-  
+
   // Pages that don't require subscription (checkout, settings, support)
   const publicPages = ['/checkout', '/settings', '/support'];
 
@@ -698,7 +698,7 @@ export default function RootLayout({
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        const response = await fetch('/api/subscription/status', { 
+        const response = await fetch('/api/subscription/status', {
           cache: 'no-store',
           credentials: 'include'
         });
@@ -718,14 +718,13 @@ export default function RootLayout({
       }
     };
     fetchSubscriptionStatus();
-    
+
     // Listen for custom event to re-fetch (triggered after trial activation)
     const handleRefreshSubscription = () => {
-      console.log('[Layout] Received refresh-subscription event');
       fetchSubscriptionStatus();
     };
     window.addEventListener('refresh-subscription', handleRefreshSubscription);
-    
+
     return () => {
       window.removeEventListener('refresh-subscription', handleRefreshSubscription);
     };
@@ -734,16 +733,16 @@ export default function RootLayout({
   // Redirect unpaid users based on their status
   useEffect(() => {
     if (subscriptionLoading) return;
-    
+
     const isPublicPage = publicPages.some(page => pathname.startsWith(page));
     if (isPublicPage) return;
-    
+
     // If user doesn't have access, check if they can start trial
     if (!subscriptionStatus || !subscriptionStatus.hasAccess) {
       // Pre-trial users can access dashboard, settings, support, and checkout
       const preTrialAllowedPages2 = ['/dashboard', '/settings', '/support', '/checkout'];
       const isPreTrialAllowedPage = preTrialAllowedPages2.some(page => pathname.startsWith(page));
-      
+
       // Any restricted page access -> send to checkout
       if (!isPreTrialAllowedPage) {
         router.push('/checkout');
@@ -763,7 +762,7 @@ export default function RootLayout({
         } else {
           document.documentElement.classList.remove("dark");
         }
-      } catch {}
+      } catch { }
     } else {
       document.documentElement.classList.add("dark");
     }
@@ -813,7 +812,7 @@ export default function RootLayout({
 
   // Pre-trial flag - users who can start trial but haven't yet
   const isPreTrial = subscriptionStatus?.canStartTrial === true && !subscriptionStatus?.hasAccess;
-  
+
   // Check if a path is restricted for pre-trial users
   const isRestrictedPath = (href: string) => {
     return !preTrialAllowedPaths.some(allowed => href.startsWith(allowed));
@@ -828,9 +827,9 @@ export default function RootLayout({
   ];
 
   const filteredNavItems = searchQuery
-    ? allNavItems.filter(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? allNavItems.filter(item =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : allNavItems;
 
   const isActive = (href: string) => {
@@ -904,11 +903,11 @@ export default function RootLayout({
   // Subscription access flags (isPreTrial is defined earlier for SidebarContent)
   const hasSubscriptionAccess = subscriptionStatus?.hasAccess || false;
   const isDemoMode = subscriptionStatus?.demoMode === true;
-  
+
   // Pre-trial users can access specific pages with restricted features
   const preTrialAllowedPages2 = ['/dashboard', '/settings', '/support', '/checkout'];
   const isPreTrialAllowedPage = preTrialAllowedPages2.some(page => pathname.startsWith(page));
-  
+
   // For unpaid users (not pre-trial), show subscription prompt instead of app shell
   // This prevents paywall bypass via modals or sidebar navigation
   if (!hasSubscriptionAccess && !isPreTrial) {
@@ -1015,7 +1014,7 @@ export default function RootLayout({
       </div>
     );
   }
-  
+
   // Pre-trial users on non-allowed pages: show redirect
   if (isPreTrial && !isPreTrialAllowedPage && !isPublicPage) {
     return (
@@ -1189,10 +1188,10 @@ export default function RootLayout({
           {/* Layered gradient overlays */}
           <div className="absolute inset-0 bg-gradient-to-b from-foreground/[0.02] via-transparent to-foreground/[0.02] dark:from-white/[0.04] dark:via-transparent dark:to-black/20 pointer-events-none" />
           <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.01] via-transparent to-violet-500/[0.01] dark:from-[#4EBF94]/[0.02] dark:to-violet-500/[0.02] pointer-events-none" />
-          
+
           {/* Inner glow */}
           <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
-          
+
           <SidebarContent {...sidebarProps} />
         </div>
       </aside>
@@ -1213,7 +1212,7 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-gradient-to-b from-foreground/[0.02] via-transparent to-foreground/[0.02] dark:from-white/[0.04] dark:via-transparent dark:to-black/20 pointer-events-none" />
           <div className="absolute inset-0 bg-gradient-to-br from-[#4EBF94]/[0.01] via-transparent to-violet-500/[0.01] dark:from-[#4EBF94]/[0.02] dark:to-violet-500/[0.02] pointer-events-none" />
           <div className="absolute inset-0 rounded-2xl shadow-[inset_0_1px_1px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] pointer-events-none" />
-          
+
           <SidebarContent {...sidebarProps} />
         </div>
       </aside>
@@ -1228,10 +1227,10 @@ export default function RootLayout({
       >
         {/* Demo Mode Banner */}
         {subscriptionStatus?.demoMode && <DemoModeBanner />}
-        
+
         {/* Announcement Banner */}
         {!subscriptionStatus?.demoMode && <AnnouncementBanner />}
-        
+
         {/* Prop Firm Phase Advancement Notification */}
         {!subscriptionStatus?.demoMode && <PhaseAdvancementNotification />}
 

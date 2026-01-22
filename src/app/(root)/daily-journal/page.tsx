@@ -105,6 +105,8 @@ interface JournalData {
   emotionalState?: string;
   mistakes?: string;
   whatWentWell?: string;
+  widw?: string;
+  lessonsLearned?: string;
   improvements?: string;
 }
 
@@ -299,9 +301,10 @@ const DailyJournal = () => {
     accountId: string;
     tradeSummary: { symbol?: string; pnl?: number; date?: string };
   } | null>(null);
-  const [strategyRules, setStrategyRules] = useState<{id: string; text: string}[]>([]);
-  const [rulesCompliance, setRulesCompliance] = useState<Record<string, boolean>>({});
+  const [strategyRules, setStrategyRules] = useState<{ id: string; text: string }[]>([]);
+  const [rulesCompliance, setRulesCompliance] = useState<Record<string, boolean | undefined>>({});
   const [loadingRules, setLoadingRules] = useState(false);
+  const [mainTab, setMainTab] = useState<"overview" | "executions" | "notes">("overview");
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const [isMobileTradeListOpen, setIsMobileTradeListOpen] = useState(false);
@@ -359,9 +362,10 @@ const DailyJournal = () => {
   }, []);
 
   useEffect(() => {
-    const allTrades = (selectedAccounts as Account[]).flatMap((account) => 
+    const allTrades = (selectedAccounts as Account[]).flatMap((account) =>
       (account.tradeData || []).map(trade => ({
         ...trade,
+        accountId: trade.accountId || account.accountId || "",
         accountType: trade.accountType || account.accountType || ""
       }))
     );
@@ -373,7 +377,7 @@ const DailyJournal = () => {
       });
       setTrades(sorted);
       setIsDemo(false);
-      
+
       // Default: select first trade if none selected and no URL param
       if (sorted.length > 0 && !selectedTrade && !urlTradeId) {
         setSelectedTrade(sorted[0]);
@@ -385,14 +389,14 @@ const DailyJournal = () => {
   // Separate useEffect to handle URL-based trade selection after trades are loaded
   useEffect(() => {
     if (!urlTradeId || trades.length === 0) return;
-    
-    const tradeFromUrl = trades.find(t => 
-      t._id === urlTradeId || 
-      t.id === urlTradeId || 
-      (t as any).tradeId === urlTradeId || 
+
+    const tradeFromUrl = trades.find(t =>
+      t._id === urlTradeId ||
+      t.id === urlTradeId ||
+      (t as any).tradeId === urlTradeId ||
       String((t as any).Ticket) === urlTradeId
     );
-    
+
     if (tradeFromUrl) {
       const idx = trades.indexOf(tradeFromUrl);
       setSelectedTrade(tradeFromUrl);
@@ -424,7 +428,7 @@ const DailyJournal = () => {
       setRulesCompliance({});
       return;
     }
-    
+
     setLoadingRules(true);
     try {
       const res = await fetch(`/api/strategy/get?apiName=getStrategyRules&strategyName=${encodeURIComponent(strategyName)}`);
@@ -435,7 +439,7 @@ const DailyJournal = () => {
           setRulesCompliance(existingCompliance);
         } else {
           const initialCompliance: Record<string, boolean> = {};
-          (data.rules || []).forEach((rule: {id: string}) => {
+          (data.rules || []).forEach((rule: { id: string }) => {
             initialCompliance[rule.id] = false;
           });
           setRulesCompliance(initialCompliance);
@@ -466,10 +470,10 @@ const DailyJournal = () => {
 
   useEffect(() => {
     const tradeId = getTradeId(selectedTrade);
-    
+
     // Check if we have a draft for this trade (unsaved content)
     const draftData = tradeId ? draftJournalRef.current[tradeId] : null;
-    
+
     if (draftData) {
       // Restore draft data
       setJournalData(draftData);
@@ -502,17 +506,17 @@ const DailyJournal = () => {
       // Skip if focused on an input or textarea
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.contentEditable === "true") return;
-      
+
       const finalFilteredTrades = filteredTrades.filter(t => {
         if (tradeFilter === "winners") return t.Profit >= 0;
         if (tradeFilter === "losers") return t.Profit < 0;
         return true;
       });
-      
+
       if (finalFilteredTrades.length === 0) return;
-      
+
       const currentIdx = finalFilteredTrades.findIndex(t => (t.id || t._id) === (selectedTrade?.id || selectedTrade?._id));
-      
+
       if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
         e.preventDefault();
         const newIdx = currentIdx <= 0 ? finalFilteredTrades.length - 1 : currentIdx - 1;
@@ -540,7 +544,7 @@ const DailyJournal = () => {
       const originalData = selectedTrade.jrData || {};
       const hasChanges = JSON.stringify(journalData) !== JSON.stringify(originalData);
       setHasUnsavedChanges(hasChanges);
-      
+
       // Save to draft if there are unsaved changes
       if (hasChanges && tradeId) {
         draftJournalRef.current[tradeId] = journalData;
@@ -624,7 +628,7 @@ const DailyJournal = () => {
 
   const saveCustomTemplate = () => {
     if (!newTemplateName.trim()) return;
-    
+
     const newTemplate: CustomJournalTemplate = {
       id: `custom-${Date.now()}`,
       name: newTemplateName.trim(),
@@ -703,7 +707,7 @@ const DailyJournal = () => {
     const rMultiple = risk > 0 ? trade.Profit / risk : 0;
     const mae = sl ? Math.abs(entry - sl) : 0;
     const mfe = tp ? Math.abs(tp - entry) : 0;
-    
+
     return {
       pips: Math.round(pips * 10) / 10,
       returnPerPip: Math.round(returnPerPip * 100) / 100,
@@ -771,23 +775,24 @@ const DailyJournal = () => {
         body: JSON.stringify({
           apiName: "updateJournal",
           id: tradeId,
+          accountId: selectedTrade.accountId,
           tokenn,
           accountType: selectedTrade.accountType,
           jrData: jrDataWithRules,
         }),
       });
-      
+
       // Update selectedTrade with the saved jrData to sync state
       setSelectedTrade(prev => prev ? { ...prev, jrData: jrDataWithRules } : null);
-      setTrades(prev => prev.map(t => 
+      setTrades(prev => prev.map(t =>
         (t.id || t._id) === tradeId ? { ...t, jrData: jrDataWithRules } : t
       ));
-      
+
       // Reset unsaved changes indicator and clear draft
       setHasUnsavedChanges(false);
       delete draftJournalRef.current[tradeId];
-      
-      setAccounts();
+
+      await setAccounts();
     } catch (error) {
       console.error("Error saving journal:", error);
     } finally {
@@ -797,26 +802,49 @@ const DailyJournal = () => {
 
   const handleDeleteScreenshot = async (type: "before" | "after") => {
     if (!selectedTrade || isDemo) return;
-    
+
     try {
-      const tradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
-      await fetch("/api/daily-journal/post", {
+      const imgKey = type === "before" ? "beforeURL" : "afterURL";
+      const urlToDelete = selectedTrade[imgKey];
+
+      if (!urlToDelete) {
+        return;
+      }
+
+      const res = await fetch("/api/daily-journal/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          apiName: "editDropdowns",
-          id: tradeId,
-          type: type === "before" ? "beforeURL" : "afterURL",
-          value: "",
+          apiName: "deleteImage",
+          url: urlToDelete,
           tokenn,
-          accountType: selectedTrade.accountType || "",
         }),
       });
-      setAccounts();
+
+      const result = await res.json();
+      if (!res.ok) {
+        alert(result.error || "Failed to delete image.");
+        return;
+      }
+
+      // If it's partial success (database works but S3 fails), notify user
+      if (res.status === 207 && result.message) {
+        alert(`${result.message}\n\nBucket: ${result.attemptedBucket}\nKey: ${result.attemptedKey}`);
+      }
+
+      const tradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
+      setSelectedTrade(prev => prev ? { ...prev, [imgKey]: "" } : null);
+      setTrades(prev => prev.map(t => {
+        const tId = t._id || t.id || (t as any).Ticket?.toString();
+        return tId === tradeId ? { ...t, [imgKey]: "" } : t;
+      }));
+
+      await setAccounts();
       setLightboxImage(null);
       setLightboxType(null);
     } catch (error) {
       console.error("Error deleting screenshot:", error);
+      alert("An error occurred while deleting the screenshot.");
     }
   };
 
@@ -867,23 +895,28 @@ const DailyJournal = () => {
         formData.append("image", blob, file.name);
         formData.append("id", tradeId);
         formData.append("imgType", type === "before" ? "beforeURL" : "afterURL");
+        formData.append("accountId", selectedTrade.accountId || "");
         formData.append("tokenn", tokenn);
         formData.append("accountType", selectedTrade.accountType || "");
         formData.append("apiName", "uploadImage");
 
         try {
           const response = await fetch("/api/daily-journal/post", { method: "POST", body: formData });
+          const result = await response.json();
           if (response.ok) {
-            const result = await response.json();
             if (result.imageUrl) {
               const imgKey = type === "before" ? "beforeURL" : "afterURL";
               setSelectedTrade(prev => prev ? { ...prev, [imgKey]: result.imageUrl } : null);
             }
+          } else {
+            alert(result.error || "Failed to upload image.");
           }
         } catch (err) {
           console.error("Image upload error:", err);
+          alert("An error occurred while uploading the image.");
         } finally {
-          setAccounts();
+          await setAccounts();
+          e.target.value = "";
         }
       };
       img.src = event.target?.result as string;
@@ -914,7 +947,7 @@ const DailyJournal = () => {
       {/* Top Header Bar */}
       <div className="flex-shrink-0 border-b border-border bg-gradient-to-b from-card/95 to-card/80 backdrop-blur-2xl">
         <div className="h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
-        
+
         <div className="px-2 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
           {/* Left: Trade Navigation */}
           <div className="flex items-center gap-1 sm:gap-4 min-w-0 flex-shrink overflow-hidden">
@@ -953,11 +986,10 @@ const DailyJournal = () => {
                 <div className="min-w-0 overflow-hidden">
                   <div className="flex items-center gap-1 sm:gap-2">
                     <span className="font-semibold text-foreground text-xs sm:text-sm truncate max-w-[60px] sm:max-w-none">{selectedTrade.Item || selectedTrade.symbol}</span>
-                    <span className={`hidden sm:inline px-2 py-0.5 rounded text-[10px] font-semibold uppercase flex-shrink-0 ${
-                      selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy"
-                        ? "bg-profit/10 text-profit"
-                        : "bg-loss/10 text-loss"
-                    }`}>
+                    <span className={`hidden sm:inline px-2 py-0.5 rounded text-[10px] font-semibold uppercase flex-shrink-0 ${selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy"
+                      ? "bg-profit/10 text-profit"
+                      : "bg-loss/10 text-loss"
+                      }`}>
                       {selectedTrade.Type || selectedTrade.side}
                     </span>
                   </div>
@@ -1003,11 +1035,10 @@ const DailyJournal = () => {
             <button
               onClick={handleSave}
               disabled={isDemo || isSaving}
-              className={`group relative flex items-center gap-1 sm:gap-2 px-2 sm:px-5 py-1.5 sm:py-2.5 rounded-xl text-white font-semibold text-[10px] sm:text-sm transition-all duration-300 disabled:opacity-50 shadow-lg ${
-                hasUnsavedChanges 
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 shadow-amber-500/20 hover:shadow-amber-500/30" 
-                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-emerald-500/20 hover:shadow-emerald-500/30"
-              }`}
+              className={`group relative flex items-center gap-1 sm:gap-2 px-2 sm:px-5 py-1.5 sm:py-2.5 rounded-xl text-white font-semibold text-[10px] sm:text-sm transition-all duration-300 disabled:opacity-50 shadow-lg ${hasUnsavedChanges
+                ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 shadow-amber-500/20 hover:shadow-amber-500/30"
+                : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-emerald-500/20 hover:shadow-emerald-500/30"
+                }`}
             >
               {hasUnsavedChanges && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
@@ -1050,15 +1081,14 @@ const DailyJournal = () => {
                   <button
                     key={f.key}
                     onClick={() => setTradeFilter(f.key as "all" | "winners" | "losers")}
-                    className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
-                      tradeFilter === f.key
-                        ? f.color === "profit"
-                          ? "bg-profit/15 text-profit border border-profit/30"
-                          : f.color === "loss"
+                    className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all ${tradeFilter === f.key
+                      ? f.color === "profit"
+                        ? "bg-profit/15 text-profit border border-profit/30"
+                        : f.color === "loss"
                           ? "bg-loss/15 text-loss border border-loss/30"
                           : "bg-primary/15 text-primary border border-primary/30"
-                        : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border border-transparent"
-                    }`}
+                      : "bg-muted/30 text-muted-foreground hover:bg-muted/50 border border-transparent"
+                      }`}
                   >
                     {f.label}
                   </button>
@@ -1076,7 +1106,7 @@ const DailyJournal = () => {
                   if (tradeFilter === "losers") return t.Profit < 0;
                   return true;
                 });
-                
+
                 finalFilteredTrades.forEach(trade => {
                   const dateKey = trade.date || "Unknown";
                   if (!groupedTrades[dateKey]) groupedTrades[dateKey] = [];
@@ -1135,18 +1165,17 @@ const DailyJournal = () => {
                               setSelectedTrade(trade);
                               setSelectedTradeIndex(globalIdx);
                             }}
-                            className={`w-full p-2.5 text-left rounded-xl transition-all duration-200 group ${
-                              isSelected 
-                                ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border border-primary/30 shadow-lg shadow-primary/5" 
-                                : "hover:bg-muted border border-transparent hover:border-primary/30"
-                            }`}
+                            className={`w-full p-2.5 text-left rounded-xl transition-all duration-200 group ${isSelected
+                              ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border border-primary/30 shadow-lg shadow-primary/5"
+                              : "hover:bg-muted border border-transparent hover:border-primary/30"
+                              }`}
                             whileHover={{ scale: isSelected ? 1 : 1.005 }}
                             whileTap={{ scale: 0.995 }}
                           >
                             <div className="flex items-center gap-2.5">
-                              <SymbolLogo 
-                                symbol={trade.Item || trade.symbol || ""} 
-                                size="sm" 
+                              <SymbolLogo
+                                symbol={trade.Item || trade.symbol || ""}
+                                size="sm"
                                 isProfit={tradeProfit}
                                 isSelected={isSelected}
                               />
@@ -1207,7 +1236,7 @@ const DailyJournal = () => {
                   <span className={`text-2xl font-bold tabular-nums ${isProfit ? 'text-profit' : 'text-loss'}`}>
                     {isProfit ? '+' : ''}{formatCompactCurrency(selectedTrade.Profit, currency, exchangeRate)}
                   </span>
-                  
+
                   {/* Quick Stats */}
                   <div className="hidden sm:flex items-center gap-3">
                     <div className="text-center px-3">
@@ -1275,15 +1304,14 @@ const DailyJournal = () => {
                         <button
                           key={s.key}
                           onClick={() => handleSentimentChange(s.key as "great" | "okay" | "poor")}
-                          className={`p-1.5 rounded-md transition-all duration-200 ${
-                            isSelected
-                              ? s.color === "profit" 
-                                ? "bg-profit/20 text-profit"
-                                : s.color === "loss"
+                          className={`p-1.5 rounded-md transition-all duration-200 ${isSelected
+                            ? s.color === "profit"
+                              ? "bg-profit/20 text-profit"
+                              : s.color === "loss"
                                 ? "bg-loss/20 text-loss"
                                 : "bg-amber-500/20 text-amber-500"
-                              : "text-muted-foreground/50 hover:text-foreground hover:bg-muted/50"
-                          }`}
+                            : "text-muted-foreground/50 hover:text-foreground hover:bg-muted/50"
+                            }`}
                           title={s.key.charAt(0).toUpperCase() + s.key.slice(1)}
                         >
                           <s.icon className="w-4 h-4" />
@@ -1300,14 +1328,14 @@ const DailyJournal = () => {
           <div className="flex-1 overflow-y-auto">
             {selectedTrade && (
               <div className="p-4 sm:p-6 space-y-6 max-w-3xl mx-auto">
-                
+
                 {/* Screenshots Section */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <ImageIcon className="w-4 h-4 text-primary" />
                     <h3 className="text-sm font-semibold text-foreground">Trade Screenshots</h3>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Before Screenshot */}
                     <div className="space-y-2">
@@ -1340,7 +1368,7 @@ const DailyJournal = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* After Screenshot */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
@@ -1398,7 +1426,7 @@ const DailyJournal = () => {
                       })()}
                     </div>
                   </div>
-                  
+
                   {/* Template Cards - Horizontal Scroll */}
                   <div className="relative">
                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
@@ -1408,15 +1436,14 @@ const DailyJournal = () => {
                         const isActive = journalData.templateId === template.id;
                         const isFavorite = favoriteTemplates.includes(template.id);
                         const isCustom = "isCustom" in template && template.isCustom;
-                        
+
                         return (
                           <motion.div
                             key={template.id}
-                            className={`relative flex-shrink-0 w-[110px] p-3 rounded-xl border cursor-pointer transition-all duration-200 group ${
-                              isActive
-                                ? `${colors.bg} ${colors.border} border-2 shadow-lg`
-                                : "bg-muted/20 border-border hover:bg-muted/40 hover:border-primary/30"
-                            }`}
+                            className={`relative flex-shrink-0 w-[110px] p-3 rounded-xl border cursor-pointer transition-all duration-200 group ${isActive
+                              ? `${colors.bg} ${colors.border} border-2 shadow-lg`
+                              : "bg-muted/20 border-border hover:bg-muted/40 hover:border-primary/30"
+                              }`}
                             onClick={() => handleTemplateClick(template)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -1431,7 +1458,7 @@ const DailyJournal = () => {
                             >
                               <Star className={`w-3 h-3 ${isFavorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40 group-hover:text-muted-foreground"}`} />
                             </button>
-                            
+
                             {/* Delete button for custom templates */}
                             {isCustom && (
                               <button
@@ -1444,7 +1471,7 @@ const DailyJournal = () => {
                                 <Trash2 className="w-3 h-3" />
                               </button>
                             )}
-                            
+
                             <div className="flex flex-col items-center text-center gap-1.5 pt-2">
                               <div className={`p-2 rounded-lg ${colors.bg} ${colors.border} border`}>
                                 <TemplateIcon className={`w-4 h-4 ${colors.text}`} />
@@ -1452,7 +1479,7 @@ const DailyJournal = () => {
                               <span className="text-[11px] font-medium text-foreground line-clamp-1">{template.name}</span>
                               <span className="text-[9px] text-muted-foreground/70 line-clamp-2 leading-tight">{template.description}</span>
                             </div>
-                            
+
                             {isActive && (
                               <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${colors.text.replace("text-", "bg-")} flex items-center justify-center`}>
                                 <Check className="w-2.5 h-2.5 text-white" />
@@ -1461,7 +1488,7 @@ const DailyJournal = () => {
                           </motion.div>
                         );
                       })}
-                      
+
                       {/* Save as Template Button */}
                       <motion.button
                         onClick={() => setShowSaveTemplateModal(true)}
@@ -1476,7 +1503,7 @@ const DailyJournal = () => {
                       </motion.button>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="p-3 rounded-lg bg-muted/20 border border-border focus-within:border-primary/30 transition-colors">
                       <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium block mb-1.5">
@@ -1515,7 +1542,7 @@ const DailyJournal = () => {
                     <Zap className="w-4 h-4 text-amber-500" />
                     <h3 className="text-sm font-semibold text-foreground">Lessons & Reflection</h3>
                   </div>
-                  
+
                   <div className="p-3 rounded-lg bg-muted/20 border border-border focus-within:border-amber-500/30 transition-colors">
                     <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium block mb-1.5">
                       What did you learn from this trade?
@@ -1552,7 +1579,7 @@ const DailyJournal = () => {
                     <Sparkles className="w-4 h-4 text-purple-500" />
                     <h3 className="text-sm font-semibold text-foreground">Quick Tags</h3>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-2">
                     {["A+ Setup", "Followed Rules", "Emotional Entry", "FOMO", "Revenge Trade", "Patience Paid", "Early Exit", "Perfect Execution"].map((tag) => {
                       const isActive = journalData.tags?.includes(tag);
@@ -1562,16 +1589,15 @@ const DailyJournal = () => {
                           onClick={() => {
                             setJournalData(prev => ({
                               ...prev,
-                              tags: isActive 
+                              tags: isActive
                                 ? (prev.tags || []).filter(t => t !== tag)
                                 : [...(prev.tags || []), tag]
                             }));
                           }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                            isActive
-                              ? "bg-primary/20 text-primary border border-primary/30"
-                              : "bg-muted/30 text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
-                          }`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${isActive
+                            ? "bg-primary/20 text-primary border border-primary/30"
+                            : "bg-muted/30 text-muted-foreground border border-border hover:bg-muted/50 hover:text-foreground"
+                            }`}
                         >
                           {tag}
                         </button>
@@ -1586,7 +1612,7 @@ const DailyJournal = () => {
                     <BookOpen className="w-4 h-4 text-blue-500" />
                     <h3 className="text-sm font-semibold text-foreground">Daily Notes</h3>
                   </div>
-                  
+
                   <div className="p-3 rounded-lg bg-muted/20 border border-border focus-within:border-blue-500/30 transition-colors">
                     <textarea
                       value={journalData.dailyNotes || ""}
@@ -1638,10 +1664,9 @@ const DailyJournal = () => {
                   <div className="grid grid-cols-2 gap-1.5">
                     <div className="p-2 rounded-lg bg-muted/20 border border-border/50">
                       <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">Side</span>
-                      <p className={`text-xs font-bold mt-0.5 ${
-                        (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
-                          ? "text-profit" : "text-loss"
-                      }`}>
+                      <p className={`text-xs font-bold mt-0.5 ${(selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long" || selectedTrade.Type?.toLowerCase() === "buy")
+                        ? "text-profit" : "text-loss"
+                        }`}>
                         {selectedTrade.Type || selectedTrade.side || "--"}
                       </p>
                     </div>
@@ -1681,21 +1706,21 @@ const DailyJournal = () => {
                       onChange={async (e) => {
                         const newStrategy = e.target.value;
                         const tradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
-                        
+
                         setSelectedTrade(prev => prev ? { ...prev, strategy: newStrategy } : null);
                         const currentTradeId = selectedTrade._id || selectedTrade.id || (selectedTrade as any).Ticket?.toString() || "";
                         setTrades(prev => prev.map(t => {
                           const tId = t._id || t.id || (t as any).Ticket?.toString() || "";
                           return tId === currentTradeId ? { ...t, strategy: newStrategy } : t;
                         }));
-                        
+
                         if (newStrategy && newStrategy !== "Select") {
                           fetchStrategyRules(newStrategy);
                         } else {
                           setStrategyRules([]);
                           setRulesCompliance({});
                         }
-                        
+
                         if (!isDemo) {
                           try {
                             await fetch("/api/daily-journal/post", {
@@ -1733,8 +1758,8 @@ const DailyJournal = () => {
                       <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider px-0.5">Rules Compliance</span>
                       <div className="space-y-1">
                         {strategyRules.slice(0, 4).map((rule: { id: string; text: string }, idx) => (
-                          <div 
-                            key={rule.id || idx} 
+                          <div
+                            key={rule.id || idx}
                             className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 border border-border/50 hover:bg-muted/40 transition-colors cursor-pointer"
                             onClick={() => {
                               setRulesCompliance(prev => ({
@@ -1743,13 +1768,12 @@ const DailyJournal = () => {
                               }));
                             }}
                           >
-                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
-                              rulesCompliance[rule.id] === true 
-                                ? "bg-profit/20 text-profit border border-profit/30"
-                                : rulesCompliance[rule.id] === false 
+                            <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${rulesCompliance[rule.id] === true
+                              ? "bg-profit/20 text-profit border border-profit/30"
+                              : rulesCompliance[rule.id] === false
                                 ? "bg-loss/20 text-loss border border-loss/30"
                                 : "bg-muted/50 border border-border"
-                            }`}>
+                              }`}>
                               {rulesCompliance[rule.id] === true && <Check className="w-3 h-3" />}
                               {rulesCompliance[rule.id] === false && <X className="w-3 h-3" />}
                             </div>
@@ -1818,7 +1842,7 @@ const DailyJournal = () => {
                 </button>
               </div>
             </motion.div>
-            
+
             <motion.img
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -1882,9 +1906,8 @@ const DailyJournal = () => {
                         setSelectedTradeIndex(idx);
                         setIsMobileTradeListOpen(false);
                       }}
-                      className={`w-full p-4 text-left border-b border-border/30 transition-all ${
-                        isSelected ? "bg-primary/10 border-l-2 border-l-primary" : "hover:bg-muted/30"
-                      }`}
+                      className={`w-full p-4 text-left border-b border-border/30 transition-all ${isSelected ? "bg-primary/10 border-l-2 border-l-primary" : "hover:bg-muted/30"
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -1937,9 +1960,8 @@ const DailyJournal = () => {
                     <button
                       key={tab.key}
                       onClick={() => setMainTab(tab.key as typeof mainTab)}
-                      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
-                        mainTab === tab.key ? "bg-muted/50 text-foreground" : "text-muted-foreground"
-                      }`}
+                      className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all ${mainTab === tab.key ? "bg-muted/50 text-foreground" : "text-muted-foreground"
+                        }`}
                     >
                       <tab.icon className="w-3 h-3" />
                       {tab.label}
@@ -1968,9 +1990,8 @@ const DailyJournal = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-3 rounded-xl bg-muted/20 border border-border">
                         <span className="text-[10px] text-muted-foreground uppercase">Side</span>
-                        <p className={`text-sm font-semibold mt-1 ${
-                          (selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long") ? "text-profit" : "text-loss"
-                        }`}>{selectedTrade.Type || selectedTrade.side}</p>
+                        <p className={`text-sm font-semibold mt-1 ${(selectedTrade.Type?.toLowerCase() === "long" || selectedTrade.side?.toLowerCase() === "long") ? "text-profit" : "text-loss"
+                          }`}>{selectedTrade.Type || selectedTrade.side}</p>
                       </div>
                       <div className="p-3 rounded-xl bg-muted/20 border border-border">
                         <span className="text-[10px] text-muted-foreground uppercase">Qty</span>
@@ -2096,12 +2117,12 @@ const DailyJournal = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <p className="text-sm text-foreground">
                   You are about to apply the <span className="font-semibold text-primary">"{pendingTemplate.name}"</span> template. The following fields will be overwritten:
                 </p>
-                
+
                 <div className="space-y-2">
                   {getFieldsToOverwrite().map((field) => (
                     <div key={field} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 border border-border">
@@ -2111,7 +2132,7 @@ const DailyJournal = () => {
                   ))}
                 </div>
               </div>
-              
+
               <div className="p-4 border-t border-border flex gap-3 justify-end">
                 <button
                   onClick={() => {
@@ -2163,7 +2184,7 @@ const DailyJournal = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 space-y-5">
                 {/* Template Name */}
                 <div className="space-y-2">
@@ -2176,7 +2197,7 @@ const DailyJournal = () => {
                     className="w-full px-4 py-2.5 rounded-lg bg-muted/30 border border-border text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-all"
                   />
                 </div>
-                
+
                 {/* Icon Selection */}
                 <div className="space-y-2">
                   <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Icon</label>
@@ -2185,18 +2206,17 @@ const DailyJournal = () => {
                       <button
                         key={id}
                         onClick={() => setNewTemplateIcon(id)}
-                        className={`p-2.5 rounded-lg border transition-all ${
-                          newTemplateIcon === id
-                            ? "bg-primary/10 border-primary/40 text-primary"
-                            : "bg-muted/20 border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                        }`}
+                        className={`p-2.5 rounded-lg border transition-all ${newTemplateIcon === id
+                          ? "bg-primary/10 border-primary/40 text-primary"
+                          : "bg-muted/20 border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                          }`}
                       >
                         <Icon className="w-4 h-4" />
                       </button>
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Color Selection */}
                 <div className="space-y-2">
                   <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Color</label>
@@ -2205,16 +2225,15 @@ const DailyJournal = () => {
                       <button
                         key={id}
                         onClick={() => setNewTemplateColor(id)}
-                        className={`w-8 h-8 rounded-lg ${colorClass} transition-all ${
-                          newTemplateColor === id
-                            ? "ring-2 ring-offset-2 ring-offset-card ring-white/50 scale-110"
-                            : "hover:scale-105 opacity-70 hover:opacity-100"
-                        }`}
+                        className={`w-8 h-8 rounded-lg ${colorClass} transition-all ${newTemplateColor === id
+                          ? "ring-2 ring-offset-2 ring-offset-card ring-white/50 scale-110"
+                          : "hover:scale-105 opacity-70 hover:opacity-100"
+                          }`}
                       />
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Preview */}
                 <div className="space-y-2">
                   <label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Preview</label>
@@ -2239,7 +2258,7 @@ const DailyJournal = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-4 border-t border-border flex gap-3 justify-end">
                 <button
                   onClick={() => {

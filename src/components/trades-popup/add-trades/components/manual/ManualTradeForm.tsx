@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  Search,
+  DollarSign,
+  TrendingUp,
   TrendingDown,
   Target,
   Shield,
@@ -94,8 +94,8 @@ const markets = [
 const formatDateForDisplay = (dateString: string) => {
   if (!dateString) return "Now";
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
@@ -113,10 +113,10 @@ const isWeekend = (dateString: string): boolean => {
 
 const getMarketClosedWarning = (market: string, entryDate: string, exitDate: string): string | null => {
   if (market === "CRYPTO") return null;
-  
+
   const entryWeekend = isWeekend(entryDate);
   const exitWeekend = isWeekend(exitDate);
-  
+
   if (entryWeekend && exitWeekend) {
     return `${market === "FOREX" ? "Forex" : "Stock"} markets are closed on weekends. Both entry and exit dates are on weekends.`;
   } else if (entryWeekend) {
@@ -124,24 +124,24 @@ const getMarketClosedWarning = (market: string, entryDate: string, exitDate: str
   } else if (exitWeekend) {
     return `${market === "FOREX" ? "Forex" : "Stock"} markets are closed on weekends. Exit date is on a weekend.`;
   }
-  
+
   return null;
 };
 
 export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStateChange, submitTrigger, isPropFirmMode = false }: ManualTradeFormProps) {
   const { selectedAccounts, setAccounts } = useAccountDetails();
-  
-  const filteredMarkets = isPropFirmMode 
-    ? markets.filter(m => m.id === "FOREX") 
+
+  const filteredMarkets = isPropFirmMode
+    ? markets.filter(m => m.id === "FOREX")
     : markets;
-  
+
   const [marketOpen, setMarketOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [defaultStrategy, setDefaultStrategy] = useState<string | null>(null);
-  
+
   useEffect(() => {
     const fetchDefaultStrategy = async () => {
       try {
@@ -156,7 +156,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     };
     fetchDefaultStrategy();
   }, []);
-  
+
   const [trades, setTrades] = useState<TradeEntry[]>([{
     id: generateId(),
     symbol: "",
@@ -179,7 +179,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   const [symbolSearch, setSymbolSearch] = useState("");
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState<string | null>(null);
-  
+
   const symbolInputRef = useRef<HTMLInputElement>(null);
   const marketRef = useRef<HTMLDivElement>(null);
   const symbolDropdownRef = useRef<HTMLDivElement>(null);
@@ -191,7 +191,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
         setMarketOpen(false);
       }
       if (symbolDropdownRef.current && !symbolDropdownRef.current.contains(e.target as Node) &&
-          symbolInputRef.current && !symbolInputRef.current.contains(e.target as Node)) {
+        symbolInputRef.current && !symbolInputRef.current.contains(e.target as Node)) {
         setShowSymbolDropdown(false);
       }
     };
@@ -215,8 +215,8 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
 
   useEffect(() => {
     if (isPropFirmMode) {
-      setTrades(prev => prev.map(t => 
-        t.market !== "FOREX" 
+      setTrades(prev => prev.map(t =>
+        t.market !== "FOREX"
           ? { ...t, market: "FOREX", currency: "USD", symbol: "", size: "" }
           : t
       ));
@@ -234,7 +234,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   };
 
   const updateTrade = (id: string, field: keyof TradeEntry, value: string) => {
-    setTrades(prev => prev.map(t => 
+    setTrades(prev => prev.map(t =>
       t.id === id ? { ...t, [field]: value } : t
     ));
     if (errorMessage) setErrorMessage(null);
@@ -251,7 +251,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   const getSymbols = () => {
     const searchLower = symbolSearch.toLowerCase().trim();
     let source: Array<{ symbol: string; name: string; market?: string; curr?: string; lotSize?: number }> = [];
-    
+
     switch (market) {
       case "FOREX": source = symbols; break;
       case "US STOCKS": source = usStocks; break;
@@ -259,20 +259,20 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       case "INDIAN F&O": source = indianFnO; break;
       case "CRYPTO": source = crypto; break;
     }
-    
+
     if (!searchLower) {
       const popular = popularSymbols[market] || [];
       return source.filter(s => popular.includes(s.symbol)).slice(0, 6);
     }
-    
-    return source.filter(s => 
+
+    return source.filter(s =>
       s.symbol.toLowerCase().includes(searchLower) ||
       s.name.toLowerCase().includes(searchLower)
     ).slice(0, 8);
   };
-  
+
   const isShowingPopularSymbols = !symbolSearch.trim();
-  
+
   const currencySymbol = getCurrencySymbol(activeTrade.currency);
 
   const selectSymbol = (sym: { symbol: string; market?: string; curr?: string }) => {
@@ -318,12 +318,12 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     for (let i = 0; i < trades.length; i++) {
       const trade = trades[i];
       const tradeNum = trades.length > 1 ? ` (Trade ${i + 1})` : "";
-      
+
       if (!trade.market) return `Please select a market${tradeNum}`;
       if (!trade.symbol.trim()) return `Please enter a symbol${tradeNum}`;
       if (!trade.size || parseFloat(trade.size) <= 0) return `Please enter a valid lot size${tradeNum}`;
       if (!trade.entryPrice || parseFloat(trade.entryPrice) <= 0) return `Please enter entry price${tradeNum}`;
-      
+
       if (trade.status === "completed") {
         if (!trade.exitPrice || parseFloat(trade.exitPrice) <= 0) return `Please enter exit price for completed trade${tradeNum}`;
       }
@@ -334,19 +334,19 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   const getContractSize = (market: string, symbol: string): number => {
     const upperSymbol = symbol.toUpperCase();
     const upperMarket = market.toUpperCase();
-    
+
     if (market === "INDIAN F&O") {
       const fnoSymbol = indianFnO.find(s => s.symbol.toUpperCase() === upperSymbol);
       return fnoSymbol?.lotSize || 25;
     }
-    
+
     if (upperSymbol.includes("XAU") || upperSymbol.includes("GOLD")) {
       return 100;
     }
     if (upperSymbol.includes("XAG") || upperSymbol.includes("SILVER")) {
       return 5000;
     }
-    
+
     switch (market) {
       case "FOREX":
         return 100000;
@@ -388,20 +388,20 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
     const size = parseFloat(trade.size) || 0;
     const commission = parseFloat(trade.commission) || 0;
     const otherCharges = parseFloat(trade.otherCharges) || 0;
-    
+
     if (trade.status !== "completed" || exitPrice === 0) return 0;
-    
+
     const contractSize = getContractSize(trade.market, trade.symbol);
-    const priceDiff = trade.side === "buy" 
-      ? exitPrice - entryPrice 
+    const priceDiff = trade.side === "buy"
+      ? exitPrice - entryPrice
       : entryPrice - exitPrice;
-    
+
     let pnl = priceDiff * size * contractSize;
-    
+
     const upperSymbol = trade.symbol.toUpperCase();
     if (trade.market === "FOREX" && upperSymbol.length >= 6) {
       const quoteCurrency = upperSymbol.slice(-3);
-      
+
       switch (quoteCurrency) {
         case "JPY":
           pnl = pnl / 150;
@@ -429,7 +429,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
           break;
       }
     }
-    
+
     return pnl - commission - otherCharges;
   };
 
@@ -442,7 +442,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
 
     setIsSubmitting(true);
     setErrorMessage(null);
-    
+
     try {
       const account = selectedAccounts.find(a => a.accountName === selectedAccount);
       if (!account) {
@@ -455,7 +455,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
         const size = parseFloat(trade.size) || 0;
         const commission = parseFloat(trade.commission) || 0;
         const otherCharges = parseFloat(trade.otherCharges) || 0;
-        
+
         const profit = calculatePnL(trade);
 
         return {
@@ -502,14 +502,14 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       } catch (e) {
         throw new Error("Server returned an invalid response. Please try again.");
       }
-      
+
       if (!response.ok) {
         throw new Error(data?.error || data?.message || `Server error (${response.status})`);
       }
 
       setShowSuccess(true);
       await setAccounts();
-      
+
       setTimeout(() => {
         setShowSuccess(false);
         onClose();
@@ -524,8 +524,8 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
   };
 
   const currentPnL = calculatePnL(activeTrade);
-  const isFormValid = activeTrade.symbol && activeTrade.entryPrice && activeTrade.size && 
-                      (activeTrade.status !== "completed" || activeTrade.exitPrice);
+  const isFormValid = activeTrade.symbol && activeTrade.entryPrice && activeTrade.size &&
+    (activeTrade.status !== "completed" || activeTrade.exitPrice);
 
   return (
     <div className="space-y-3">
@@ -552,7 +552,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                   <Check className="w-8 h-8 text-profit" strokeWidth={3} />
                 </motion.div>
               </motion.div>
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
@@ -652,7 +652,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
 
       {/* Main Compact Form */}
       <div className="bg-muted/20 border border-border/30 rounded-xl p-3 space-y-3">
-        
+
         {/* Row 1: Symbol + Direction (side by side) */}
         <div className="grid grid-cols-5 gap-2">
           {/* Symbol - takes 3 cols */}
@@ -682,7 +682,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                 </button>
               )}
             </div>
-            
+
             <AnimatePresence>
               {showSymbolDropdown && getSymbols().length > 0 && (
                 <motion.div
@@ -783,10 +783,10 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
 
         {/* Quick Lot Presets - Prominent with color */}
         <div className="flex gap-1">
-          {(market === "FOREX" 
-            ? [0.01, 0.1, 0.5, 1.0] 
-            : market === "INDIAN F&O" 
-              ? [1, 2, 5, 10] 
+          {(market === "FOREX"
+            ? [0.01, 0.1, 0.5, 1.0]
+            : market === "INDIAN F&O"
+              ? [1, 2, 5, 10]
               : [1, 10, 50, 100]
           ).map((preset) => (
             <button
@@ -822,11 +822,11 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                 className={cn(
                   "flex items-center justify-center gap-1.5 py-2 rounded-lg text-[11px] font-semibold transition-all",
                   isActive
-                    ? status.color === "profit" 
+                    ? status.color === "profit"
                       ? "bg-profit/15 text-profit ring-1 ring-profit/30"
                       : status.color === "warning"
-                      ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
-                      : "bg-primary/15 text-primary ring-1 ring-primary/30"
+                        ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30"
+                        : "bg-primary/15 text-primary ring-1 ring-primary/30"
                     : "bg-muted/20 text-muted-foreground hover:bg-muted/40"
                 )}
               >
@@ -883,7 +883,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
                   animate={{ opacity: 1, scale: 1 }}
                   className={cn(
                     "p-3 rounded-lg flex items-center justify-between",
-                    currentPnL >= 0 
+                    currentPnL >= 0
                       ? "bg-gradient-to-r from-profit/15 to-profit/5 border border-profit/25"
                       : "bg-gradient-to-r from-loss/15 to-loss/5 border border-loss/25"
                   )}
@@ -1013,7 +1013,7 @@ export default function ManualTradeForm({ selectedAccount, onClose, onSubmitStat
       </div>
 
       {/* Add Another Trade - More subtle */}
-      {trades.length === 1 && (
+      {trades.length < 10 && (
         <button
           onClick={addNewTrade}
           className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-border/40 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all"
